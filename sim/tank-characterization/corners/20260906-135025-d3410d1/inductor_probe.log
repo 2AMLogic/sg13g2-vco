@@ -1,0 +1,13 @@
+Error: unknown subckt: xl_p1 lp1 0 0 inductor w=8.22u s=3.29u d=47.65u nr_r=1
+    in line no. 71 from file /Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-5/sim/tank-characterization/netlist-snapshots/20260906-135025-d3410d1/inductor_probe.spice
+    Simulation interrupted due to error!
+
+Error: incomplete or empty netlist
+       or no ".plot", ".print", or ".fourier" lines in batch mode;
+no simulations run!
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_inductor_zscan -- sg13g2 spiral-inductor small-signal impedance scan
+

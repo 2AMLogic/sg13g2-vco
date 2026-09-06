@@ -1,0 +1,4 @@
+geometry,w_um,s_um,d_um,nr_r,model_source,status,srf_hz,l_1ghz_h,l_5ghz_h,l_10ghz_h,q_1ghz,q_5ghz,q_10ghz
+p1,8.22,3.29,47.65,1,none,MODEL_ABSENT,,,,,,,
+p13,6.10,3.29,110.11,5,none,MODEL_ABSENT,,,,,,,
+p11,8.22,3.74,141.975,4,none,MODEL_ABSENT,,,,,,,

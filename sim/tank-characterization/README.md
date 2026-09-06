@@ -146,7 +146,7 @@ device model, not the method.
 
 ## Results
 
-All figures below are from record `20260906-134354-d71b3ce`, at `cap_typ`,
+All figures below are from record `20260906-135025-d3410d1`, at `cap_typ`,
 27 °C, `Vbias = 0 V`, and are reproducible by re-running the script. The full
 grid is in that record's CSVs.
 
