@@ -343,7 +343,7 @@ Deciding *which* route to take to an inductor model — EM-extract the PDK's own
 PCell with openEMS/Palace and fit a lumped subcircuit, use published
 measured data, or accept an analytic model with its error bars stated — is a
 design decision with real cost, out of scope for a characterization study.
-It is filed separately; see the issues linked from this directory's PR.
+It is filed separately as **#6**.
 
 ---
 
