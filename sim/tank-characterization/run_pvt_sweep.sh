@@ -124,15 +124,24 @@ CAP_LABELS=(typ bcs wcs)
 TEMPS=(-40 27 125)
 VBIASES=(0.0 1.5)
 
-# Device instance table: <key> <model> <w_um> <l_um> <wfeed_um>
-# Keys match the node/measurement prefixes in the template.
-DEV_KEYS=(a20 a35 a50 b20 b35 b50)
-declare -A DEV_MODEL=( [a20]=cap_cmim [a35]=cap_cmim [a50]=cap_cmim
-                       [b20]=cap_rfcmim [b35]=cap_rfcmim [b50]=cap_rfcmim )
-declare -A DEV_W=( [a20]=20 [a35]=35 [a50]=50 [b20]=20 [b35]=35 [b50]=50 )
-declare -A DEV_L=( [a20]=20 [a35]=35 [a50]=50 [b20]=20 [b35]=35 [b50]=50 )
-# cap_cmim has no wfeed parameter at all, hence the empty cells.
-declare -A DEV_WFEED=( [a20]="" [a35]="" [a50]="" [b20]=5 [b35]=10 [b50]=15 )
+# Device instance table, one colon-separated record per instance:
+#   <key>:<model>:<w_um>:<l_um>:<wfeed_um>
+# <key> matches the node and .meas name prefixes in the template. cap_cmim has
+# no wfeed parameter at all, hence the trailing empty field on those rows.
+#
+# Colon-separated strings rather than `declare -A`, deliberately: bash's
+# associative arrays are a bash-4 feature and macOS still ships bash 3.2 as
+# /bin/bash. A "one-command cold start" (spec/review-bar.md item 1) that
+# silently needs a Homebrew bash is exactly the hidden prerequisite that bar
+# exists to forbid, so this script stays bash-3.2 clean throughout.
+DEV_SPECS=(
+  "a20:cap_cmim:20:20:"
+  "a35:cap_cmim:35:35:"
+  "a50:cap_cmim:50:50:"
+  "b20:cap_rfcmim:20:20:5"
+  "b35:cap_rfcmim:35:35:10"
+  "b50:cap_rfcmim:50:50:15"
+)
 
 # Pull a scalar out of an ngspice batch log. `meas` prints
 #   "<name>                =  <value>"
@@ -189,7 +198,10 @@ for i in "${!CAP_SECTIONS[@]}"; do
 
       echo "[${corner_id}] ngspice rc=${rc} model_error=${model_error}"
 
-      for key in "${DEV_KEYS[@]}"; do
+      for spec in "${DEV_SPECS[@]}"; do
+        IFS=: read -r key dev_model dev_w dev_l dev_wfeed <<EOF
+${spec}
+EOF
         srf="$(meas_value "${log}" "srf_${key}")"
         c1="$(meas_value  "${log}" "c_${key}_1g")"
         c2="$(meas_value  "${log}" "c_${key}_2g")"
@@ -206,19 +218,15 @@ for i in "${!CAP_SECTIONS[@]}"; do
         # no inductance at all), so a missing SRF for it is the expected,
         # physically meaningful answer -- not a failure.
         srf_field="${srf}"
-        if [[ -z "${srf}" ]]; then
-          if [[ "${DEV_MODEL[$key]}" == "cap_cmim" ]]; then
-            srf_field="none"
-          else
-            srf_field=""
-          fi
+        if [[ -z "${srf}" && "${dev_model}" == "cap_cmim" ]]; then
+          srf_field="none"
         fi
 
         status=FAIL
         if [[ ${rc} -eq 0 && ${model_error} -eq 0 && -n "${c1}" && -n "${q1}" && -n "${srf_field}" ]]; then
           status=PASS
         fi
-        echo "${label},${section},${temp},${vbias},${DEV_MODEL[$key]},${DEV_W[$key]},${DEV_L[$key]},${DEV_WFEED[$key]},${status},${srf_field},${c1},${c2},${c5},${c10},${c20},${q1},${q2},${q5},${q10},${q20}" >> "${CSV_OUT}"
+        echo "${label},${section},${temp},${vbias},${dev_model},${dev_w},${dev_l},${dev_wfeed},${status},${srf_field},${c1},${c2},${c5},${c10},${c20},${q1},${q2},${q5},${q10},${q20}" >> "${CSV_OUT}"
         if [[ "${status}" == "FAIL" ]]; then failed_points+=("${corner_id}/${key}"); fi
       done
 
@@ -302,14 +310,19 @@ if grep -qiE "unknown subckt" "${ind_log}"; then ind_model_absent=1; fi
 echo "[${ind_corner_id}] ngspice rc=${ind_rc} model_absent=${ind_model_absent}"
 
 echo "geometry,w_um,s_um,d_um,nr_r,model_source,status,srf_hz,l_1ghz_h,l_5ghz_h,l_10ghz_h,q_1ghz,q_5ghz,q_10ghz" > "${IND_CSV}"
-IND_KEYS=(p1 p13 p11)
-declare -A IND_W=( [p1]=8.22 [p13]=6.10 [p11]=8.22 )
-declare -A IND_S=( [p1]=3.29 [p13]=3.29 [p11]=3.74 )
-declare -A IND_D=( [p1]=47.65 [p13]=110.11 [p11]=141.975 )
-declare -A IND_N=( [p1]=1 [p13]=5 [p11]=4 )
-for key in "${IND_KEYS[@]}"; do
+# <key>:<w_um>:<s_um>:<d_um>:<nr_r>, matching the instances in the template.
+# Same bash-3.2 rationale as DEV_SPECS above.
+IND_SPECS=(
+  "p1:8.22:3.29:47.65:1"
+  "p13:6.10:3.29:110.11:5"
+  "p11:8.22:3.74:141.975:4"
+)
+for spec in "${IND_SPECS[@]}"; do
+  IFS=: read -r key ind_w ind_s ind_d ind_n <<EOF
+${spec}
+EOF
   if [[ ${ind_model_absent} -eq 1 ]]; then
-    echo "${key},${IND_W[$key]},${IND_S[$key]},${IND_D[$key]},${IND_N[$key]},none,MODEL_ABSENT,,,,,,," >> "${IND_CSV}"
+    echo "${key},${ind_w},${ind_s},${ind_d},${ind_n},none,MODEL_ABSENT,,,,,,," >> "${IND_CSV}"
   else
     srf="$(meas_value "${ind_log}" "srf_${key}")"
     l1="$(meas_value "${ind_log}" "l_${key}_1g")"
@@ -320,7 +333,7 @@ for key in "${IND_KEYS[@]}"; do
     q10="$(meas_value "${ind_log}" "q_${key}_10g")"
     st=FAIL
     if [[ ${ind_rc} -eq 0 && -n "${l1}" ]]; then st=PASS; fi
-    echo "${key},${IND_W[$key]},${IND_S[$key]},${IND_D[$key]},${IND_N[$key]},${SG13G2_IND_MODEL_LIB:-unknown},${st},${srf},${l1},${l5},${l10},${q1},${q5},${q10}" >> "${IND_CSV}"
+    echo "${key},${ind_w},${ind_s},${ind_d},${ind_n},${SG13G2_IND_MODEL_LIB:-unknown},${st},${srf},${l1},${l5},${l10},${q1},${q5},${q10}" >> "${IND_CSV}"
   fi
 done
 
