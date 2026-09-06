@@ -1,0 +1,15 @@
+* Hermetic ngspice init for sim/tank-characterization.
+*
+* run_pvt_sweep.sh copies this file into the scratch directory it runs
+* ngspice from, so a run does NOT depend on whether $HOME/.spiceinit exists
+* (the PDK ships libs.tech/ngspice/install.py, which symlinks one into $HOME;
+* a cold-start checkout on a machine where that was never run must still
+* reproduce the committed numbers).
+*
+* ngbehavior=hsa is the compatibility mode the PDK own .spiceinit sets, and
+* is what its model libraries are written against. For the passive models
+* this experiment exercises the mode is not actually load-bearing -- the
+* extracted C, Q and SRF were verified bit-identical with the mode off --
+* but it is set anyway so this tree matches the PDK documented ngspice
+* setup rather than quietly diverging from it.
+set ngbehavior=hsa

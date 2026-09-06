@@ -1,0 +1,22 @@
+{
+  "_comment": "Pinned SG13G2 PDK revision this sim/ tree's committed evidence records were generated against. Every record under sim/*/records/ must trace to this file (or to a later commit that bumps it). Not consumed by tooling; kept as a plain, greppable fact sheet. Each record additionally states the exact PDK_ROOT and ngspice version its own run used, plus sha256 of the model libraries it loaded, so a reader can tell whether their environment matches without re-deriving it from this file alone.",
+  "source": "IHP-GmbH/IHP-Open-PDK",
+  "release_tag": "v0.3.0",
+  "release_url": "https://github.com/IHP-GmbH/IHP-Open-PDK/archive/refs/tags/v0.3.0.tar.gz",
+  "tarball_sha256": "f6afb7a8d2adf3e40acd3fd2c7892fc93510e6f760565409a8df2b5b242254fc",
+  "tarball_sha256_source": "2AMLogic/klayout-tools scripts/fetch-ihp-sg13g2.sh (IHP_OPEN_PDK_SHA256), cross-checked 2026-09-06 against the local install by file-level sha256 of libs.tech/ngspice/models/{capacitors_mod.lib,cornerCAP.lib} -- see sim/tank-characterization/records/ for the per-record digests",
+  "fetch_method": "klayout-tools scripts/fetch-ihp-sg13g2.sh (2AMLogic/klayout-tools), which downloads the tagged tarball, verifies the sha256 above, and lays it out open_pdks-shaped under PDK_ROOT/ihp-sg13g2",
+  "pdk_root_layout": "PDK_ROOT/ihp-sg13g2 (open_pdks-shaped install, klt pdk find/list convention)",
+  "variant": "ihp-sg13g2",
+  "documented_tool_versions_from_pdk_versions_txt": {
+    "ngspice": "43",
+    "xschem": "3.4.6",
+    "openvaf": "23.5.0",
+    "openems": "v0.0.35-108-gc651cce",
+    "note": "These are the tool versions IHP's own versions.txt records for this release. This repo's records state the ngspice version actually used, which may be newer."
+  },
+  "known_model_gaps": {
+    "_comment": "Devices this block needs that IHP-Open-PDK v0.3.0 does NOT ship an ngspice-simulatable model for. Recorded here because a missing model is a first-class constraint on what this repo can evidence, not a footnote. See sim/tank-characterization/README.md for the search that established this.",
+    "spiral_inductor": "ABSENT for ngspice. v0.3.0 ships inductor LAYOUT and LVS support only: KLayout PCells (libs.tech/klayout/python/sg13g2_pycell_lib/ihp/inductor{s,2,3}_code.py), LVS extraction/derivation rules (libs.tech/klayout/tech/lvs/rule_decks/ind_*.lvs), xschem symbols (libs.tech/xschem/sg13g2_pr/inductor{,3}.sym) and a Qucs-S symbol. No .subckt or .model named `inductor` exists anywhere under libs.tech/ngspice/models/. The Qucs-S component descriptor (libs.tech/qucs-s/symbols/inductor_2.xml) carries `L` as the placeholder equation `w*s`, which is dimensionally meaningless as an inductance and is not a compact model. IHP's own intended path is EM extraction (libs.doc/doc/EM_Simulation_Overview.pdf; libs.tech/openems/), and libs.tech/openems/openems_ihp_sg13g2/ is a git submodule (github.com/VolkerMuehlhaus/openems_ihp_sg13g2) that is EMPTY in the release tarball, because GitHub source tarballs never carry submodule contents."
+  }
+}

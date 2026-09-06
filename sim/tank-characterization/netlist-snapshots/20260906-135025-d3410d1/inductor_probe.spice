@@ -1,0 +1,135 @@
+* tb_inductor_zscan -- SG13G2 spiral-inductor small-signal impedance scan
+*
+* TEMPLATE. run_pvt_sweep.sh substitutes the @@...@@ placeholders and writes
+* the resulting netlist to netlist-snapshots/<record-id>/<corner-id>.spice.
+*
+* STATUS: this testbench does not currently produce numbers, and that is the
+* result it is here to record.
+*
+* IHP-Open-PDK v0.3.0 ships NO ngspice-simulatable spiral-inductor model.
+* It ships the inductor as a layout + LVS device only:
+*   - KLayout PCells   libs.tech/klayout/python/sg13g2_pycell_lib/ihp/
+*                      inductor{s,2,3}_code.py
+*   - LVS rule decks   libs.tech/klayout/tech/lvs/rule_decks/ind_{extraction,
+*                      derivations,connections}.lvs
+*   - xschem symbols   libs.tech/xschem/sg13g2_pr/inductor{,3}.sym, whose
+*                      format line emits exactly the instance card below
+*   - Qucs-S symbol    libs.tech/qucs-s/symbols/inductor_2.xml, whose "L"
+*                      parameter is the placeholder equation `w*s` -- a
+*                      geometry product, not an inductance, and not a model
+* but nothing under libs.tech/ngspice/models/ defines a `.subckt inductor`
+* (or `.model` of any inductor flavour) for the simulator to bind to. Running
+* this netlist against a stock v0.3.0 install therefore terminates with
+*
+*   Error: unknown subckt: xl_p1 lp 0 0 inductor w=8.22u ...
+*
+* and run_pvt_sweep.sh records that verbatim as a MODEL_ABSENT result rather
+* than swallowing it. See README.md, "The inductor gap".
+*
+* HOW TO MAKE IT PRODUCE NUMBERS
+* ------------------------------
+* Export SG13G2_IND_MODEL_LIB to a SPICE file that defines a `.subckt
+* inductor <la> <lb> <sub>` accepting w/s/d/nr_r parameters -- e.g. a
+* lumped fit to an openEMS/Palace extraction of the PDK's own inductor
+* PCell (that is IHP's own documented route: libs.doc/doc/
+* EM_Simulation_Overview.pdf, libs.tech/openems/, libs.tech/palace/).
+* run_pvt_sweep.sh then substitutes it below and the same extraction
+* arithmetic used for the MIM caps yields L(f), Q(f) and SRF with no
+* further change:
+*
+*   Leff(f) = Im(Z)/(2*pi*f)      series-equivalent inductance
+*   Q(f)    = Im(Z)/Re(Z)         quality factor
+*   SRF     = the f at which Im(Z) crosses zero going NEGATIVE, i.e. where
+*             the spiral stops being net inductive and turns capacitive.
+*
+* That arithmetic is NOT unvalidated: tb_mimcap_zscan.spice.tmpl runs the
+* identical extraction on an ideal R-L-C network with closed-form Leff, Q
+* and SRF, and run_pvt_sweep.sh fails the run if it disagrees by more than
+* 0.1 %. So what is missing here is the device model, not the method.
+*
+* GEOMETRIES
+* ----------
+* The three instances below are lifted verbatim from the PDK's own LVS unit
+* testcase (libs.tech/klayout/tech/lvs/testing/testcases/unit/ind_devices/
+* netlist/inductor.cdl), so they are geometries IHP itself exercises rather
+* than ones this repo invented: a small single-turn, a 5-turn and a 4-turn
+* spiral. No claim is made here that any of them suits this block's tank --
+* that choice needs the model this file is documenting the absence of.
+*
+* Corner: inductor_probe
+* Record: 20260906-135025-d3410d1
+* PDK models: /Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/models
+* Inductor model library: NONE -- $SG13G2_IND_MODEL_LIB unset and the PDK ships no ngspice inductor model
+
+* (no inductor model library: $SG13G2_IND_MODEL_LIB unset or missing, and IHP-Open-PDK v0.3.0 ships none)
+.temp 27
+
+* Same 1 A AC injection convention as tb_mimcap_zscan -- see that file's
+* header for why the source is written "I 0 <node>" and not "I <node> 0".
+Ip1 0 lp1 dc 0 ac 1
+Ldp1 lp1 0 1
+XL_p1 lp1 0 0 inductor w=8.22u s=3.29u d=47.65u nr_r=1
+
+Ip13 0 lp13 dc 0 ac 1
+Ldp13 lp13 0 1
+XL_p13 lp13 0 0 inductor w=6.10u s=3.29u d=110.11u nr_r=5
+
+Ip11 0 lp11 dc 0 ac 1
+Ldp11 lp11 0 1
+XL_p11 lp11 0 0 inductor w=8.22u s=3.74u d=141.975u nr_r=4
+
+.control
+ac dec 500 1e8 3e11
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+
+let zp1  = imag(v(lp1))
+let lp1e = imag(v(lp1))/wrad
+let qp1  = imag(v(lp1))/real(v(lp1))
+let zp13  = imag(v(lp13))
+let lp13e = imag(v(lp13))/wrad
+let qp13  = imag(v(lp13))/real(v(lp13))
+let zp11  = imag(v(lp11))
+let lp11e = imag(v(lp11))/wrad
+let qp11  = imag(v(lp11))/real(v(lp11))
+
+meas ac srf_p1  WHEN zp1=0  FALL=1
+meas ac srf_p13 WHEN zp13=0 FALL=1
+meas ac srf_p11 WHEN zp11=0 FALL=1
+
+meas ac l_p1_1g   FIND lp1e  AT=1e9
+meas ac l_p1_5g   FIND lp1e  AT=5e9
+meas ac l_p1_10g  FIND lp1e  AT=1e10
+meas ac q_p1_1g   FIND qp1   AT=1e9
+meas ac q_p1_5g   FIND qp1   AT=5e9
+meas ac q_p1_10g  FIND qp1   AT=1e10
+
+meas ac l_p13_1g  FIND lp13e AT=1e9
+meas ac l_p13_5g  FIND lp13e AT=5e9
+meas ac l_p13_10g FIND lp13e AT=1e10
+meas ac q_p13_1g  FIND qp13  AT=1e9
+meas ac q_p13_5g  FIND qp13  AT=5e9
+meas ac q_p13_10g FIND qp13  AT=1e10
+
+meas ac l_p11_1g  FIND lp11e AT=1e9
+meas ac l_p11_5g  FIND lp11e AT=5e9
+meas ac l_p11_10g FIND lp11e AT=1e10
+meas ac q_p11_1g  FIND qp11  AT=1e9
+meas ac q_p11_5g  FIND qp11  AT=5e9
+meas ac q_p11_10g FIND qp11  AT=1e10
+
+set wr_singlescale
+set wr_vecnames
+ac dec 50 1e8 3e11
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+let l_ind_p1  = imag(v(lp1))/wrad
+let q_ind_p1  = imag(v(lp1))/real(v(lp1))
+let l_ind_p13 = imag(v(lp13))/wrad
+let q_ind_p13 = imag(v(lp13))/real(v(lp13))
+let l_ind_p11 = imag(v(lp11))/wrad
+let q_ind_p11 = imag(v(lp11))/real(v(lp11))
+wrdata /Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-5/sim/tank-characterization/records/20260906-135025-d3410d1-curves/inductor_probe.csv l_ind_p1 q_ind_p1 l_ind_p13 q_ind_p13 l_ind_p11 q_ind_p11
+.endc
+
+.end
