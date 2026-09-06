@@ -1,0 +1,95 @@
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_mimcap_zscan -- sg13g2 mim-capacitor small-signal impedance scan
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 1739
+
+Error: measure  srf_a20  when(WHEN) : out of interval
+ meas ac srf_a20 when za20=0 rise=1 failed!
+
+
+Error: measure  srf_a35  when(WHEN) : out of interval
+ meas ac srf_a35 when za35=0 rise=1 failed!
+
+
+Error: measure  srf_a50  when(WHEN) : out of interval
+ meas ac srf_a50 when za50=0 rise=1 failed!
+
+srf_b20             =  5.37249e+10
+srf_b35             =  2.65627e+10
+srf_b50             =  1.60876e+10
+srf_ref             =  1.59119e+10
+c_a20_1g            =  6.03200e-13
+c_a20_2g            =  6.03200e-13
+c_a20_5g            =  6.03199e-13
+c_a20_10g           =  6.03197e-13
+c_a20_20g           =  6.03190e-13
+q_a20_1g            =  4.79731e+03
+q_a20_2g            =  2.39866e+03
+q_a20_5g            =  9.59462e+02
+q_a20_10g           =  4.79731e+02
+q_a20_20g           =  2.39865e+02
+c_a35_1g            =  1.84310e-12
+c_a35_2g            =  1.84310e-12
+c_a35_5g            =  1.84308e-12
+c_a35_10g           =  1.84303e-12
+c_a35_20g           =  1.84280e-12
+q_a35_1g            =  1.57004e+03
+q_a35_2g            =  7.85020e+02
+q_a35_5g            =  3.14008e+02
+q_a35_10g           =  1.57004e+02
+q_a35_20g           =  7.85018e+01
+c_a50_1g            =  3.75799e-12
+c_a50_2g            =  3.75797e-12
+c_a50_5g            =  3.75784e-12
+c_a50_10g           =  3.75737e-12
+c_a50_20g           =  3.75547e-12
+q_a50_1g            =  7.70020e+02
+q_a50_2g            =  3.85011e+02
+q_a50_5g            =  1.54004e+02
+q_a50_10g           =  7.70021e+01
+q_a50_20g           =  3.85010e+01
+c_b20_1g            =  6.03442e-13
+c_b20_2g            =  6.04165e-13
+c_b20_5g            =  6.09221e-13
+c_b20_10g           =  6.27342e-13
+c_b20_20g           =  7.05976e-13
+q_b20_1g            =  8.57375e+02
+q_b20_2g            =  4.24550e+02
+q_b20_5g            =  1.59588e+02
+q_b20_10g           =  6.76374e+01
+q_b20_20g           =  2.40480e+01
+c_b35_1g            =  1.84604e-12
+c_b35_2g            =  1.85488e-12
+c_b35_5g            =  1.91832e-12
+c_b35_10g           =  2.17227e-12
+c_b35_20g           =  4.10030e-12
+q_b35_1g            =  3.29934e+02
+q_b35_2g            =  1.61814e+02
+q_b35_5g            =  5.72188e+01
+q_b35_10g           =  2.04341e+01
+q_b35_20g           =  3.72834e+00
+c_b50_1g            =  3.77362e-12
+c_b50_2g            =  3.82112e-12
+c_b50_5g            =  4.18357e-12
+c_b50_10g           =  6.11939e-12
+c_b50_20g           =  -5.73849e-12
+q_b50_1g            =  1.51117e+02
+q_b50_2g            =  7.32935e+01
+q_b50_5g            =  2.39949e+01
+q_b50_10g           =  6.27061e+00
+q_b50_20g           =  1.92528e+00
+l_ref_1g            =  1.00356e-09
+q_ref_1g            =  3.12793e+00
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 174
+Note: Simulation executed from .control section 

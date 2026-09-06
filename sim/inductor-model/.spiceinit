@@ -1,0 +1,16 @@
+* Hermetic ngspice init for sim/inductor-model.
+*
+* run_model_check.sh copies this file into the scratch directory it runs
+* ngspice from, so a run does NOT depend on whether $HOME/.spiceinit exists
+* (the PDK ships libs.tech/ngspice/install.py, which symlinks one into $HOME;
+* a cold-start checkout on a machine where that was never run must still
+* reproduce the committed numbers).
+*
+* ngbehavior=hsa is the compatibility mode the PDK's own .spiceinit sets, and
+* is what its model libraries are written against. sg13g2_inductor_analytic.spice
+* uses only ngspice-native R/L/C primitives and .param arithmetic, so the mode
+* is not load-bearing here; it is set anyway so this tree matches the PDK's
+* documented ngspice setup rather than quietly diverging from it, and so the
+* model behaves identically when it is .include'd alongside the PDK libraries
+* by sim/tank-characterization/run_pvt_sweep.sh.
+set ngbehavior=hsa

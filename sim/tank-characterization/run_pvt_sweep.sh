@@ -19,7 +19,15 @@
 #                          IHP-Open-PDK v0.3.0 ships no such model; see
 #                          README.md "The inductor gap". When unset the
 #                          inductor probe is still run, and its failure is
-#                          recorded as MODEL_ABSENT evidence.
+#                          recorded as MODEL_ABSENT evidence. This repository
+#                          ships one analytic model with stated error bars:
+#
+#   export SG13G2_IND_MODEL_LIB=$PWD/sim/inductor-model/sg13g2_inductor_analytic.spice
+#
+#                          The record then names that file by its repo-relative
+#                          path and its content sha256, because the numbers it
+#                          produces are only as good as the model's own stated
+#                          limits -- which are NOT the PDK's.
 #
 # WHAT IT DOES
 # ------------
@@ -274,19 +282,38 @@ EOF
 done
 
 # ------------------------------------------------------- spiral-inductor probe
-# Corner-independent: with no model to bind to, the corner section and
-# temperature are irrelevant to the outcome. Run once, at nominal.
+# Run once, at nominal. IHP-Open-PDK v0.3.0 ships no inductor model, so with
+# $SG13G2_IND_MODEL_LIB unset the probe is corner-independent: there is nothing
+# for the corner section or temperature to act on, and the outcome is recorded
+# as MODEL_ABSENT. With a model library supplied, this single nominal point is
+# still all this experiment claims -- a drop-in model's own PVT behaviour is
+# that model's business to evidence, not this MIM study's. sim/inductor-model/
+# is where the model shipped in this repository corners itself.
 ind_corner_id="inductor_probe"
 ind_netlist="${NETLIST_DIR}/${ind_corner_id}.spice"
 ind_log="${LOG_DIR}/${ind_corner_id}.log"
 ind_curve="${CURVE_DIR}/${ind_corner_id}.csv"
 
 if [[ -n "${SG13G2_IND_MODEL_LIB:-}" && -f "${SG13G2_IND_MODEL_LIB}" ]]; then
-  ind_model_line=".include \"${SG13G2_IND_MODEL_LIB}\""
-  ind_model_comment="${SG13G2_IND_MODEL_LIB} (via \$SG13G2_IND_MODEL_LIB)"
+  # ngspice runs from a scratch directory, so the .include must be absolute;
+  # but a committed record must not carry this machine's directory layout, so
+  # what gets RECORDED is the repo-relative path when the model lives in this
+  # repository, plus its content sha256 -- the same "state the digest of every
+  # model library the run loaded" rule sim/README.md applies to the PDK libs.
+  ind_model_abs="$(cd "$(dirname "${SG13G2_IND_MODEL_LIB}")" && pwd)/$(basename "${SG13G2_IND_MODEL_LIB}")"
+  ind_model_id="${ind_model_abs}"
+  case "${ind_model_abs}" in
+    "${REPO_ROOT}"/*) ind_model_id="${ind_model_abs#"${REPO_ROOT}"/}" ;;
+  esac
+  ind_model_sha="$(sha256_of "${ind_model_abs}")"
+  ind_model_line=".include \"${ind_model_abs}\""
+  ind_model_comment="${ind_model_id} sha256 ${ind_model_sha} (via \$SG13G2_IND_MODEL_LIB)"
+  ind_model_source="${ind_model_id} sha256=${ind_model_sha}"
 else
   ind_model_line="* (no inductor model library: \$SG13G2_IND_MODEL_LIB unset or missing, and IHP-Open-PDK v0.3.0 ships none)"
   ind_model_comment="NONE -- \$SG13G2_IND_MODEL_LIB unset and the PDK ships no ngspice inductor model"
+  ind_model_source="none"
+  ind_model_id=""
 fi
 
 sed \
@@ -333,7 +360,7 @@ EOF
     q10="$(meas_value "${ind_log}" "q_${key}_10g")"
     st=FAIL
     if [[ ${ind_rc} -eq 0 && -n "${l1}" ]]; then st=PASS; fi
-    echo "${key},${ind_w},${ind_s},${ind_d},${ind_n},${SG13G2_IND_MODEL_LIB:-unknown},${st},${srf},${l1},${l5},${l10},${q1},${q5},${q10}" >> "${IND_CSV}"
+    echo "${key},${ind_w},${ind_s},${ind_d},${ind_n},${ind_model_source},${st},${srf},${l1},${l5},${l10},${q1},${q5},${q10}" >> "${IND_CSV}"
   fi
 done
 
@@ -388,7 +415,16 @@ done
   if [[ ${#failed_points[@]} -gt 0 ]]; then
     echo "- **Failed device rows**: ${failed_points[*]}"
   fi
-  echo "- **Inductor probe**: $( [[ ${ind_model_absent} -eq 1 ]] && echo 'MODEL_ABSENT (expected on a stock v0.3.0 install)' || echo "ran against ${SG13G2_IND_MODEL_LIB:-an unexpected model source}" )"
+  if [[ ${ind_model_absent} -eq 1 ]]; then
+    echo "- **Inductor probe**: MODEL_ABSENT (expected on a stock v0.3.0"
+    echo "  install: IHP-Open-PDK v0.3.0 ships no ngspice inductor model)."
+  else
+    echo "- **Inductor probe**: ran against \`${ind_model_source}\`, supplied"
+    echo "  through \`\$SG13G2_IND_MODEL_LIB\`. That model is NOT part of the PDK"
+    echo "  and NOT EM-extracted; its accuracy limits are stated in its own"
+    echo "  header and they propagate into every L/Q/SRF number in"
+    echo "  \`records/${RECORD_ID}-inductor.csv\`. Read them before using one."
+  fi
   echo "- **Links**:"
   echo "  - Templates: \`testbench/tb_mimcap_zscan.spice.tmpl\`,"
   echo "    \`testbench/tb_inductor_zscan.spice.tmpl\`"
@@ -398,8 +434,19 @@ done
   echo "  - Curves vs frequency: \`records/${RECORD_ID}-curves/\`"
   echo "  - Method known-answer check: \`records/${RECORD_ID}-method-check.csv\`"
   echo "  - Inductor probe outcome: \`records/${RECORD_ID}-inductor.csv\`"
-  echo "- **Reproduce**: \`sim/tank-characterization/run_pvt_sweep.sh\` (no"
-  echo "  arguments, no preceding steps) against the pinned PDK."
+  if [[ ${ind_model_absent} -eq 1 ]]; then
+    echo "- **Reproduce**: \`sim/tank-characterization/run_pvt_sweep.sh\` (no"
+    echo "  arguments, no preceding steps) against the pinned PDK."
+  else
+    echo "- **Reproduce**: against the pinned PDK, with the inductor model"
+    echo "  library above on \`\$SG13G2_IND_MODEL_LIB\`:"
+    echo
+    echo "  \`\`\`bash"
+    echo "  export SG13G2_IND_MODEL_LIB=\$PWD/${ind_model_id}"
+    echo "  sim/tank-characterization/run_pvt_sweep.sh"
+    echo "  \`\`\`"
+    echo
+  fi
   echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 } > "${MD_OUT}"
 

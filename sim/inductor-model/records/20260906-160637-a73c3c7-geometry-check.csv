@@ -1,0 +1,6 @@
+case,w_um,s_um,d_um,nr_r,d_out_um,d_avg_um,fill_ratio,l_modwheeler_h,l_currentsheet_h,l_monomial_h,l_singleloop_h,spread_of_3_pct,external_reference_h,err_vs_external_pct,note
+p1,8.22,3.29,47.65,1,64.0900,55.8700,0.14713,1.037696e-10,1.032610e-10,1.020500e-10,9.417195e-11,1.657,,,PDK-LVS-testcase-single-turn
+p13,6.1,3.29,110.11,5,197.5100,153.8100,0.28412,5.412780e-09,5.434686e-09,5.375359e-09,,1.096,,,PDK-LVS-testcase-5-turn
+p11,8.22,3.74,141.975,4,230.2350,186.1050,0.23712,4.571198e-09,4.561134e-09,4.545132e-09,,0.570,,,PDK-LVS-testcase-4-turn
+ihp_lEstim_at_minD,2,2.1,14.76,1,18.7600,16.7600,0.11933,3.328664e-11,3.331996e-11,3.114362e-11,2.385384e-11,6.538,3.330300e-11,-0.049,IHP-inductor2-PCell-lEstim-vs-d-from-inductor_minD()
+ihp_lEstim_at_DMIN,2,2.1,15.48,1,19.4800,17.4800,0.11442,3.514741e-11,3.524311e-11,3.295855e-11,2.536586e-11,6.500,3.330300e-11,5.538,IHP-inductor2-PCell-lEstim-vs-shipped-DMIN

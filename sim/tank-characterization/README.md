@@ -7,12 +7,23 @@ models (L, Q, SRF across the band) before sizing the pair.*
 **The headline result is half a study, and that is the result.**
 IHP-Open-PDK v0.3.0 ships a fully simulatable MIM-capacitor model and **no
 ngspice-simulatable spiral-inductor model at all**. The C half of the tank is
-characterized here over the full PVT grid. The L half cannot be characterized
-in this flow, by anyone, with this PDK release — see
-[The inductor gap](#the-inductor-gap). That is recorded as evidence rather
-than papered over with a hand-rolled inductance formula, because a number
-this block's phase-noise and tuning-range claims would later lean on must not
-be one an agent invented.
+characterized here over the full PVT grid, against the PDK's own models. The L
+half cannot be characterized *from the PDK* in this flow, by anyone, with this
+release — see [The inductor gap](#the-inductor-gap). That was recorded as
+evidence (record `20260906-135025-d3410d1`, `MODEL_ABSENT`) rather than
+papered over with a hand-rolled inductance formula, because a number this
+block's phase-noise and tuning-range claims would later lean on must not be
+one an agent invented.
+
+**Since then the L half has an answer, but a differently-sourced one.**
+[`../inductor-model/`](../inductor-model/) supplies an **analytic** spiral
+model with stated error bars — *not* a PDK model and *not* an EM extraction —
+and this harness will run against it when pointed at it. Record
+`20260906-160246-a73c3c7` is the first one whose `*-inductor.csv` carries real
+L/Q/SRF instead of `MODEL_ABSENT`. Those inductor rows are only as good as
+that model's own stated limits (±5 % on L, a Q that is an **upper bound**,
+0.5–20 GHz), and each such record names the model file by repo-relative path
+**and content sha256** so the two can never be confused for PDK output.
 
 Nothing here ratifies a `spec/target-spec.md` row. Ratification is a separate
 decision-record step; this directory only produces the evidence it would cite.
@@ -26,7 +37,18 @@ sim/tank-characterization/run_pvt_sweep.sh
 ```
 
 That is the entire cold-start invocation — no arguments, no preceding build
-step, no manual ngspice session. It takes about 15 s.
+step, no manual ngspice session. It takes about 15 s. Run that way, the
+inductor probe records `MODEL_ABSENT`, because the PDK ships no inductor
+model; that is the *default* behaviour and it is deliberately unchanged.
+
+To include the inductor, point `$SG13G2_IND_MODEL_LIB` at a model — this
+repository ships one, with its own error bars, in
+[`../inductor-model/`](../inductor-model/):
+
+```bash
+export SG13G2_IND_MODEL_LIB=$PWD/sim/inductor-model/sg13g2_inductor_analytic.spice
+sim/tank-characterization/run_pvt_sweep.sh
+```
 
 **Requirements**: `ngspice` on `PATH`, `bash`, and an IHP-Open-PDK **v0.3.0**
 install (pinned with its tarball sha256 in [`../pdk.json`](../pdk.json);
@@ -309,16 +331,23 @@ box either.
 ### What this blocks
 
 Every acceptance criterion in this study that names the inductor: L, Q and SRF
-vs. frequency for the spiral cannot be produced with the shipped models by any
-means. Downstream, it blocks the parts of `spec/target-spec.md` that need a
-tank Q or a tank centre frequency (rows 1, 2, 3, 5, 6) from being ratified on
-simulated evidence — the MIM data above bounds `Q_tank` from one side only.
+vs. frequency for the spiral cannot be produced **with the shipped models** by
+any means. Downstream, that blocked the parts of `spec/target-spec.md` needing
+a tank Q or a tank centre frequency (rows 1, 2, 3, 5, 6) from being ratified
+on simulated evidence — the MIM data above bounds `Q_tank` from one side only.
+
+That bound is now two-sided, but **not with a PDK number**: see
+[How the gap is bridged](#how-the-gap-is-bridged-and-what-that-costs) below.
+Ratifying any of those spec rows remains a separate decision-record step, and
+whoever takes it has to decide explicitly whether an analytic model with
+stated error bars clears that bar. Nothing here makes that decision.
 
 ### What it does not block
 
 The measurement *method* is in place and validated (see §"The method is
-validated"), and this testbench is wired to accept a model the moment one
-exists:
+validated"), and this testbench is wired to accept **any** conforming model —
+this repo's analytic one today, an EM-fitted one later (#9) — with no change
+to the harness:
 
 ```bash
 export SG13G2_IND_MODEL_LIB=/path/to/inductor_model.spice   # .subckt inductor la lb sub
@@ -337,20 +366,54 @@ repo invented — a single-turn `w=8.22 s=3.29 d=47.65`, a 5-turn
 `w=6.10 s=3.29 d=110.11`, and a 4-turn `w=8.22 s=3.74 d=141.975` (µm). No
 claim is made that any of them suits this block's tank.
 
-### Tracked as
+### How the gap is bridged, and what that costs
 
 Deciding *which* route to take to an inductor model — EM-extract the PDK's own
-PCell with openEMS/Palace and fit a lumped subcircuit, use published
-measured data, or accept an analytic model with its error bars stated — is a
-design decision with real cost, out of scope for a characterization study.
-It is filed separately as **#6**.
+PCell with openEMS/Palace and fit a lumped subcircuit, use published measured
+data, or accept an analytic model with its error bars stated — was a design
+decision with real cost, out of scope for this characterization study and
+filed separately as **#6**. That decision has been taken: the third route,
+implemented in [`../inductor-model/`](../inductor-model/), with the rationale
+against the other two written out in that directory's README. The EM route
+remains the right long-term answer and is tracked as **#9**.
+
+**What that buys**, at `typ`/27 °C, from record `20260906-160246-a73c3c7`:
+
+| Geometry | `L` @ 1 GHz | SRF | Q @ 1 GHz | Q @ 5 GHz | Q @ 10 GHz |
+|---|---|---|---|---|---|
+| 1 turn, `w=8.22 s=3.29 d=47.65` | 103.8 pH | 240 GHz | 2.57 | 11.19 | 16.90 |
+| 5 turns, `w=6.10 s=3.29 d=110.11` | 5.451 nH | 14.31 GHz | 5.26 | 11.14 | 4.95 |
+| 4 turns, `w=8.22 s=3.74 d=141.975` | 4.606 nH | 14.11 GHz | 6.66 | 12.34 | 5.00 |
+
+**What it costs.** These are not PDK numbers and must never be quoted as
+though they were. They carry ±5 % on `L` (±10 % for the single-turn
+extrapolation), a **Q that is an upper bound** because lateral current
+crowding and substrate eddy-current loss are unmodelled, a 0.5–20 GHz validity
+window, and an SRF for the multi-turn geometries that lands right where a
+lumped model stops being entitled to answer. The full error budget, its
+derivation, and the evidence behind each bar are in
+[`../inductor-model/README.md`](../inductor-model/README.md) §"Accuracy
+limits". A run that used a model library records that file's **content
+sha256** in both `records/<record-id>.md` and the `model_source` column of
+`records/<record-id>-inductor.csv`.
+
+> **Consequence for this block**, reading the two halves together: at 10 GHz
+> the 5-turn spiral's `Q_L ≈ 5` is an order of magnitude below the 20×20 µm
+> `cap_rfcmim`'s `Q_C = 68`, so on these geometries **the inductor, not the
+> capacitor, sets tank Q** at the top of the band. That reverses the reading
+> a MIM-only study invites, and it is the single most decision-relevant thing
+> the inductor model adds — with the caveat that `Q_L` is an upper bound, so
+> the real gap is wider, not narrower.
 
 ---
 
 ## Findings summary
 
-1. The MIM cap is fully characterizable in this flow; the spiral inductor is
-   not characterizable in this flow **at all** on PDK v0.3.0.
+1. The MIM cap is fully characterizable in this flow from the PDK's own
+   models; the spiral inductor is not characterizable **from the PDK at all**
+   on v0.3.0, and is covered instead by an out-of-PDK analytic model with
+   stated error bars ([`../inductor-model/`](../inductor-model/)) whose limits
+   travel with every number it produces.
 2. Use `cap_rfcmim`, never `cap_cmim`, for anything at RF: `cap_cmim` reports
    5–12× optimistic Q and has no self-resonance.
 3. `Q_C` at 10 GHz falls from 68 (0.6 pF) to 6.3 (3.8 pF); tank Q is bounded
@@ -361,6 +424,10 @@ It is filed separately as **#6**.
    spread is ±10 % on C, ≈∓5 % on tank centre frequency.
 6. The MIM cap is exactly bias-independent, so it offers no tuning and no
    AM-to-PM path; all tuning must come from the varactor or a switched bank.
+7. Against the analytic inductor model, at 10 GHz the tank-Q limiter is the
+   **inductor** (`Q_L ≈ 5`, an upper bound) and not the capacitor (`Q_C` up to
+   68) — the opposite of what finding 3 alone suggests. Finding 7 carries that
+   model's error bars; findings 2–6 carry only the PDK's.
 
 None of these is a ratified spec row, and this PR does not make any of them
 one.
