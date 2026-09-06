@@ -1,0 +1,62 @@
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_inductor_model_check -- known-answer + pvt check of sg13g2_inductor_analytic
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 1739
+srf_p1              =  2.40126e+11
+srf_p13             =  1.42434e+10
+srf_p11             =  1.40534e+10
+l_p1_1g             =  1.03764e-10
+l_p1_5g             =  1.03637e-10
+l_p1_10g            =  1.03307e-10
+q_p1_1g             =  1.95495e+00
+q_p1_5g             =  8.97723e+00
+q_p1_10g            =  1.46731e+01
+zr_p1_1g            =  3.33495e-01
+zi_p1_1g            =  6.51967e-01
+zr_p1_5g            =  3.62678e-01
+zi_p1_5g            =  3.25584e+00
+zr_p1_10g           =  4.42373e-01
+zi_p1_10g           =  6.49098e+00
+zr_p1_20g           =  6.56341e-01
+zi_p1_20g           =  1.29031e+01
+l_p13_1g            =  5.45426e-09
+l_p13_5g            =  6.19885e-09
+l_p13_10g           =  1.01469e-08
+q_p13_1g            =  4.21343e+00
+q_p13_5g            =  8.87997e+00
+q_p13_10g           =  3.82022e+00
+zr_p13_1g           =  8.13354e+00
+zi_p13_1g           =  3.42702e+01
+zr_p13_5g           =  2.19306e+01
+zi_p13_5g           =  1.94743e+02
+zr_p13_10g          =  1.66899e+02
+zi_p13_10g          =  6.37552e+02
+zr_p13_20g          =  1.59274e+02
+zi_p13_20g          =  -6.72467e+02
+l_p11_1g            =  4.60942e-09
+l_p11_5g            =  5.26073e-09
+l_p11_10g           =  8.80183e-09
+q_p11_1g            =  5.26145e+00
+q_p11_5g            =  9.74091e+00
+q_p11_10g           =  3.83289e+00
+zr_p11_1g           =  5.50453e+00
+zi_p11_1g           =  2.89618e+01
+zr_p11_5g           =  1.69667e+01
+zi_p11_5g           =  1.65271e+02
+zr_p11_10g          =  1.44298e+02
+zi_p11_10g          =  5.53039e+02
+zr_p11_20g          =  1.21303e+02
+zi_p11_20g          =  -5.41108e+02
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 174
+Note: Simulation executed from .control section 

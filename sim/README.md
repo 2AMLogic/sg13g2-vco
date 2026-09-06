@@ -12,7 +12,8 @@ mature siblings unchanged.
 
 | Directory | Claim under test | Status |
 |---|---|---|
-| [`tank-characterization/`](tank-characterization/) | L / Q / SRF of the passives an LC tank on this PDK would be built from, over a wide candidate band | MIM cap characterized over the full PVT grid; **the spiral inductor could not be characterized — PDK v0.3.0 ships no ngspice inductor model** (see that README's "The inductor gap") |
+| [`tank-characterization/`](tank-characterization/) | L / Q / SRF of the passives an LC tank on this PDK would be built from, over a wide candidate band | MIM cap characterized over the full PVT grid from the PDK's own models; **the spiral inductor cannot be characterized from the PDK — v0.3.0 ships no ngspice inductor model** (see that README's "The inductor gap"). The inductor half is covered by the model below, whose error bars travel with every number it produces. |
+| [`inductor-model/`](inductor-model/) | that the analytic spiral-inductor model this repo ships implements the closed form it claims to, over a process × temperature grid | 27/27 known-answer points pass to 0.003 %. **This validates the implementation, not the physics** — the model is an *analytic screening* model with stated error bars (±5 % on L, Q an upper bound, 0.5–20 GHz), **not** a PDK model and **not** an EM extraction. EM extraction is tracked as #9. |
 
 ## PDK pin
 
@@ -44,7 +45,8 @@ sim/
   <experiment-slug>/         one directory per distinct claim under test
     README.md                what was measured, over what band and corners,
                              how to reproduce it, and what it does NOT show
-    run_pvt_sweep.sh         THE cold-start entry point: one command, no args
+    run_*.sh                 THE cold-start entry point: one command, no args
+                             (e.g. run_pvt_sweep.sh, run_model_check.sh)
     .spiceinit               ngspice init copied into the run's scratch dir, so
                              a run never depends on $HOME/.spiceinit existing
     testbench/
@@ -84,3 +86,11 @@ sim/
    `tank-characterization/`'s reference network); where it cannot — phase
    noise, per `CLAUDE.md` — the method, its variance and its limits are stated
    with the number or the number is not a result.
+6. **A non-PDK model is labelled as one, everywhere it is used.** Where a
+   device model does not come from the pinned PDK (e.g.
+   `inductor-model/sg13g2_inductor_analytic.spice`, an analytic model standing
+   in for a device v0.3.0 ships no model for), the record names that file by
+   **repo-relative path and content sha256**, and the model's own stated
+   accuracy limits propagate to every number derived from it. A reader must
+   never have to guess whether a number came from the PDK or from a
+   substitute.

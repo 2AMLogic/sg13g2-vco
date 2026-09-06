@@ -1,0 +1,385 @@
+*******************************************************************************
+* sg13g2_inductor_analytic.spice
+*
+* An ngspice-simulatable compact model for the IHP SG13G2 octagonal spiral
+* inductor PCell (`inductor2` / LVS device `inductor`), for a PDK release that
+* ships none.
+*
+*   .subckt inductor la lb sub  w=<m> s=<m> d=<m> nr_r=<turns>
+*
+* Pin and parameter names match what the PDK's own xschem symbol
+* (libs.tech/xschem/sg13g2_pr/inductor.sym) and LVS netlists emit, so this
+* file is a drop-in for the instance card those tools already produce:
+*
+*   XL1 la lb sub inductor w=8.22u s=3.29u d=47.65u nr_r=1
+*
+* Use it with sim/tank-characterization/run_pvt_sweep.sh:
+*
+*   export SG13G2_IND_MODEL_LIB=$PWD/sim/inductor-model/sg13g2_inductor_analytic.spice
+*   sim/tank-characterization/run_pvt_sweep.sh
+*
+*===============================================================================
+* WHAT THIS IS -- AND, MORE IMPORTANTLY, WHAT IT IS NOT
+*===============================================================================
+*
+* THIS IS NOT AN EM-EXTRACTED OR MEASURED MODEL. It is an ANALYTIC model:
+* published closed-form expressions for the geometry, evaluated on the PDK's
+* own published process constants. It carries stated error bars (below). It
+* is a SCREENING model -- good enough to size a tank and rank candidate
+* geometries, NOT good enough to be the final number behind a taped-out
+* phase-noise claim. Any such claim must be re-derived from a 3-D EM
+* extraction of the PCell (IHP's own documented route:
+* libs.doc/doc/EM_Simulation_Overview.pdf, libs.tech/openems, libs.tech/palace),
+* which is tracked as issue #9 -- not done here because both of those PDK
+* directories are git submodules that are EMPTY in the v0.3.0 release tarball
+* and neither solver is installed in this flow. See README.md "Route decision".
+*
+* Every number in a record produced with this model inherits the error bars in
+* the ACCURACY LIMITS section below. See sim/inductor-model/README.md for the
+* route decision (why analytic, and not EM extraction or published data), the
+* full derivation, and the validation evidence.
+*
+*===============================================================================
+* SOURCES -- every constant below traces to one of these
+*===============================================================================
+*
+* [PS]    IHP-Open-PDK v0.3.0, libs.doc/doc/SG13G2_os_process_spec.pdf,
+*         "SG13G2 Process Specification Rev. 1.2":
+*           section 2.13  RSTM2  = 7.5 / 11 / 14.5 mOhm/sq  (min/target/max)
+*                         RSTM1  = 15 / 18 / 21 mOhm/sq
+*                         DWTM2  = -340 / -140 / +140 nm    (line-width delta)
+*                         TC1RSTM2 = 3800 ppm/K, TC1RSTM1 = 3700 ppm/K
+*                         RSBLK  = 37.5 / 50 / 62.5 Ohm*cm  (substrate resistivity)
+*           section 2.14  RTV2   = 0.5 / 1.1 / 2.2 Ohm per TopVia2
+*           section 2.16  TTM2   = 3000 nm, TILTM2 = 2800 nm
+*           section 2.17  CATOPMET2 = 10 / 13 / 16 aF/um^2 (TopMetal2-TopMetal1)
+* [XS]    IHP-Open-PDK v0.3.0, libs.tech/klayout/tech/xsect/sg13g2_for_EM.xs --
+*         the layer stack IHP's own EM flow uses. Summing its thicknesses from
+*         the substrate surface to the bottom of TopMetal2 gives
+*           h_ox = 0.4+0.64 +0.42+0.54 +0.49+0.54 +0.49+0.54 +0.49+0.54
+*                  +0.49+0.85 +2.0+2.8 = 11.23 um.
+* [MG]    IHP-Open-PDK v0.3.0, libs.tech/magic/ihp-sg13g2-extract.tech
+*         (metal7 == TopMetal2):
+*           defaultareacap    allm7 metal7  3.233  aF/um^2  (to substrate)
+*           defaultperimeter  allm7 metal7 31.175  aF/um    (fringe, per edge)
+*           resist (allm7)/metal7  7 / 11 / 15 mOhm/sq  (low / typ / high corner)
+*         Internal consistency check on [XS] and [MG]: eps0*4.1/11.23um =
+*         3.2325 aF/um^2 vs. magic's 3.233 -- so the stack height and eps_r=4.1
+*         are mutually consistent to 0.02 %. Independently, eps0*4.1/2.8um =
+*         12.96 aF/um^2 vs. [PS] CATOPMET2 target 13. Both confirmed, so the
+*         capacitance constants used here are the PDK's own, not fitted.
+* [PC]    IHP-Open-PDK v0.3.0, libs.tech/klayout/python/sg13g2_pycell_lib/ihp/
+*         inductors_code.py + inductor2_code.py -- the PCell that DRAWS the
+*         device, and therefore the definitive statement of what w/s/d/nr_r
+*         mean geometrically. See GEOMETRY below.
+* [MOH]   S. S. Mohan, M. del Mar Hershenson, S. P. Boyd, T. H. Lee, "Simple
+*         Accurate Expressions for Planar Spiral Inductances", IEEE J.
+*         Solid-State Circuits, vol. 34, no. 10, pp. 1419-1424, Oct. 1999.
+*         DOI 10.1109/4.792620. Modified-Wheeler expression (1), Table I;
+*         current-sheet expression (2), Table II; monomial (3), Table III.
+*
+*===============================================================================
+* GEOMETRY -- read off the PCell [PC], not assumed
+*===============================================================================
+*
+* inductors_code.py draws an OCTAGONAL spiral in TopMetal2. Its turn loop ends
+* with `d = d + 2*(s+w+grid)` (grid = 0.01 um), and the innermost turn's inner
+* edge traces an octagon whose flat-to-flat width is exactly the passed `d`
+* (the polygon points use `lat_sm = d/(1+sqrt(2))` -- the side of an octagon of
+* flat-to-flat width d). Therefore:
+*
+*   d_in  = d                                     inner flat-to-flat diameter
+*   pitch = s + w + grid                          radial pitch per turn
+*   d_out = d + 2*(n-1)*pitch + 2*w               outer flat-to-flat diameter
+*   d_avg = (d_in + d_out)/2 ,  rho = (d_out-d_in)/(d_out+d_in)
+*
+* Conductor centre-line length: a regular octagon of flat-to-flat width D has
+* perimeter 8*tan(pi/8)*D = 3.3137085*D, so summing over the n turns,
+*
+*   len = 3.3137085 * n * ( d + w + (n-1)*pitch )
+*
+* NOT INCLUDED: the PCell also draws two ~30 um feed lines from the coil down
+* to the LA/LB pin boxes. They are deliberately excluded -- the subcircuit's
+* parameter list (w, s, d, nr_r) contains no feed-length parameter, so folding
+* in a fixed PCell drawing constant would bake a layout artifact into every
+* downstream tank number. Their cost is quantified in README.md so a user can
+* add it explicitly.
+*
+*===============================================================================
+* MODEL TOPOLOGY
+*===============================================================================
+*
+*         la o--[ Rdc+Rcross ]--[ skin ladder ]--[ Lmain ]--o lb
+*                |         `------------ Cs ------------'   |
+*             [Coxa]                                     [Coxb]
+*                |                                          |
+*         [Rsia||Csia]                              [Rsib||Csib]
+*                |                                          |
+*                +--------------------o sub ----------------+
+*
+* This is the standard 2-pi lumped spiral topology (a series branch with a
+* feed-through capacitance, and an oxide capacitance into a substrate R||C at
+* each port). The element-by-element sizing, and the reason each one is where
+* it is, is in README.md.
+*
+* The series branch's frequency dependence is NOT a fit. The exact 1-D
+* solution for the internal impedance of a conductor slab of thickness t and
+* width w, with the field on both faces, is
+*
+*   Z_int(w) = R_dc * xi * coth(xi) ,   xi = (1+j) * t / (2*delta) ,
+*   delta = sqrt( rho_m / (pi*f*mu0) )                        (skin depth)
+*
+* and `x*coth(x)` has the exact partial-fraction expansion
+*
+*   xi*coth(xi) = 1 + SUM_{m=1..inf} 2*xi^2/(xi^2 + m^2*pi^2)
+*
+* which, with xi^2 = j*u/2 (u = f/f_skin, f_skin = rho_m/(pi*mu0*t^2), the
+* frequency at which delta = t), is term-for-term a series chain of parallel
+* R||L sections with
+*
+*   R_m = 2*R_dc          (independent of m)
+*   L_m = mu0*len*t / (2*pi^2*m^2*w_eff)
+*
+* So the ladder below is a TRUNCATION of an exact closed form, not a curve
+* fit, and it has no free parameters. Truncating at m = 10 reproduces
+* Re(xi*coth(xi)) to 0.03 % below 20 GHz and 1.7 % at 300 GHz (verified in
+* run_model_check.sh against the closed form).
+*
+* Because R_m scales with R_dc while L_m does not, giving every resistor the
+* PDK's TC1RSTM2 makes the ladder's corner frequencies scale as
+* f_skin ~ rho_m(T) automatically -- the temperature dependence of the skin
+* effect is exact, not approximated, and comes for free from ngspice's native
+* `tc1`.
+*
+*===============================================================================
+* ACCURACY LIMITS -- READ BEFORE USING ANY NUMBER FROM THIS MODEL
+*===============================================================================
+*
+* 1. FREQUENCY RANGE. Trust 0.5 GHz .. 20 GHz, and only below the device's own
+*    SRF. Outside that:
+*      - below ~0.3 GHz nothing is wrong, the model is just uninteresting;
+*      - above 20 GHz the ladder truncation error grows (0.03 % at 20 GHz,
+*        0.6 % at 100 GHz, 1.7 % at 300 GHz on the series resistance) and,
+*        far more seriously, the lumped 2-pi topology itself stops being valid
+*        once the conductor length approaches a wavelength;
+*      - above the reported SRF the extracted `Leff` is not an inductance at
+*        all, exactly as for the PDK's MIM model. Check the srf_hz column.
+*
+* 2. INDUCTANCE: +/- 5 % typical, wider outside the fitted geometry family.
+*    L is [MOH] expression (1) (modified Wheeler, octagonal K1=2.25 K2=3.55).
+*    [MOH] reports typical error 1-2 % vs. a 3-D field solver and ~5 % vs.
+*    measurement for that expression. As an internal check, [MOH]'s three
+*    mutually independent expressions -- modified Wheeler, current sheet, and
+*    the data-fitted monomial -- agree with each other to better than 2 % on
+*    all three PDK LVS-testcase geometries (numbers in README.md).
+*      GEOMETRY VALIDITY: [MOH]'s fitted family spans d_out 100-480 um,
+*      L 0.5-100 nH, w from 2 um to 0.3*d_out, s from 2 um to 3*w, and
+*      d_in/d_out from 0.1 to 0.9. The 5-turn (d_out 197.5 um, 5.4 nH) and
+*      4-turn (230.2 um, 4.6 nH) PDK geometries are inside it. The single-turn
+*      w=8.22 s=3.29 d=47.65 geometry is OUTSIDE it in two axes at once
+*      (d_out 64 um, L 104 pH), so it is an extrapolation; README.md
+*      cross-checks it against the classical single-loop formula
+*      L = mu0*a*(ln(8a/GMD)-2) and gets 94 pH vs. this model's 104 pH,
+*      i.e. treat single-turn L as +/- 10 %, not +/- 5 %.
+*
+* 3. QUALITY FACTOR: this model's Q is an UPPER BOUND. Q is the largest
+*    uncertainty here and it is systematic, not random:
+*      (a) LATERAL CURRENT CROWDING between turns is NOT modelled. Only the
+*          vertical (through-thickness) skin effect is, and for these traces
+*          w > t, so crowding -- not vertical skin effect -- is the dominant
+*          AC-loss mechanism above a few GHz in a multi-turn spiral. The
+*          commonly used one-sided "effective conduction depth" approximation
+*          (t_eff = delta*(1-exp(-t/delta))), which is empirically closer to
+*          measured spirals precisely because it over-states vertical skin
+*          effect and thereby partly stands in for crowding, gives a series
+*          resistance 1.6x higher at 1 GHz and 2.3x higher at 10 GHz than the
+*          exact vertical-skin solution used here. run_model_check.sh reports
+*          Q under BOTH assumptions in every record; read the pessimistic
+*          column as the lower bound and treat the truth as somewhere between.
+*          The gap widens with turn count.
+*      (b) MAGNETICALLY INDUCED SUBSTRATE EDDY-CURRENT LOSS is not modelled at
+*          all. At 50 Ohm*cm and <=20 GHz it is usually second-order, but it
+*          is a one-way error: it can only lower Q.
+*      (c) The substrate branch (Rsi, Csi) is a two-element lumped stand-in
+*          for a distributed half-space, sized from [PS] RSBLK and the
+*          classical disk-on-half-space spreading resistance rho/(4a).
+*          Expect a factor-of-~2 uncertainty on Rsi. Sensitivity is reported
+*          per geometry in README.md.
+*
+* 4. SELF-RESONANCE: SRF sits roughly +/- 15 % on the back of the L and C
+*    uncertainties. The oxide capacitance treats the coil band as a SOLID
+*    octagonal annulus, which is right while the turn spacing is much smaller
+*    than the 11.23 um oxide height [XS] (true for every PDK testcase
+*    geometry: s <= 9 um) and over-states C once s approaches h_ox.
+*
+* 5. NOT MODELLED, DELIBERATELY: the PCell feed lines (see GEOMETRY above);
+*    any patterned ground shield; the `inductor3` centre-tapped variant (this
+*    subcircuit is the 2-terminal `inductor` device only); substrate etching
+*    (the PCell's subE option); statistical/mismatch spread.
+*
+* 6. TEMPERATURE is modelled only through the metal sheet resistance
+*    (TC1RSTM2 = 3800 ppm/K [PS], applied natively via ngspice `tc1`, with
+*    the correct implied scaling of the skin corner frequency -- see MODEL
+*    TOPOLOGY). ngspice's TNOM defaults to 27 C; [PS] does not state the
+*    reference temperature for TC1RSTM2, so if it is in fact 25 C the
+*    resulting error is (27-25)*3800e-6 = 0.76 % on R_dc. Substrate
+*    resistivity is held temperature-independent (no PDK temperature
+*    coefficient is published for RSBLK); real p- silicon resistivity does
+*    drift with T, which perturbs the substrate-loss term only.
+*
+*===============================================================================
+* CORNER KNOBS (both default to 1.0 = the PDK target value)
+*===============================================================================
+*   mc_rsh   TopMetal2 sheet-resistance multiplier.
+*            RSTM2 [PS] 7.5 / 11 / 14.5 mOhm/sq  ->  0.682 / 1.0 / 1.318
+*   mc_rsub  substrate-resistivity multiplier.
+*            RSBLK [PS] 37.5 / 50 / 62.5 Ohm*cm  ->  0.75 / 1.0 / 1.25
+*
+* SPDX-License-Identifier: Apache-2.0
+*******************************************************************************
+
+.subckt inductor la lb sub
+
+* ---- instance parameters (names fixed by the PDK's xschem/LVS netlists) ----
+.param w = {2.0e-6}   $ drawn turn width           [m]
+.param s = {2.1e-6}   $ drawn turn-to-turn spacing [m]
+.param d = {15.48e-6}   $ inner flat-to-flat diameter of the innermost turn [m]
+.param nr_r = {1}   $ number of turns
+
+* ---- corner knobs -----------------------------------------------------------
+.param mc_rsh = {1.0}
+.param mc_rsub = {1.0}
+
+* ---- physical constants -----------------------------------------------------
+.param ind_mu0 = {1.25663706212e-6}
+.param ind_eps0 = {8.8541878128e-12}
+.param ind_pisq = {9.86960440108936}
+.param ind_koct = {3.31370849898476}   $ 8*tan(pi/8), octagon perimeter / (flat-to-flat)
+.param ind_aoct = {0.828427124746190}   $ 2*(sqrt(2)-1), octagon area / (flat-to-flat)^2
+
+* ---- PDK process constants (see SOURCES above) -------------------------------
+.param ind_ttm2 = {3.000e-6}   $ [PS] TTM2         TopMetal2 thickness
+.param ind_rsh2 = {11.0e-3}   $ [PS] RSTM2 target TopMetal2 sheet resistance
+.param ind_rsh1 = {18.0e-3}   $ [PS] RSTM1 target TopMetal1 sheet resistance
+.param ind_tc2 = {3.8e-3}   $ [PS] TC1RSTM2
+.param ind_tc1 = {3.7e-3}   $ [PS] TC1RSTM1
+.param ind_dw2 = {-0.140e-6}   $ [PS] DWTM2 target line-width delta
+.param ind_rtv2 = {1.1}   $ [PS] RTV2 target, Ohm per TopVia2
+.param ind_casub = {3.233e-6}   $ [MG] 3.233 aF/um^2 TopMetal2 -> substrate area cap
+.param ind_cpsub = {31.175e-12}   $ [MG] 31.175 aF/um  TopMetal2 -> substrate fringe, per edge
+.param ind_ca21 = {13.0e-6}   $ [PS] CATOPMET2 13 aF/um^2 TopMetal2 -> TopMetal1
+.param ind_rhosub = {0.5}   $ [PS] RSBLK target 50 Ohm*cm, in Ohm*m
+.param ind_epssi = {11.9}   $ relative permittivity of silicon
+.param ind_grid = {0.01e-6}   $ [PC] layout grid used by the PCell turn pitch
+
+* ---- derived geometry [PC] ---------------------------------------------------
+.param ind_n = {nr_r}
+.param ind_pitch = {s + w + ind_grid}
+.param ind_din = {d}
+.param ind_dout = {d + 2*(ind_n-1)*ind_pitch + 2*w}
+.param ind_davg = {(ind_din + ind_dout)/2}
+.param ind_fill = {(ind_dout - ind_din)/(ind_dout + ind_din)}
+.param ind_len = {ind_koct*ind_n*(d + w + (ind_n-1)*ind_pitch)}
+.param ind_weff = {w + ind_dw2}
+
+* ---- inductance: [MOH] eq. (1), octagonal K1 = 2.25, K2 = 3.55 ---------------
+.param ind_lmw = {2.25*ind_mu0*ind_n*ind_n*ind_davg/(1 + 3.55*ind_fill)}
+
+* ---- series resistance and the exact vertical-skin ladder --------------------
+.param ind_rshT = {ind_rsh2*mc_rsh}
+.param ind_rdc = {ind_rshT*ind_len/ind_weff}
+.param ind_lu = {ind_mu0*ind_len*ind_ttm2/(2*ind_weff)}   $ = R_dc/omega_skin
+.param ind_lm1 = {ind_lu/(ind_pisq*1)}
+.param ind_lm2 = {ind_lu/(ind_pisq*4)}
+.param ind_lm3 = {ind_lu/(ind_pisq*9)}
+.param ind_lm4 = {ind_lu/(ind_pisq*16)}
+.param ind_lm5 = {ind_lu/(ind_pisq*25)}
+.param ind_lm6 = {ind_lu/(ind_pisq*36)}
+.param ind_lm7 = {ind_lu/(ind_pisq*49)}
+.param ind_lm8 = {ind_lu/(ind_pisq*64)}
+.param ind_lm9 = {ind_lu/(ind_pisq*81)}
+.param ind_lm10 = {ind_lu/(ind_pisq*100)}
+.param ind_lint = {ind_lm1+ind_lm2+ind_lm3+ind_lm4+ind_lm5+ind_lm6+ind_lm7+ind_lm8+ind_lm9+ind_lm10}
+.param ind_lmain = {ind_lmw - ind_lint}
+.param ind_rlad = {2*ind_rdc}
+
+* ---- crossunder (TopMetal2 <-> TopMetal1 via arrays + TM1 bridge) ------------
+* [PC] nr_vias = round((w+0.06u)/1.96u - 0.5), laid out as an nr_vias^2 array.
+* A crossunder is two arrays in series (down to TM1, back up to TM2); an n-turn
+* coil draws n-1 crossunders plus one TM2<->TM1 transition per port, so 2*n
+* arrays for n >= 2 and none at all for n = 1 (the 1-turn PCell stays in TM2).
+.param ind_nvia = {floor((w/1e-6 + 0.06)/1.96)}
+.param ind_narr = {2*ind_n*min(ind_n-1,1)}
+.param ind_ltm1 = {2*(1.70711*w + 0.9143*s)}
+* The TM1 bridge is scaled by mc_rsh too -- metal sheet-resistance corners
+* correlate across layers. The via term is NOT, because [PS] publishes no
+* correlated via corner; both terms are small next to R_dc. The whole
+* crossunder is one resistor and therefore carries TC1RSTM2, i.e. the via
+* resistance is ASSUMED to drift with temperature like the metal it connects.
+* [PS] publishes no via temperature coefficient, so that is an assumption, not
+* a datum; it moves R_dc+R_cross by under 1.5 % at 125 C for the 5-turn case.
+* 1e-9 floor so the n = 1 case is not a literally zero-valued resistor.
+.param ind_rcros = {ind_narr*ind_rtv2/(ind_nvia*ind_nvia) + (ind_n-1)*ind_rsh1*mc_rsh*ind_ltm1/ind_weff + 1e-9}
+
+* ---- series (feed-through) capacitance: TM1 bridge under the TM2 turns -------
+.param ind_novl = {2*(ind_n-1)}
+.param ind_cs = {ind_novl*ind_weff*ind_weff*ind_ca21 + 1e-21}
+
+* ---- oxide capacitance to substrate ------------------------------------------
+* The oxide is 11.23 um thick [XS] and the turn spacing is at most a few um, so
+* the substrate sees the coil as a SOLID octagonal annulus, not n separate
+* strips: area term over the whole band, fringe term on the outer and inner
+* edges of the band only.
+.param ind_aband = {ind_aoct*(ind_dout*ind_dout - ind_din*ind_din)}
+.param ind_edge = {ind_koct*(ind_dout + ind_din)}
+.param ind_coxt = {ind_aband*ind_casub + ind_edge*ind_cpsub}
+.param ind_coxh = {ind_coxt/2}
+
+* ---- substrate branch ---------------------------------------------------------
+* Classical spreading resistance of a disk of radius a on a semi-infinite medium
+* of resistivity rho is rho/(4a). Each port drives half the device footprint, so
+* the equivalent half-area disk radius is a_eq/sqrt(2), giving sqrt(2)*rho/(4*a_eq).
+* Csi then follows from the substrate's dielectric relaxation time, Rsi*Csi =
+* eps_si*rho_sub, which is a material constant independent of geometry.
+.param ind_rhos = {ind_rhosub*mc_rsub}
+.param ind_aout = {ind_aoct*ind_dout*ind_dout}
+.param ind_aeq = {sqrt(ind_aout/3.14159265358979)}
+.param ind_rsi = {1.41421356237*ind_rhos/(4*ind_aeq)}
+.param ind_csi = {ind_eps0*ind_epssi*ind_rhos/ind_rsi}
+
+* ==== netlist =================================================================
+Rdc     la    n01  r={ind_rdc}    tc1={ind_tc2}
+Rcros   n01   n02  r={ind_rcros}  tc1={ind_tc2}
+
+Rk1  n02 n03 r={ind_rlad} tc1={ind_tc2}
+Lk1  n02 n03 {ind_lm1}
+Rk2  n03 n04 r={ind_rlad} tc1={ind_tc2}
+Lk2  n03 n04 {ind_lm2}
+Rk3  n04 n05 r={ind_rlad} tc1={ind_tc2}
+Lk3  n04 n05 {ind_lm3}
+Rk4  n05 n06 r={ind_rlad} tc1={ind_tc2}
+Lk4  n05 n06 {ind_lm4}
+Rk5  n06 n07 r={ind_rlad} tc1={ind_tc2}
+Lk5  n06 n07 {ind_lm5}
+Rk6  n07 n08 r={ind_rlad} tc1={ind_tc2}
+Lk6  n07 n08 {ind_lm6}
+Rk7  n08 n09 r={ind_rlad} tc1={ind_tc2}
+Lk7  n08 n09 {ind_lm7}
+Rk8  n09 n10 r={ind_rlad} tc1={ind_tc2}
+Lk8  n09 n10 {ind_lm8}
+Rk9  n10 n11 r={ind_rlad} tc1={ind_tc2}
+Lk9  n10 n11 {ind_lm9}
+Rk10 n11 n12 r={ind_rlad} tc1={ind_tc2}
+Lk10 n11 n12 {ind_lm10}
+
+Lmain   n12   lb   {ind_lmain}
+Cser    la    lb   {ind_cs}
+
+Coxa    la    n20  {ind_coxh}
+Rsia    n20   sub  r={ind_rsi}
+Csia    n20   sub  {ind_csi}
+Coxb    lb    n21  {ind_coxh}
+Rsib    n21   sub  r={ind_rsi}
+Csib    n21   sub  {ind_csi}
+
+.ends inductor

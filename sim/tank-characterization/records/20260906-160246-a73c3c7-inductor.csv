@@ -1,0 +1,4 @@
+geometry,w_um,s_um,d_um,nr_r,model_source,status,srf_hz,l_1ghz_h,l_5ghz_h,l_10ghz_h,q_1ghz,q_5ghz,q_10ghz
+p1,8.22,3.29,47.65,1,sim/inductor-model/sg13g2_inductor_analytic.spice sha256=d6ce02ad3073df28bad83d4d8906b39ed1e7d9b0c0a4f4d5e1c6d7c92eab49da,PASS,2.40380e+11,1.03758e-10,1.03510e-10,1.02931e-10,2.56991e+00,1.11878e+01,1.68973e+01
+p13,6.10,3.29,110.11,5,sim/inductor-model/sg13g2_inductor_analytic.spice sha256=d6ce02ad3073df28bad83d4d8906b39ed1e7d9b0c0a4f4d5e1c6d7c92eab49da,PASS,1.43055e+10,5.45142e-09,6.17639e-09,1.02525e-08,5.26350e+00,1.11366e+01,4.94786e+00
+p11,8.22,3.74,141.975,4,sim/inductor-model/sg13g2_inductor_analytic.spice sha256=d6ce02ad3073df28bad83d4d8906b39ed1e7d9b0c0a4f4d5e1c6d7c92eab49da,PASS,1.41118e+10,4.60639e-09,5.24033e-09,8.89929e-09,6.66441e+00,1.23419e+01,5.00204e+00
