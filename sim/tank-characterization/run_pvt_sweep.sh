@@ -1,0 +1,403 @@
+#!/usr/bin/env bash
+# Cold-start invocation (this is the whole thing -- there are no hidden steps):
+#
+#   sim/tank-characterization/run_pvt_sweep.sh
+#
+# Optionally, if the PDK is not installed under one of the prefixes sim/env.sh
+# probes (/usr/share/pdk, /usr/local/share/pdk, ~/share/pdk, ~/.ciel, ~/.volare):
+#
+#   export PDK_ROOT=/path/to/ihp-open-pdk   # parent dir containing ihp-sg13g2/
+#   export PDK=ihp-sg13g2
+#
+# Requires: ngspice on PATH, a bash, and an IHP-Open-PDK v0.3.0 install (pinned
+# in sim/pdk.json; fetchable with klayout-tools scripts/fetch-ihp-sg13g2.sh).
+# Does NOT require xschem, klayout, klt, python, or any compiled OSDI model --
+# every device this sweep touches is built from ngspice native primitives.
+#
+# Optional, and normally unset:
+#   SG13G2_IND_MODEL_LIB   path to a SPICE file defining `.subckt inductor`.
+#                          IHP-Open-PDK v0.3.0 ships no such model; see
+#                          README.md "The inductor gap". When unset the
+#                          inductor probe is still run, and its failure is
+#                          recorded as MODEL_ABSENT evidence.
+#
+# WHAT IT DOES
+# ------------
+# Sweeps the SG13G2 MIM-capacitor models over the full process x temperature x
+# bias grid, extracting C(f), Q(f) and SRF for three geometries of each of the
+# two shipped MIM models, and runs the spiral-inductor probe once. Everything
+# it writes is APPEND-ONLY evidence under this directory, keyed by a record ID
+# that is minted fresh on every run:
+#
+#   netlist-snapshots/<record-id>/<corner-id>.spice   exact netlist simulated
+#   corners/<record-id>/<corner-id>.log               raw ngspice batch output
+#   records/<record-id>-curves/<corner-id>.csv        C/Q/L vs frequency
+#   records/<record-id>.csv                           scalar summary, one row
+#                                                     per corner x device
+#   records/<record-id>-method-check.csv              known-answer check of the
+#                                                     extraction arithmetic
+#   records/<record-id>-inductor.csv                  inductor probe outcome
+#   records/<record-id>.md                            the narrative record
+#
+# Nothing under those directories is ever rewritten -- a re-run mints a new
+# record ID. See sim/README.md for the convention.
+set -euo pipefail
+
+EXPERIMENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SIM_DIR="$(cd "${EXPERIMENT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SIM_DIR}/.." && pwd)"
+
+# shellcheck source=../env.sh
+source "${SIM_DIR}/env.sh"
+
+# ------------------------------------------------------------------ preflight
+if ! command -v ngspice >/dev/null 2>&1; then
+  echo "error: ngspice not found on PATH." >&2
+  exit 1
+fi
+if [[ -z "${SG13G2_NGSPICE_MODELS:-}" || ! -f "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib" ]]; then
+  echo "error: could not resolve the SG13G2 ngspice model libraries." >&2
+  echo "       expected \$PDK_ROOT/\$PDK/libs.tech/ngspice/models/cornerCAP.lib" >&2
+  echo "       see the message from sim/env.sh above, and sim/pdk.json." >&2
+  exit 1
+fi
+
+NGSPICE_VERSION="$(ngspice --version 2>&1 | sed -n 's/^\*\* \(ngspice-[0-9.]*\).*/\1/p' | head -1)"
+NGSPICE_VERSION="${NGSPICE_VERSION:-unknown}"
+
+sha256_of() {
+  if command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | awk '{print $1}'
+  elif command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'
+  else echo "unavailable"; fi
+}
+CORNERCAP_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib")"
+CAPMOD_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/capacitors_mod.lib")"
+
+GIT_SHA="$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo nogit)"
+RECORD_ID="$(date -u +%Y%m%d-%H%M%S)-${GIT_SHA}"
+
+NETLIST_DIR="${EXPERIMENT_DIR}/netlist-snapshots/${RECORD_ID}"
+LOG_DIR="${EXPERIMENT_DIR}/corners/${RECORD_ID}"
+CURVE_DIR="${EXPERIMENT_DIR}/records/${RECORD_ID}-curves"
+CSV_OUT="${EXPERIMENT_DIR}/records/${RECORD_ID}.csv"
+METHOD_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-method-check.csv"
+IND_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-inductor.csv"
+MD_OUT="${EXPERIMENT_DIR}/records/${RECORD_ID}.md"
+mkdir -p "${NETLIST_DIR}" "${LOG_DIR}" "${CURVE_DIR}"
+
+# ngspice must run from a directory holding this experiment's own .spiceinit,
+# so a cold-start run does not depend on whether the PDK's install.py ever
+# symlinked one into $HOME.
+WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/sg13g2-tank.XXXXXX")"
+cleanup() { rm -rf "${WORKDIR}"; }
+trap cleanup EXIT
+cp "${EXPERIMENT_DIR}/.spiceinit" "${WORKDIR}/.spiceinit"
+
+# --------------------------------------------------------------- sweep ranges
+# The target band for this block is NOT chosen yet (spec/target-spec.md row 1
+# is blank, and choosing it is downstream of this very study), so the sweep is
+# deliberately wide rather than centred on an assumed frequency:
+#   100 MHz .. 300 GHz, i.e. from well below any plausible LC-VCO tank up to
+#   roughly the fT of this process's fastest HBT. The upper decade is knowingly
+#   outside IHP's stated model validity -- see README.md "Band edges and model
+#   validity". It is swept anyway so the record shows where the model stops
+#   being credible instead of quietly stopping short of it.
+FMIN=1e8
+FMAX=3e11
+NDEC_MEAS=500     # dense pass: scalar .meas extractions (SRF interpolation)
+NDEC_CURVE=50     # coarse pass: the committed curve CSVs
+
+# PVT grid.
+#   P: cornerCAP.lib's three non-statistical MIM sections. cap_bcs/cap_wcs
+#      scale cap_carea by 0.9/1.1 and cap_cpara likewise, i.e. +-10 % on the
+#      MIM area capacitance. (The *_mismatch and *_stat sections are omitted:
+#      they model device-to-device spread within one die, which needs a Monte
+#      Carlo harness this study does not have -- named as future work in
+#      README.md rather than silently skipped.)
+#   V: MIM caps are passives; cmim_core carries TC1/TC2 temperature
+#      coefficients but no voltage coefficient, so the model is
+#      bias-independent by construction. Two bias points are swept anyway so
+#      that claim is measured rather than asserted.
+#   T: the same -40 / 27 / 125 C span the sibling blocks in this catalog use.
+CAP_SECTIONS=(cap_typ cap_bcs cap_wcs)
+CAP_LABELS=(typ bcs wcs)
+TEMPS=(-40 27 125)
+VBIASES=(0.0 1.5)
+
+# Device instance table: <key> <model> <w_um> <l_um> <wfeed_um>
+# Keys match the node/measurement prefixes in the template.
+DEV_KEYS=(a20 a35 a50 b20 b35 b50)
+declare -A DEV_MODEL=( [a20]=cap_cmim [a35]=cap_cmim [a50]=cap_cmim
+                       [b20]=cap_rfcmim [b35]=cap_rfcmim [b50]=cap_rfcmim )
+declare -A DEV_W=( [a20]=20 [a35]=35 [a50]=50 [b20]=20 [b35]=35 [b50]=50 )
+declare -A DEV_L=( [a20]=20 [a35]=35 [a50]=50 [b20]=20 [b35]=35 [b50]=50 )
+# cap_cmim has no wfeed parameter at all, hence the empty cells.
+declare -A DEV_WFEED=( [a20]="" [a35]="" [a50]="" [b20]=5 [b35]=10 [b50]=15 )
+
+# Pull a scalar out of an ngspice batch log. `meas` prints
+#   "<name>                =  <value>"
+# on success and "meas ... failed!" on a miss; a miss must come back empty so
+# the caller can record it as "none" instead of as a number.
+meas_value() {
+  local log="$1" name="$2"
+  awk -v n="${name}" '$1 == n && $2 == "=" { print $3; found=1 } END { if (!found) print "" }' "${log}" | head -1
+}
+
+echo "corner_label,cap_section,temp_c,vbias_v,device_model,w_um,l_um,wfeed_um,status,srf_hz,c_1ghz_f,c_2ghz_f,c_5ghz_f,c_10ghz_f,c_20ghz_f,q_1ghz,q_2ghz,q_5ghz,q_10ghz,q_20ghz" > "${CSV_OUT}"
+echo "corner_label,temp_c,vbias_v,quantity,simulated,closed_form,rel_err_pct,tol_pct,status" > "${METHOD_CSV}"
+
+total=0
+passed=0
+failed_points=()
+method_fail=0
+METHOD_TOL_PCT=0.1
+
+# ------------------------------------------------------------- MIM cap sweep
+for i in "${!CAP_SECTIONS[@]}"; do
+  section="${CAP_SECTIONS[$i]}"
+  label="${CAP_LABELS[$i]}"
+  for temp in "${TEMPS[@]}"; do
+    for vbias in "${VBIASES[@]}"; do
+      corner_id="mimcap_${label}_${temp}c_${vbias}v"
+      netlist="${NETLIST_DIR}/${corner_id}.spice"
+      log="${LOG_DIR}/${corner_id}.log"
+      curve="${CURVE_DIR}/${corner_id}.csv"
+      total=$((total + 1))
+
+      sed \
+        -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
+        -e "s|@@CAP_SECTION@@|${section}|g" \
+        -e "s|@@TEMP_C@@|${temp}|g" \
+        -e "s|@@VBIAS@@|${vbias}|g" \
+        -e "s|@@CORNER_ID@@|${corner_id}|g" \
+        -e "s|@@RECORD_ID@@|${RECORD_ID}|g" \
+        -e "s|@@FMIN@@|${FMIN}|g" \
+        -e "s|@@FMAX@@|${FMAX}|g" \
+        -e "s|@@NDEC_MEAS@@|${NDEC_MEAS}|g" \
+        -e "s|@@NDEC_CURVE@@|${NDEC_CURVE}|g" \
+        -e "s|@@CURVE_CSV@@|${curve}|g" \
+        "${EXPERIMENT_DIR}/testbench/tb_mimcap_zscan.spice.tmpl" > "${netlist}"
+
+      rc=0
+      ( cd "${WORKDIR}" && ngspice -b "${netlist}" ) > "${log}" 2>&1 || rc=$?
+
+      # A model-load failure is not always a nonzero exit, so check the text too.
+      model_error=0
+      if grep -qiE "unknown subckt|could not find|can't find|no such (parameter|model)" "${log}"; then
+        model_error=1
+      fi
+
+      echo "[${corner_id}] ngspice rc=${rc} model_error=${model_error}"
+
+      for key in "${DEV_KEYS[@]}"; do
+        srf="$(meas_value "${log}" "srf_${key}")"
+        c1="$(meas_value  "${log}" "c_${key}_1g")"
+        c2="$(meas_value  "${log}" "c_${key}_2g")"
+        c5="$(meas_value  "${log}" "c_${key}_5g")"
+        c10="$(meas_value "${log}" "c_${key}_10g")"
+        c20="$(meas_value "${log}" "c_${key}_20g")"
+        q1="$(meas_value  "${log}" "q_${key}_1g")"
+        q2="$(meas_value  "${log}" "q_${key}_2g")"
+        q5="$(meas_value  "${log}" "q_${key}_5g")"
+        q10="$(meas_value "${log}" "q_${key}_10g")"
+        q20="$(meas_value "${log}" "q_${key}_20g")"
+
+        # cap_cmim has no self-resonance in ANY band (it is a series R-C with
+        # no inductance at all), so a missing SRF for it is the expected,
+        # physically meaningful answer -- not a failure.
+        srf_field="${srf}"
+        if [[ -z "${srf}" ]]; then
+          if [[ "${DEV_MODEL[$key]}" == "cap_cmim" ]]; then
+            srf_field="none"
+          else
+            srf_field=""
+          fi
+        fi
+
+        status=FAIL
+        if [[ ${rc} -eq 0 && ${model_error} -eq 0 && -n "${c1}" && -n "${q1}" && -n "${srf_field}" ]]; then
+          status=PASS
+        fi
+        echo "${label},${section},${temp},${vbias},${DEV_MODEL[$key]},${DEV_W[$key]},${DEV_L[$key]},${DEV_WFEED[$key]},${status},${srf_field},${c1},${c2},${c5},${c10},${c20},${q1},${q2},${q5},${q10},${q20}" >> "${CSV_OUT}"
+        if [[ "${status}" == "FAIL" ]]; then failed_points+=("${corner_id}/${key}"); fi
+      done
+
+      # ---- known-answer check on the extraction arithmetic -----------------
+      # The reference network is ideal (R=2, L=1n, C=100f), corner- and
+      # temperature-independent, so its closed forms are constants; it is
+      # re-checked at every corner anyway, because the whole point is to catch
+      # a run whose extraction arithmetic silently went wrong.
+      l_sim="$(meas_value "${log}" "l_ref_1g")"
+      q_sim="$(meas_value "${log}" "q_ref_1g")"
+      s_sim="$(meas_value "${log}" "srf_ref")"
+      point_ok=1
+      while read -r qty sim ref err st; do
+        echo "${label},${temp},${vbias},${qty},${sim},${ref},${err},${METHOD_TOL_PCT},${st}" >> "${METHOD_CSV}"
+        if [[ "${st}" != "PASS" ]]; then point_ok=0; fi
+      done < <(awk -v ls="${l_sim:-nan}" -v qs="${q_sim:-nan}" -v ss="${s_sim:-nan}" -v tol="${METHOD_TOL_PCT}" '
+        BEGIN {
+          PI = 4*atan2(1,1); R = 2.0; L = 1e-9; C = 100e-15; w = 2*PI*1e9;
+          # Z(w) = (R + jwL) / ((1 - w^2 LC) + jwRC)
+          nr = R;  ni = w*L;
+          dr = 1 - w*w*L*C;  di = w*R*C;
+          den = dr*dr + di*di;
+          zr = (nr*dr + ni*di)/den;
+          zi = (ni*dr - nr*di)/den;
+          l_ref = zi/w;
+          q_ref = zi/zr;
+          srf_ref = sqrt((L - R*R*C)/(L*L*C))/(2*PI);
+          split("leff_1ghz_h q_1ghz srf_hz", names, " ");
+          sims[1] = ls; sims[2] = qs; sims[3] = ss;
+          refs[1] = l_ref; refs[2] = q_ref; refs[3] = srf_ref;
+          for (i = 1; i <= 3; i++) {
+            if (sims[i] == "nan" || sims[i] == "") { printf "%s %s %.6e nan %s\n", names[i], "", refs[i], "FAIL"; continue }
+            e = (sims[i] - refs[i]) / refs[i] * 100.0;
+            ae = (e < 0) ? -e : e;
+            printf "%s %.6e %.6e %+.5f %s\n", names[i], sims[i], refs[i], e, (ae <= tol ? "PASS" : "FAIL");
+          }
+        }')
+      if [[ ${point_ok} -eq 0 ]]; then method_fail=$((method_fail + 1)); fi
+
+      if [[ ${rc} -eq 0 && ${model_error} -eq 0 && ${point_ok} -eq 1 ]]; then
+        passed=$((passed + 1))
+      fi
+    done
+  done
+done
+
+# ------------------------------------------------------- spiral-inductor probe
+# Corner-independent: with no model to bind to, the corner section and
+# temperature are irrelevant to the outcome. Run once, at nominal.
+ind_corner_id="inductor_probe"
+ind_netlist="${NETLIST_DIR}/${ind_corner_id}.spice"
+ind_log="${LOG_DIR}/${ind_corner_id}.log"
+ind_curve="${CURVE_DIR}/${ind_corner_id}.csv"
+
+if [[ -n "${SG13G2_IND_MODEL_LIB:-}" && -f "${SG13G2_IND_MODEL_LIB}" ]]; then
+  ind_model_line=".include \"${SG13G2_IND_MODEL_LIB}\""
+  ind_model_comment="${SG13G2_IND_MODEL_LIB} (via \$SG13G2_IND_MODEL_LIB)"
+else
+  ind_model_line="* (no inductor model library: \$SG13G2_IND_MODEL_LIB unset or missing, and IHP-Open-PDK v0.3.0 ships none)"
+  ind_model_comment="NONE -- \$SG13G2_IND_MODEL_LIB unset and the PDK ships no ngspice inductor model"
+fi
+
+sed \
+  -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
+  -e "s|@@TEMP_C@@|27|g" \
+  -e "s|@@CORNER_ID@@|${ind_corner_id}|g" \
+  -e "s|@@RECORD_ID@@|${RECORD_ID}|g" \
+  -e "s|@@FMIN@@|${FMIN}|g" \
+  -e "s|@@FMAX@@|${FMAX}|g" \
+  -e "s|@@NDEC_MEAS@@|${NDEC_MEAS}|g" \
+  -e "s|@@NDEC_CURVE@@|${NDEC_CURVE}|g" \
+  -e "s|@@CURVE_CSV@@|${ind_curve}|g" \
+  -e "s|@@IND_MODEL_LINE@@|${ind_model_line}|g" \
+  -e "s|@@IND_MODEL_LINE_COMMENT@@|${ind_model_comment}|g" \
+  "${EXPERIMENT_DIR}/testbench/tb_inductor_zscan.spice.tmpl" > "${ind_netlist}"
+
+ind_rc=0
+( cd "${WORKDIR}" && ngspice -b "${ind_netlist}" ) > "${ind_log}" 2>&1 || ind_rc=$?
+ind_model_absent=0
+if grep -qiE "unknown subckt" "${ind_log}"; then ind_model_absent=1; fi
+echo "[${ind_corner_id}] ngspice rc=${ind_rc} model_absent=${ind_model_absent}"
+
+echo "geometry,w_um,s_um,d_um,nr_r,model_source,status,srf_hz,l_1ghz_h,l_5ghz_h,l_10ghz_h,q_1ghz,q_5ghz,q_10ghz" > "${IND_CSV}"
+IND_KEYS=(p1 p13 p11)
+declare -A IND_W=( [p1]=8.22 [p13]=6.10 [p11]=8.22 )
+declare -A IND_S=( [p1]=3.29 [p13]=3.29 [p11]=3.74 )
+declare -A IND_D=( [p1]=47.65 [p13]=110.11 [p11]=141.975 )
+declare -A IND_N=( [p1]=1 [p13]=5 [p11]=4 )
+for key in "${IND_KEYS[@]}"; do
+  if [[ ${ind_model_absent} -eq 1 ]]; then
+    echo "${key},${IND_W[$key]},${IND_S[$key]},${IND_D[$key]},${IND_N[$key]},none,MODEL_ABSENT,,,,,,," >> "${IND_CSV}"
+  else
+    srf="$(meas_value "${ind_log}" "srf_${key}")"
+    l1="$(meas_value "${ind_log}" "l_${key}_1g")"
+    l5="$(meas_value "${ind_log}" "l_${key}_5g")"
+    l10="$(meas_value "${ind_log}" "l_${key}_10g")"
+    q1="$(meas_value "${ind_log}" "q_${key}_1g")"
+    q5="$(meas_value "${ind_log}" "q_${key}_5g")"
+    q10="$(meas_value "${ind_log}" "q_${key}_10g")"
+    st=FAIL
+    if [[ ${ind_rc} -eq 0 && -n "${l1}" ]]; then st=PASS; fi
+    echo "${key},${IND_W[$key]},${IND_S[$key]},${IND_D[$key]},${IND_N[$key]},${SG13G2_IND_MODEL_LIB:-unknown},${st},${srf},${l1},${l5},${l10},${q1},${q5},${q10}" >> "${IND_CSV}"
+  fi
+done
+
+# ------------------------------------------------------------------- record
+{
+  echo "# Record ${RECORD_ID}"
+  echo
+  echo "- **Experiment**: tank-characterization"
+  echo "- **Claim**: the L / Q / SRF behaviour of the passive devices an LC tank"
+  echo "  on this PDK would be built from, measured over a deliberately wide"
+  echo "  candidate band (${FMIN} Hz .. ${FMAX} Hz) rather than at one assumed"
+  echo "  centre frequency, because the target band is not chosen yet"
+  echo "  (\`spec/target-spec.md\` row 1). This record ratifies NO spec row."
+  echo "- **Devices measured**: \`cap_cmim\` and \`cap_rfcmim\` from"
+  echo "  \`capacitors_mod.lib\`, three square geometries each (20, 35, 50 um)."
+  echo "- **Device NOT measured**: the SG13G2 spiral inductor. IHP-Open-PDK"
+  echo "  v0.3.0 ships no ngspice-simulatable inductor model, so the L half of"
+  echo "  the tank could not be characterized in this flow at all. The probe was"
+  echo "  run anyway and its failure recorded -- see"
+  echo "  \`records/${RECORD_ID}-inductor.csv\`, the raw log at"
+  echo "  \`corners/${RECORD_ID}/${ind_corner_id}.log\`, and README.md"
+  echo "  \"The inductor gap\"."
+  echo "- **Method**: 1 A AC current injection into each device's hot node, so"
+  echo "  V(node) = Z(f). Then Ceff = Im(1/Z)/(2*pi*f), Q = |Im(1/Z)|/Re(1/Z),"
+  echo "  and SRF = the frequency at which Im(Z) crosses zero. Scalars come from"
+  echo "  a ${NDEC_MEAS} point/decade pass; the committed curves are a"
+  echo "  ${NDEC_CURVE} point/decade pass over the same range."
+  echo "- **Method validation**: every corner also carries an ideal R-L-C"
+  echo "  reference network whose Leff, Q and SRF are known in closed form. The"
+  echo "  same extraction arithmetic is applied to it and compared against the"
+  echo "  algebra to ${METHOD_TOL_PCT} %; results in"
+  echo "  \`records/${RECORD_ID}-method-check.csv\`."
+  echo "- **PDK**: \`${PDK}\` at \`${PDK_ROOT}\` -- pinned release in"
+  echo "  \`sim/pdk.json\` (IHP-Open-PDK v0.3.0). Loaded model libraries, by"
+  echo "  content digest, so a reader can confirm their install matches:"
+  echo "  - \`cornerCAP.lib\` sha256 \`${CORNERCAP_SHA}\`"
+  echo "  - \`capacitors_mod.lib\` sha256 \`${CAPMOD_SHA}\`"
+  echo "- **ngspice**: \`${NGSPICE_VERSION}\`"
+  echo "- **Corner matrix run**: MIM process section {cap_typ, cap_bcs, cap_wcs}"
+  echo "  x temperature {${TEMPS[*]}} C x bias {${VBIASES[*]}} V = ${total}"
+  echo "  simulation points, each covering 6 device instances = $((total * 6))"
+  echo "  device rows. The V axis is present to MEASURE, not assume, that the"
+  echo "  MIM models are bias-independent."
+  echo "- **Result**: ${passed}/${total} simulation points PASS (ngspice exit 0,"
+  echo "  no model-load error, and the known-answer method check within"
+  echo "  ${METHOD_TOL_PCT} %)."
+  if [[ ${method_fail} -gt 0 ]]; then
+    echo "- **Method-check failures**: ${method_fail} point(s) exceeded the"
+    echo "  ${METHOD_TOL_PCT} % tolerance -- treat every number in this record as"
+    echo "  suspect until that is explained."
+  fi
+  if [[ ${#failed_points[@]} -gt 0 ]]; then
+    echo "- **Failed device rows**: ${failed_points[*]}"
+  fi
+  echo "- **Inductor probe**: $( [[ ${ind_model_absent} -eq 1 ]] && echo 'MODEL_ABSENT (expected on a stock v0.3.0 install)' || echo "ran against ${SG13G2_IND_MODEL_LIB:-an unexpected model source}" )"
+  echo "- **Links**:"
+  echo "  - Templates: \`testbench/tb_mimcap_zscan.spice.tmpl\`,"
+  echo "    \`testbench/tb_inductor_zscan.spice.tmpl\`"
+  echo "  - Per-point generated netlists: \`netlist-snapshots/${RECORD_ID}/\`"
+  echo "  - Per-point raw ngspice logs: \`corners/${RECORD_ID}/\`"
+  echo "  - Scalar summary: \`records/${RECORD_ID}.csv\`"
+  echo "  - Curves vs frequency: \`records/${RECORD_ID}-curves/\`"
+  echo "  - Method known-answer check: \`records/${RECORD_ID}-method-check.csv\`"
+  echo "  - Inductor probe outcome: \`records/${RECORD_ID}-inductor.csv\`"
+  echo "- **Reproduce**: \`sim/tank-characterization/run_pvt_sweep.sh\` (no"
+  echo "  arguments, no preceding steps) against the pinned PDK."
+  echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+} > "${MD_OUT}"
+
+echo
+echo "record        : ${RECORD_ID}"
+echo "points        : ${passed}/${total} PASS"
+echo "method check  : $(( total - method_fail ))/${total} within ${METHOD_TOL_PCT}%"
+echo "inductor probe: $( [[ ${ind_model_absent} -eq 1 ]] && echo MODEL_ABSENT || echo ran )"
+echo "written       : ${MD_OUT#"${REPO_ROOT}"/}"
+
+if [[ ${passed} -ne ${total} ]]; then
+  echo "error: ${#failed_points[@]} device row(s) and/or $(( total - passed )) simulation point(s) did not pass." >&2
+  exit 1
+fi
