@@ -1,0 +1,70 @@
+Warning: m=xx on .subckt line will override multiplier m hierarchy!
+
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_mos_varactor_vscan -- sg13g2 sg13_hv_svaricap c(v), dc/dv and q(v,f) scan
+
+Doing analysis at TEMP = -40.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 1739
+
+Error: measure  srf_small  when(WHEN) : out of interval
+ meas ac srf_small when zsmall=0 rise=1 failed!
+
+
+Error: measure  srf_mid  when(WHEN) : out of interval
+ meas ac srf_mid when zmid=0 rise=1 failed!
+
+
+Error: measure  srf_large  when(WHEN) : out of interval
+ meas ac srf_large when zlarge=0 rise=1 failed!
+
+
+Error: measure  srf_xlarge  when(WHEN) : out of interval
+ meas ac srf_xlarge when zxlarge=0 rise=1 failed!
+
+srf_ref             =  1.59119e+10
+c_small_1g          =  1.06445e-14
+c_small_5g          =  1.06392e-14
+c_small_10g         =  1.06227e-14
+c_small_20g         =  1.05573e-14
+q_small_1g          =  2.19826e+02
+q_small_5g          =  4.39654e+01
+q_small_10g         =  2.19827e+01
+q_small_20g         =  1.09914e+01
+c_mid_1g            =  1.13172e-13
+c_mid_5g            =  9.98845e-14
+c_mid_10g           =  7.30736e-14
+c_mid_20g           =  3.52388e-14
+q_mid_1g            =  1.33945e+01
+q_mid_5g            =  2.67891e+00
+q_mid_10g           =  1.33946e+00
+q_mid_20g           =  6.69733e-01
+c_large_1g          =  4.95200e-13
+c_large_5g          =  7.95732e-14
+c_large_10g         =  2.19645e-14
+c_large_20g         =  5.63795e-15
+q_large_1g          =  1.89601e+00
+q_large_5g          =  3.79203e-01
+q_large_10g         =  1.89603e-01
+q_large_20g         =  9.48033e-02
+c_xlarge_1g         =  1.98080e-12
+c_xlarge_5g         =  3.18293e-13
+c_xlarge_10g        =  8.78579e-14
+c_xlarge_20g        =  2.25518e-14
+q_xlarge_1g         =  1.89601e+00
+q_xlarge_5g         =  3.79203e-01
+q_xlarge_10g        =  1.89603e-01
+q_xlarge_20g        =  9.48033e-02
+l_ref_1g            =  1.00356e-09
+q_ref_1g            =  3.12793e+00
+Doing analysis at TEMP = -40.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 174
+Note: Simulation executed from .control section 

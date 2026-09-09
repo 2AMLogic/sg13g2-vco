@@ -1,0 +1,222 @@
+* tb_mos_varactor_vscan -- SG13G2 sg13_hv_svaricap C(V), dC/dV and Q(V,f) scan
+*
+* TEMPLATE. run_varactor_sweep.sh substitutes the @@...@@ placeholders and
+* writes the resulting netlist to
+* netlist-snapshots/<record-id>/<corner-id>.spice before handing it to
+* ngspice, so every record freezes the exact netlist it simulated
+* (sim/README.md rule 3).
+*
+* DEVICE UNDER TEST AND BIAS CONVENTION
+* --------------------------------------
+* sg13_hv_svaricap is an accumulation-mode MOS varactor:
+*   .subckt sg13_hv_svaricap G1 W G2 bn
+* G1/G2 are the two split poly gates (coupled by an internal Rk/Ck_g12
+* network); W is the isolated n-well the gates sit over; bn is the buried
+* n-layer / substrate contact that isolates that well from the p-substrate.
+* Its capacitance depends on Vgb = V(gate) - V(well).
+*
+* This testbench ties G1 and G2 TOGETHER as the "hot" node -- the tank-side
+* RF connection in a real VCO, held at a fixed DC bias by the negative-gm
+* pair, not free to move with tuning -- and ties W and bn TOGETHER as the
+* "ctrl" node, driven by the sweep voltage 3.3. This is the standard
+* accumulation-varactor tuning scheme (tune the isolated well, not the tank
+* node) and it is the scheme IHP's own
+* libs.tech/xschem/sg13g2_tests/ac_svaricap_test.sch uses (DC bias applied to
+* bn through a choke, gates held at a fixed potential).
+*
+* Sign convention, stated once so every C(V) curve in this study is read the
+* same way: the "hot" node's DC bias is fixed at 0 V (via the choke below),
+* so Vgb = 0 - Vctrl = -Vctrl. Vctrl = 0 is this device's closest approach to
+* full accumulation (Vgb >= 0) reachable by this testbench; increasing Vctrl
+* drives Vgb more negative (toward/through depletion). C is therefore
+* expected to be monotonically non-increasing in Vctrl -- see README.md
+* "Sign convention and what Vctrl=0 means" for what that does and does not
+* imply about which physical polarity a real tank would use.
+*
+* bn is tied to the SAME node as W (not held at a separate fixed rail as
+* some real layouts would for isolation): both this testbench's Vctrl range
+* (0 .. 3.3 V) and the internal dsubw junction's built-in voltage keep that
+* junction at zero or reverse bias throughout, so this simplification does
+* not forward-bias anything the model would otherwise reverse-bias -- but it
+* IS a modeling choice, stated here rather than left implicit.
+*
+* Bias chokes: same rationale as tb_mimcap_zscan.spice.tmpl -- an ideal 1 A
+* AC current source is an open circuit at DC, and this device's gates have no
+* resistive DC path to anywhere (only the internal Cic1/Cic2 caps and the
+* "mosvar" OSDI device itself, both high-impedance at DC), so each hot node
+* needs an ideal 1 H choke to 0 V or the operating point is singular. Vctrl
+* itself is an ideal voltage source, which is already a perfect AC short, so
+* the ctrl node needs no separate choke.
+*
+* OSDI: sg13_hv_svaricap's internal "mosvar"-typed devices (nmvcap1, nmvcap2
+* in sg13g2_svaricaphv_mod.lib) only resolve once mosvar.osdi is loaded via
+* `pre_osdi` inside .control, BEFORE the first analysis command runs --
+* ngspice defers instantiation of Verilog-A/OSDI devices to analysis setup,
+* not to netlist parse, so this must appear before `ac`, not before the
+* device lines. run_varactor_sweep.sh builds this file with
+* sim/tools/build-osdi.sh before generating any netlist that references it.
+*
+* GEOMETRIES
+* ----------
+* Four sg13_hv_svaricap instances, spanning this model's OWN documented
+* range (cornerMOShv.lib: lmin=2.99e-7, lmax=8.1e-7; wmin=3.7e-6,
+* wmax=9.8e-6; the subckt's own commented paramtest bounds: l in
+* [300n,800n], w in [3.74u,9.74u], Nx in [1,10], Ny<=1) -- NOT "300 nm to a
+* few um" as issue #18 informally described it before this study checked the
+* file. See README.md "The l range is narrower than the issue assumed" for
+* that correction, stated the way sim/README.md rule 4 requires.
+*   mos_small  : l=300n (floor)   w=3.74u (floor) Nx=1  Ny=1
+*   mos_mid    : l=550n (mid)     w=6.00u         Nx=4  Ny=1
+*   mos_large  : l=800n (ceiling) w=9.74u (ceil.) Nx=10 (ceiling) Ny=1
+*   mos_xlarge : FOUR mos_large unit cells in parallel. Nx=10 is the model's
+*                own documented ceiling (unenforced in this OSDI build, but
+*                honoured here anyway rather than exceeded past what IHP
+*                states the model is valid for), so reaching
+*                tank-characterization finding 3's ~2 pF top end needs
+*                paralleling multiple max-rated cells, not one instance
+*                pushed out of range -- exactly how a real layout would do
+*                it (parallel unit fingers), not a testbench artifact.
+*
+* REFERENCE NETWORK (known-answer check on the extraction math) -- identical
+* to tank-characterization/testbench/tb_mimcap_zscan.spice.tmpl's, so the
+* same 0.1 % tolerance and closed forms apply; see that file's header for the
+* algebra. It is corner-, temperature- and Vctrl-independent by construction
+* and is re-run at every point anyway, to catch a run whose extraction
+* arithmetic silently went wrong.
+*
+* Corner: svaricap_mos_ff_-40c_3.3v   (MOS section mos_ff, -40 C, Vctrl 3.3 V)
+* Record: 20260909-231619-de50891
+* PDK models: /Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/models
+* OSDI: /Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+
+.lib "/Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib" mos_ff
+.temp -40
+
+* ---------------------------------------------------------------- control
+Vctrl ctrl 0 dc 3.3 ac 0
+
+* --------------------------------------------------------- mos_small (floor)
+Ismall 0 hsmall dc 0 ac 1
+Lsmall hsmall 0 1
+Xsmall hsmall ctrl hsmall ctrl sg13_hv_svaricap l=300n w=3.74u Nx=1 Ny=1
+
+* ------------------------------------------------------------- mos_mid
+Imid 0 hmid dc 0 ac 1
+Lmid hmid 0 1
+Xmid hmid ctrl hmid ctrl sg13_hv_svaricap l=550n w=6.00u Nx=4 Ny=1
+
+* ------------------------------------------------------ mos_large (ceiling)
+Ilarge 0 hlarge dc 0 ac 1
+Llarge hlarge 0 1
+Xlarge hlarge ctrl hlarge ctrl sg13_hv_svaricap l=800n w=9.74u Nx=10 Ny=1
+
+* ------------------------------------------- mos_xlarge (4x mos_large cells)
+Ixlarge 0 hxlarge dc 0 ac 1
+Lxlarge hxlarge 0 1
+Xxlarge1 hxlarge ctrl hxlarge ctrl sg13_hv_svaricap l=800n w=9.74u Nx=10 Ny=1
+Xxlarge2 hxlarge ctrl hxlarge ctrl sg13_hv_svaricap l=800n w=9.74u Nx=10 Ny=1
+Xxlarge3 hxlarge ctrl hxlarge ctrl sg13_hv_svaricap l=800n w=9.74u Nx=10 Ny=1
+Xxlarge4 hxlarge ctrl hxlarge ctrl sg13_hv_svaricap l=800n w=9.74u Nx=10 Ny=1
+
+* --------------------------------- ideal reference network (known answers)
+Iref 0 ref dc 0 ac 1
+Lref ref refn 1n
+Rref refn 0 2
+Cref ref 0 100f
+
+.control
+pre_osdi /Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+
+* --- pass 1: dense sweep, used only for the scalar .meas extractions -------
+ac dec 500 1e8 3e11
+
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+
+let zsmall  = imag(v(hsmall))
+let csmall  = imag(1/v(hsmall))/wrad
+let qsmall  = abs(imag(1/v(hsmall)))/real(1/v(hsmall))
+let zmid    = imag(v(hmid))
+let cmid    = imag(1/v(hmid))/wrad
+let qmid    = abs(imag(1/v(hmid)))/real(1/v(hmid))
+let zlarge  = imag(v(hlarge))
+let clarge  = imag(1/v(hlarge))/wrad
+let qlarge  = abs(imag(1/v(hlarge)))/real(1/v(hlarge))
+let zxlarge = imag(v(hxlarge))
+let cxlarge = imag(1/v(hxlarge))/wrad
+let qxlarge = abs(imag(1/v(hxlarge)))/real(1/v(hxlarge))
+
+let zref = imag(v(ref))
+let lref = imag(v(ref))/wrad
+let qref = imag(v(ref))/real(v(ref))
+
+* SRF: Im(Z) crossing zero upward. sg13_hv_svaricap has no plate/feed
+* inductance of any kind (it is a gate capacitance behind a well/substrate
+* resistor network, not a distributed-plate structure), so this measurement
+* is EXPECTED to fail with "out of interval" at every corner -- recorded as
+* SRF = none, the same convention tank-characterization uses for cap_cmim.
+meas ac srf_small  WHEN zsmall=0  RISE=1
+meas ac srf_mid    WHEN zmid=0    RISE=1
+meas ac srf_large  WHEN zlarge=0  RISE=1
+meas ac srf_xlarge WHEN zxlarge=0 RISE=1
+meas ac srf_ref    WHEN zref=0    FALL=1
+
+meas ac c_small_1g   FIND csmall AT=1e9
+meas ac c_small_5g   FIND csmall AT=5e9
+meas ac c_small_10g  FIND csmall AT=1e10
+meas ac c_small_20g  FIND csmall AT=2e10
+meas ac q_small_1g   FIND qsmall AT=1e9
+meas ac q_small_5g   FIND qsmall AT=5e9
+meas ac q_small_10g  FIND qsmall AT=1e10
+meas ac q_small_20g  FIND qsmall AT=2e10
+
+meas ac c_mid_1g   FIND cmid AT=1e9
+meas ac c_mid_5g   FIND cmid AT=5e9
+meas ac c_mid_10g  FIND cmid AT=1e10
+meas ac c_mid_20g  FIND cmid AT=2e10
+meas ac q_mid_1g   FIND qmid AT=1e9
+meas ac q_mid_5g   FIND qmid AT=5e9
+meas ac q_mid_10g  FIND qmid AT=1e10
+meas ac q_mid_20g  FIND qmid AT=2e10
+
+meas ac c_large_1g   FIND clarge AT=1e9
+meas ac c_large_5g   FIND clarge AT=5e9
+meas ac c_large_10g  FIND clarge AT=1e10
+meas ac c_large_20g  FIND clarge AT=2e10
+meas ac q_large_1g   FIND qlarge AT=1e9
+meas ac q_large_5g   FIND qlarge AT=5e9
+meas ac q_large_10g  FIND qlarge AT=1e10
+meas ac q_large_20g  FIND qlarge AT=2e10
+
+meas ac c_xlarge_1g   FIND cxlarge AT=1e9
+meas ac c_xlarge_5g   FIND cxlarge AT=5e9
+meas ac c_xlarge_10g  FIND cxlarge AT=1e10
+meas ac c_xlarge_20g  FIND cxlarge AT=2e10
+meas ac q_xlarge_1g   FIND qxlarge AT=1e9
+meas ac q_xlarge_5g   FIND qxlarge AT=5e9
+meas ac q_xlarge_10g  FIND qxlarge AT=1e10
+meas ac q_xlarge_20g  FIND qxlarge AT=2e10
+
+meas ac l_ref_1g   FIND lref AT=1e9
+meas ac q_ref_1g   FIND qref AT=1e9
+
+* --- pass 2: coarse sweep, written out as the committed curve file --------
+set wr_singlescale
+set wr_vecnames
+ac dec 50 1e8 3e11
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+let c_small  = imag(1/v(hsmall))/wrad
+let q_small  = abs(imag(1/v(hsmall)))/real(1/v(hsmall))
+let c_mid    = imag(1/v(hmid))/wrad
+let q_mid    = abs(imag(1/v(hmid)))/real(1/v(hmid))
+let c_large  = imag(1/v(hlarge))/wrad
+let q_large  = abs(imag(1/v(hlarge)))/real(1/v(hlarge))
+let c_xlarge = imag(1/v(hxlarge))/wrad
+let q_xlarge = abs(imag(1/v(hxlarge)))/real(1/v(hxlarge))
+let l_ref    = imag(v(ref))/wrad
+let q_ref    = imag(v(ref))/real(v(ref))
+wrdata /Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-18/sim/varactor-characterization/records/20260909-231619-de50891-curves/svaricap_mos_ff_-40c_3.3v.csv c_small q_small c_mid q_mid c_large q_large c_xlarge q_xlarge l_ref q_ref
+.endc
+
+.end
