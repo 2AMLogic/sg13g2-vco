@@ -53,10 +53,20 @@ fi
 # Note on OSDI: nothing under sim/tank-characterization/ needs the PDK's
 # Verilog-A (OSDI) device models -- cap_cmim, cap_rfcmim and the parasitic
 # subcircuits in capacitors_mod.lib are built entirely from ngspice's native
-# R/L/C primitives and a `.model ... C` card. Testbenches that later
-# instantiate a MOS (PSP103) or an r3_cmc resistor WILL need compiled .osdi
-# binaries; adding that resolution here is deliberately deferred to the first
-# issue that actually needs it, so this file does not carry an untested code
-# path.
+# R/L/C primitives and a `.model ... C` card. sim/varactor-characterization/
+# (#18) is the first study that does: `sg13_hv_svaricap` is a Verilog-A
+# ("mosvar") compact model, only instantiable via a compiled .osdi shared
+# library. SG13G2_OSDI_DIR below is that resolution -- deferred until now on
+# purpose, per this comment's earlier revision, so this file never carried an
+# untested code path.
+if [[ -n "${PDK_ROOT:-}" && -d "${PDK_ROOT}/${PDK}/libs.tech/ngspice/models" ]]; then
+  export SG13G2_OSDI_DIR="${PDK_ROOT}/${PDK}/libs.tech/ngspice/osdi"
+  if [[ ! -f "${SG13G2_OSDI_DIR}/mosvar.osdi" ]]; then
+    echo "sg13g2: mosvar.osdi not built yet in ${SG13G2_OSDI_DIR}" >&2
+    echo "sg13g2: sg13_hv_svaricap will not simulate until it is." >&2
+    echo "sg13g2: Build it with:  sim/tools/build-osdi.sh" >&2
+    echo "sg13g2: (sim/varactor-characterization/run_varactor_sweep.sh does this itself)." >&2
+  fi
+fi
 
 unset _sg13g2_env_self _sg13g2_sim_dir _sg13g2_candidate

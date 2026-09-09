@@ -1,0 +1,194 @@
+* tb_diode_varactor_vscan -- SG13G2 dantenna/dpantenna reverse-bias C(V) scan
+*
+* TEMPLATE. run_varactor_sweep.sh substitutes the @@...@@ placeholders and
+* writes the resulting netlist to
+* netlist-snapshots/<record-id>/<corner-id>.spice before handing it to
+* ngspice, so every record freezes the exact netlist it simulated
+* (sim/README.md rule 3).
+*
+* DEVICES AND BIAS CONVENTION
+* ---------------------------
+* dantenna and dpantenna (diodes.lib) are the two junction-diode tuning
+* candidates issue #18 names:
+*   .subckt dantenna  1 2   -- (bn/pWell anode, NSD cathode)
+*   .subckt dpantenna 1 2   -- (PSD anode, nWell cathode)
+* Both are reverse-bias antenna/ESD-protection diodes, not devices IHP
+* designed for RF tuning -- they are characterized here only because issue
+* #18 names them as the junction-diode alternative to sg13_hv_svaricap.
+*
+* Pin 1 is the anode, pin 2 the cathode (standard SPICE `D n+ n- model`
+* order, confirmed by the .subckt's own internal `D1 1 2 darea` /
+* `D1 1 2 dparea` lines). This testbench grounds pin 1 (the "hot" node,
+* fixed at 0 V DC through a choke, carrying the 1 A AC probe) and drives
+* pin 2 with +0.9 V DC through an ideal source -- i.e. cathode more
+* positive than anode, which IS reverse bias for both devices at every
+* 0.9 >= 0 this study sweeps.
+*
+* A choke is REQUIRED on the hot node even though a diode is not a DC-open
+* device: without one, the DC operating point has no independent reference
+* for "hot" other than the diode's own I-V curve against Vctrl, and since
+* the AC current source's DC value is exactly 0, ngspice solves for
+* V(hot) = V(ctrl) (zero diode current forces zero diode voltage) -- i.e.
+* NO reverse bias is actually applied, silently. This was caught during
+* testbench development (a first draft without the choke returned a C(V)
+* that was completely flat in V) and is exactly the kind of testbench bug
+* sim/README.md rule 5 ("method before number") exists to catch before it
+* becomes a wrong result.
+*
+* AREAS
+* -----
+* Two areas per device (l=w square, DEV_A=(l*w)/1p per diodes.lib's own
+* .subckt .params line, i.e. an area in um^2):
+*   <dev>_small : l=2u,  w=2u   (DEV_A =  4 um^2)
+*   <dev>_large : l=20u, w=20u  (DEV_A = 400 um^2)
+* These are NOT chosen to bracket tank-characterization's ~sub-pF..2pF
+* target C -- see README.md "Why the diode areas are smaller than the MOS
+* geometries' C range" for why that bracket was abandoned for this half of
+* the study.
+*
+* REFERENCE NETWORK (known-answer check on the extraction math) -- identical
+* to tank-characterization/testbench/tb_mimcap_zscan.spice.tmpl's; see that
+* file's header for the algebra and tb_mos_varactor_vscan.spice.tmpl's
+* header for why it is re-run at every point.
+*
+* CORNER-INVARIANCE, MEASURED NOT ASSUMED
+* ----------------------------------------
+* cornerDIO.lib's dio_tt/dio_ss/dio_ff sections each `.include "diodes.lib"`
+* UNCONDITIONALLY and identically -- verified by reading the file (2AMLogic's
+* IHP-Open-PDK v0.3.0 install): the only parameters that differ between the
+* three sections are `schottky_nbl1_is`/`schottky_nbl1_kf`, which belong to
+* `.subckt dschottky_nbl1`, a device unrelated to dantenna/dpantenna. So
+* darea/dperim/dcorner/dparea/dpperim/dpcorner carry NO process-corner
+* dependence in this PDK release at all. This testbench still runs all three
+* dio_* sections (rather than skip two of them) so that claim is measured,
+* not assumed -- the same posture tank-characterization took for MIM-cap
+* bias-independence.
+*
+* Corner: svaricap_dio_tt_-40c_0.9v   (diode section dio_tt, -40 C, Vctrl 0.9 V)
+* Record: 20260909-231619-de50891
+* PDK models: /Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/models
+
+.lib "/Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerDIO.lib" dio_tt
+.temp -40
+
+* ---------------------------------------------------------------- control
+Vctrl ctrl 0 dc 0.9 ac 0
+
+* ---------------------------------------------------------- dantenna_small
+Idasm 0 hdasm dc 0 ac 1
+Ldasm hdasm 0 1
+Xdasm hdasm ctrl dantenna l=2u w=2u
+
+* ---------------------------------------------------------- dantenna_large
+Idalg 0 hdalg dc 0 ac 1
+Ldalg hdalg 0 1
+Xdalg hdalg ctrl dantenna l=20u w=20u
+
+* --------------------------------------------------------- dpantenna_small
+Idpsm 0 hdpsm dc 0 ac 1
+Ldpsm hdpsm 0 1
+Xdpsm hdpsm ctrl dpantenna l=2u w=2u
+
+* --------------------------------------------------------- dpantenna_large
+Idplg 0 hdplg dc 0 ac 1
+Ldplg hdplg 0 1
+Xdplg hdplg ctrl dpantenna l=20u w=20u
+
+* --------------------------------- ideal reference network (known answers)
+Iref 0 ref dc 0 ac 1
+Lref ref refn 1n
+Rref refn 0 2
+Cref ref 0 100f
+
+.control
+* --- pass 1: dense sweep, used only for the scalar .meas extractions -------
+ac dec 500 1e8 3e11
+
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+
+let zdasm = imag(v(hdasm))
+let cdasm = imag(1/v(hdasm))/wrad
+let qdasm = abs(imag(1/v(hdasm)))/real(1/v(hdasm))
+let zdalg = imag(v(hdalg))
+let cdalg = imag(1/v(hdalg))/wrad
+let qdalg = abs(imag(1/v(hdalg)))/real(1/v(hdalg))
+let zdpsm = imag(v(hdpsm))
+let cdpsm = imag(1/v(hdpsm))/wrad
+let qdpsm = abs(imag(1/v(hdpsm)))/real(1/v(hdpsm))
+let zdplg = imag(v(hdplg))
+let cdplg = imag(1/v(hdplg))/wrad
+let qdplg = abs(imag(1/v(hdplg)))/real(1/v(hdplg))
+
+let zref = imag(v(ref))
+let lref = imag(v(ref))/wrad
+let qref = imag(v(ref))/real(v(ref))
+
+* SRF: same convention as the MOS template -- a plain reverse-biased
+* junction has no plate/feed inductance, so this is EXPECTED to fail (SRF =
+* none) at every corner, exactly like tank-characterization's cap_cmim.
+meas ac srf_dasm WHEN zdasm=0 RISE=1
+meas ac srf_dalg WHEN zdalg=0 RISE=1
+meas ac srf_dpsm WHEN zdpsm=0 RISE=1
+meas ac srf_dplg WHEN zdplg=0 RISE=1
+meas ac srf_ref  WHEN zref=0  FALL=1
+
+meas ac c_dasm_1g   FIND cdasm AT=1e9
+meas ac c_dasm_5g   FIND cdasm AT=5e9
+meas ac c_dasm_10g  FIND cdasm AT=1e10
+meas ac c_dasm_20g  FIND cdasm AT=2e10
+meas ac q_dasm_1g   FIND qdasm AT=1e9
+meas ac q_dasm_5g   FIND qdasm AT=5e9
+meas ac q_dasm_10g  FIND qdasm AT=1e10
+meas ac q_dasm_20g  FIND qdasm AT=2e10
+
+meas ac c_dalg_1g   FIND cdalg AT=1e9
+meas ac c_dalg_5g   FIND cdalg AT=5e9
+meas ac c_dalg_10g  FIND cdalg AT=1e10
+meas ac c_dalg_20g  FIND cdalg AT=2e10
+meas ac q_dalg_1g   FIND qdalg AT=1e9
+meas ac q_dalg_5g   FIND qdalg AT=5e9
+meas ac q_dalg_10g  FIND qdalg AT=1e10
+meas ac q_dalg_20g  FIND qdalg AT=2e10
+
+meas ac c_dpsm_1g   FIND cdpsm AT=1e9
+meas ac c_dpsm_5g   FIND cdpsm AT=5e9
+meas ac c_dpsm_10g  FIND cdpsm AT=1e10
+meas ac c_dpsm_20g  FIND cdpsm AT=2e10
+meas ac q_dpsm_1g   FIND qdpsm AT=1e9
+meas ac q_dpsm_5g   FIND qdpsm AT=5e9
+meas ac q_dpsm_10g  FIND qdpsm AT=1e10
+meas ac q_dpsm_20g  FIND qdpsm AT=2e10
+
+meas ac c_dplg_1g   FIND cdplg AT=1e9
+meas ac c_dplg_5g   FIND cdplg AT=5e9
+meas ac c_dplg_10g  FIND cdplg AT=1e10
+meas ac c_dplg_20g  FIND cdplg AT=2e10
+meas ac q_dplg_1g   FIND qdplg AT=1e9
+meas ac q_dplg_5g   FIND qdplg AT=5e9
+meas ac q_dplg_10g  FIND qdplg AT=1e10
+meas ac q_dplg_20g  FIND qdplg AT=2e10
+
+meas ac l_ref_1g   FIND lref AT=1e9
+meas ac q_ref_1g   FIND qref AT=1e9
+
+* --- pass 2: coarse sweep, written out as the committed curve file --------
+set wr_singlescale
+set wr_vecnames
+ac dec 50 1e8 3e11
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+let c_dasm = imag(1/v(hdasm))/wrad
+let q_dasm = abs(imag(1/v(hdasm)))/real(1/v(hdasm))
+let c_dalg = imag(1/v(hdalg))/wrad
+let q_dalg = abs(imag(1/v(hdalg)))/real(1/v(hdalg))
+let c_dpsm = imag(1/v(hdpsm))/wrad
+let q_dpsm = abs(imag(1/v(hdpsm)))/real(1/v(hdpsm))
+let c_dplg = imag(1/v(hdplg))/wrad
+let q_dplg = abs(imag(1/v(hdplg)))/real(1/v(hdplg))
+let l_ref  = imag(v(ref))/wrad
+let q_ref  = imag(v(ref))/real(v(ref))
+wrdata /Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-18/sim/varactor-characterization/records/20260909-231619-de50891-curves/svaricap_dio_tt_-40c_0.9v.csv c_dasm q_dasm c_dalg q_dalg c_dpsm q_dpsm c_dplg q_dplg l_ref q_ref
+.endc
+
+.end

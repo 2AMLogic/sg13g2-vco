@@ -1,0 +1,68 @@
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_diode_varactor_vscan -- sg13g2 dantenna/dpantenna reverse-bias c(v) scan
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 1739
+
+Error: measure  srf_dasm  when(WHEN) : out of interval
+ meas ac srf_dasm when zdasm=0 rise=1 failed!
+
+
+Error: measure  srf_dalg  when(WHEN) : out of interval
+ meas ac srf_dalg when zdalg=0 rise=1 failed!
+
+
+Error: measure  srf_dpsm  when(WHEN) : out of interval
+ meas ac srf_dpsm when zdpsm=0 rise=1 failed!
+
+
+Error: measure  srf_dplg  when(WHEN) : out of interval
+ meas ac srf_dplg when zdplg=0 rise=1 failed!
+
+srf_ref             =  1.59119e+10
+c_dasm_1g           =  1.58172e-15
+c_dasm_5g           =  1.97756e-16
+c_dasm_10g          =  6.29052e-17
+c_dasm_20g          =  1.73289e-17
+q_dasm_1g           =  1.18784e+00
+q_dasm_5g           =  3.16580e-01
+q_dasm_10g          =  1.81955e-01
+q_dasm_20g          =  9.62968e-02
+c_dalg_1g           =  1.45267e-13
+c_dalg_5g           =  1.33453e-14
+c_dalg_10g          =  3.58207e-15
+c_dalg_20g          =  9.18932e-16
+q_dalg_1g           =  1.14941e+00
+q_dalg_5g           =  2.38758e-01
+q_dalg_10g          =  1.22485e-01
+q_dalg_20g          =  6.20059e-02
+c_dpsm_1g           =  1.82908e-15
+c_dpsm_5g           =  2.99290e-16
+c_dpsm_10g          =  8.55420e-17
+c_dpsm_20g          =  2.22509e-17
+q_dpsm_1g           =  1.80058e+00
+q_dpsm_5g           =  3.88510e-01
+q_dpsm_10g          =  1.98805e-01
+q_dpsm_20g          =  1.00186e-01
+c_dplg_1g           =  1.63513e-13
+c_dplg_5g           =  2.31311e-14
+c_dplg_10g          =  6.31050e-15
+c_dplg_20g          =  1.61535e-15
+q_dplg_1g           =  1.70377e+00
+q_dplg_5g           =  3.44200e-01
+q_dplg_10g          =  1.72714e-01
+q_dplg_20g          =  8.64666e-02
+l_ref_1g            =  1.00356e-09
+q_ref_1g            =  3.12793e+00
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 174
+Note: Simulation executed from .control section 
