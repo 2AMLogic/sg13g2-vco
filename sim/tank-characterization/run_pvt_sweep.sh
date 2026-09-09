@@ -57,6 +57,8 @@ REPO_ROOT="$(cd "${SIM_DIR}/.." && pwd)"
 
 # shellcheck source=../env.sh
 source "${SIM_DIR}/env.sh"
+# shellcheck source=../lib.sh
+source "${SIM_DIR}/lib.sh"
 
 # ------------------------------------------------------------------ preflight
 if ! command -v ngspice >/dev/null 2>&1; then
@@ -70,19 +72,12 @@ if [[ -z "${SG13G2_NGSPICE_MODELS:-}" || ! -f "${SG13G2_NGSPICE_MODELS}/cornerCA
   exit 1
 fi
 
-NGSPICE_VERSION="$(ngspice --version 2>&1 | sed -n 's/^\*\* \(ngspice-[0-9.]*\).*/\1/p' | head -1)"
-NGSPICE_VERSION="${NGSPICE_VERSION:-unknown}"
+NGSPICE_VERSION="$(detect_ngspice_version)"
 
-sha256_of() {
-  if command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | awk '{print $1}'
-  elif command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'
-  else echo "unavailable"; fi
-}
 CORNERCAP_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib")"
 CAPMOD_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/capacitors_mod.lib")"
 
-GIT_SHA="$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo nogit)"
-RECORD_ID="$(date -u +%Y%m%d-%H%M%S)-${GIT_SHA}"
+RECORD_ID="$(mint_record_id "${REPO_ROOT}")"
 
 NETLIST_DIR="${EXPERIMENT_DIR}/netlist-snapshots/${RECORD_ID}"
 LOG_DIR="${EXPERIMENT_DIR}/corners/${RECORD_ID}"
@@ -96,10 +91,7 @@ mkdir -p "${NETLIST_DIR}" "${LOG_DIR}" "${CURVE_DIR}"
 # ngspice must run from a directory holding this experiment's own .spiceinit,
 # so a cold-start run does not depend on whether the PDK's install.py ever
 # symlinked one into $HOME.
-WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/sg13g2-tank.XXXXXX")"
-cleanup() { rm -rf "${WORKDIR}"; }
-trap cleanup EXIT
-cp "${EXPERIMENT_DIR}/.spiceinit" "${WORKDIR}/.spiceinit"
+make_scratch_workdir "sg13g2-tank"
 
 # --------------------------------------------------------------- sweep ranges
 # The target band for this block is NOT chosen yet (spec/target-spec.md row 1
@@ -150,15 +142,6 @@ DEV_SPECS=(
   "b35:cap_rfcmim:35:35:10"
   "b50:cap_rfcmim:50:50:15"
 )
-
-# Pull a scalar out of an ngspice batch log. `meas` prints
-#   "<name>                =  <value>"
-# on success and "meas ... failed!" on a miss; a miss must come back empty so
-# the caller can record it as "none" instead of as a number.
-meas_value() {
-  local log="$1" name="$2"
-  awk -v n="${name}" '$1 == n && $2 == "=" { print $3; found=1 } END { if (!found) print "" }' "${log}" | head -1
-}
 
 echo "corner_label,cap_section,temp_c,vbias_v,device_model,w_um,l_um,wfeed_um,status,srf_hz,c_1ghz_f,c_2ghz_f,c_5ghz_f,c_10ghz_f,c_20ghz_f,q_1ghz,q_2ghz,q_5ghz,q_10ghz,q_20ghz" > "${CSV_OUT}"
 echo "corner_label,temp_c,vbias_v,quantity,simulated,closed_form,rel_err_pct,tol_pct,status" > "${METHOD_CSV}"

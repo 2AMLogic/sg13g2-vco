@@ -41,6 +41,9 @@ EXPERIMENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SIM_DIR="$(cd "${EXPERIMENT_DIR}/.." && pwd)"
 REPO_ROOT="$(cd "${SIM_DIR}/.." && pwd)"
 
+# shellcheck source=../lib.sh
+source "${SIM_DIR}/lib.sh"
+
 MODEL_LIB="${EXPERIMENT_DIR}/sg13g2_inductor_analytic.spice"
 REF_AWK="${EXPERIMENT_DIR}/testbench/closed_form_z.awk"
 
@@ -52,19 +55,12 @@ for f in "${MODEL_LIB}" "${REF_AWK}"; do
   [[ -f "${f}" ]] || { echo "error: missing ${f}" >&2; exit 1; }
 done
 
-NGSPICE_VERSION="$(ngspice --version 2>&1 | sed -n 's/^\*\* \(ngspice-[0-9.]*\).*/\1/p' | head -1)"
-NGSPICE_VERSION="${NGSPICE_VERSION:-unknown}"
+NGSPICE_VERSION="$(detect_ngspice_version)"
 
-sha256_of() {
-  if command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | awk '{print $1}'
-  elif command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'
-  else echo "unavailable"; fi
-}
 MODEL_SHA="$(sha256_of "${MODEL_LIB}")"
 REF_SHA="$(sha256_of "${REF_AWK}")"
 
-GIT_SHA="$(git -C "${REPO_ROOT}" rev-parse --short HEAD 2>/dev/null || echo nogit)"
-RECORD_ID="$(date -u +%Y%m%d-%H%M%S)-${GIT_SHA}"
+RECORD_ID="$(mint_record_id "${REPO_ROOT}")"
 
 NETLIST_DIR="${EXPERIMENT_DIR}/netlist-snapshots/${RECORD_ID}"
 LOG_DIR="${EXPERIMENT_DIR}/corners/${RECORD_ID}"
@@ -75,10 +71,7 @@ GEOM_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-geometry-check.csv"
 MD_OUT="${EXPERIMENT_DIR}/records/${RECORD_ID}.md"
 mkdir -p "${NETLIST_DIR}" "${LOG_DIR}" "${CURVE_DIR}"
 
-WORKDIR="$(mktemp -d "${TMPDIR:-/tmp}/sg13g2-indmodel.XXXXXX")"
-cleanup() { rm -rf "${WORKDIR}"; }
-trap cleanup EXIT
-cp "${EXPERIMENT_DIR}/.spiceinit" "${WORKDIR}/.spiceinit"
+make_scratch_workdir "sg13g2-indmodel"
 
 # --------------------------------------------------------------- sweep ranges
 # Same 100 MHz .. 300 GHz band as sim/tank-characterization, for the same
@@ -131,11 +124,6 @@ IND_SPECS=(
 # there, which is what sets the tolerance below.
 CHECK_FREQS=(1e9 5e9 1e10 2e10)
 CHECK_TOL_PCT=0.5
-
-meas_value() {
-  local log="$1" name="$2"
-  awk -v n="${name}" '$1 == n && $2 == "=" { print $3; found=1 } END { if (!found) print "" }' "${log}" | head -1
-}
 
 echo "corner_label,mc_rsh,mc_rsub,temp_c,geometry,w_um,s_um,d_um,nr_r,status,srf_hz,l_1ghz_h,l_5ghz_h,l_10ghz_h,q_1ghz,q_5ghz,q_10ghz,qlow_1ghz,qlow_5ghz,qlow_10ghz" > "${CSV_OUT}"
 echo "corner_label,temp_c,geometry,f_hz,quantity,simulated,closed_form,rel_err_pct,tol_pct,status" > "${METHOD_CSV}"

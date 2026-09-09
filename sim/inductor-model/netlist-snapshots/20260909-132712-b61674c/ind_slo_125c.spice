@@ -1,0 +1,134 @@
+* tb_inductor_model_check -- known-answer + PVT check of sg13g2_inductor_analytic
+*
+* TEMPLATE. run_model_check.sh substitutes the @@...@@ placeholders and writes
+* the resulting netlist to netlist-snapshots/<record-id>/<corner-id>.spice.
+*
+* WHAT THIS CHECKS, AND WHAT IT DOES NOT
+* --------------------------------------
+* It checks that the SPICE netlist in sg13g2_inductor_analytic.spice actually
+* implements the closed form that file's header claims it implements -- the
+* driving-point impedance of the 2-pi topology whose series branch is
+* R_dc * xi*coth(xi), truncated at ten ladder sections. run_model_check.sh
+* recomputes that closed form independently in awk, from the same geometry and
+* the same PDK constants, and fails the run if the two disagree by more than
+* the stated tolerance.
+*
+* It therefore validates the IMPLEMENTATION, not the MODEL. Whether the model
+* is a good description of a real SG13G2 spiral is a separate question,
+* answered (as far as it can be answered without EM extraction or silicon) by
+* the cross-checks in README.md and by the accuracy limits stated in
+* sg13g2_inductor_analytic.spice's own header. This distinction is exactly the
+* one sim/tank-characterization/ draws for its MIM extraction arithmetic: the
+* method being right is not the model being right.
+*
+* The same 1 A AC current-injection convention as tb_inductor_zscan and
+* tb_mimcap_zscan: the source is written "I 0 <node>" so that V(node) = +Z(f)
+* rather than -Z(f).
+*
+* GEOMETRIES: the three from the PDK's own LVS unit testcase
+* (libs.tech/klayout/tech/lvs/testing/testcases/unit/ind_devices/netlist/
+* inductor.cdl), so they are geometries IHP itself exercises.
+*
+* Corner: ind_slo_125c
+* Record: 20260909-132712-b61674c
+* Model library: /Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-16/sim/inductor-model/sg13g2_inductor_analytic.spice
+* mc_rsh = 1.0  (TopMetal2 sheet-resistance multiplier)
+* mc_rsub = 0.75 (substrate-resistivity multiplier)
+
+.include "/Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-16/sim/inductor-model/sg13g2_inductor_analytic.spice"
+.temp 125
+
+Ip1  0 lp1  dc 0 ac 1
+Ldp1 lp1 0 1
+XL_p1 lp1 0 0 inductor w=8.22u s=3.29u d=47.65u nr_r=1 mc_rsh=1.0 mc_rsub=0.75
+
+Ip13  0 lp13 dc 0 ac 1
+Ldp13 lp13 0 1
+XL_p13 lp13 0 0 inductor w=6.10u s=3.29u d=110.11u nr_r=5 mc_rsh=1.0 mc_rsub=0.75
+
+Ip11  0 lp11 dc 0 ac 1
+Ldp11 lp11 0 1
+XL_p11 lp11 0 0 inductor w=8.22u s=3.74u d=141.975u nr_r=4 mc_rsh=1.0 mc_rsub=0.75
+
+.control
+ac dec 500 1e8 3e11
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+
+let zi_p1  = imag(v(lp1))
+let zr_p1  = real(v(lp1))
+let l_p1   = imag(v(lp1))/wrad
+let q_p1   = imag(v(lp1))/real(v(lp1))
+let zi_p13 = imag(v(lp13))
+let zr_p13 = real(v(lp13))
+let l_p13  = imag(v(lp13))/wrad
+let q_p13  = imag(v(lp13))/real(v(lp13))
+let zi_p11 = imag(v(lp11))
+let zr_p11 = real(v(lp11))
+let l_p11  = imag(v(lp11))/wrad
+let q_p11  = imag(v(lp11))/real(v(lp11))
+
+meas ac srf_p1  WHEN zi_p1=0  FALL=1
+meas ac srf_p13 WHEN zi_p13=0 FALL=1
+meas ac srf_p11 WHEN zi_p11=0 FALL=1
+
+meas ac l_p1_1g   FIND l_p1  AT=1e9
+meas ac l_p1_5g   FIND l_p1  AT=5e9
+meas ac l_p1_10g  FIND l_p1  AT=1e10
+meas ac q_p1_1g   FIND q_p1  AT=1e9
+meas ac q_p1_5g   FIND q_p1  AT=5e9
+meas ac q_p1_10g  FIND q_p1  AT=1e10
+meas ac zr_p1_1g  FIND zr_p1 AT=1e9
+meas ac zi_p1_1g  FIND zi_p1 AT=1e9
+meas ac zr_p1_5g  FIND zr_p1 AT=5e9
+meas ac zi_p1_5g  FIND zi_p1 AT=5e9
+meas ac zr_p1_10g FIND zr_p1 AT=1e10
+meas ac zi_p1_10g FIND zi_p1 AT=1e10
+meas ac zr_p1_20g FIND zr_p1 AT=2e10
+meas ac zi_p1_20g FIND zi_p1 AT=2e10
+
+meas ac l_p13_1g   FIND l_p13  AT=1e9
+meas ac l_p13_5g   FIND l_p13  AT=5e9
+meas ac l_p13_10g  FIND l_p13  AT=1e10
+meas ac q_p13_1g   FIND q_p13  AT=1e9
+meas ac q_p13_5g   FIND q_p13  AT=5e9
+meas ac q_p13_10g  FIND q_p13  AT=1e10
+meas ac zr_p13_1g  FIND zr_p13 AT=1e9
+meas ac zi_p13_1g  FIND zi_p13 AT=1e9
+meas ac zr_p13_5g  FIND zr_p13 AT=5e9
+meas ac zi_p13_5g  FIND zi_p13 AT=5e9
+meas ac zr_p13_10g FIND zr_p13 AT=1e10
+meas ac zi_p13_10g FIND zi_p13 AT=1e10
+meas ac zr_p13_20g FIND zr_p13 AT=2e10
+meas ac zi_p13_20g FIND zi_p13 AT=2e10
+
+meas ac l_p11_1g   FIND l_p11  AT=1e9
+meas ac l_p11_5g   FIND l_p11  AT=5e9
+meas ac l_p11_10g  FIND l_p11  AT=1e10
+meas ac q_p11_1g   FIND q_p11  AT=1e9
+meas ac q_p11_5g   FIND q_p11  AT=5e9
+meas ac q_p11_10g  FIND q_p11  AT=1e10
+meas ac zr_p11_1g  FIND zr_p11 AT=1e9
+meas ac zi_p11_1g  FIND zi_p11 AT=1e9
+meas ac zr_p11_5g  FIND zr_p11 AT=5e9
+meas ac zi_p11_5g  FIND zi_p11 AT=5e9
+meas ac zr_p11_10g FIND zr_p11 AT=1e10
+meas ac zi_p11_10g FIND zi_p11 AT=1e10
+meas ac zr_p11_20g FIND zr_p11 AT=2e10
+meas ac zi_p11_20g FIND zi_p11 AT=2e10
+
+set wr_singlescale
+set wr_vecnames
+ac dec 50 1e8 3e11
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+let l_ind_p1  = imag(v(lp1))/wrad
+let q_ind_p1  = imag(v(lp1))/real(v(lp1))
+let l_ind_p13 = imag(v(lp13))/wrad
+let q_ind_p13 = imag(v(lp13))/real(v(lp13))
+let l_ind_p11 = imag(v(lp11))/wrad
+let q_ind_p11 = imag(v(lp11))/real(v(lp11))
+wrdata /Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-16/sim/inductor-model/records/20260909-132712-b61674c-curves/ind_slo_125c.csv l_ind_p1 q_ind_p1 l_ind_p13 q_ind_p13 l_ind_p11 q_ind_p11
+.endc
+
+.end

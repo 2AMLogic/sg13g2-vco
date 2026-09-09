@@ -1,0 +1,260 @@
+* tb_mimcap_zscan -- SG13G2 MIM-capacitor small-signal impedance scan
+*
+* TEMPLATE. run_pvt_sweep.sh substitutes the @@...@@ placeholders and writes
+* the resulting netlist to netlist-snapshots/<record-id>/<corner-id>.spice
+* before handing it to ngspice, so every record freezes the exact netlist it
+* simulated (sim/README.md, "Netlist provenance").
+*
+* WHAT THIS MEASURES
+* ------------------
+* Each device under test is a two-terminal (or two-terminal-plus-substrate)
+* passive with its low side at AC ground. It is driven by an ideal 1 A AC
+* current source injecting INTO the hot node, so the node voltage IS the
+* device's driving-point impedance:  V(node) = Z(f), in ohms per amp.
+*
+* Note the source orientation:  "I<name> 0 <node>".  In SPICE a current
+* source "I n+ n-" drives current from n+ THROUGH the source to n-, i.e. it
+* SINKS current out of n+.  Writing it as "I 0 node" therefore injects into
+* `node`; the opposite order silently returns -Z (real part negative), which
+* is the easy way to get a sign-flipped Q out of this style of testbench.
+*
+* From Z(f) the .control block below derives, per device:
+*   Ceff(f) = Im(Y)/(2*pi*f)        parallel-equivalent capacitance, Y = 1/Z
+*   Q(f)    = |Im(Y)| / Re(Y)       quality factor (identical to |Im Z|/Re Z)
+*   SRF     = the f at which Im(Z) crosses zero going positive, i.e. where
+*             the device stops being net capacitive and turns inductive.
+*
+* Q is written in the admittance form on purpose: it is numerically better
+* conditioned than |Im Z|/Re Z near SRF, where Re(Z) blows up.
+*
+* Ld<node> is a 1 H bias-feed choke giving each hot node a DC path to the
+* bias rail. Something is needed: an ideal current source is an open circuit
+* at DC and both MIM models are DC-blocking from their PLUS pin, so without
+* it the operating point has a floating node. A large *resistor* is the
+* obvious choice and is the wrong one -- a 1e15 ohm bleeder next to
+* cap_cmim's own 55 mOhm series R spans 16 decades of conductance and makes
+* ngspice report "singular matrix: check node x<inst>.1" and fall back
+* through gmin/source stepping on every point (observed, ngspice-46). An
+* ideal choke is a perfect DC short, so the DC matrix is well conditioned,
+* and it adds no loss at all, so Re(Y) -- and therefore Q -- is untouched.
+* Its only error term is the shunt susceptance -1/(wL), which biases Ceff by
+* -1/(w^2 L): 2.5e-18 F at the 100 MHz bottom of the band against a 0.6 pF
+* smallest DUT, i.e. 4 ppm, falling as 1/f^2 above that. Substituting the
+* choke for the bleeder left every extracted scalar unchanged to the 6
+* significant figures ngspice prints.
+*
+* DEVICES
+* -------
+* cap_cmim   (capacitors_mod.lib): the *lumped* MIM model. A single 55 mOhm
+*            series resistor and an area+perimeter capacitance. It has no
+*            plate/feed inductance and no substrate network, so by
+*            construction it has NO self-resonance and its Q rises without
+*            bound as f falls. It is a low-frequency model.
+* cap_rfcmim (capacitors_mod.lib): the RF MIM model. Adds skin-effect
+*            R/L, plate + feed inductance, series plate resistance and an
+*            oxide/substrate network (Cox, Csub, Rsub) referred to a
+*            substrate node. This is the one with a physical SRF and a
+*            physical Q roll-off, and it is the only one of the two that can
+*            support a tank claim.
+*            Model validity range stated in capacitors_mod.lib itself:
+*            w, l in [7 um, 75 um]; wfeed in [1 um, 30 um] and
+*            wfeed <= w - 1.2 um. All three geometries below are inside it.
+*
+* REFERENCE NETWORK (known-answer check on the extraction math)
+* ------------------------------------------------------------
+* Lref/Rref/Cref is not a PDK device. It is an ideal series-RL shunted by an
+* ideal C whose Leff, Q and SRF are known in closed form, so the same
+* .control arithmetic that reports the MIM numbers can be checked against
+* algebra rather than against itself. With R=2 Ohm, L=1 nH, C=100 fF:
+*   Zref(w) = (R + jwL) / ((1 - w^2 LC) + jw R C)
+*   Leff(w) = Im(Zref)/w ;  Q(w) = Im(Zref)/Re(Zref)
+*   SRF     = sqrt((L - R^2 C) / (L^2 C)) / (2*pi)
+* run_pvt_sweep.sh evaluates those closed forms independently (in awk) and
+* fails the run if the simulated values disagree by more than 0.1 %.
+* This is what lets the inductive-branch extraction (Leff, Q, SRF from Z) be
+* trusted even though this PDK ships no inductor model to exercise it on --
+* see tb_inductor_zscan.spice.tmpl.
+*
+* Corner: mimcap_wcs_-40c_1.5v   (cap section cap_wcs, -40 C, Vbias 1.5 V)
+* Record: 20260909-132835-b61674c
+* PDK models: /Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/models
+
+.lib "/Users/rwalters/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib" cap_wcs
+.temp -40
+
+* ---------------------------------------------------------------- bias rail
+Vbias bias 0 dc 1.5
+
+* ------------------------------------------------- cap_cmim (lumped model)
+Ia20 0 a20 dc 0 ac 1
+Lda20 a20 bias 1
+Xa20 a20 0 cap_cmim w=20u l=20u
+
+Ia35 0 a35 dc 0 ac 1
+Lda35 a35 bias 1
+Xa35 a35 0 cap_cmim w=35u l=35u
+
+Ia50 0 a50 dc 0 ac 1
+Lda50 a50 bias 1
+Xa50 a50 0 cap_cmim w=50u l=50u
+
+* ------------------------------------------------------ cap_rfcmim (RF model)
+* Third pin is the substrate node bn, tied to the AC/DC ground rail.
+Ib20 0 b20 dc 0 ac 1
+Ldb20 b20 bias 1
+Xb20 b20 0 0 cap_rfcmim w=20u l=20u wfeed=5u
+
+Ib35 0 b35 dc 0 ac 1
+Ldb35 b35 bias 1
+Xb35 b35 0 0 cap_rfcmim w=35u l=35u wfeed=10u
+
+Ib50 0 b50 dc 0 ac 1
+Ldb50 b50 bias 1
+Xb50 b50 0 0 cap_rfcmim w=50u l=50u wfeed=15u
+
+* --------------------------------- ideal reference network (known answers)
+Iref 0 ref dc 0 ac 1
+Lref ref refn 1n
+Rref refn 0 2
+Cref ref 0 100f
+
+.control
+* --- pass 1: dense sweep, used only for the scalar .meas extractions -------
+ac dec 500 1e8 3e11
+
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+
+let za20 = imag(v(a20))
+let ca20 = imag(1/v(a20))/wrad
+let qa20 = abs(imag(1/v(a20)))/real(1/v(a20))
+let za35 = imag(v(a35))
+let ca35 = imag(1/v(a35))/wrad
+let qa35 = abs(imag(1/v(a35)))/real(1/v(a35))
+let za50 = imag(v(a50))
+let ca50 = imag(1/v(a50))/wrad
+let qa50 = abs(imag(1/v(a50)))/real(1/v(a50))
+
+let zb20 = imag(v(b20))
+let cb20 = imag(1/v(b20))/wrad
+let qb20 = abs(imag(1/v(b20)))/real(1/v(b20))
+let zb35 = imag(v(b35))
+let cb35 = imag(1/v(b35))/wrad
+let qb35 = abs(imag(1/v(b35)))/real(1/v(b35))
+let zb50 = imag(v(b50))
+let cb50 = imag(1/v(b50))/wrad
+let qb50 = abs(imag(1/v(b50)))/real(1/v(b50))
+
+let zref = imag(v(ref))
+let lref = imag(v(ref))/wrad
+let qref = imag(v(ref))/real(v(ref))
+
+* SRF: Im(Z) crossing zero upward (capacitive -> inductive). For cap_cmim
+* this measurement is EXPECTED to fail with "out of interval" -- that model
+* never turns inductive. run_pvt_sweep.sh records the miss as SRF = none
+* rather than as an error; see README.md.
+meas ac srf_a20 WHEN za20=0 RISE=1
+meas ac srf_a35 WHEN za35=0 RISE=1
+meas ac srf_a50 WHEN za50=0 RISE=1
+meas ac srf_b20 WHEN zb20=0 RISE=1
+meas ac srf_b35 WHEN zb35=0 RISE=1
+meas ac srf_b50 WHEN zb50=0 RISE=1
+* The reference network is inductive below its SRF, so its Im(Z) crosses
+* zero DOWNWARD.
+meas ac srf_ref WHEN zref=0 FALL=1
+
+meas ac c_a20_1g   FIND ca20 AT=1e9
+meas ac c_a20_2g   FIND ca20 AT=2e9
+meas ac c_a20_5g   FIND ca20 AT=5e9
+meas ac c_a20_10g  FIND ca20 AT=1e10
+meas ac c_a20_20g  FIND ca20 AT=2e10
+meas ac q_a20_1g   FIND qa20 AT=1e9
+meas ac q_a20_2g   FIND qa20 AT=2e9
+meas ac q_a20_5g   FIND qa20 AT=5e9
+meas ac q_a20_10g  FIND qa20 AT=1e10
+meas ac q_a20_20g  FIND qa20 AT=2e10
+
+meas ac c_a35_1g   FIND ca35 AT=1e9
+meas ac c_a35_2g   FIND ca35 AT=2e9
+meas ac c_a35_5g   FIND ca35 AT=5e9
+meas ac c_a35_10g  FIND ca35 AT=1e10
+meas ac c_a35_20g  FIND ca35 AT=2e10
+meas ac q_a35_1g   FIND qa35 AT=1e9
+meas ac q_a35_2g   FIND qa35 AT=2e9
+meas ac q_a35_5g   FIND qa35 AT=5e9
+meas ac q_a35_10g  FIND qa35 AT=1e10
+meas ac q_a35_20g  FIND qa35 AT=2e10
+
+meas ac c_a50_1g   FIND ca50 AT=1e9
+meas ac c_a50_2g   FIND ca50 AT=2e9
+meas ac c_a50_5g   FIND ca50 AT=5e9
+meas ac c_a50_10g  FIND ca50 AT=1e10
+meas ac c_a50_20g  FIND ca50 AT=2e10
+meas ac q_a50_1g   FIND qa50 AT=1e9
+meas ac q_a50_2g   FIND qa50 AT=2e9
+meas ac q_a50_5g   FIND qa50 AT=5e9
+meas ac q_a50_10g  FIND qa50 AT=1e10
+meas ac q_a50_20g  FIND qa50 AT=2e10
+
+meas ac c_b20_1g   FIND cb20 AT=1e9
+meas ac c_b20_2g   FIND cb20 AT=2e9
+meas ac c_b20_5g   FIND cb20 AT=5e9
+meas ac c_b20_10g  FIND cb20 AT=1e10
+meas ac c_b20_20g  FIND cb20 AT=2e10
+meas ac q_b20_1g   FIND qb20 AT=1e9
+meas ac q_b20_2g   FIND qb20 AT=2e9
+meas ac q_b20_5g   FIND qb20 AT=5e9
+meas ac q_b20_10g  FIND qb20 AT=1e10
+meas ac q_b20_20g  FIND qb20 AT=2e10
+
+meas ac c_b35_1g   FIND cb35 AT=1e9
+meas ac c_b35_2g   FIND cb35 AT=2e9
+meas ac c_b35_5g   FIND cb35 AT=5e9
+meas ac c_b35_10g  FIND cb35 AT=1e10
+meas ac c_b35_20g  FIND cb35 AT=2e10
+meas ac q_b35_1g   FIND qb35 AT=1e9
+meas ac q_b35_2g   FIND qb35 AT=2e9
+meas ac q_b35_5g   FIND qb35 AT=5e9
+meas ac q_b35_10g  FIND qb35 AT=1e10
+meas ac q_b35_20g  FIND qb35 AT=2e10
+
+meas ac c_b50_1g   FIND cb50 AT=1e9
+meas ac c_b50_2g   FIND cb50 AT=2e9
+meas ac c_b50_5g   FIND cb50 AT=5e9
+meas ac c_b50_10g  FIND cb50 AT=1e10
+meas ac c_b50_20g  FIND cb50 AT=2e10
+meas ac q_b50_1g   FIND qb50 AT=1e9
+meas ac q_b50_2g   FIND qb50 AT=2e9
+meas ac q_b50_5g   FIND qb50 AT=5e9
+meas ac q_b50_10g  FIND qb50 AT=1e10
+meas ac q_b50_20g  FIND qb50 AT=2e10
+
+meas ac l_ref_1g   FIND lref AT=1e9
+meas ac q_ref_1g   FIND qref AT=1e9
+
+* --- pass 2: coarse sweep, written out as the committed curve file --------
+* Re-run at lower resolution purely to keep the committed CSV small; the
+* scalars above come from the dense pass, not from this one.
+set wr_singlescale
+set wr_vecnames
+ac dec 50 1e8 3e11
+let fhz  = real(frequency)
+let wrad = 2*pi*fhz
+let c_cmim_20u   = imag(1/v(a20))/wrad
+let q_cmim_20u   = abs(imag(1/v(a20)))/real(1/v(a20))
+let c_cmim_35u   = imag(1/v(a35))/wrad
+let q_cmim_35u   = abs(imag(1/v(a35)))/real(1/v(a35))
+let c_cmim_50u   = imag(1/v(a50))/wrad
+let q_cmim_50u   = abs(imag(1/v(a50)))/real(1/v(a50))
+let c_rfcmim_20u = imag(1/v(b20))/wrad
+let q_rfcmim_20u = abs(imag(1/v(b20)))/real(1/v(b20))
+let c_rfcmim_35u = imag(1/v(b35))/wrad
+let q_rfcmim_35u = abs(imag(1/v(b35)))/real(1/v(b35))
+let c_rfcmim_50u = imag(1/v(b50))/wrad
+let q_rfcmim_50u = abs(imag(1/v(b50)))/real(1/v(b50))
+let l_ref        = imag(v(ref))/wrad
+let q_ref        = imag(v(ref))/real(v(ref))
+wrdata /Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-16/sim/tank-characterization/records/20260909-132835-b61674c-curves/mimcap_wcs_-40c_1.5v.csv c_cmim_20u q_cmim_20u c_cmim_35u q_cmim_35u c_cmim_50u q_cmim_50u c_rfcmim_20u q_rfcmim_20u c_rfcmim_35u q_rfcmim_35u c_rfcmim_50u q_rfcmim_50u l_ref q_ref
+.endc
+
+.end
