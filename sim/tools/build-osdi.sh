@@ -99,6 +99,8 @@ done
 
 # shellcheck source=/dev/null
 source "${SIM_DIR}/env.sh"
+# shellcheck source=../lib.sh
+source "${SIM_DIR}/lib.sh"
 
 if [[ -z "${PDK_ROOT:-}" || ! -d "${PDK_ROOT}/${PDK}/libs.tech/ngspice" ]]; then
   echo "build-osdi.sh: no resolvable ${PDK:-ihp-sg13g2} install -- see sim/env.sh output above." >&2
@@ -113,15 +115,15 @@ if [[ ! -d "${VA_DIR}" ]]; then
   exit 3
 fi
 
-sha256_of() {
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "$1" | awk '{print $1}'
-  elif command -v shasum >/dev/null 2>&1; then
-    shasum -a 256 "$1" | awk '{print $1}'
-  else
-    echo "build-osdi.sh: neither sha256sum nor shasum available -- cannot verify download." >&2
-    exit 3
-  fi
+# sha256_of() itself comes from sim/lib.sh (sourced above), which returns the
+# string "unavailable" -- not fatal -- when neither tool is on PATH, for use
+# as non-fatal provenance metadata elsewhere. This script checksum-verifies a
+# downloaded compiler binary before executing it, so a missing checksum tool
+# must fail closed here, not silently degrade to a misleading SHA256 MISMATCH
+# against the literal string "unavailable". Preflight that case explicitly.
+command -v sha256sum >/dev/null 2>&1 || command -v shasum >/dev/null 2>&1 || {
+  echo "build-osdi.sh: neither sha256sum nor shasum available -- cannot verify download." >&2
+  exit 3
 }
 
 # --------------------------------------------------------------------------
