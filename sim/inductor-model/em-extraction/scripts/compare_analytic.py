@@ -23,7 +23,6 @@ Writes:
 import argparse
 import csv
 import datetime
-import hashlib
 import json
 import os
 import platform
@@ -44,14 +43,6 @@ GEOMS = [
 ]
 SPOT_F = [1e9, 2e9, 5e9, 10e9, 20e9]
 FMIN, FMAX, DF = 1e8, 3e10, 5e7
-
-
-def sha256(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for c in iter(lambda: fh.read(1 << 20), b""):
-            h.update(c)
-    return h.hexdigest()
 
 
 def run_ngspice(model_lib, workdir):
@@ -212,8 +203,8 @@ def main():
         "python": sys.version.split()[0],
         "numpy": np.__version__,
         "models": {
-            "analytic": {"path": os.path.relpath(args.analytic, root), "sha256": sha256(args.analytic)},
-            "em_fitted": {"path": os.path.relpath(args.fitted, root), "sha256": sha256(args.fitted)},
+            "analytic": {"path": os.path.relpath(args.analytic, root), "sha256": emlib.sha256(args.analytic)},
+            "em_fitted": {"path": os.path.relpath(args.fitted, root), "sha256": emlib.sha256(args.fitted)},
         },
         "em_runs": {},
     }
