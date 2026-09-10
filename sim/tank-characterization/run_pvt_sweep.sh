@@ -222,42 +222,13 @@ EOF
       done
 
       # ---- known-answer check on the extraction arithmetic -----------------
-      # The reference network is ideal (R=2, L=1n, C=100f), corner- and
-      # temperature-independent, so its closed forms are constants; it is
-      # re-checked at every corner anyway, because the whole point is to catch
-      # a run whose extraction arithmetic silently went wrong.
-      l_sim="$(meas_value "${log}" "l_ref_1g")"
-      q_sim="$(meas_value "${log}" "q_ref_1g")"
-      s_sim="$(meas_value "${log}" "srf_ref")"
-      point_ok=1
-      while read -r qty sim ref err st; do
-        echo "${label},${temp},${vbias},${qty},${sim},${ref},${err},${METHOD_TOL_PCT},${st}" >> "${METHOD_CSV}"
-        if [[ "${st}" != "PASS" ]]; then point_ok=0; fi
-      done < <(awk -v ls="${l_sim:-nan}" -v qs="${q_sim:-nan}" -v ss="${s_sim:-nan}" -v tol="${METHOD_TOL_PCT}" '
-        BEGIN {
-          PI = 4*atan2(1,1); R = 2.0; L = 1e-9; C = 100e-15; w = 2*PI*1e9;
-          # Z(w) = (R + jwL) / ((1 - w^2 LC) + jwRC)
-          nr = R;  ni = w*L;
-          dr = 1 - w*w*L*C;  di = w*R*C;
-          den = dr*dr + di*di;
-          zr = (nr*dr + ni*di)/den;
-          zi = (ni*dr - nr*di)/den;
-          l_ref = zi/w;
-          q_ref = zi/zr;
-          srf_ref = sqrt((L - R*R*C)/(L*L*C))/(2*PI);
-          split("leff_1ghz_h q_1ghz srf_hz", names, " ");
-          sims[1] = ls; sims[2] = qs; sims[3] = ss;
-          refs[1] = l_ref; refs[2] = q_ref; refs[3] = srf_ref;
-          for (i = 1; i <= 3; i++) {
-            if (sims[i] == "nan" || sims[i] == "") { printf "%s %s %.6e nan %s\n", names[i], "", refs[i], "FAIL"; continue }
-            e = (sims[i] - refs[i]) / refs[i] * 100.0;
-            ae = (e < 0) ? -e : e;
-            printf "%s %.6e %.6e %+.5f %s\n", names[i], sims[i], refs[i], e, (ae <= tol ? "PASS" : "FAIL");
-          }
-        }')
-      if [[ ${point_ok} -eq 0 ]]; then method_fail=$((method_fail + 1)); fi
+      # See sim/lib.sh's method_check_point for the shared reference-network
+      # implementation (ideal R=2, L=1n, C=100f) and why it is re-checked at
+      # every corner.
+      point_status="$(method_check_point "${label}" "${temp}" "${vbias}" "${log}" "${METHOD_CSV}" "${METHOD_TOL_PCT}")"
+      if [[ "${point_status}" != "PASS" ]]; then method_fail=$((method_fail + 1)); fi
 
-      if [[ ${rc} -eq 0 && ${model_error} -eq 0 && ${point_ok} -eq 1 ]]; then
+      if [[ ${rc} -eq 0 && ${model_error} -eq 0 && "${point_status}" == "PASS" ]]; then
         passed=$((passed + 1))
       fi
     done

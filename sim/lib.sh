@@ -1,8 +1,9 @@
 # Source me:  source "${SIM_DIR}/lib.sh"
 #
 # Shared scaffolding for the sim/*/run_*.sh experiment scripts
-# (sim/tank-characterization/run_pvt_sweep.sh, sim/inductor-model/run_model_check.sh).
-# These two scripts are legitimate, distinct experiments -- this file exists
+# (sim/tank-characterization/run_pvt_sweep.sh, sim/inductor-model/run_model_check.sh,
+# sim/varactor-characterization/run_varactor_sweep.sh).
+# These are legitimate, distinct experiments -- this file exists
 # because the bash *scaffolding* around them (hashing, record-ID minting, a
 # scratch ngspice workdir, pulling a scalar out of a .meas log) was
 # byte-identical between them, not because the experiments themselves should
@@ -81,4 +82,56 @@ make_scratch_workdir() {
   cleanup() { rm -rf "${WORKDIR}"; }
   trap cleanup EXIT
   cp "${EXPERIMENT_DIR}/.spiceinit" "${WORKDIR}/.spiceinit"
+}
+
+# method_check_point <label> <temp> <axis_val> <log> <method_csv> <tol_pct>
+# Known-answer check on the extraction arithmetic itself, not on any device
+# under test: pulls l_ref_1g/q_ref_1g/srf_ref out of <log> (a testbench's
+# .meas outputs for the ideal reference network R=2 ohm, L=1 nH, C=100 fF)
+# and compares each against that network's closed form at w = 2*pi*1 GHz.
+# The reference network is corner- and temperature-independent, so its
+# closed forms are constants; it is re-checked at every corner anyway,
+# because the whole point is to catch a run whose extraction arithmetic
+# silently went wrong. Appends one row per quantity (leff_1ghz_h, q_1ghz,
+# srf_hz) to <method_csv>, in the shared
+# "label,temp,axis_val,quantity,simulated,closed_form,rel_err_pct,tol_pct,status"
+# format. Prints "PASS" on stdout if every quantity was within <tol_pct> of
+# its closed form, "FAIL" otherwise -- deliberately a print, not a mutated
+# global counter, so the caller decides what a FAIL means for its own
+# pass/fail bookkeeping (see sim/tank-characterization/run_pvt_sweep.sh and
+# sim/varactor-characterization/run_varactor_sweep.sh for the two different
+# ways that turns out to matter).
+method_check_point() {
+  local label="$1" temp="$2" axis_val="$3" log="$4" method_csv="$5" tol_pct="$6"
+  local l_sim q_sim s_sim point_ok
+  l_sim="$(meas_value "${log}" "l_ref_1g")"
+  q_sim="$(meas_value "${log}" "q_ref_1g")"
+  s_sim="$(meas_value "${log}" "srf_ref")"
+  point_ok=1
+  while read -r qty sim ref err st; do
+    echo "${label},${temp},${axis_val},${qty},${sim},${ref},${err},${tol_pct},${st}" >> "${method_csv}"
+    if [[ "${st}" != "PASS" ]]; then point_ok=0; fi
+  done < <(awk -v ls="${l_sim:-nan}" -v qs="${q_sim:-nan}" -v ss="${s_sim:-nan}" -v tol="${tol_pct}" '
+    BEGIN {
+      PI = 4*atan2(1,1); R = 2.0; L = 1e-9; C = 100e-15; w = 2*PI*1e9;
+      # Z(w) = (R + jwL) / ((1 - w^2 LC) + jwRC)
+      nr = R;  ni = w*L;
+      dr = 1 - w*w*L*C;  di = w*R*C;
+      den = dr*dr + di*di;
+      zr = (nr*dr + ni*di)/den;
+      zi = (ni*dr - nr*di)/den;
+      l_ref = zi/w;
+      q_ref = zi/zr;
+      srf_ref = sqrt((L - R*R*C)/(L*L*C))/(2*PI);
+      split("leff_1ghz_h q_1ghz srf_hz", names, " ");
+      sims[1] = ls; sims[2] = qs; sims[3] = ss;
+      refs[1] = l_ref; refs[2] = q_ref; refs[3] = srf_ref;
+      for (i = 1; i <= 3; i++) {
+        if (sims[i] == "nan" || sims[i] == "") { printf "%s %s %.6e nan %s\n", names[i], "", refs[i], "FAIL"; continue }
+        e = (sims[i] - refs[i]) / refs[i] * 100.0;
+        ae = (e < 0) ? -e : e;
+        printf "%s %.6e %.6e %+.5f %s\n", names[i], sims[i], refs[i], e, (ae <= tol ? "PASS" : "FAIL");
+      }
+    }')
+  if [[ ${point_ok} -eq 1 ]]; then echo PASS; else echo FAIL; fi
 }
