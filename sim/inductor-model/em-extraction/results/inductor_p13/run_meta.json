@@ -1,0 +1,128 @@
+{
+  "gds_sha256": "73ed4b8899a85270225c896c45be889eac40d3ed819753657634668ab6c4e101",
+  "geometry": {
+    "coil_bbox_um": [
+      -128.76500000000001,
+      -1.0,
+      128.76500000000001,
+      257.53000000000003
+    ],
+    "d_um": 110.11,
+    "geometry": "p13",
+    "nr_r": 5,
+    "pcell": {
+      "cell": "inductor2",
+      "library": "SG13_dev"
+    },
+    "polygon_counts": {
+      "TopMetal1": 6,
+      "TopMetal2": 15,
+      "TopVia2": 90
+    },
+    "port_metal_layer": "TopMetal1",
+    "ports": [
+      {
+        "box_um": [
+          -22.825,
+          -1.0,
+          -16.725,
+          1.0
+        ],
+        "gds_layer": [
+          201,
+          0
+        ],
+        "portnumber": 1,
+        "terminal": "LA"
+      },
+      {
+        "box_um": [
+          16.725,
+          -1.0,
+          22.825,
+          1.0
+        ],
+        "gds_layer": [
+          202,
+          0
+        ],
+        "portnumber": 2,
+        "terminal": "LB"
+      }
+    ],
+    "s_um": 3.29,
+    "subgnd_box_um": [
+      -37.825,
+      -16.0,
+      37.825,
+      16.0
+    ],
+    "w_um": 6.1
+  },
+  "host": {
+    "cpu_count": 8,
+    "hostname": "ip-172-31-76-7",
+    "platform": "Linux-7.0.0-1010-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "provenance_note": {
+    "version_banner_fix": "The original run_openems.py openems_version() captured splitlines()[0] of `openEMS --version`, which is the decorative dashed border line, not the version line -- recorded here as '---------------------------------------------------------------------- '. Corrected post-hoc to the actual banner line (same binary, verified separately: `openEMS --version` on the extraction host prints 'openEMS 64bit -- version v0.37.0-rc2'); scripts/run_openems.py fixed so future runs capture it directly."
+  },
+  "settings": {
+    "Boundaries": [
+      "PEC",
+      "PEC",
+      "PEC",
+      "PEC",
+      "PEC",
+      "PEC"
+    ],
+    "cells_per_wavelength": 20,
+    "energy_limit": -50.0,
+    "excite_portnumbers": [
+      2
+    ],
+    "fstart": 0.0,
+    "fstop": 30000000000.0,
+    "layernumbers": [
+      157,
+      210,
+      1,
+      6,
+      8,
+      19,
+      10,
+      29,
+      30,
+      49,
+      50,
+      66,
+      67,
+      125,
+      36,
+      36,
+      126,
+      133,
+      134,
+      201,
+      202
+    ],
+    "margin": 200.0,
+    "merge_polygon_size": 1.0,
+    "model_basename": "inductor_p13",
+    "no_gui": true,
+    "numThreads": 8,
+    "numfreq": 601,
+    "preview_only": false,
+    "refined_cellsize": 1.0,
+    "sim_path": "/home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p13",
+    "unit": 1e-06
+  },
+  "solver": {
+    "engine": "FDTD (time domain), Gaussian pulse excitation",
+    "tool": "openEMS",
+    "version_banner": "openEMS 64bit -- version v0.37.0-rc2"
+  },
+  "stackup_xml_sha256": "e0a9762bd85e15b2b173d2bfb509a0e97568a5de53b149935a3ae6913682fea1",
+  "wall_seconds": 863.3
+}

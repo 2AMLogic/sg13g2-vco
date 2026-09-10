@@ -1,0 +1,60 @@
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/gds/inductor_p11.gds (p11)
+{
+  "coil_bbox_um": [
+    -145.12800000000001,
+    -1.0,
+    145.12800000000001,
+    290.255
+  ],
+  "d_um": 141.975,
+  "geometry": "p11",
+  "nr_r": 4,
+  "pcell": {
+    "cell": "inductor2",
+    "library": "SG13_dev"
+  },
+  "polygon_counts": {
+    "TopMetal1": 5,
+    "TopMetal2": 12,
+    "TopVia2": 128
+  },
+  "port_metal_layer": "TopMetal1",
+  "ports": [
+    {
+      "box_um": [
+        -29.425,
+        -1.0,
+        -21.205000000000002,
+        1.0
+      ],
+      "gds_layer": [
+        201,
+        0
+      ],
+      "portnumber": 1,
+      "terminal": "LA"
+    },
+    {
+      "box_um": [
+        21.205000000000002,
+        -1.0,
+        29.425,
+        1.0
+      ],
+      "gds_layer": [
+        202,
+        0
+      ],
+      "portnumber": 2,
+      "terminal": "LB"
+    }
+  ],
+  "s_um": 3.74,
+  "subgnd_box_um": [
+    -44.425000000000004,
+    -16.0,
+    44.425000000000004,
+    16.0
+  ],
+  "w_um": 8.22
+}

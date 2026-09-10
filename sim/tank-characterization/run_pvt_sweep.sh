@@ -404,8 +404,10 @@ done
   else
     echo "- **Inductor probe**: ran against \`${ind_model_source}\`, supplied"
     echo "  through \`\$SG13G2_IND_MODEL_LIB\`. That model is NOT part of the PDK"
-    echo "  and NOT EM-extracted; its accuracy limits are stated in its own"
-    echo "  header and they propagate into every L/Q/SRF number in"
+    echo "  -- it is one of the two non-PDK models sim/inductor-model/ ships"
+    echo "  (analytic screening, or an openEMS extraction fit -- see that"
+    echo "  file's own header for which); its accuracy limits are stated in"
+    echo "  its own header and they propagate into every L/Q/SRF number in"
     echo "  \`records/${RECORD_ID}-inductor.csv\`. Read them before using one."
   fi
   echo "- **Links**:"

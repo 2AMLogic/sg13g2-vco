@@ -1,0 +1,7 @@
+p1   L_se(1G)= 0.09848 nH  Q_se(1G)=   1.9  Q_se(10G)=  8.83  SRF_se=    nan GHz
+p13  L_se(1G)=   5.124 nH  Q_se(1G)=  4.49  Q_se(10G)= -5.46  SRF_se=   8.07 GHz
+p11  L_se(1G)=   4.276 nH  Q_se(1G)=   5.7  Q_se(10G)= -1.61  SRF_se=  9.422 GHz
+
+convergence (vs baseline mesh 1.0 um / margin 200.0 um):
+  p1_mesh0p5     dL(1G)=  0.898 %  dQ(10G)=   9.42 %  dSRF=    nan %
+  p1_margin400   dL(1G)= 0.0781 %  dQ(10G)= 0.0358 %  dSRF=    nan %

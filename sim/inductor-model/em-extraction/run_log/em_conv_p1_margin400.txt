@@ -1,0 +1,129 @@
+openEMS - fixed number of threads: 8
+ ---------------------------------------------------------------------- 
+ | openEMS 64bit -- version v0.37.0-rc2
+ | (C) 2010-2026 Thorsten Liebig <thorsten.liebig@gmx.de>  GPL license
+ ---------------------------------------------------------------------- 
+	Used external libraries:
+		CSXCAD -- Version: v0.7.0-rc2
+		hdf5   -- Version: 1.10.10
+		          compiled against: HDF5 library version: 1.10.10
+		tinyxml -- compiled against: 2.6.2
+		fparser
+		boost  -- compiled against: 1_83
+		vtk -- Version: 9.1.0
+		       compiled against: 9.1.0
+
+Create FDTD operator (compressed SSE + multi-threading)
+FDTD simulation size: 96x104x28 --> 279552 FDTD cells 
+FDTD timestep is: 1.68035e-15 s; Nyquist rate: 9918 timesteps @3.00018e+10 Hz
+openEMS::SetupFDTD: Warning, the timestep seems to be very small --> long simulation. Check your mesh!?
+Excitation signal length is: 113659 timesteps (1.90986e-10s)
+Max. number of timesteps: 1000000000 ( --> 8798.25 * Excitation signal length)
+Create FDTD engine (compressed SSE + multi-threading)
+Running FDTD engine... this may take a while... grab a cup of coffee?!?
+[@        5s] Timestep:         7437 || Speed:  410.6 MC/s (6.808e-04 s/TS) || Energy: ~8.47e-26 (- 0.00dB)
+[@        9s] Timestep:        14874 || Speed:  435.7 MC/s (6.417e-04 s/TS) || Energy: ~6.71e-22 (- 0.00dB)
+[@       14s] Timestep:        22311 || Speed:  438.9 MC/s (6.369e-04 s/TS) || Energy: ~1.14e-20 (- 0.00dB)
+[@       19s] Timestep:        29748 || Speed:  460.2 MC/s (6.075e-04 s/TS) || Energy: ~3.03e-20 (- 0.00dB)
+[@       24s] Timestep:        37185 || Speed:  418.1 MC/s (6.687e-04 s/TS) || Energy: ~1.99e-18 (- 0.00dB)
+[@       28s] Timestep:        44622 || Speed:  446.8 MC/s (6.256e-04 s/TS) || Energy: ~1.57e-18 (- 1.03dB)
+[@       33s] Timestep:        52059 || Speed:  406.4 MC/s (6.879e-04 s/TS) || Energy: ~7.18e-18 (- 0.00dB)
+[@       38s] Timestep:        59496 || Speed:  439.9 MC/s (6.355e-04 s/TS) || Energy: ~1.71e-17 (- 0.49dB)
+[@       43s] Timestep:        66933 || Speed:  451.3 MC/s (6.194e-04 s/TS) || Energy: ~3.23e-19 (-17.73dB)
+[@       47s] Timestep:        74370 || Speed:  448.3 MC/s (6.236e-04 s/TS) || Energy: ~3.00e-18 (- 8.04dB)
+[@       52s] Timestep:        81807 || Speed:  425.5 MC/s (6.571e-04 s/TS) || Energy: ~4.02e-19 (-16.78dB)
+[@       57s] Timestep:        89244 || Speed:  424.5 MC/s (6.585e-04 s/TS) || Energy: ~1.23e-20 (-31.90dB)
+[@     1m02s] Timestep:        96681 || Speed:  408.2 MC/s (6.849e-04 s/TS) || Energy: ~5.23e-21 (-35.63dB)
+[@     1m08s] Timestep:       104118 || Speed:  375.0 MC/s (7.455e-04 s/TS) || Energy: ~9.64e-22 (-42.97dB)
+[@     1m12s] Timestep:       111555 || Speed:  442.0 MC/s (6.325e-04 s/TS) || Energy: ~6.85e-22 (-44.46dB)
+[@     1m17s] Timestep:       118992 || Speed:  425.0 MC/s (6.577e-04 s/TS) || Energy: ~5.34e-22 (-45.54dB)
+[@     1m22s] Timestep:       126429 || Speed:  427.8 MC/s (6.534e-04 s/TS) || Energy: ~4.14e-22 (-46.65dB)
+[@     1m27s] Timestep:       133866 || Speed:  434.9 MC/s (6.428e-04 s/TS) || Energy: ~3.21e-22 (-47.74dB)
+[@     1m32s] Timestep:       141303 || Speed:  437.2 MC/s (6.394e-04 s/TS) || Energy: ~2.50e-22 (-48.83dB)
+[@     1m36s] Timestep:       148740 || Speed:  475.7 MC/s (5.876e-04 s/TS) || Energy: ~1.95e-22 (-49.92dB)
+[@     1m41s] Timestep:       156177 || Speed:  448.0 MC/s (6.240e-04 s/TS) || Energy: ~1.52e-22 (-51.00dB)
+Time for 156177 iterations with 279552.00 cells : 101.23 sec
+Speed: 431.31 MCells/s 
+openEMS - fixed number of threads: 8
+ ---------------------------------------------------------------------- 
+ | openEMS 64bit -- version v0.37.0-rc2
+ | (C) 2010-2026 Thorsten Liebig <thorsten.liebig@gmx.de>  GPL license
+ ---------------------------------------------------------------------- 
+	Used external libraries:
+		CSXCAD -- Version: v0.7.0-rc2
+		hdf5   -- Version: 1.10.10
+		          compiled against: HDF5 library version: 1.10.10
+		tinyxml -- compiled against: 2.6.2
+		fparser
+		boost  -- compiled against: 1_83
+		vtk -- Version: 9.1.0
+		       compiled against: 9.1.0
+
+Create FDTD operator (compressed SSE + multi-threading)
+FDTD simulation size: 96x104x28 --> 279552.00 FDTD cells 
+FDTD timestep is: 0.00 s; Nyquist rate: 9918 timesteps @30001798081.00 Hz
+openEMS::SetupFDTD: Warning, the timestep seems to be very small --> long simulation. Check your mesh!?
+Excitation signal length is: 113659 timesteps (0.00s)
+Max. number of timesteps: 1000000000 ( --> 8798.25 * Excitation signal length)
+Create FDTD engine (compressed SSE + multi-threading)
+Running FDTD engine... this may take a while... grab a cup of coffee?!?
+[@        5s] Timestep:         7437 || Speed:  410.4 MC/s (6.812e-04 s/TS) || Energy: ~8.46e-26 (- 0.00dB)
+[@        9s] Timestep:        14874 || Speed:  425.1 MC/s (6.576e-04 s/TS) || Energy: ~6.71e-22 (- 0.00dB)
+[@       14s] Timestep:        22311 || Speed:  413.5 MC/s (6.761e-04 s/TS) || Energy: ~1.14e-20 (- 0.00dB)
+[@       20s] Timestep:        29748 || Speed:  388.8 MC/s (7.191e-04 s/TS) || Energy: ~3.03e-20 (- 0.00dB)
+[@       25s] Timestep:        37185 || Speed:  400.0 MC/s (6.988e-04 s/TS) || Energy: ~1.99e-18 (- 0.00dB)
+[@       30s] Timestep:        44622 || Speed:  446.0 MC/s (6.268e-04 s/TS) || Energy: ~1.57e-18 (- 1.03dB)
+[@       34s] Timestep:        52059 || Speed:  443.7 MC/s (6.300e-04 s/TS) || Energy: ~7.18e-18 (- 0.00dB)
+[@       40s] Timestep:        59496 || Speed:  396.2 MC/s (7.056e-04 s/TS) || Energy: ~1.71e-17 (- 0.49dB)
+[@       44s] Timestep:        66933 || Speed:  430.5 MC/s (6.494e-04 s/TS) || Energy: ~3.22e-19 (-17.73dB)
+[@       49s] Timestep:        74370 || Speed:  425.8 MC/s (6.565e-04 s/TS) || Energy: ~3.00e-18 (- 8.04dB)
+[@       54s] Timestep:        81807 || Speed:  447.4 MC/s (6.248e-04 s/TS) || Energy: ~4.02e-19 (-16.78dB)
+[@       59s] Timestep:        89244 || Speed:  417.0 MC/s (6.704e-04 s/TS) || Energy: ~1.24e-20 (-31.90dB)
+[@     1m04s] Timestep:        96681 || Speed:  447.5 MC/s (6.247e-04 s/TS) || Energy: ~5.23e-21 (-35.63dB)
+[@     1m08s] Timestep:       104118 || Speed:  433.2 MC/s (6.453e-04 s/TS) || Energy: ~9.64e-22 (-42.97dB)
+[@     1m13s] Timestep:       111555 || Speed:  420.0 MC/s (6.657e-04 s/TS) || Energy: ~6.85e-22 (-44.46dB)
+[@     1m18s] Timestep:       118992 || Speed:  406.6 MC/s (6.875e-04 s/TS) || Energy: ~5.34e-22 (-45.54dB)
+[@     1m24s] Timestep:       126429 || Speed:  403.6 MC/s (6.926e-04 s/TS) || Energy: ~4.14e-22 (-46.65dB)
+[@     1m29s] Timestep:       133866 || Speed:  395.6 MC/s (7.067e-04 s/TS) || Energy: ~3.22e-22 (-47.74dB)
+[@     1m34s] Timestep:       141303 || Speed:  445.1 MC/s (6.281e-04 s/TS) || Energy: ~2.50e-22 (-48.83dB)
+[@     1m38s] Timestep:       148740 || Speed:  429.6 MC/s (6.507e-04 s/TS) || Energy: ~1.95e-22 (-49.92dB)
+[@     1m43s] Timestep:       156177 || Speed:  442.2 MC/s (6.321e-04 s/TS) || Energy: ~1.52e-22 (-51.00dB)
+Time for 156177 iterations with 279552.00 cells : 103.60 sec
+Speed: 421.44 MCells/s 
+Reading GDSII input file: /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/gds/inductor_p1.gds
+Getting simulation settings from "settings" dictionary
+
+________________________
+Mesh cells by axis (total 280 kcells):
+ x = 96
+ y = 104
+ z = 28
+Smallest cell size:
+ dx = 0.8282
+ dy = 0.9818
+ dz = 0.4000
+________________________
+
+Getting simulation settings from "settings" dictionary
+Creating port information metadata file  /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/convergence/p1_margin400/port_information.json
+Starting FDTD simulation for excitation  [1]
+FDTD simulation completed successfully for excitation  [1]
+Getting simulation settings from "settings" dictionary
+
+________________________
+Mesh cells by axis (total 280 kcells):
+ x = 96
+ y = 104
+ z = 28
+Smallest cell size:
+ dx = 0.8282
+ dy = 0.9818
+ dz = 0.4000
+________________________
+
+Getting simulation settings from "settings" dictionary
+Creating port information metadata file  /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/convergence/p1_margin400/port_information.json
+Starting FDTD simulation for excitation  [2]
+FDTD simulation completed successfully for excitation  [2]
+Creating  S-parameter file
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/convergence/p1_margin400.s2p in 207 s

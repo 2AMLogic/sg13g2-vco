@@ -1,0 +1,4 @@
+p1    L(1G) EM  0.09848 nH vs analytic   0.1038 nH (  +5.4 %) | Q(10G) EM   8.83 vs analytic  16.90 ( +91.4 %) | SRF EM none <30 GHz
+p13   L(1G) EM    5.124 nH vs analytic    5.451 nH (  +6.4 %) | Q(10G) EM  -5.46 vs analytic   4.95 (-190.7 %) | SRF EM 8.07 GHz
+p11   L(1G) EM    4.276 nH vs analytic    4.606 nH (  +7.7 %) | Q(10G) EM  -1.61 vs analytic   5.00 (-410.1 %) | SRF EM 9.42 GHz
+record 20260910-052657-3896421

@@ -15,15 +15,22 @@ papered over with a hand-rolled inductance formula, because a number this
 block's phase-noise and tuning-range claims would later lean on must not be
 one an agent invented.
 
-**Since then the L half has an answer, but a differently-sourced one.**
+**Since then the L half has two answers, differently sourced.**
 [`../inductor-model/`](../inductor-model/) supplies an **analytic** spiral
-model with stated error bars — *not* a PDK model and *not* an EM extraction —
-and this harness will run against it when pointed at it. Record
+model with stated error bars — *not* a PDK model, valid for any geometry —
+and, as of issue #9, an **EM-fitted** model
+(`../inductor-model/em-extraction/`, openEMS FDTD) that is now authoritative
+for the three PDK LVS-testcase geometries this harness already probes. This
+harness runs against either when pointed at it. Record
 `20260906-160246-a73c3c7` is the first one whose `*-inductor.csv` carries real
-L/Q/SRF instead of `MODEL_ABSENT`. Those inductor rows are only as good as
-that model's own stated limits (±5 % on L, a Q that is an **upper bound**,
-0.5–20 GHz), and each such record names the model file by repo-relative path
-**and content sha256** so the two can never be confused for PDK output.
+L/Q/SRF instead of `MODEL_ABSENT` (analytic model); record
+`20260910-052245-3896421` is the first one using the EM-fitted model. Analytic
+inductor rows are only as good as that model's own stated limits (±5 % on L,
+a Q that is an **upper bound**, 0.5–20 GHz); EM-fitted rows are a real field
+solve at the three extracted geometries, measured against the analytic model
+in [`../inductor-model/em-extraction/README.md`](../inductor-model/em-extraction/README.md).
+Either way, each record names the model file by repo-relative path **and
+content sha256** so the two can never be confused for PDK output.
 
 Nothing here ratifies a `spec/target-spec.md` row. Ratification is a separate
 decision-record step; this directory only produces the evidence it would cite.
@@ -346,7 +353,7 @@ stated error bars clears that bar. Nothing here makes that decision.
 
 The measurement *method* is in place and validated (see §"The method is
 validated"), and this testbench is wired to accept **any** conforming model —
-this repo's analytic one today, an EM-fitted one later (#9) — with no change
+this repo's analytic one, or the EM-fitted one from issue #9 — with no change
 to the harness:
 
 ```bash
@@ -374,16 +381,26 @@ data, or accept an analytic model with its error bars stated — was a design
 decision with real cost, out of scope for this characterization study and
 filed separately as **#6**. That decision has been taken: the third route,
 implemented in [`../inductor-model/`](../inductor-model/), with the rationale
-against the other two written out in that directory's README. The EM route
-remains the right long-term answer and is tracked as **#9**.
+against the other two written out in that directory's README. **The EM route
+has since landed too**, for the three geometries below, per issue #9 — see
+[`../inductor-model/em-extraction/README.md`](../inductor-model/em-extraction/README.md).
+It is now the authoritative model for those three geometries; the analytic
+model below remains the only option for any other geometry.
 
-**What that buys**, at `typ`/27 °C, from record `20260906-160246-a73c3c7`:
+**What the analytic model buys**, at `typ`/27 °C, from record `20260906-160246-a73c3c7`:
 
 | Geometry | `L` @ 1 GHz | SRF | Q @ 1 GHz | Q @ 5 GHz | Q @ 10 GHz |
 |---|---|---|---|---|---|
 | 1 turn, `w=8.22 s=3.29 d=47.65` | 103.8 pH | 240 GHz | 2.57 | 11.19 | 16.90 |
 | 5 turns, `w=6.10 s=3.29 d=110.11` | 5.451 nH | 14.31 GHz | 5.26 | 11.14 | 4.95 |
 | 4 turns, `w=8.22 s=3.74 d=141.975` | 4.606 nH | 14.11 GHz | 6.66 | 12.34 | 5.00 |
+
+**What the EM-fitted model measures instead**, same conditions, from
+[`../inductor-model/em-extraction/README.md`](../inductor-model/em-extraction/README.md):
+SRF at 8.07 GHz / 9.42 GHz for the 5-turn / 4-turn geometries — **50–77 %
+lower** than the analytic estimate above. A ~10 GHz tank built on either
+geometry would be running *above*, not below, its real self-resonance; see
+that file's "What this means for the tank" section.
 
 **What it costs.** These are not PDK numbers and must never be quoted as
 though they were. They carry ±5 % on `L` (±10 % for the single-turn
