@@ -29,7 +29,19 @@ Above SRF the reported L is not an inductance; the CSVs carry the SRF column so
 a reader can see where that happens.
 """
 
+import hashlib
+
 import numpy as np
+
+
+# --------------------------------------------------------------------- hashing
+def sha256(path):
+    """Hex-digest sha256 of a file, read in chunks (no whole-file read)."""
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 # ----------------------------------------------------------------- touchstone

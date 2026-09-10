@@ -41,18 +41,11 @@ import time
 
 import numpy as np
 
-from gds2openEMS import gds_reader, simulation_setup, stackup_reader, utilities
-from openEMS import openEMS
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import emlib  # noqa: E402
 
-
-def sha256(path):
-    import hashlib
-
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+from gds2openEMS import gds_reader, simulation_setup, stackup_reader, utilities  # noqa: E402
+from openEMS import openEMS  # noqa: E402
 
 
 def openems_version():
@@ -172,8 +165,8 @@ def main():
             for k, v in settings.items()
             if isinstance(v, (int, float, str, bool, list))
         },
-        "stackup_xml_sha256": sha256(args.xml),
-        "gds_sha256": sha256(args.gds),
+        "stackup_xml_sha256": emlib.sha256(args.xml),
+        "gds_sha256": emlib.sha256(args.gds),
         "host": {
             "hostname": platform.node(),
             "platform": platform.platform(),
