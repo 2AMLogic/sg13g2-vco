@@ -1,25 +1,42 @@
-# sim/inductor-model — an analytic spiral-inductor model for SG13G2
+# sim/inductor-model — spiral-inductor models for SG13G2
 
 **What this is.** IHP-Open-PDK v0.3.0 ships no ngspice-simulatable spiral
 inductor (established by search in [`../tank-characterization/`](../tank-characterization/),
 § "The inductor gap", and recorded as `MODEL_ABSENT` evidence there). This
-directory chooses a route to a usable inductor model, implements it, and holds
-it to a known answer over a process × temperature grid.
+directory now holds **two** models, in the order they were built, and states
+which one is authoritative for which purpose:
 
-**The route chosen is an analytic model with stated error bars** —
-[`sg13g2_inductor_analytic.spice`](sg13g2_inductor_analytic.spice), a
-`.subckt inductor la lb sub` with `w`/`s`/`d`/`nr_r` parameters, drop-in for
-the instance card the PDK's own xschem symbol and LVS netlists already emit.
-Section [Route decision](#route-decision-why-analytic) states why, against the
-two alternatives.
+1. **[`sg13g2_inductor_analytic.spice`](sg13g2_inductor_analytic.spice)** — a
+   closed-form (Mohan et al. 1999) model with stated error bars, valid for
+   *any* `w`/`s`/`d`/`nr_r` instance card, held to a known answer over a full
+   process × temperature grid ([Route decision](#route-decision-why-analytic)
+   and [Accuracy limits](#accuracy-limits) below).
+2. **[`em-extraction/`](em-extraction/) → `sg13g2_inductor_em.spice`** — an
+   openEMS (FDTD) extraction of the PDK's own `inductor2` PCell at the three
+   LVS-testcase geometries, fit to the same topology and **measured against**
+   (1) above (issue #9). Same `w`/`s`/`d`/`nr_r` / `SG13G2_IND_MODEL_LIB`
+   drop-in interface.
 
-> **This is a screening model, not a PDK model and not an EM extraction.** It
-> is good enough to size a tank and rank candidate geometries. It is **not**
-> good enough to be the final number behind a taped-out phase-noise claim.
-> Every number it produces inherits the error bars in
-> [Accuracy limits](#accuracy-limits). Per this repo's `CLAUDE.md` — *"numbers
-> without methods are not results"* — an inductance from this file must be
-> quoted with its method and its limits, exactly like a phase-noise number.
+**Which one is authoritative**: for the three extracted geometries (`p1`,
+`p13`, `p11` — see [`em-extraction/README.md`](em-extraction/README.md) §
+Geometries), **`sg13g2_inductor_em.spice` is now the authoritative model** —
+it is a real field solve of the real drawn PCell rather than a closed-form
+approximation, and its fit residual (< 1 % rms within its fit band) is
+reported directly rather than asserted. For any *other* geometry, the
+analytic model `sg13g2_inductor_analytic.spice` remains the only option (the
+EM route was not re-run for arbitrary geometries — see
+[`em-extraction/README.md`](em-extraction/README.md) § Accuracy limits, point
+1), and the analytic model's own error bars below are unchanged **except**
+where [Accuracy limits](#accuracy-limits) now cites the measured EM delta in
+place of an asserted one.
+
+> **Neither model is a PDK model or silicon.** The analytic model is a
+> screening model, good enough to size a tank and rank candidate geometries.
+> The EM-fitted model is a real field solve, but of a CAD geometry against a
+> PDK-published stackup — not a measured part, and only at three fixed
+> geometries. Per this repo's `CLAUDE.md` — *"numbers without methods are not
+> results"* — an inductance from either file must be quoted with its method
+> and its limits.
 
 Nothing here ratifies a `spec/target-spec.md` row. Ratification is a separate
 decision-record step; this directory only produces evidence it would cite.
@@ -42,39 +59,67 @@ into its header with each one's source cited) and it loads no PDK library.
 That is deliberate — the model has to be checkable by a reader who has this
 repository but not a PDK tarball.
 
-To use the model in the tank study, which is what it exists for:
+To use a model in the tank study, which is what both exist for — point
+`SG13G2_IND_MODEL_LIB` at whichever one is authoritative for the geometry in
+use (see [What this is](#sim-inductor-model--spiral-inductor-models-for-sg13g2)
+above):
 
 ```bash
+# EM-fitted, authoritative for the three extracted geometries (p1/p13/p11):
+export SG13G2_IND_MODEL_LIB=$PWD/sim/inductor-model/sg13g2_inductor_em.spice
+# or, analytic, the only option for any other geometry:
 export SG13G2_IND_MODEL_LIB=$PWD/sim/inductor-model/sg13g2_inductor_analytic.spice
+
 sim/tank-characterization/run_pvt_sweep.sh     # needs the PDK, for the MIM half
 ```
 
 That fills in `records/<record-id>-inductor.csv` in the tank study with real
-L/Q/SRF instead of `MODEL_ABSENT`, and the tank record then names this file by
-repo-relative path **and content sha256**, so a reader can tell exactly which
-model produced the numbers.
+L/Q/SRF instead of `MODEL_ABSENT`, and the tank record then names the model
+file by repo-relative path **and content sha256**, so a reader can tell
+exactly which model produced the numbers.
 
 Records land under `records/`, `corners/`, `netlist-snapshots/` keyed by a
-fresh record ID per run, append-only, per [`../README.md`](../README.md).
+fresh record ID per run, append-only, per [`../README.md`](../README.md). The
+EM model's own reproduction command, method, and evidence are in
+[`em-extraction/README.md`](em-extraction/README.md) — this directory's
+`run_model_check.sh` (below) validates the **analytic** model's netlist
+algebra only; it does not touch the EM model, which is validated instead by
+its own fit-residual report (`em-extraction/fit/fit_summary.csv` and
+`em-extraction/README.md` § Fit residual).
 
 ---
 
-## Route decision (why analytic)
+## Route decision (why analytic, at the time)
 
 Issue #6 named three candidate routes. All three were evaluated against what
-is actually available in this flow today.
+was actually available in this flow at the time (2026-09-06). **Route 1 has
+since landed**, under issue #9 — see the update note below the table; the
+table itself is kept as the historical record of why route 3 was chosen
+*first*, not as a currently-accurate feasibility statement for route 1.
 
-| Route | Verdict | Why |
+| Route | Verdict (2026-09-06) | Why |
 |---|---|---|
 | **1. EM-extract the PDK's own PCell** (openEMS / Palace) and fit a lumped subcircuit to the extracted S-parameters | **Rejected for now, and it remains the right long-term answer** | This is IHP's own documented route (`libs.doc/doc/EM_Simulation_Overview.pdf`). It is blocked twice over: `libs.tech/openems/openems_ihp_sg13g2` and `libs.tech/palace/` are **git submodules that are empty in the v0.3.0 release tarball** (GitHub source tarballs never carry submodule contents), and neither openEMS nor Palace is installed in this environment. Beyond fetching them, the route needs a 3-D mesh of the PCell, an EM solve per geometry, and an S-to-lumped fitting step this repo does not have. That is a multi-day tool-bring-up, not a model choice — so it is **filed as its own issue** rather than done badly here. |
 | **2. Published or measured data for a process-matched spiral** | **Rejected** | No citable measured spiral inductor **on SG13G2** with a stated geometry was found in the PDK's own documentation, and this repo's evidence bar does not permit importing a number from a *different* process and calling it this process's. A measurement is only usable if it is traceable to a geometry and a stack; an untraceable "typical 130 nm BiCMOS spiral" number would be exactly the invented number `../tank-characterization/` refused to write. |
-| **3. Analytic model with explicit error bars** | **Chosen** | Every input is either a *published closed-form expression* (Mohan et al. 1999, whose error vs. 3-D field solvers and vs. measurement the authors themselves quantify) or a *PDK-published process constant* (transcribed with its source, and cross-checked between two independent PDK files — see [Where the constants come from](#where-the-constants-come-from)). It has no fitted parameters. Its error bars can therefore be stated rather than guessed, which is the property that makes it admissible here at all. |
+| **3. Analytic model with explicit error bars** | **Chosen (first)** | Every input is either a *published closed-form expression* (Mohan et al. 1999, whose error vs. 3-D field solvers and vs. measurement the authors themselves quantify) or a *PDK-published process constant* (transcribed with its source, and cross-checked between two independent PDK files — see [Where the constants come from](#where-the-constants-come-from)). It has no fitted parameters. Its error bars can therefore be stated rather than guessed, which is the property that makes it admissible here at all. |
+
+> **Update (issue #9, this PR)**: route 1's blockers were both host/tooling
+> gaps, not fundamental ones. Issue #11 provisioned openEMS v0.37.0-rc2 on a
+> build host; this PR used it to EM-extract the three PDK LVS-testcase
+> geometries and fit a lumped model to each — see
+> [`em-extraction/README.md`](em-extraction/README.md). Route 1 is therefore
+> **done, for those three geometries** — see [What this
+> is](#sim-inductor-model--spiral-inductor-models-for-sg13g2) at the top of
+> this file for which model is now authoritative where. Route 1 for
+> *arbitrary* geometry (a general EM-lookup or a resolver that extracts
+> on-demand) remains undone; nothing here claims otherwise.
 
 **The honest framing of route 3**: it is not a first-principles PDK number and
 this repository never presents it as one. It is a *documented approximation
 with a stated error budget*, admitted because a tank cannot be sized without
 some L, and an approximation whose error is stated beats both a silent
-placeholder and indefinite paralysis. When the EM route lands, this model
+placeholder and indefinite paralysis. Now that the EM route has landed for
+the three extracted geometries, this model
 should be superseded, and every number derived from it re-derived.
 
 ---
@@ -246,6 +291,22 @@ These are the same limits stated in the model file's own header, restated here
 with the supporting arithmetic. **Read them before quoting any number this
 model produced.**
 
+### These bars are now measured, not just asserted (issue #9)
+
+[`em-extraction/`](em-extraction/) EM-extracted the real drawn PCell at these
+same three geometries and compared it point-for-point against this model.
+The bars below predate that measurement and are kept as-is where the
+measurement confirms them; where the measurement sharpens or contradicts a
+bar, that is called out inline. Full method and per-geometry numbers:
+[`em-extraction/README.md`](em-extraction/README.md) § "Extraction vs.
+analytic: the measured delta".
+
+| Quantity | Bar stated below | Measured delta (analytic vs. EM, `p1`/`p13`/`p11`) | Verdict |
+|---|---|---|---|
+| `L` @ 1 GHz | ±5 % multi-turn, ±10 % single-turn | +5.4 % / +6.4 % / +7.7 % | **confirmed** for `p1`; `p13`/`p11` land just outside the multi-turn bar — see "Inductance" below |
+| `Q` @ 1 GHz | upper bound, one-directional | +34.9 % / +17.2 % / +16.9 % (analytic always reads high) | **direction confirmed**; magnitude is inside this model's own `qlow_*` pessimistic bracket at `p13` — see "Quality factor" below |
+| SRF | ±15 %, "order-of-magnitude marker" for large geometries | `p13` +77.3 %, `p11` +49.8 % (analytic over-estimates) | **bar was too tight** — see "Self-resonance" below |
+
 ### Frequency: trust 0.5 GHz … 20 GHz, and only below the device's own SRF
 
 - Below ~0.3 GHz nothing is wrong; the model is simply uninteresting there.
@@ -281,6 +342,16 @@ from 2 µm to `3w`, and `d_in/d_out` 0.1–0.9.
 
 So `p1` is an **extrapolation**, cross-checked in (c) above against the
 single-loop formula to a 10 % gap. Treat single-turn `L` as ±10 %.
+
+**Measured (issue #9, EM extraction of the real PCell)**: +5.4 % (`p1`),
++6.4 % (`p13`), +7.7 % (`p11`) — analytic always reads high, same sign at all
+three geometries. `p1` is inside its ±10 % bar; `p13`/`p11` sit just outside
+the stated ±5 % multi-turn bar (by 1.4–2.7 points). Read `L` @ 1 GHz from the
+**EM-fitted model** (`sg13g2_inductor_em.spice`) for these three geometries
+rather than adjusting this bar upward — the EM number is a direct measurement
+of the real drawn coil, not a wider version of the same approximation. Detail:
+[`em-extraction/README.md`](em-extraction/README.md) § "Extraction vs.
+analytic".
 
 ### Quality factor: this model's Q is an UPPER BOUND
 
@@ -318,13 +389,39 @@ i.e. **±19 %**, which is *larger* than the ±10 % the metal-resistance corners
 `rlo`/`rhi` produce there. Substrate loss dominates Q at the top of the band;
 metal loss dominates at the bottom.
 
-### Self-resonance: ±15 %
+**Measured (issue #9)**: analytic `Q` @ 1 GHz reads +34.9 % / +17.2 % / +16.9 %
+high vs. the EM extraction at `p1`/`p13`/`p11` — the predicted **direction**
+(analytic is an upper bound) is confirmed at all three geometries, every
+time. The **magnitude** is better read against this model's own `qlow_*`
+pessimistic bracket than against `q_*` alone: at `p13`/1 GHz, `q_*` = 5.26,
+`qlow_*` = 3.67, and the EM-measured value is **4.49** — inside that bracket.
+So the bracket, not the point estimate, is what this measurement validates.
+Full table: [`em-extraction/README.md`](em-extraction/README.md) §
+"Extraction vs. analytic".
+
+### Self-resonance: ±15 % as stated — measured 49–77 % high for `p13`/`p11`
 
 SRF rides on the back of the `L` and `C` uncertainties. The oxide capacitance
 treats the coil band as a **solid octagonal annulus**, which is right while
 the turn spacing is much smaller than the 11.23 µm oxide height (true for
 every PDK testcase geometry: `s ≤ 9 µm`) and overstates C once `s` approaches
 `h_ox`.
+
+**Measured (issue #9) — this bar was too tight, not too loose.** The EM
+extraction finds SRF at 8.07 GHz (`p13`) and 9.42 GHz (`p11`), **77.3 %** and
+**49.8 %** *below* this model's analytic estimate (14.31 / 14.11 GHz) — far
+outside the ±15 % bar. This is consistent with, and explained by, the
+frequency-limits note above: `p13`'s 2.55 mm conductor approaches a
+quarter-wavelength near the analytic model's own SRF estimate, i.e. the
+analytic estimate sits exactly where a lumped 2-π topology loses the right to
+answer the question, while the EM extraction is a full-wave field solve with
+no such limit. **For `p13`/`p11`, use the EM-measured SRF
+(`sg13g2_inductor_em.spice`), not this model's**, and read `../README.md`'s
+tank conclusions in [What this means for the
+tank](em-extraction/README.md#what-this-means-for-the-tank) — a ~10 GHz tank
+built on either geometry runs **above**, not below, the real SRF. `p1`'s SRF
+remains unmeasured in-band by either method (analytic estimates 240 GHz; the
+EM scan found none below its 30 GHz ceiling) — consistent, not contradictory.
 
 ### The PCell's feed lines are deliberately excluded — and here is their cost
 
@@ -409,24 +506,34 @@ None of that is a ratified spec row, and this PR does not make any of it one.
 
 ---
 
-## What this does **not** establish
+## What this (analytic) model does **not** establish
 
-1. **That a real SG13G2 spiral behaves this way.** No EM extraction, no
-   measurement, no silicon. Every check in
-   [Validation evidence](#validation-evidence) is either internal
-   (netlist-vs-algebra) or a consistency check among expressions with a common
-   ancestry — except IHP's `lEstim`, which is one geometry at the bottom of the
-   size range.
-2. **Any Q number to better than the bracket.** The `q_*`/`qlow_*` pair is not
-   decoration; unmodelled crowding and substrate eddy currents are real and
-   one-directional.
+1. **That a real SG13G2 spiral behaves this way, beyond three points.**
+   [`em-extraction/`](em-extraction/) (issue #9) has now EM-extracted the real
+   drawn PCell at `p1`/`p13`/`p11` and measured this model against it — see
+   [Accuracy limits](#accuracy-limits) above. For those three geometries, this
+   claim is **resolved**: read the EM-fitted model instead. For any *other*
+   geometry, it remains unresolved — no EM extraction, no measurement, no
+   silicon. Every check in [Validation evidence](#validation-evidence) below
+   is either internal (netlist-vs-algebra) or a consistency check among
+   expressions with a common ancestry — except IHP's `lEstim`, which is one
+   geometry at the bottom of the size range.
+2. **Any Q number to better than the bracket**, for geometries other than the
+   three extracted ones. The `q_*`/`qlow_*` pair is not decoration; unmodelled
+   crowding and substrate eddy currents are real and one-directional — and
+   the EM measurement confirms both the direction and, at `p13`, that the
+   `qlow_*` bracket (not the `q_*` point estimate) is the closer number.
 3. **Anything above 20 GHz**, or above a device's own SRF.
 4. **Anything about the drawn layout's parasitics** beyond the coil itself —
-   feeds, ground shielding, and neighbouring structures are all out.
+   feeds, ground shielding, and neighbouring structures are all out. This
+   applies identically to the EM-fitted model, which shares this model's
+   topology.
 
-The follow-up that would settle (1) — EM-extracting the PDK's own PCell with
-openEMS or Palace and fitting a lumped subcircuit to the extracted
-S-parameters — is filed separately as **#9**.
+The EM-extraction follow-up that settled (1) and (2) for three geometries is
+[`em-extraction/`](em-extraction/) (issue #9); its own "What this does not
+establish" section states what remains open even with the EM route landed
+(arbitrary-geometry accuracy, PVT behaviour of the EM-measured level itself,
+silicon agreement).
 
 ---
 
@@ -447,6 +554,10 @@ S-parameters — is filed separately as **#9**.
   `libs.tech/klayout/tech/lvs/testing/testcases/unit/ind_devices/`.
 - [`../tank-characterization/README.md`](../tank-characterization/README.md)
   § "The inductor gap" — the negative result this directory answers.
+- [`em-extraction/README.md`](em-extraction/README.md) — the openEMS
+  extraction this file's [Accuracy limits](#accuracy-limits) section is now
+  measured against (issue #9); its own Sources section cites the solver, the
+  PDK's openEMS workflow, and issue #11's provisioning record.
 - This repo's `CLAUDE.md` — "Tank first", "numbers without methods are not
   results"; [`../README.md`](../README.md) — the append-only record convention;
   `spec/review-bar.md` items 1 and 2.

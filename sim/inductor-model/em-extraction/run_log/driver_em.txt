@@ -1,0 +1,55 @@
+== geometry: instantiating the PDK's own inductor PCell ==
+{
+  "pycell4klayout-api": {"repo": "https://github.com/IHP-GmbH/pycell4klayout-api.git", "rev": "2ffdf79fe51a7c35b361cc854369b5d434c8d478"},
+  "pypreprocessor": {"repo": "https://github.com/IHP-GmbH/pypreprocessor.git", "rev": "cf1ff9bad0fb5338cf1c5b990b2b816b1ea01a64"},
+  "overlay": "/tmp/sg13g2-pycell-overlay"
+}
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/gds/inductor_p1.gds (p1)
+{
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/gds/inductor_p13.gds (p13)
+{
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/gds/inductor_p11.gds (p11)
+{
+== em: p1 (geom=p1 cellsize=1.0um margin=200um) ==
+FDTD simulation completed successfully for excitation  [1]
+Getting simulation settings from "settings" dictionary
+
+________________________
+Mesh cells by axis (total 249 kcells):
+ x = 90
+ y = 99
+ z = 28
+Smallest cell size:
+ dx = 0.8282
+ dy = 0.9818
+ dz = 0.4000
+________________________
+
+Getting simulation settings from "settings" dictionary
+Creating port information metadata file  /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p1/port_information.json
+Starting FDTD simulation for excitation  [2]
+FDTD simulation completed successfully for excitation  [2]
+Creating  S-parameter file
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p1.s2p in 194 s
+== em: p13 (geom=p13 cellsize=1.0um margin=200um) ==
+FDTD simulation completed successfully for excitation  [1]
+Getting simulation settings from "settings" dictionary
+
+________________________
+Mesh cells by axis (total 1118 kcells):
+ x = 196
+ y = 184
+ z = 31
+Smallest cell size:
+ dx = 0.8008
+ dy = 0.8208
+ dz = 0.4000
+________________________
+
+Getting simulation settings from "settings" dictionary
+Creating port information metadata file  /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p13/port_information.json
+Starting FDTD simulation for excitation  [2]
+FDTD simulation completed successfully for excitation  [2]
+Creating  S-parameter file
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p13.s2p in 708 s
+== em: p11 (geom=p11 cellsize=1.0um margin=200um) ==

@@ -1,0 +1,207 @@
+openEMS - fixed number of threads: 8
+ ---------------------------------------------------------------------- 
+ | openEMS 64bit -- version v0.37.0-rc2
+ | (C) 2010-2026 Thorsten Liebig <thorsten.liebig@gmx.de>  GPL license
+ ---------------------------------------------------------------------- 
+	Used external libraries:
+		CSXCAD -- Version: v0.7.0-rc2
+		hdf5   -- Version: 1.10.10
+		          compiled against: HDF5 library version: 1.10.10
+		tinyxml -- compiled against: 2.6.2
+		fparser
+		boost  -- compiled against: 1_83
+		vtk -- Version: 9.1.0
+		       compiled against: 9.1.0
+
+Create FDTD operator (compressed SSE + multi-threading)
+FDTD simulation size: 153x157x30 --> 720630 FDTD cells 
+FDTD timestep is: 9.41222e-16 s; Nyquist rate: 17707 timesteps @3.00008e+10 Hz
+openEMS::SetupFDTD: Warning, the timestep seems to be very small --> long simulation. Check your mesh!?
+Excitation signal length is: 202913 timesteps (1.90986e-10s)
+Max. number of timesteps: 1000000000 ( --> 4928.22 * Excitation signal length)
+Create FDTD engine (compressed SSE + multi-threading)
+Running FDTD engine... this may take a while... grab a cup of coffee?!?
+[@        6s] Timestep:         4426 || Speed:  473.8 MC/s (1.521e-03 s/TS) || Energy: ~2.87e-24 (- 0.00dB)
+[@       13s] Timestep:         8852 || Speed:  498.4 MC/s (1.446e-03 s/TS) || Energy: ~4.28e-24 (- 0.00dB)
+[@       19s] Timestep:        13278 || Speed:  468.5 MC/s (1.538e-03 s/TS) || Energy: ~4.29e-25 (- 9.99dB)
+[@       26s] Timestep:        17704 || Speed:  514.2 MC/s (1.401e-03 s/TS) || Energy: ~4.01e-23 (- 0.00dB)
+[@       32s] Timestep:        22130 || Speed:  469.7 MC/s (1.534e-03 s/TS) || Energy: ~5.79e-22 (- 0.00dB)
+[@       39s] Timestep:        26556 || Speed:  504.9 MC/s (1.427e-03 s/TS) || Energy: ~3.53e-21 (- 0.00dB)
+[@       45s] Timestep:        30982 || Speed:  548.4 MC/s (1.314e-03 s/TS) || Energy: ~1.36e-20 (- 0.00dB)
+[@       50s] Timestep:        35408 || Speed:  580.1 MC/s (1.242e-03 s/TS) || Energy: ~3.54e-20 (- 0.00dB)
+[@       56s] Timestep:        39834 || Speed:  536.7 MC/s (1.343e-03 s/TS) || Energy: ~6.05e-20 (- 0.00dB)
+[@     1m02s] Timestep:        44260 || Speed:  509.8 MC/s (1.414e-03 s/TS) || Energy: ~5.29e-20 (- 0.58dB)
+[@     1m08s] Timestep:        48686 || Speed:  580.8 MC/s (1.241e-03 s/TS) || Energy: ~3.58e-21 (-12.28dB)
+[@     1m13s] Timestep:        53112 || Speed:  616.9 MC/s (1.168e-03 s/TS) || Energy: ~1.58e-19 (- 0.00dB)
+[@     1m18s] Timestep:        57538 || Speed:  640.5 MC/s (1.125e-03 s/TS) || Energy: ~1.33e-18 (- 0.00dB)
+[@     1m23s] Timestep:        61964 || Speed:  685.9 MC/s (1.051e-03 s/TS) || Energy: ~4.72e-18 (- 0.00dB)
+[@     1m28s] Timestep:        66390 || Speed:  634.2 MC/s (1.136e-03 s/TS) || Energy: ~1.05e-17 (- 0.00dB)
+[@     1m32s] Timestep:        70816 || Speed:  708.9 MC/s (1.016e-03 s/TS) || Energy: ~1.60e-17 (- 0.00dB)
+[@     1m37s] Timestep:        75242 || Speed:  616.6 MC/s (1.169e-03 s/TS) || Energy: ~1.60e-17 (- 0.01dB)
+[@     1m42s] Timestep:        79668 || Speed:  637.0 MC/s (1.131e-03 s/TS) || Energy: ~8.28e-18 (- 2.87dB)
+[@     1m47s] Timestep:        84094 || Speed:  657.6 MC/s (1.096e-03 s/TS) || Energy: ~4.81e-19 (-15.22dB)
+[@     1m52s] Timestep:        88520 || Speed:  616.0 MC/s (1.170e-03 s/TS) || Energy: ~7.65e-18 (- 3.21dB)
+[@     1m58s] Timestep:        92946 || Speed:  603.4 MC/s (1.194e-03 s/TS) || Energy: ~3.79e-17 (- 0.00dB)
+[@     2m03s] Timestep:        97372 || Speed:  607.8 MC/s (1.186e-03 s/TS) || Energy: ~7.85e-17 (- 0.00dB)
+[@     2m08s] Timestep:       101454 || Speed:  602.8 MC/s (1.196e-03 s/TS) || Energy: ~1.01e-16 (- 0.00dB)
+[@     2m13s] Timestep:       106224 || Speed:  647.1 MC/s (1.114e-03 s/TS) || Energy: ~9.05e-17 (- 0.49dB)
+[@     2m18s] Timestep:       110650 || Speed:  636.9 MC/s (1.131e-03 s/TS) || Energy: ~5.31e-17 (- 2.81dB)
+[@     2m23s] Timestep:       115076 || Speed:  644.2 MC/s (1.119e-03 s/TS) || Energy: ~1.68e-17 (- 7.81dB)
+[@     2m28s] Timestep:       119502 || Speed:  608.9 MC/s (1.183e-03 s/TS) || Energy: ~1.16e-18 (-19.41dB)
+[@     2m34s] Timestep:       123928 || Speed:  584.8 MC/s (1.232e-03 s/TS) || Energy: ~4.71e-18 (-13.33dB)
+[@     2m40s] Timestep:       128354 || Speed:  522.5 MC/s (1.379e-03 s/TS) || Energy: ~1.32e-17 (- 8.85dB)
+[@     2m46s] Timestep:       132780 || Speed:  540.9 MC/s (1.332e-03 s/TS) || Energy: ~1.59e-17 (- 8.04dB)
+[@     2m51s] Timestep:       137206 || Speed:  590.1 MC/s (1.221e-03 s/TS) || Energy: ~1.20e-17 (- 9.26dB)
+[@     2m56s] Timestep:       141632 || Speed:  620.3 MC/s (1.162e-03 s/TS) || Energy: ~6.18e-18 (-12.15dB)
+[@     3m02s] Timestep:       146058 || Speed:  602.6 MC/s (1.196e-03 s/TS) || Energy: ~2.11e-18 (-16.82dB)
+[@     3m06s] Timestep:       150484 || Speed:  651.3 MC/s (1.106e-03 s/TS) || Energy: ~3.98e-19 (-24.07dB)
+[@     3m11s] Timestep:       154910 || Speed:  633.2 MC/s (1.138e-03 s/TS) || Energy: ~3.28e-20 (-34.91dB)
+[@     3m16s] Timestep:       159336 || Speed:  647.3 MC/s (1.113e-03 s/TS) || Energy: ~5.45e-20 (-32.70dB)
+[@     3m21s] Timestep:       163762 || Speed:  652.9 MC/s (1.104e-03 s/TS) || Energy: ~7.52e-20 (-31.30dB)
+[@     3m26s] Timestep:       168188 || Speed:  717.2 MC/s (1.005e-03 s/TS) || Energy: ~5.41e-20 (-32.73dB)
+[@     3m30s] Timestep:       172614 || Speed:  669.4 MC/s (1.077e-03 s/TS) || Energy: ~2.78e-20 (-35.61dB)
+[@     3m36s] Timestep:       177040 || Speed:  617.5 MC/s (1.167e-03 s/TS) || Energy: ~1.28e-20 (-38.98dB)
+[@     3m40s] Timestep:       181466 || Speed:  663.8 MC/s (1.086e-03 s/TS) || Energy: ~6.90e-21 (-41.67dB)
+[@     3m45s] Timestep:       185892 || Speed:  702.3 MC/s (1.026e-03 s/TS) || Energy: ~4.96e-21 (-43.11dB)
+[@     3m50s] Timestep:       190318 || Speed:  698.9 MC/s (1.031e-03 s/TS) || Energy: ~4.24e-21 (-43.79dB)
+[@     3m55s] Timestep:       194744 || Speed:  641.8 MC/s (1.123e-03 s/TS) || Energy: ~3.83e-21 (-44.23dB)
+[@     4m00s] Timestep:       199170 || Speed:  609.4 MC/s (1.182e-03 s/TS) || Energy: ~3.51e-21 (-44.61dB)
+[@     4m05s] Timestep:       203596 || Speed:  615.8 MC/s (1.170e-03 s/TS) || Energy: ~3.24e-21 (-44.95dB)
+[@     4m10s] Timestep:       208022 || Speed:  650.4 MC/s (1.108e-03 s/TS) || Energy: ~2.99e-21 (-45.31dB)
+[@     4m14s] Timestep:       212448 || Speed:  689.0 MC/s (1.046e-03 s/TS) || Energy: ~2.74e-21 (-45.68dB)
+[@     4m19s] Timestep:       216874 || Speed:  682.6 MC/s (1.056e-03 s/TS) || Energy: ~2.52e-21 (-46.04dB)
+[@     4m24s] Timestep:       221300 || Speed:  693.2 MC/s (1.040e-03 s/TS) || Energy: ~2.32e-21 (-46.41dB)
+[@     4m28s] Timestep:       225726 || Speed:  695.3 MC/s (1.036e-03 s/TS) || Energy: ~2.13e-21 (-46.78dB)
+[@     4m33s] Timestep:       230152 || Speed:  665.9 MC/s (1.082e-03 s/TS) || Energy: ~1.96e-21 (-47.14dB)
+[@     4m38s] Timestep:       234578 || Speed:  711.0 MC/s (1.014e-03 s/TS) || Energy: ~1.80e-21 (-47.51dB)
+[@     4m43s] Timestep:       239004 || Speed:  615.4 MC/s (1.171e-03 s/TS) || Energy: ~1.66e-21 (-47.87dB)
+[@     4m48s] Timestep:       243430 || Speed:  608.1 MC/s (1.185e-03 s/TS) || Energy: ~1.52e-21 (-48.23dB)
+[@     4m53s] Timestep:       247856 || Speed:  676.6 MC/s (1.065e-03 s/TS) || Energy: ~1.40e-21 (-48.60dB)
+[@     4m57s] Timestep:       252282 || Speed:  688.8 MC/s (1.046e-03 s/TS) || Energy: ~1.29e-21 (-48.96dB)
+[@     5m02s] Timestep:       256708 || Speed:  682.5 MC/s (1.056e-03 s/TS) || Energy: ~1.18e-21 (-49.32dB)
+[@     5m07s] Timestep:       261134 || Speed:  586.9 MC/s (1.228e-03 s/TS) || Energy: ~1.09e-21 (-49.68dB)
+[@     5m13s] Timestep:       265560 || Speed:  572.2 MC/s (1.260e-03 s/TS) || Energy: ~1.00e-21 (-50.05dB)
+Time for 265560 iterations with 720630.00 cells : 313.55 sec
+Speed: 610.33 MCells/s 
+openEMS - fixed number of threads: 8
+ ---------------------------------------------------------------------- 
+ | openEMS 64bit -- version v0.37.0-rc2
+ | (C) 2010-2026 Thorsten Liebig <thorsten.liebig@gmx.de>  GPL license
+ ---------------------------------------------------------------------- 
+	Used external libraries:
+		CSXCAD -- Version: v0.7.0-rc2
+		hdf5   -- Version: 1.10.10
+		          compiled against: HDF5 library version: 1.10.10
+		tinyxml -- compiled against: 2.6.2
+		fparser
+		boost  -- compiled against: 1_83
+		vtk -- Version: 9.1.0
+		       compiled against: 9.1.0
+
+Create FDTD operator (compressed SSE + multi-threading)
+FDTD simulation size: 153x157x30 --> 720630.00 FDTD cells 
+FDTD timestep is: 0.00 s; Nyquist rate: 17707 timesteps @30000812654.00 Hz
+openEMS::SetupFDTD: Warning, the timestep seems to be very small --> long simulation. Check your mesh!?
+Excitation signal length is: 202913 timesteps (0.00s)
+Max. number of timesteps: 1000000000 ( --> 4928.22 * Excitation signal length)
+Create FDTD engine (compressed SSE + multi-threading)
+Running FDTD engine... this may take a while... grab a cup of coffee?!?
+[@        4s] Timestep:         4426 || Speed:  697.8 MC/s (1.033e-03 s/TS) || Energy: ~2.87e-24 (- 0.00dB)
+[@        8s] Timestep:         8852 || Speed:  728.9 MC/s (9.886e-04 s/TS) || Energy: ~4.28e-24 (- 0.00dB)
+[@       13s] Timestep:        13278 || Speed:  661.3 MC/s (1.090e-03 s/TS) || Energy: ~4.29e-25 (- 9.99dB)
+[@       18s] Timestep:        17704 || Speed:  716.8 MC/s (1.005e-03 s/TS) || Energy: ~4.01e-23 (- 0.00dB)
+[@       22s] Timestep:        22130 || Speed:  743.3 MC/s (9.695e-04 s/TS) || Energy: ~5.79e-22 (- 0.00dB)
+[@       27s] Timestep:        26556 || Speed:  644.5 MC/s (1.118e-03 s/TS) || Energy: ~3.53e-21 (- 0.00dB)
+[@       32s] Timestep:        30982 || Speed:  657.5 MC/s (1.096e-03 s/TS) || Energy: ~1.36e-20 (- 0.00dB)
+[@       36s] Timestep:        35408 || Speed:  706.1 MC/s (1.021e-03 s/TS) || Energy: ~3.54e-20 (- 0.00dB)
+[@       41s] Timestep:        39834 || Speed:  689.7 MC/s (1.045e-03 s/TS) || Energy: ~6.05e-20 (- 0.00dB)
+[@       46s] Timestep:        44260 || Speed:  656.3 MC/s (1.098e-03 s/TS) || Energy: ~5.29e-20 (- 0.58dB)
+[@       51s] Timestep:        48686 || Speed:  646.3 MC/s (1.115e-03 s/TS) || Energy: ~3.58e-21 (-12.28dB)
+[@       55s] Timestep:        53112 || Speed:  704.5 MC/s (1.023e-03 s/TS) || Energy: ~1.58e-19 (- 0.00dB)
+[@     1m00s] Timestep:        57538 || Speed:  615.8 MC/s (1.170e-03 s/TS) || Energy: ~1.33e-18 (- 0.00dB)
+[@     1m05s] Timestep:        61964 || Speed:  745.9 MC/s (9.662e-04 s/TS) || Energy: ~4.73e-18 (- 0.00dB)
+[@     1m09s] Timestep:        66390 || Speed:  693.6 MC/s (1.039e-03 s/TS) || Energy: ~1.05e-17 (- 0.00dB)
+[@     1m14s] Timestep:        70816 || Speed:  662.8 MC/s (1.087e-03 s/TS) || Energy: ~1.60e-17 (- 0.00dB)
+[@     1m19s] Timestep:        75242 || Speed:  697.7 MC/s (1.033e-03 s/TS) || Energy: ~1.60e-17 (- 0.01dB)
+[@     1m23s] Timestep:        79668 || Speed:  682.2 MC/s (1.056e-03 s/TS) || Energy: ~8.28e-18 (- 2.87dB)
+[@     1m28s] Timestep:        84094 || Speed:  676.0 MC/s (1.066e-03 s/TS) || Energy: ~4.81e-19 (-15.22dB)
+[@     1m32s] Timestep:        88520 || Speed:  747.0 MC/s (9.647e-04 s/TS) || Energy: ~7.65e-18 (- 3.21dB)
+[@     1m37s] Timestep:        92946 || Speed:  672.0 MC/s (1.072e-03 s/TS) || Energy: ~3.79e-17 (- 0.00dB)
+[@     1m42s] Timestep:        97372 || Speed:  656.4 MC/s (1.098e-03 s/TS) || Energy: ~7.85e-17 (- 0.00dB)
+[@     1m47s] Timestep:       101454 || Speed:  623.9 MC/s (1.155e-03 s/TS) || Energy: ~1.01e-16 (- 0.00dB)
+[@     1m52s] Timestep:       106224 || Speed:  688.4 MC/s (1.047e-03 s/TS) || Energy: ~9.06e-17 (- 0.49dB)
+[@     1m56s] Timestep:       110650 || Speed:  663.7 MC/s (1.086e-03 s/TS) || Energy: ~5.31e-17 (- 2.81dB)
+[@     2m01s] Timestep:       115076 || Speed:  706.0 MC/s (1.021e-03 s/TS) || Energy: ~1.68e-17 (- 7.81dB)
+[@     2m06s] Timestep:       119502 || Speed:  701.4 MC/s (1.027e-03 s/TS) || Energy: ~1.16e-18 (-19.41dB)
+[@     2m10s] Timestep:       123928 || Speed:  710.4 MC/s (1.014e-03 s/TS) || Energy: ~4.71e-18 (-13.33dB)
+[@     2m15s] Timestep:       128354 || Speed:  680.1 MC/s (1.060e-03 s/TS) || Energy: ~1.32e-17 (- 8.85dB)
+[@     2m20s] Timestep:       132780 || Speed:  651.8 MC/s (1.106e-03 s/TS) || Energy: ~1.59e-17 (- 8.04dB)
+[@     2m24s] Timestep:       137206 || Speed:  658.7 MC/s (1.094e-03 s/TS) || Energy: ~1.20e-17 (- 9.26dB)
+[@     2m29s] Timestep:       141632 || Speed:  726.7 MC/s (9.917e-04 s/TS) || Energy: ~6.18e-18 (-12.15dB)
+[@     2m33s] Timestep:       146058 || Speed:  701.6 MC/s (1.027e-03 s/TS) || Energy: ~2.11e-18 (-16.82dB)
+[@     2m38s] Timestep:       150484 || Speed:  745.8 MC/s (9.663e-04 s/TS) || Energy: ~3.98e-19 (-24.07dB)
+[@     2m42s] Timestep:       154910 || Speed:  667.7 MC/s (1.079e-03 s/TS) || Energy: ~3.28e-20 (-34.91dB)
+[@     2m48s] Timestep:       159336 || Speed:  612.4 MC/s (1.177e-03 s/TS) || Energy: ~5.45e-20 (-32.70dB)
+[@     2m53s] Timestep:       163762 || Speed:  607.8 MC/s (1.186e-03 s/TS) || Energy: ~7.52e-20 (-31.30dB)
+[@     2m58s] Timestep:       168188 || Speed:  679.8 MC/s (1.060e-03 s/TS) || Energy: ~5.41e-20 (-32.73dB)
+[@     3m02s] Timestep:       172614 || Speed:  694.4 MC/s (1.038e-03 s/TS) || Energy: ~2.78e-20 (-35.61dB)
+[@     3m07s] Timestep:       177040 || Speed:  722.6 MC/s (9.973e-04 s/TS) || Energy: ~1.28e-20 (-38.98dB)
+[@     3m12s] Timestep:       181466 || Speed:  639.8 MC/s (1.126e-03 s/TS) || Energy: ~6.90e-21 (-41.67dB)
+[@     3m17s] Timestep:       185892 || Speed:  648.5 MC/s (1.111e-03 s/TS) || Energy: ~4.96e-21 (-43.11dB)
+[@     3m21s] Timestep:       190318 || Speed:  710.2 MC/s (1.015e-03 s/TS) || Energy: ~4.24e-21 (-43.79dB)
+[@     3m26s] Timestep:       194744 || Speed:  689.9 MC/s (1.045e-03 s/TS) || Energy: ~3.83e-21 (-44.23dB)
+[@     3m30s] Timestep:       199170 || Speed:  678.7 MC/s (1.062e-03 s/TS) || Energy: ~3.51e-21 (-44.61dB)
+[@     3m35s] Timestep:       203596 || Speed:  697.3 MC/s (1.034e-03 s/TS) || Energy: ~3.24e-21 (-44.95dB)
+[@     3m39s] Timestep:       208022 || Speed:  744.3 MC/s (9.682e-04 s/TS) || Energy: ~2.99e-21 (-45.31dB)
+[@     3m44s] Timestep:       212448 || Speed:  638.7 MC/s (1.128e-03 s/TS) || Energy: ~2.74e-21 (-45.68dB)
+[@     3m49s] Timestep:       216874 || Speed:  617.0 MC/s (1.168e-03 s/TS) || Energy: ~2.52e-21 (-46.04dB)
+[@     3m54s] Timestep:       221300 || Speed:  654.8 MC/s (1.101e-03 s/TS) || Energy: ~2.32e-21 (-46.41dB)
+[@     3m59s] Timestep:       225726 || Speed:  707.3 MC/s (1.019e-03 s/TS) || Energy: ~2.13e-21 (-46.78dB)
+[@     4m05s] Timestep:       230152 || Speed:  551.8 MC/s (1.306e-03 s/TS) || Energy: ~1.96e-21 (-47.14dB)
+[@     4m10s] Timestep:       234578 || Speed:  628.1 MC/s (1.147e-03 s/TS) || Energy: ~1.80e-21 (-47.51dB)
+[@     4m15s] Timestep:       239004 || Speed:  642.1 MC/s (1.122e-03 s/TS) || Energy: ~1.66e-21 (-47.87dB)
+[@     4m19s] Timestep:       243430 || Speed:  691.0 MC/s (1.043e-03 s/TS) || Energy: ~1.52e-21 (-48.23dB)
+[@     4m24s] Timestep:       247856 || Speed:  698.6 MC/s (1.032e-03 s/TS) || Energy: ~1.40e-21 (-48.60dB)
+[@     4m28s] Timestep:       252282 || Speed:  716.4 MC/s (1.006e-03 s/TS) || Energy: ~1.29e-21 (-48.96dB)
+[@     4m33s] Timestep:       256708 || Speed:  730.1 MC/s (9.870e-04 s/TS) || Energy: ~1.18e-21 (-49.32dB)
+[@     4m37s] Timestep:       261134 || Speed:  652.5 MC/s (1.104e-03 s/TS) || Energy: ~1.09e-21 (-49.68dB)
+[@     4m42s] Timestep:       265560 || Speed:  648.8 MC/s (1.111e-03 s/TS) || Energy: ~1.00e-21 (-50.05dB)
+Time for 265560 iterations with 720630.00 cells : 282.87 sec
+Speed: 676.53 MCells/s 
+Reading GDSII input file: /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/gds/inductor_p1.gds
+Getting simulation settings from "settings" dictionary
+
+________________________
+Mesh cells by axis (total 721 kcells):
+ x = 153
+ y = 157
+ z = 30
+Smallest cell size:
+ dx = 0.4600
+ dy = 0.4600
+ dz = 0.4000
+________________________
+
+Getting simulation settings from "settings" dictionary
+Creating port information metadata file  /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/convergence/p1_mesh0p5/port_information.json
+Starting FDTD simulation for excitation  [1]
+FDTD simulation completed successfully for excitation  [1]
+Getting simulation settings from "settings" dictionary
+
+________________________
+Mesh cells by axis (total 721 kcells):
+ x = 153
+ y = 157
+ z = 30
+Smallest cell size:
+ dx = 0.4600
+ dy = 0.4600
+ dz = 0.4000
+________________________
+
+Getting simulation settings from "settings" dictionary
+Creating port information metadata file  /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/convergence/p1_mesh0p5/port_information.json
+Starting FDTD simulation for excitation  [2]
+FDTD simulation completed successfully for excitation  [2]
+Creating  S-parameter file
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/convergence/p1_mesh0p5.s2p in 601 s

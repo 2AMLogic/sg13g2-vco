@@ -1,0 +1,223 @@
+{
+  "em_runs": {
+    "p1": {
+      "gds_sha256": "674090e9e0f520f000d5b220460e3f3647c46dcb4f06e1b7236557d2d3beeceb",
+      "host": {
+        "cpu_count": 8,
+        "hostname": "ip-172-31-76-7",
+        "platform": "Linux-7.0.0-1010-aws-x86_64-with-glibc2.39",
+        "python": "3.12.3"
+      },
+      "settings": {
+        "Boundaries": [
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC"
+        ],
+        "cells_per_wavelength": 20,
+        "energy_limit": -50.0,
+        "excite_portnumbers": [
+          2
+        ],
+        "fstart": 0.0,
+        "fstop": 30000000000.0,
+        "layernumbers": [
+          157,
+          210,
+          1,
+          6,
+          8,
+          19,
+          10,
+          29,
+          30,
+          49,
+          50,
+          66,
+          67,
+          125,
+          36,
+          36,
+          126,
+          133,
+          134,
+          201,
+          202
+        ],
+        "margin": 200.0,
+        "merge_polygon_size": 1.0,
+        "model_basename": "inductor_p1",
+        "no_gui": true,
+        "numThreads": 8,
+        "numfreq": 601,
+        "preview_only": false,
+        "refined_cellsize": 1.0,
+        "sim_path": "/home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p1",
+        "unit": 1e-06
+      },
+      "solver": {
+        "engine": "FDTD (time domain), Gaussian pulse excitation",
+        "tool": "openEMS",
+        "version_banner": "openEMS 64bit -- version v0.37.0-rc2"
+      },
+      "stackup_xml_sha256": "e0a9762bd85e15b2b173d2bfb509a0e97568a5de53b149935a3ae6913682fea1",
+      "wall_seconds": 201.6
+    },
+    "p11": {
+      "gds_sha256": "5c10348ff729b60aa184f50919f2bfaf129b0a9b10e967ce34f7b1da4a806016",
+      "host": {
+        "cpu_count": 8,
+        "hostname": "ip-172-31-76-7",
+        "platform": "Linux-7.0.0-1010-aws-x86_64-with-glibc2.39",
+        "python": "3.12.3"
+      },
+      "settings": {
+        "Boundaries": [
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC"
+        ],
+        "cells_per_wavelength": 20,
+        "energy_limit": -50.0,
+        "excite_portnumbers": [
+          2
+        ],
+        "fstart": 0.0,
+        "fstop": 30000000000.0,
+        "layernumbers": [
+          157,
+          210,
+          1,
+          6,
+          8,
+          19,
+          10,
+          29,
+          30,
+          49,
+          50,
+          66,
+          67,
+          125,
+          36,
+          36,
+          126,
+          133,
+          134,
+          201,
+          202
+        ],
+        "margin": 200.0,
+        "merge_polygon_size": 1.0,
+        "model_basename": "inductor_p11",
+        "no_gui": true,
+        "numThreads": 8,
+        "numfreq": 601,
+        "preview_only": false,
+        "refined_cellsize": 1.0,
+        "sim_path": "/home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p11",
+        "unit": 1e-06
+      },
+      "solver": {
+        "engine": "FDTD (time domain), Gaussian pulse excitation",
+        "tool": "openEMS",
+        "version_banner": "openEMS 64bit -- version v0.37.0-rc2"
+      },
+      "stackup_xml_sha256": "e0a9762bd85e15b2b173d2bfb509a0e97568a5de53b149935a3ae6913682fea1",
+      "wall_seconds": 1271.2
+    },
+    "p13": {
+      "gds_sha256": "73ed4b8899a85270225c896c45be889eac40d3ed819753657634668ab6c4e101",
+      "host": {
+        "cpu_count": 8,
+        "hostname": "ip-172-31-76-7",
+        "platform": "Linux-7.0.0-1010-aws-x86_64-with-glibc2.39",
+        "python": "3.12.3"
+      },
+      "settings": {
+        "Boundaries": [
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC",
+          "PEC"
+        ],
+        "cells_per_wavelength": 20,
+        "energy_limit": -50.0,
+        "excite_portnumbers": [
+          2
+        ],
+        "fstart": 0.0,
+        "fstop": 30000000000.0,
+        "layernumbers": [
+          157,
+          210,
+          1,
+          6,
+          8,
+          19,
+          10,
+          29,
+          30,
+          49,
+          50,
+          66,
+          67,
+          125,
+          36,
+          36,
+          126,
+          133,
+          134,
+          201,
+          202
+        ],
+        "margin": 200.0,
+        "merge_polygon_size": 1.0,
+        "model_basename": "inductor_p13",
+        "no_gui": true,
+        "numThreads": 8,
+        "numfreq": 601,
+        "preview_only": false,
+        "refined_cellsize": 1.0,
+        "sim_path": "/home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/results/inductor_p13",
+        "unit": 1e-06
+      },
+      "solver": {
+        "engine": "FDTD (time domain), Gaussian pulse excitation",
+        "tool": "openEMS",
+        "version_banner": "openEMS 64bit -- version v0.37.0-rc2"
+      },
+      "stackup_xml_sha256": "e0a9762bd85e15b2b173d2bfb509a0e97568a5de53b149935a3ae6913682fea1",
+      "wall_seconds": 863.3
+    }
+  },
+  "generated_utc": "2026-09-10T05:26:57.470122+00:00",
+  "host": {
+    "hostname": "ip-172-31-76-7",
+    "platform": "Linux-7.0.0-1010-aws-x86_64-with-glibc2.39"
+  },
+  "models": {
+    "analytic": {
+      "path": "../sg13g2_inductor_analytic.spice",
+      "sha256": "d6ce02ad3073df28bad83d4d8906b39ed1e7d9b0c0a4f4d5e1c6d7c92eab49da"
+    },
+    "em_fitted": {
+      "path": "../sg13g2_inductor_em.spice",
+      "sha256": "6f24f9857ab7810c91bda5f6307e78f1dfcbe2afd750bb023e28156ded06d6a0"
+    }
+  },
+  "ngspice_version": [
+    "** ngspice-46 : Circuit level simulation program"
+  ],
+  "numpy": "1.26.4",
+  "python": "3.12.3",
+  "record_id": "20260910-052657-3896421"
+}

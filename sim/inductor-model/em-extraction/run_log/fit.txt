@@ -1,0 +1,10 @@
+/home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/scripts/emlib.py:218: RuntimeWarning: divide by zero encountered in divide
+  return 1.0 / (1.0 / (1j * w * Cox) + Zsi)
+/home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/scripts/emlib.py:218: RuntimeWarning: invalid value encountered in divide
+  return 1.0 / (1.0 / (1j * w * Cox) + Zsi)
+/home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/em-extraction/scripts/emlib.py:154: RuntimeWarning: invalid value encountered in divide
+  return Z[:, 0, 0] - Z[:, 0, 1] * Z[:, 1, 0] / Z[:, 1, 1]
+p1   fit band 0.3-30 GHz: |Zse| rms 0.18% max 0.52% | L rms 0.16% | Q rms 0.92% | SRF EM nan vs fit nan GHz
+p13  fit band 0.3-6.85947 GHz: |Zse| rms 0.83% max 2.74% | L rms 0.44% | Q rms 4.23% | SRF EM 8.07 vs fit 8.17 GHz
+p11  fit band 0.3-8.00829 GHz: |Zse| rms 0.90% max 2.90% | L rms 0.48% | Q rms 5.16% | SRF EM 9.42 vs fit 9.51 GHz
+wrote /home/ubuntu/loom-workspaces/sg13g2-vco/.loom/worktrees/issue-9/sim/inductor-model/sg13g2_inductor_em.spice
