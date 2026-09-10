@@ -32,9 +32,12 @@ evidence, not a footnote.
 ## Environment
 
 `source env.sh` resolves `PDK_ROOT`/`PDK` — an explicit export wins, otherwise
-the usual open_pdks install prefixes are probed. Every `run_*.sh` sources it,
-and an interactive `ngspice` session can too, so nothing here can silently
-drift onto a different install than a script used.
+the usual open_pdks install prefixes are probed. `run_pvt_sweep.sh` sources it
+because it needs the PDK's model libraries; `run_model_check.sh` deliberately
+does not, so it keeps its no-PDK-install cold start (see its own header and
+`sim/lib.sh`'s header for why). An interactive `ngspice` session can source it
+too, so nothing here can silently drift onto a different install than a
+PDK-dependent script used.
 
 ## Directory / naming convention
 
@@ -42,7 +45,9 @@ drift onto a different install than a script used.
 sim/
   README.md                  this file — the authoritative convention
   pdk.json                   pinned PDK revision + known model gaps
-  env.sh                     PDK_ROOT/PDK resolution, sourced by every run script
+  env.sh                     PDK_ROOT/PDK resolution, sourced by run scripts
+                             that need the PDK (not all of them — see
+                             "Environment" above)
   <experiment-slug>/         one directory per distinct claim under test
     README.md                what was measured, over what band and corners,
                              how to reproduce it, and what it does NOT show
