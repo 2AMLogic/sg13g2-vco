@@ -196,6 +196,56 @@ kvco_stats() {
   }'
 }
 
+# ---- Kvco stats: full (all N points, 0..3.3 V) and core (first
+# N_CORE_POINTS, 0..1.2 V). Last-index lookups use explicit
+# count-minus-one arithmetic rather than bash's `array[-1]`, which needs
+# bash 4.3+ and macOS still ships 3.2 as /bin/bash (see lib.sh's header).
+#
+# emit_kvco_rows <device_class> <label> <temp> <pair>...
+# Shared by the MOS and diode sweeps below (identical except for the
+# device_class tag and the set of devices swept). Each <pair> is
+# "<device_key>:<space-separated C(1GHz) values, one per VCTRL_LIST entry,
+# same order>". Reads the already-global VCTRL_LIST/N_CORE_POINTS, appends
+# one full-domain and one core-domain row per pair to the already-global
+# KVCO_CSV.
+emit_kvco_rows() {
+  local device_class="$1" label="$2" temp="$3"
+  shift 3
+  local n_full last_full last_core V_FULL V_CORE vmin_full vmax_full vmin_core vmax_core
+  n_full=${#VCTRL_LIST[@]}
+  last_full=$((n_full - 1))
+  last_core=$((N_CORE_POINTS - 1))
+  V_FULL="${VCTRL_LIST[*]}"
+  V_CORE="${VCTRL_LIST[*]:0:${N_CORE_POINTS}}"
+  vmin_full="${VCTRL_LIST[0]}"; vmax_full="${VCTRL_LIST[${last_full}]}"
+  vmin_core="${VCTRL_LIST[0]}"; vmax_core="${VCTRL_LIST[${last_core}]}"
+
+  local pair key carr carr_a c_full c_core_a c_core
+  local cmax cmin ratio dpeak dmin c_at_vmin c_at_vmax
+  for pair in "$@"; do
+    key="${pair%%:*}"
+    carr="${pair#*:}"
+    # shellcheck disable=SC2206
+    carr_a=(${carr})
+    c_full="${carr_a[*]}"
+    # shellcheck disable=SC2206
+    c_core_a=(${carr_a[*]:0:${N_CORE_POINTS}})
+    c_core="${c_core_a[*]}"
+
+    read -r cmax cmin ratio dpeak dmin <<EOF
+$(kvco_stats "${V_FULL}" "${c_full}")
+EOF
+    c_at_vmin="${carr_a[0]}"; c_at_vmax="${carr_a[${last_full}]}"
+    echo "${device_class},${key},${label},${temp},full,${vmin_full},${vmax_full},${n_full},${c_at_vmin},${c_at_vmax},${cmax},${cmin},${ratio},${dpeak},${dmin}" >> "${KVCO_CSV}"
+
+    read -r cmax cmin ratio dpeak dmin <<EOF
+$(kvco_stats "${V_CORE}" "${c_core}")
+EOF
+    c_at_vmin="${c_core_a[0]}"; c_at_vmax="${c_core_a[${last_core}]}"
+    echo "${device_class},${key},${label},${temp},core,${vmin_core},${vmax_core},${N_CORE_POINTS},${c_at_vmin},${c_at_vmax},${cmax},${cmin},${ratio},${dpeak},${dmin}" >> "${KVCO_CSV}"
+  done
+}
+
 # ---------------------------------------------------------------- MOS sweep
 for i in "${!MOS_SECTIONS[@]}"; do
   section="${MOS_SECTIONS[$i]}"
@@ -273,39 +323,7 @@ for i in "${!MOS_SECTIONS[@]}"; do
       if [[ ${rc} -eq 0 && ${model_error} -eq 0 ]]; then passed=$((passed + 1)); fi
     done
 
-    # ---- Kvco stats: full (all N points, 0..3.3 V) and core (first
-    # N_CORE_POINTS, 0..1.2 V). Last-index lookups use explicit
-    # count-minus-one arithmetic rather than bash's `array[-1]`, which needs
-    # bash 4.3+ and macOS still ships 3.2 as /bin/bash (see lib.sh's header).
-    n_full=${#VCTRL_LIST[@]}
-    last_full=$((n_full - 1))
-    last_core=$((N_CORE_POINTS - 1))
-    V_FULL="${VCTRL_LIST[*]}"
-    V_CORE="${VCTRL_LIST[*]:0:${N_CORE_POINTS}}"
-    vmin_full="${VCTRL_LIST[0]}"; vmax_full="${VCTRL_LIST[${last_full}]}"
-    vmin_core="${VCTRL_LIST[0]}"; vmax_core="${VCTRL_LIST[${last_core}]}"
-    for pair in "small:${C_small[*]}" "mid:${C_mid[*]}" "large:${C_large[*]}" "xlarge:${C_xlarge[*]}"; do
-      key="${pair%%:*}"
-      carr="${pair#*:}"
-      # shellcheck disable=SC2206
-      carr_a=(${carr})
-      c_full="${carr_a[*]}"
-      # shellcheck disable=SC2206
-      c_core_a=(${carr_a[*]:0:${N_CORE_POINTS}})
-      c_core="${c_core_a[*]}"
-
-      read -r cmax cmin ratio dpeak dmin <<EOF
-$(kvco_stats "${V_FULL}" "${c_full}")
-EOF
-      c_at_vmin="${carr_a[0]}"; c_at_vmax="${carr_a[${last_full}]}"
-      echo "mos,${key},${label},${temp},full,${vmin_full},${vmax_full},${n_full},${c_at_vmin},${c_at_vmax},${cmax},${cmin},${ratio},${dpeak},${dmin}" >> "${KVCO_CSV}"
-
-      read -r cmax cmin ratio dpeak dmin <<EOF
-$(kvco_stats "${V_CORE}" "${c_core}")
-EOF
-      c_at_vmin="${c_core_a[0]}"; c_at_vmax="${c_core_a[${last_core}]}"
-      echo "mos,${key},${label},${temp},core,${vmin_core},${vmax_core},${N_CORE_POINTS},${c_at_vmin},${c_at_vmax},${cmax},${cmin},${ratio},${dpeak},${dmin}" >> "${KVCO_CSV}"
-    done
+    emit_kvco_rows mos "${label}" "${temp}" "small:${C_small[*]}" "mid:${C_mid[*]}" "large:${C_large[*]}" "xlarge:${C_xlarge[*]}"
   done
 done
 
@@ -382,35 +400,7 @@ for i in "${!DIO_SECTIONS[@]}"; do
       if [[ ${rc} -eq 0 && ${model_error} -eq 0 ]]; then passed=$((passed + 1)); fi
     done
 
-    n_full=${#VCTRL_LIST[@]}
-    last_full=$((n_full - 1))
-    last_core=$((N_CORE_POINTS - 1))
-    V_FULL="${VCTRL_LIST[*]}"
-    V_CORE="${VCTRL_LIST[*]:0:${N_CORE_POINTS}}"
-    vmin_full="${VCTRL_LIST[0]}"; vmax_full="${VCTRL_LIST[${last_full}]}"
-    vmin_core="${VCTRL_LIST[0]}"; vmax_core="${VCTRL_LIST[${last_core}]}"
-    for pair in "dasm:${C_dasm[*]}" "dalg:${C_dalg[*]}" "dpsm:${C_dpsm[*]}" "dplg:${C_dplg[*]}"; do
-      key="${pair%%:*}"
-      carr="${pair#*:}"
-      # shellcheck disable=SC2206
-      carr_a=(${carr})
-      c_full="${carr_a[*]}"
-      # shellcheck disable=SC2206
-      c_core_a=(${carr_a[*]:0:${N_CORE_POINTS}})
-      c_core="${c_core_a[*]}"
-
-      read -r cmax cmin ratio dpeak dmin <<EOF
-$(kvco_stats "${V_FULL}" "${c_full}")
-EOF
-      c_at_vmin="${carr_a[0]}"; c_at_vmax="${carr_a[${last_full}]}"
-      echo "diode,${key},${label},${temp},full,${vmin_full},${vmax_full},${n_full},${c_at_vmin},${c_at_vmax},${cmax},${cmin},${ratio},${dpeak},${dmin}" >> "${KVCO_CSV}"
-
-      read -r cmax cmin ratio dpeak dmin <<EOF
-$(kvco_stats "${V_CORE}" "${c_core}")
-EOF
-      c_at_vmin="${c_core_a[0]}"; c_at_vmax="${c_core_a[${last_core}]}"
-      echo "diode,${key},${label},${temp},core,${vmin_core},${vmax_core},${N_CORE_POINTS},${c_at_vmin},${c_at_vmax},${cmax},${cmin},${ratio},${dpeak},${dmin}" >> "${KVCO_CSV}"
-    done
+    emit_kvco_rows diode "${label}" "${temp}" "dasm:${C_dasm[*]}" "dalg:${C_dalg[*]}" "dpsm:${C_dpsm[*]}" "dplg:${C_dplg[*]}"
   done
 done
 
