@@ -20,10 +20,14 @@
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone and carries the eleventh checklist item, which released `klt 0.5.0` does not bundle (see "Why the checklist doc is vendored"). |
 
 Today every item renders `unmet` with `reason: "no_evidence"`, and that
-is the correct result: this block has no layout, no schematic-derived
-netlist, and no `klt`-native evidence envelope yet, and
-`spec/target-spec.md` is still DRAFT, so no spec-row artifact exists for
-any item to grade. Per issue #34: an all-`unmet` manifest is the honest
+is the correct result: no evidence envelope exists yet for any item to
+grade — no layout, no schematic-derived netlist, no `klt`-native run
+artifact, and no PVT corner pass — and that absence, not the spec's
+ratification state, is why the render is all-`unmet`.
+`spec/target-spec.md` is now partially ratified (DR-003: nine rows
+RATIFIED as targets, three explicitly open) — a ratified target is
+explicitly *not met by any measurement*. Per issue #34: an
+all-`unmet` manifest is the honest
 machine-readable statement of the gap — never hold the manifest back
 until the block is further along, and never cite an envelope that does
 not actually support an item just to make a row go green.
