@@ -51,10 +51,6 @@
   // pyproject.toml/uv.lock exists. The pep621/uv packageRules below are
   // likewise no-ops today.
 
-  // Update lockfile without widening pyproject.toml version ranges.
-  // Renovate detects uv.lock natively.
-  "rangeStrategy": "update-lockfile",
-
   // Refresh uv.lock even when no direct dependency range changes.
   // This is how Renovate keeps transitive dependencies current.
   // Match the repo's Monday morning schedule explicitly; Renovate otherwise
@@ -69,23 +65,30 @@
   // Limit concurrent PRs to keep review queue manageable
   "prConcurrentLimit": 5,
 
-  // Add release notes and changelogs to PR body for agent review
-  "fetchReleaseNotes": true,
+  // Add changelogs to PR body for agent review
+  "fetchChangeLogs": true,
 
   // --- Package grouping ---
 
   "packageRules": [
-    // Group all non-major Python dependency updates into one PR
+    // Group all non-major Python dependency updates into one PR.
+    // rangeStrategy is scoped here (not top-level): per Renovate docs,
+    // "update-lockfile" only applies to a fixed list of managers that does
+    // not include github-actions, the only manager with anything to update
+    // in this repo today. Update lockfile without widening pyproject.toml
+    // version ranges; Renovate detects uv.lock natively.
     {
       "groupName": "python minor/patch dependencies",
       "matchManagers": ["pep621", "uv"],
-      "matchUpdateTypes": ["minor", "patch"]
+      "matchUpdateTypes": ["minor", "patch"],
+      "rangeStrategy": "update-lockfile"
     },
 
     // Python major updates get individual PRs (more risk, need individual review)
     {
       "matchManagers": ["pep621", "uv"],
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": ["major"],
+      "rangeStrategy": "update-lockfile"
     },
 
     // Group all GitHub Actions SHA updates into one PR
