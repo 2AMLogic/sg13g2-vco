@@ -32,7 +32,9 @@
   // Never auto-merge. Agents review, humans merge.
   "automerge": false,
 
-  // Create PRs as drafts — consistent with AGENTS.md PR policy
+  // Create PRs as drafts — keeps dependency PRs out of the merge-ready
+  // queue until reviewed (template convention, not an AGENTS.md mandate —
+  // this repo has no written PR policy)
   "draftPR": true,
 
   // --- Schedule ---
