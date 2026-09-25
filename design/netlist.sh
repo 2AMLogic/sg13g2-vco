@@ -46,7 +46,7 @@ source "${SIM_DIR}/env.sh"
 if [[ -z "${PDK_ROOT:-}" || ! -d "${PDK_ROOT}/${PDK}/libs.tech/xschem/sg13g2_pr" ]]; then
   echo "error: no ${PDK} xschem symbol library under PDK_ROOT=${PDK_ROOT:-unset}." >&2
   echo "       design/vco.sch instantiates sg13g2_pr/{npn13G2v,sg13_svaricap," >&2
-  echo "       cap_rfcmim,inductor}.sym; see sim/pdk.json for the pinned release." >&2
+  echo "       cap_cmim,inductor}.sym; see sim/pdk.json for the pinned release." >&2
   exit 1
 fi
 

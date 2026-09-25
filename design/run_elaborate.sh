@@ -19,7 +19,7 @@
 #      rather than being silently simulated.)
 #   2. Does that netlist ELABORATE against the pinned PDK -- i.e. does every
 #      device resolve, with zero unknown-subckt / unknown-model errors?
-#      (npn13G2v and cap_rfcmim from the PDK's ngspice model libraries,
+#      (npn13G2v and cap_cmim from the PDK's ngspice model libraries,
 #      sg13_hv_svaricap through the OSDI mosvar build, and this repo's own
 #      EM-fitted `inductor` subckt.)
 #   3. Does it start up and oscillate, and where -- at Vctrl = 0.0, 1.65 and
@@ -30,7 +30,7 @@
 # testbenches are separate work and belong under sim/ with their own
 # append-only records, per sim/README.md.
 #
-# Requires: ngspice, xschem, awk and curl on PATH, bash, and an IHP-Open-PDK
+# Requires: ngspice, xschem and awk on PATH, bash, and an IHP-Open-PDK
 # v0.3.0 install (pinned in sim/pdk.json). Like
 # sim/varactor-characterization/run_varactor_sweep.sh, this script runs the
 # OSDI build itself (sim/README.md rule 1: a run that needs a build step owns
