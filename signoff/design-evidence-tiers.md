@@ -133,7 +133,17 @@ written to every block.
   within the same repo and satisfy **both** columns, one per partition. The
   claim must state the partition boundary explicitly (which nets/pins/cells
   belong to which side) so a reviewer can tell which evidence covers which
-  silicon.
+  silicon. A block manifest states it in its optional `partition_boundary`
+  field (issue #2278 — `{"analog": "...", "digital": "..."}`), which `klt
+  signoff --manifest` echoes onto the report and onto every row of the
+  partition it names, so the statement travels with the evidence instead of
+  living only in a prose file a reader has to find and trust is current. It
+  is **reported, not graded**: `klt signoff` cannot check free text against
+  silicon, so a manifest that declares nothing still grades identically —
+  what it loses is a reviewer's ability to answer this paragraph's question
+  from the report alone. See
+  [`docs/cli/signoff.md`](cli/signoff.md)'s "The declared partition
+  boundary" section for the field's exact rules.
 
 1. **Design sources**
    - *Analog* — committed schematic sources (or generator) plus the
@@ -360,7 +370,69 @@ written to every block.
       well/substrate taps. Every declared supply must resolve to exactly
       **one** electrical island — no `erc.unconnected_net` and no
       `erc.supply_short` naming it — and the run must report zero
-      `erc.missing_tie`. Those are the rules this item grades, not the
+      `erc.missing_tie`, from a tie the run actually *checked*: a `ties[]`
+      entry `klt erc` reports as degenerate (`erc_coverage.skipped[]`,
+      reason `degenerate_tap_declaration`, issue #2199, or
+      `degenerate_well_assertion`, issue #2255) returns zero for a
+      reason that has nothing to do with taps, and renders
+      `supply_spec_incomplete` rather than a met item — the same rule that
+      already rejects a spec declaring no `ties[]` at all. **A stream with
+      no distinguishing implant/marker layer at all** — common for
+      generated/full-custom analog whose implants are derived downstream,
+      see `docs/cli/erc.md`'s #2199 section — can still declare a checked
+      tie via `ties[].tap_boxes` (issue #2234): a caller-asserted list of
+      tap-geometry boxes, graded under its own
+      `erc_coverage.checked_by_assertion` classification and held to the
+      same degenerate/falsifiability test as every other narrowing form.
+      **A block sitting in a native substrate** — NMOS-in-bulk, with no
+      *drawn* well/tub layer anywhere in the stream — can likewise declare
+      its substrate tie with `ties[].well_layer: null` +
+      `ties[].well_boxes` (issue #2255), asserting the substrate region
+      rather than naming one. Before that, one half of this item was
+      unreachable by construction for such a block: `well_layer` required
+      drawn geometry, and a `ties_disclosure` describes only *undeclared*
+      work, so a design that declared its n-well tie could not even
+      disclose the missing substrate half. It reaches **met** on the same
+      terms as a drawn-well tie, because the assertion is falsifiable and
+      `klt erc` falsifies it where it can: each asserted polygon must
+      independently hold a tap that reaches the declared net, and an
+      asserted region indistinguishable from the whole top-cell extent is
+      skipped as `degenerate_well_assertion` (which this item already
+      refuses to read as a clean missing-tie verdict, via the same gate
+      that catches a degenerate tap). What a grader gains is the
+      provenance, not a weaker bar: a met citation's
+      `power_delivery.ties_checked_by_well_assertion` names which ties
+      rested on an asserted well, beside
+      `ties_checked_by_assertion` for the tap side — two distinct claims,
+      reported distinctly, so "the well itself was the caller's word" never
+      hides inside "a tap box was asserted".
+      When a stream genuinely cannot express a tap at all, a top-level
+      `ties_disclosure` declares that explicitly; the item still renders
+      `supply_spec_disclosed_unexpressible` rather than a met item — a
+      disclosure proves nothing about the tap's actual connectivity — but
+      that reason is distinguishable from a spec that omitted `ties[]`
+      without ever considering the question. **A second obstacle is
+      disclosable the same way** (issue #2247): `ties_disclosure.kind:
+      "tool_limitation"` says the tap *is* expressible, but the `klt` build
+      this evidence had to be produced on cannot grade a declared tie
+      safely — the reported instance being issue #2169, where a declared
+      tie on an affected build joins the well/tap regions into the primary
+      connectivity graph and reports a false `erc.supply_short` on any
+      routed design. The item renders
+      `supply_spec_disclosed_tool_limitation`: a third reason, still
+      **unmet** on the same principle (a disclosure is the caller's word
+      about their toolchain, never a computed `erc.missing_tie` result),
+      but kept distinct because the remedy differs — re-run against a
+      build whose tie extraction is isolated and declare the tie, rather
+      than go looking for a tap that is already drawn. The report's own
+      `provenance.klt_version` is what a grader checks to see whether a
+      disclosed tool limitation applies to the run in front of them.
+      So the three zero-`ties[]` states this item can render are
+      mechanically distinguishable: `supply_spec_incomplete` (nobody asked
+      the question), `supply_spec_disclosed_unexpressible` (no tap to
+      name), and `supply_spec_disclosed_tool_limitation` (a tap, and a
+      build that cannot be trusted to grade it). Those are the
+      rules this item grades, not the
       report's overall `status`: an antenna verdict or a floating-gate
       finding is a real defect, but it is not this item's subject and does
       not block it (#1994). IR-drop and EM (`klt power`) stay deliberately
@@ -378,7 +450,44 @@ written to every block.
       independent, device-aware LVS run first (and confirm that LVS deck's
       own connectivity setup does not join nets by label alone, e.g. via a
       bare `connect_implicit('*')` rule, before trusting a "match" verdict
-      as that independent check).
+      as that independent check). **Caveat (issue #2183)**: the mirror-image
+      false positive applies to `erc.supply_short`. `klt erc` traces
+      conductor geometry with no device recognition, so a drawn device body
+      on a declared role — a poly resistor, a poly fuse, a MiM/MOM
+      capacitor plate — reads as a wire. A block that deliberately spans
+      its two supplies through such a device (a power-on-reset divider, a
+      brown-out detector, a supply-referenced bias string) therefore
+      reports an `erc.supply_short` that is an artifact of the declaration,
+      not a power-delivery defect. **Declare those bodies in the spec's
+      `devices[]` array** — see `docs/cli/erc.md`'s "Device bodies are not
+      wires" section — and the item becomes gradeable for such a block. A
+      grader seeing an `erc.supply_short` on a supply-sensing analog block
+      should check the cited report's `provenance.devices` (empty, or
+      missing the bodies on the conducting path) before reading the finding
+      as a real short. **`--deck` (issue #2204) removes the need for
+      hand-declaration for a device a curated extraction deck already knows
+      about**: running the same supply-spec check with `--deck <name>`
+      (e.g. `gf180mcu`/`sky130`) auto-carves out every deck-recognised
+      `ResistorDevice`/`CapacitorDevice` body whose conducting-body layer
+      matches a declared `stackup`/`vias` role, echoed in
+      `provenance.devices` exactly as a hand-declared entry is (plus
+      `source: "deck"`) — see `docs/cli/erc.md`'s "Deck-driven
+      device-marker auto-detection". A run without `--deck`, or whose
+      device is not yet covered by any curated deck's `resistors`/
+      `capacitors` tables, still needs the explicit `devices[]` declaration
+      above; a grader should check `provenance.deck` alongside
+      `provenance.devices` before treating a clean `erc.supply_short` read
+      as covered by auto-detection rather than a hand-declaration that
+      happens to be present. **Known gap (issue #2255)**: every `ties[]`
+      entry still requires a *drawn* `well_layer`, so a block sitting in a
+      native substrate — no drawn pwell/tub shape anywhere, NMOS-in-bulk —
+      cannot declare its substrate tie at all, and (because a
+      `ties_disclosure` only ever describes *undeclared* work) cannot
+      disclose the missing half either when it declares its n-well tie. For
+      such a block only the drawn-well half of this item is graded today;
+      neither #2234 nor #2247 closes that, and a grader should read a met
+      item 11 on a native-substrate block as covering the declared ties
+      only.
 
 ## Power/IR-drop + EM evidence (not yet a T1 item)
 
@@ -630,7 +739,17 @@ than the disclosure. The rule binds the writer, from now on.
 
 - **Staleness is failure.** Every report is checked against current source
   revisions/hashes before it counts. Provenance blocks in klt JSON output
-  (#335) exist for this.
+  (#335) exist for this. `klt signoff --manifest` applies the rule in two
+  steps, and discloses how far it got: the manifest's pinned `content_hash`
+  is *gated* against the cited envelope's self-reported
+  `provenance.input.content_hash` (a mismatch renders the item `unmet`),
+  and that self-report is then checked against the **artifact itself** by
+  re-hashing the input the envelope names — reported per citation as
+  `input_verified: true | false | null` (issue #2196), never graded on. A
+  `null` there means the freshness claim was only ever compared to another
+  claim: two statements about a revision, neither of which is the revision.
+  Committing evidence beside the artifact it names (so the path resolves
+  from the repo) is what turns that `null` into a real check.
 - **Coverage honesty.** A verdict's blind spots (deck holes, warning-level
   mismatches, uncombined evidence legs) are part of the claim and travel
   with it.
