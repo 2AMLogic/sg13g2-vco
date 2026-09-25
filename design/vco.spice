@@ -1,0 +1,108 @@
+** sch_path: design/vco.sch
+**.subckt vco
+XL1 VDD OUTP 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XL2 VDD OUTN 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XC1 OUTP OUTN cap_cmim w=3.65e-6 l=3.65e-6 m=1
+XCVP1 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP2 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP3 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP4 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP5 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP6 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP7 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP8 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP9 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP10 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP11 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP12 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP13 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP14 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP15 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP16 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN1 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN2 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN3 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN4 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN5 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN6 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN7 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN8 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN9 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN10 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN11 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN12 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN13 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN14 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN15 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN16 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XQ1 OUTP OUTN TAIL 0 npn13G2v Nx=1 El=1.0
+XQ2 OUTN OUTP TAIL 0 npn13G2v Nx=1 El=1.0
+XQ3 TAIL NBIAS TE 0 npn13G2v Nx=1 El=2.0
+RTE TE 0 2k m=1
+RREF VDD NBIAS 20.5k m=1
+XQ4 NBIAS NBIAS RE 0 npn13G2v Nx=1 El=1.0
+RRE RE 0 4k m=1
+VSUP VDD 0 dc 3.3
+.save i(vsup)
+VCT VCTRL 0 dc 1.65
+**** begin user architecture code
+
+
+* Model libraries for this elaboration. The paths below are machine-specific,
+* so the committed netlist carries placeholder tokens that
+* design/run_elaborate.sh substitutes before running ngspice -- the same
+* mechanism sim/*/run_*.sh use for their testbench templates. The token list
+* and what each resolves to is documented in design/README.md.
+.lib @@MODELS_DIR@@/cornerHBT.lib hbt_typ
+.lib @@MODELS_DIR@@/cornerMOShv.lib mos_tt
+.lib @@MODELS_DIR@@/cornerCAP.lib cap_typ
+.include @@IND_MODEL@@
+
+
+
+
+* A perfectly symmetric differential pair sits on an unstable DC equilibrium;
+* this 10 mV differential initial condition is what lets the startup transient
+* leave it.  It is an initial condition, not a drive: it is not refreshed.
+.ic v(OUTP)=3.305 v(OUTN)=3.295
+
+.control
+pre_osdi @@OSDI_MOSVAR@@
+* VSUP carries savecurrent=true, which emits a `.save i(vsup)` card -- and a
+* .save card RESTRICTS the saved set, so without this `save all` every node
+* voltage below is unavailable and `let vdiff = ...` has nothing to read.
+save all
+op
+print v(NBIAS) v(TE) v(TAIL) v(OUTP) v(OUTN) i(VSUP)
+* 2 ps ceiling = 100 points per period at 5 GHz, ample for the rising-zero-
+* crossing period count design/run_elaborate.sh does; 20 ns is ~100 periods,
+* and startup from the .ic below completes inside the first nanosecond
+* (net negative conductance / 2C ~ 7 GNp/s), so the 10-20 ns window the
+* script measures over is settled oscillation.
+foreach vv 0 1.65 3.3
+  alter VCT dc = $vv
+  tran 1p 20n 0 2p
+  let vdiff = v(OUTP) - v(OUTN)
+  wrdata vco_tran_$vv vdiff
+* Differential-mode evidence, not decoration. A genuinely differential tank
+* puts the whole fundamental into vdiff and leaves the common mode and the
+* tail node with only the 2f component the two half-circuits pump in phase;
+* two independently-resonating branches would instead show a fundamental in
+* vcm. run_elaborate.sh reports Vpp(vcm)/Vpp(vdiff) and the tail node's own
+* crossing-counted frequency against f_osc for exactly that test.
+  let vcm = (v(OUTP) + v(OUTN))/2 - 3.3
+  wrdata vco_cm_$vv vcm
+  let vtl = v(TAIL) - mean(v(TAIL))
+  wrdata vco_tail_$vv vtl
+* Large-signal supply current: the row-8 power number the DC operating point
+* alone cannot give, since the pair's average current shifts once it is
+* switching. Sign flipped so the printed number is current OUT of the rail.
+  let isup = -i(VSUP)
+  wrdata vco_isup_$vv isup
+end
+.endc
+
+
+**** end user architecture code
+**.ends
+.end

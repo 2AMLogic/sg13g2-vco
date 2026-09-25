@@ -1,0 +1,15 @@
+* Hermetic ngspice init for design/.
+*
+* run_elaborate.sh copies this file into the scratch directory it runs
+* ngspice from, so a run does NOT depend on whether $HOME/.spiceinit exists
+* (the PDK ships libs.tech/ngspice/install.py, which symlinks one into $HOME;
+* a cold-start checkout on a machine where that was never run must still
+* elaborate the netlist the same way).
+*
+* ngbehavior=hsa is the compatibility mode the PDK's own .spiceinit sets, and
+* is what its model libraries are written against. Here it IS load-bearing:
+* design/vco.spice instantiates the PDK's own npn13G2v, cap_cmim and
+* sg13_hv_svaricap subcircuits, whose model cards use HSPICE-style
+* constructs (.if/.else inside .subckt, expression-valued .model parameters)
+* that ngspice only accepts in this mode.
+set ngbehavior=hsa
