@@ -1,0 +1,128 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": null,
+    "scope": "external"
+  },
+  "status": "error",
+  "corner_count": 1,
+  "passed": 0,
+  "failed": 0,
+  "errored": 1,
+  "implausible": 0,
+  "diagnostic_counts": {
+    "by_code": {
+      "measurement": 1
+    },
+    "by_severity": {
+      "error": 1
+    },
+    "corners_with_diagnostics": 1
+  },
+  "metrics": {
+    "sim__corner__count": 1,
+    "sim__corner__passed_count": 0,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 1
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "46",
+    "ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "models_lib": {
+      "path": null,
+      "scope": "external"
+    },
+    "models_lib_sha256": "06714fc260925d124fce6222d6bf4ea8db990fed53b8e01889084ca9cc151173",
+    "netlist_sha256": "06ea7c8377a3d788f521d3e332409eab96262fd9664b5d998adee9236ceae77e"
+  },
+  "coverage": {
+    "corners_simulated": 1,
+    "measurements_declared": 1,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [],
+    "skipped": [
+      {
+        "id": "measurement:[0,\"tt_captyp_hbttyp/1.650V/27C\",\"t_100_periods\"]/observation",
+        "reason": "unavailable_measurement"
+      }
+    ],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"tt_captyp_hbttyp/1.650V/27C\",\"t_100_periods\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": true,
+    "nothing_checked_reasons": [
+      "characterization_without_limits",
+      "unavailable_measurement"
+    ]
+  },
+  "provenance": {
+    "klt_version": "0.6.0+gf123e6c29f5b",
+    "klayout_version": "0.30.12",
+    "pdk": null,
+    "deck": {
+      "name": "corners_sg13g2.lib",
+      "content_hash": "sha256:06714fc260925d124fce6222d6bf4ea8db990fed53b8e01889084ca9cc151173",
+      "released": false
+    },
+    "input": {
+      "content_hash": "sha256:06ea7c8377a3d788f521d3e332409eab96262fd9664b5d998adee9236ceae77e",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "t_100_periods",
+      "unit": "s",
+      "limits": null,
+      "status": "error",
+      "worst_case": {
+        "corner_id": "tt_captyp_hbttyp/1.650V/27C",
+        "value": null,
+        "margin": null
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "tt_captyp_hbttyp/1.650V/27C",
+      "process": "tt_captyp_hbttyp",
+      "supply_v": {
+        "vct": 1.65
+      },
+      "temperature_c": 27,
+      "status": "error",
+      "runtime_s": 0.579,
+      "measurements": [
+        {
+          "name": "t_100_periods",
+          "value": null,
+          "unit": "s",
+          "status": "error",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "error",
+          "code": "measurement",
+          "message": "measurement 't_100_periods' produced no value"
+        }
+      ],
+      "artifacts": {
+        "log": "@@ATTEMPT_DIR@@/.klt/sim/tt_captyp_hbttyp_1p650V_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "@@ATTEMPT_DIR@@/.klt/sim/tt_captyp_hbttyp_1p650V_27C/corner.cir"
+      },
+      "monte_carlo": null
+    }
+  ]
+}

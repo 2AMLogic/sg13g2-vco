@@ -1,0 +1,25 @@
+* Hermetic ngspice init for sim/oscillator-core.
+*
+* Every run_*.sh in this directory copies this file into the scratch
+* directory it runs ngspice from, so a run does NOT depend on whether
+* $HOME/.spiceinit exists (the PDK ships libs.tech/ngspice/install.py, which
+* symlinks one into $HOME; a cold-start checkout on a machine where that was
+* never run must still reproduce the committed numbers).
+*
+* ngbehavior=hsa is the compatibility mode the PDK's own .spiceinit sets, and
+* is what its model libraries are written against. Here it IS load-bearing,
+* for the same reason design/.spiceinit says it is: the netlist under test
+* instantiates the PDK's own npn13G2v, cap_cmim and sg13_hv_svaricap
+* subcircuits, whose model cards use HSPICE-style constructs (.if/.else inside
+* .subckt, expression-valued .model parameters) that ngspice only accepts in
+* this mode. Without it ngspice prints "Note: No compatibility mode
+* selected!" and the varactor bank does not resolve -- see klt-sim/README.md,
+* where exactly that failure is the reproduction of one of the two tool gaps
+* this experiment filed upstream.
+*
+* run_method_check.sh copies it too, even though its synthetic deck uses only
+* ngspice-native behavioural sources and does not need the mode: the method
+* check exists to validate the SAME extractor the PDK-dependent sweep uses,
+* so it runs under the same ngspice configuration rather than quietly
+* diverging from it.
+set ngbehavior=hsa
