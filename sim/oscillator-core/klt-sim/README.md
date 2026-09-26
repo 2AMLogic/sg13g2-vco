@@ -10,20 +10,31 @@ Upstream issue: **[2AMLogic/klayout-tools#2511](https://github.com/2AMLogic/klay
 
 ## Why the grid wants to leave the host at all
 
-`../run_pvt_sweep.sh` declares 1350 transient points plus 119 margin
-transients. Measured on the machine that wrote it (ngspice-46, one core, the
-2 ps timestep ceiling `design/vco.spice`'s own comments justify), this netlist
-simulates at roughly **13 ps of circuit time per wall-clock second** — 32 OSDI
-varactor instances and four HBTs, all stiff. One 20 ns point is therefore
-~25 CPU-minutes and the declared grid is several hundred CPU-hours. That is a
-fleet job by any reading, and `klt sim` is the verb that exists to route a
-corner matrix to a fleet.
+`../run_pvt_sweep.sh` declares 1350 transient points plus a 33-corner × 9-rung
+margin pass — 1647 transients. Measured on the machine that wrote it
+(ngspice-46, one core, host under contention, at the 2 ps timestep ceiling):
+this netlist simulates at roughly **13 ps of circuit time per wall-clock
+second** — 32 OSDI varactor instances and four HBTs, all stiff. A 2 ns
+transient took 169 s, so at the bench's 5 ns window one point is ~6.5
+CPU-minutes and the declared grid is **~180 CPU-hours**. That is a fleet job
+by any reading, and `klt sim` is the verb that exists to route a corner matrix
+to a fleet.
+
+The three obvious ways to shrink it have all been measured rather than
+assumed, and only two of them worked: shortening the transient from 20 ns to
+5 ns (the window is now derived from a *measured* 0.883 ns settling time, see
+`../osc_bench.sh`'s `OSC_TSTOP` header) cut it ~4×, naming the save set
+instead of `save all` cut ~10 %, and **coarsening the timestep ceiling bought
+nothing at all** — the same 2 ns transient costs 169 s at a 2 ps ceiling and
+183 s at 5 ps, because the cost is in the Newton iterations per accepted point
+rather than in the point count. What is left after all three is still 180
+CPU-hours.
 
 ## What is here
 
 | File | What it is |
 |---|---|
-| `request-pvt-grid.json` | The full row-10/11 grid as a `klt sim` request: 45 composite process corners (MOS 5 × MIM 3 × HBT 3, each a `sections` bundle), the 10-point `Vctrl` axis as `corners.supply_v.vct`, the three row-11 temperatures, the 20 ns `tran`, and the `.meas` cards that would stand in for the extractors. Committed so it stays current with the sweep it mirrors; **not runnable against `klt 0.6.0`.** |
+| `request-pvt-grid.json` | The full row-10/11 grid as a `klt sim` request: 45 composite process corners (MOS 5 × MIM 3 × HBT 3, each a `sections` bundle), the 10-point `Vctrl` axis as `corners.supply_v.vct`, the three row-11 temperatures, the 5 ns `tran` and 2.5 ns measurement window the bench actually uses, and the `.meas` cards that would stand in for the extractors. Committed so it stays current with the sweep it mirrors; **not runnable against `klt 0.6.0`.** |
 | `attempt-20260926/request-single-corner.json` | The cut-down, single-corner request actually submitted, so the failure below reproduces in one point instead of 1350. |
 | `attempt-20260926/corners_sg13g2.lib` | The nested-`.lib` aggregator the attempt had to generate (see gap 3). |
 | `attempt-20260926/corner.cir` | The corner deck `klt sim` generated. This is the primary evidence: read its `.control` block. |

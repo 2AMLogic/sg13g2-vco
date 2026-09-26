@@ -209,9 +209,14 @@ IN_BAND="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v tm="${OSC_TMAX}" \
   NR > 1 && $6 == vc && $7 == tm && $8 == "PASS" { n++; if ($9 >= lo && $9 <= hi) k++ }
   END { printf "%d/%d", k+0, n+0 }' "${CSV_OUT}")"
 RATIO_SUMMARY="$(awk -F, 'NR > 1 { printf "%s C: %.4f (%s pts, worst floor %.3g %%); ", $4, $10, $5, $17 }' "${TUNING_CSV}")"
-SETTLE_SUMMARY="$(awk -F, -v tm="${OSC_TMAX}" '
-  NR > 1 && $7 == tm && $8 == "PASS" && $15 != "nan" { n++; if (w == "" || $15+0 > w+0) w = $15 }
-  END { if (n == 0) { print "no settled point" } else { printf "%d points settled, slowest %.3g s", n, w } }' "${CSV_OUT}")"
+SETTLE_SUMMARY="$(awk -F, -v tm="${OSC_TMAX}" -v disc="${OSC_TMEAS_START}" '
+  NR > 1 && $7 == tm && $8 == "PASS" && $15 != "nan" {
+    n++; if (w == "" || $15+0 > w+0) w = $15; if (b == "" || $15+0 < b+0) b = $15 }
+  END { if (n == 0) { print "no settled point" }
+        else { printf "%d of the %s-ceiling points settled, in %.3g .. %.3g s; the discarded window is %.3gx the slowest of those", n, tm, b, w, disc/w } }' "${CSV_OUT}")"
+SETTLE_WORST="$(awk -F, -v tm="${OSC_TMAX}" '
+  NR > 1 && $7 == tm && $8 == "PASS" && $15 != "nan" { if (w == "" || $15+0 > w+0) w = $15 }
+  END { print (w == "" ? "nan" : w) }' "${CSV_OUT}")"
 CM_SUMMARY="$(awk -F, -v tm="${OSC_TMAX}" '
   NR > 1 && $7 == tm && $8 == "PASS" { n++; if (w == "" || $17+0 > w+0) w = $17; if (ft == "" || ($21+0 < ft+0)) ft = $21; if ($21+0 > ftx+0) ftx = $21 }
   END { if (n == 0) { print "no point" } else { printf "worst Vpp(cm)/Vpp(diff) %.3g over %d points; f(TAIL)/f_osc in [%.3f, %.3f]", w, n, ft, ftx } }' "${CSV_OUT}")"
@@ -256,7 +261,10 @@ MARGIN_SUMMARY="$(awk -F, 'NR > 1 { printf "bracket [%s, %s] against bound %s ->
   echo "    initial condition, never refreshed."
   echo "  - discarded startup window 0 .. ${OSC_TMEAS_START} s; measurement"
   echo "    window ${OSC_TMEAS_START} s .. ${OSC_TSTOP_S} s. The discard is"
-  echo "    2.8x the settling time measured at the nominal corner; every point"
+  echo "    $(awk -v d="${OSC_TMEAS_START}" -v w="${SETTLE_WORST}" 'BEGIN{ if (w+0 > 0) printf "%.3g", d/w; else printf "an unknown multiple of" }')x"
+  echo "    the slowest settling time THIS RUN measured (${SETTLE_WORST} s) --"
+  echo "    the ratio is computed from this run's own data rather than quoted"
+  echo "    from the run the window was originally sized against. Every point"
   echo "    records its own \`t_settle_s\`, so a corner that needed longer is"
   echo "    visible rather than silently mismeasured."
   echo "  - \`f_osc\` = rising crossings of \`v(OUTP)-v(OUTN)\` through the"

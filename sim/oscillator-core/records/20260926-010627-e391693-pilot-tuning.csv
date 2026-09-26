@@ -1,0 +1,4 @@
+mos,cap,hbt,temp_c,n_points,f_min_hz,f_max_hz,v_at_f_min,v_at_f_max,tuning_ratio,tuning_pct,f_center_geo_hz,kvco_mean_hz_per_v,kvco_peak_hz_per_v,kvco_min_hz_per_v,kvco_linearity_pct,quant_floor_worst_pct,row1_verdict,row2_verdict,row2_stretch_verdict
+tt,cap_typ,hbt_typ,27,6,4.622456e+09,5.419325e+09,3.3,0.6,1.172391,17.2391,5.005057e+09,-1.927119e+08,-6.404100e+08,9.750000e+05,332.821,0.0924491,BOTH ENDPOINTS INSIDE,MET,NOT MET
+tt,cap_typ,hbt_typ,-40,3,4.621508e+09,5.447901e+09,3.3,0,1.178815,17.8815,5.017720e+09,-2.504221e+08,-4.736333e+08,-2.721091e+07,nan,0.0924302,BOTH ENDPOINTS INSIDE,MET,NOT MET
+tt,cap_typ,hbt_typ,125,3,4.607438e+09,5.342032e+09,3.3,0,1.159437,15.9437,4.961157e+09,-2.226042e+08,-4.327964e+08,-1.241212e+07,nan,0.0837716,BOTH ENDPOINTS INSIDE,MET,NOT MET

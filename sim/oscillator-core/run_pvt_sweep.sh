@@ -45,19 +45,36 @@
 #
 # THIS IS A LARGE JOB. READ THIS BEFORE STARTING IT.
 # --------------------------------------------------
-# Measured on the machine that wrote this script (ngspice-46, one core): the
-# netlist under test simulates at roughly 13 ps of circuit time per second of
-# wall clock at the 2 ps timestep ceiling -- 32 OSDI varactor instances and
-# four HBTs, all stiff. One 20 ns transient point is therefore ~25 CPU-minutes,
-# and the declared grid below is several hundred CPU-hours. It is a fleet job,
-# not a workstation job. The script prints its own point count and cost
-# estimate before it starts, and every point writes its own frozen netlist,
-# raw log and CSV row as it completes, so an interrupted run leaves usable
-# partial evidence rather than nothing.
+# Measured on the machine that wrote this script (ngspice-46, one core, host
+# under contention): this netlist simulates at roughly 13 ps of circuit time
+# per second of wall clock at the 2 ps timestep ceiling -- 32 OSDI varactor
+# instances and four HBTs, all stiff. A 2 ns transient took 169 s; the whole
+# grid below is upward of 150 CPU-hours. It is a fleet job, not a workstation
+# job. The script prints its own point count and cost estimate before it
+# starts, and every point writes its own frozen netlist, raw log and CSV row
+# as it completes, so an interrupted run leaves usable partial evidence
+# rather than nothing.
+#
+# THREE WAYS TO MAKE IT CHEAPER HAVE BEEN MEASURED, NOT ASSUMED:
+#   * shorten the transient. Done, and it is why OSC_TSTOP is 5 ns rather
+#     than the 20 ns design/vco.spice's comments propose -- see that
+#     constant's header in osc_bench.sh for the measured settling time the
+#     window is derived from. This cut the grid ~4x.
+#   * coarsen the timestep ceiling. MEASURED AND REJECTED: the same 2 ns
+#     transient costs 169 s at a 2 ps ceiling and 183 s at 5 ps. The cost is
+#     in the Newton iterations per accepted point, not in the point count, so
+#     coarsening buys no CPU time and only discretization error (the measured
+#     2p -> 5p delta on f_osc is -0.19 %; run_pilot_grid.sh records it).
+#   * name the save set instead of `save all`. Done in both templates: ~10 %
+#     of the run, bit-identical extracted f_osc and Vpp.
+# What is left after all three is still a fleet job. Do not shave corners off
+# the grid instead -- rows 1/2/6/10/11 are stated over this corner set, and a
+# subset of it grades nothing. If only a subset can be afforded, run
+# run_pilot_grid.sh, whose record says in its own words that it grades no row.
 #
 # `klt sim` is the tool that is supposed to route a grid this shape off-host,
-# and at the time this landed it could not express this deck at all. The two
-# blocking gaps, both reproduced rather than assumed, are recorded with their
+# and at the time this landed it could not express this deck at all. The
+# blocking gaps, all reproduced rather than assumed, are recorded with their
 # logs in klt-sim/README.md, which also carries the request document to submit
 # once they close.
 #
@@ -178,10 +195,21 @@ echo "transient points  : ${N_TRAN}"
 echo "margin corners    : ${N_MARGIN} x ${N_RUNGS} rungs = $((N_MARGIN * N_RUNGS)) transients"
 echo "transient settings: tran ${OSC_TSTEP} ${OSC_TSTOP}, ceiling ${OSC_TMAX};"
 echo "                    discard 0..${OSC_TMEAS_START} s, measure to ${OSC_TSTOP_S} s"
-echo "measured rate     : ~13 ps circuit time per wall-clock second per core"
-echo "                    at this ceiling on the machine that wrote this"
-echo "                    script, i.e. ~25 CPU-min per 20 ns transient"
-echo "estimated cost    : ~$(( (N_TRAN + N_MARGIN * N_RUNGS) * 25 / 60 )) CPU-hours."
+echo "                    margin ladder runs to ${OSC_MARGIN_TSTOP}"
+# The estimate is DERIVED from one measured rate constant and the declared
+# axes, so it cannot drift away from the settings above the way a hardcoded
+# "~N CPU-hours" sentence would. OSC_SECS_PER_NS is the measured wall-clock
+# cost of one nanosecond of circuit time on one core at OSC_TMAX; everything
+# else is arithmetic.
+OSC_SECS_PER_NS=76
+EST_H=$(awk -v nt="${N_TRAN}" -v ts="${OSC_TSTOP_S}" -v nm="$((N_MARGIN * N_RUNGS))" \
+            -v ms="${OSC_MARGIN_TSTOP_S}" -v r="${OSC_SECS_PER_NS}" \
+        'BEGIN { printf "%.0f", (nt*ts*1e9 + nm*ms*1e9) * r / 3600 }')
+echo "measured rate     : ~${OSC_SECS_PER_NS} s wall clock per ns of circuit time per core"
+echo "                    at this ceiling (2 ns transient = 169 s, ngspice-46)."
+echo "                    Coarsening the ceiling does NOT help: the same 2 ns"
+echo "                    transient costs 183 s at a 5 ps ceiling."
+echo "estimated cost    : ~${EST_H} CPU-hours."
 echo "                    This is a fleet job. Partial evidence is written"
 echo "                    point by point, so an interrupted run is not lost."
 echo "---------------------------------------------------------------"

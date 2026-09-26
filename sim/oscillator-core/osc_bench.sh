@@ -5,15 +5,17 @@
 # run_*.sh scripts next to it (sim/README.md's directory contract):
 #
 #   run_pvt_sweep.sh     the graded row-10/11 PVT grid + the row-6 margin pass
-#   run_probe.sh         one nominal PVT point; grades no spec row
+#   run_pilot_grid.sh    a DECLARED SUBSET of that grid; grades no spec row
 #   run_method_check.sh  known-answer check of the extractors (does NOT source
 #                        this file -- it needs no PDK and must stay that way)
 #
 # WHY THIS FILE EXISTS AND sim/lib.sh DOES NOT ABSORB IT
-# run_pvt_sweep.sh and run_probe.sh differ ONLY in which corners, control
+# run_pvt_sweep.sh and run_pilot_grid.sh differ ONLY in which corners, control
 # voltages and timestep ceilings they declare -- the deck generation, the
 # per-point ngspice invocation, the extraction and the record writing are
-# identical. sim/lib.sh is the repo-wide scaffolding shared by all four
+# identical. That is deliberate: the pilot's numbers and the graded grid's
+# come out of the same code path, so the pilot is a real rehearsal of the
+# sweep rather than a lookalike. sim/lib.sh is the repo-wide scaffolding shared by all four
 # experiments and deliberately knows nothing about oscillators or about this
 # netlist; the genuinely reusable extractors (osc_metrics, osc_settle) were
 # added THERE, and only the parts that are specific to design/vco.sch live
@@ -39,20 +41,21 @@
 # THE WINDOW IS SET FROM A MEASURED SETTLING TIME, NOT FROM A GUESS.
 # design/vco.spice's own comments propose 20 ns / a 10 ns discard on the
 # reasoning that startup "completes inside the first nanosecond". That
-# reasoning is now MEASURED rather than asserted: at the nominal corner
-# (mos_tt / cap_typ / hbt_typ, 27 C, Vctrl = 1.65 V) the differential envelope
-# reaches 90 % of its final peak-to-peak at t = 0.883 ns from the 10 mV .ic
-# (record 20260926-011500-*, run_pilot_grid.sh's own t_settle_s column, and
-# reproducible from a 2 ns transient). The settings below are therefore
-#   * discard 0 .. 2.5 ns  -- 2.8x the measured nominal settling time, so a
-#     corner that settles almost three times slower than nominal is still
-#     measured over settled oscillation; and a corner that does NOT is not
-#     hidden, because t_settle_s is recorded per point and lands at nan when
-#     the envelope never reaches the level and stays.
-#   * measure 2.5 .. 5.0 ns -- ~13 cycles at the 5.4 GHz nominal f_osc, which
-#     puts the interpolated quantization floor at dt_max*f/cycles ~ 0.08 %
-#     (the no-interpolation floor would be 1/cycles ~ 7.4 %; both are recorded
-#     with every number, see osc_quant_floor_pct).
+# reasoning is now MEASURED rather than asserted: a 2 ns exploratory transient
+# at the nominal corner put the 90 %-envelope settling time at 0.883 ns, the
+# window below was sized from it, and the pilot run then measured 0.487 ..
+# 1.256 ns across its corners (record 20260926-010627-e391693, the
+# t_settle_s column). The settings are therefore
+#   * discard 0 .. 2.5 ns  -- 2.0x the slowest settling time observed so far,
+#     so the recorded frequency and amplitude are of the settled oscillation.
+#     A corner that settles slower still is NOT hidden by this: t_settle_s is
+#     recorded per point and lands at nan when the envelope never reaches
+#     90 % of its final amplitude and stays there.
+#   * measure 2.5 .. 5.0 ns -- 10..13 cycles at the measured 4.6-5.4 GHz,
+#     which put the interpolated quantization floor at dt_max*f/cycles =
+#     0.082..0.092 % over the pilot (the no-interpolation floor would be
+#     1/cycles = 7.7..10 %; both are recorded with every number, see
+#     osc_quant_floor_pct).
 # A 20 ns transient would buy a 0.02 % floor instead of a 0.08 % one and cost
 # 4x the CPU time. Nothing this bench grades needs 0.02 %: the tightest
 # comparison is row 2's 1.15 ratio, against which 0.08 % on each endpoint is

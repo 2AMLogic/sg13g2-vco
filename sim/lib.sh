@@ -3,7 +3,7 @@
 # Shared scaffolding for the sim/*/run_*.sh experiment scripts
 # (sim/tank-characterization/run_pvt_sweep.sh, sim/inductor-model/run_model_check.sh,
 # sim/varactor-characterization/run_varactor_sweep.sh,
-# sim/oscillator-core/run_pvt_sweep.sh + run_method_check.sh).
+# sim/oscillator-core/run_pvt_sweep.sh + run_pilot_grid.sh + run_method_check.sh).
 # These are legitimate, distinct experiments -- this file exists
 # because the bash *scaffolding* around them (hashing, record-ID minting, a
 # scratch ngspice workdir, pulling a scalar out of a .meas log) was

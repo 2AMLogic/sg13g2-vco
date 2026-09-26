@@ -9,7 +9,15 @@
     "(`vco_core_body.spice`, the circuit body derived from design/vco.spice,",
     "and `corners_sg13g2.lib`, the nested-.lib aggregator that gives the",
     "single-file `models.lib` axis three families' corner sections) are",
-    "produced by the reproduction recipe in README.md."
+    "produced by the reproduction recipe in README.md.",
+    "Kept in step with osc_bench.sh's OSC_TSTOP / OSC_TMEAS_START: the",
+    "transient is 5 ns with a 2.5 ns discard, derived from the MEASURED",
+    "0.883 ns settling time, not the 20 ns design/vco.spice's comments",
+    "propose. The `.meas` period count below is coarser than sim/lib.sh's",
+    "osc_metrics -- TRIG/TARG RISE=n counts a FIXED number of crossings",
+    "and cannot be told to count inside a time window -- so its own",
+    "discarded-startup window moves with frequency. run_method_check.sh",
+    "does not validate this estimator, only the one in sim/lib.sh."
   ],
   "netlist": "vco_core_body.spice",
   "netlist_source": "schematic",
@@ -402,43 +410,43 @@
   },
   "analysis": {
     "kind": "tran",
-    "args": "1p 20n 0 2p"
+    "args": "1p 5n 0 2p"
   },
   "measurements": [
     {
-      "name": "t_50_periods",
+      "name": "t_10_periods",
       "unit": "s",
-      "spice": ".meas tran t_50_periods TRIG v(vdiff) VAL=0 RISE=11 TARG v(vdiff) VAL=0 RISE=61"
+      "spice": ".meas tran t_10_periods TRIG v(vdiff) VAL=0 RISE=11 TARG v(vdiff) VAL=0 RISE=21"
     },
     {
       "name": "vdiff_max",
       "unit": "V",
-      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
+      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=2.5n TO=5n"
     },
     {
       "name": "vdiff_min",
       "unit": "V",
-      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
+      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=2.5n TO=5n"
     },
     {
       "name": "vcm_max",
       "unit": "V",
-      "spice": ".meas tran vcm_max MAX v(vcm) FROM=10n TO=20n"
+      "spice": ".meas tran vcm_max MAX v(vcm) FROM=2.5n TO=5n"
     },
     {
       "name": "vcm_min",
       "unit": "V",
-      "spice": ".meas tran vcm_min MIN v(vcm) FROM=10n TO=20n"
+      "spice": ".meas tran vcm_min MIN v(vcm) FROM=2.5n TO=5n"
     },
     {
       "name": "isup_avg",
       "unit": "A",
-      "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
+      "spice": ".meas tran isup_avg AVG i(vsup) FROM=2.5n TO=5n"
     },
     {
       "name": "vtail_avg",
       "unit": "V",
-      "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
+      "spice": ".meas tran vtail_avg AVG v(tail) FROM=2.5n TO=5n"
     }
   ],
   "options": {
