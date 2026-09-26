@@ -1,0 +1,74 @@
+* tb_vco_port_noise -- equivalent noise current at an injection port of design/vco.sch
+* record @@RECORD_ID@@   corner @@CORNER_ID@@   port @@PORT_ID@@
+*
+* GENERATED FILE. Committed source:
+* sim/phase-noise/testbench/tb_vco_port_noise.spice.tmpl.
+*
+* WHAT THIS PRODUCES
+* ------------------
+* S_i, the ONE-SIDED equivalent (Norton) noise current PSD at one injection
+* port of the oscillator, in A^2/Hz -- the second of the phase-noise kernel's
+* two measured inputs (the first is the ISF, from
+* tb_vco_isf_impulse.spice.tmpl).
+*
+* It is obtained from ngspice's small-signal `noise` analysis with a unit AC
+* current probe ACROSS THE PORT and the port voltage as the output. Then
+* gain = Z_port, and ngspice's input-referred `inoise_spectrum` is
+* onoise/|Z_port| = the Norton-equivalent noise current density at that port
+* in A/sqrt(Hz). Squaring it gives S_i. The identity, and that this deck asks
+* ngspice for it correctly, is checked against a closed form in
+* run_method_check.sh (tb_portnoise_known_answer.spice.tmpl).
+*
+* THE LIMIT THIS DECK CARRIES, STATED HERE AND IN EVERY RECORD
+* ngspice's `noise` is a small-signal analysis about the DC OPERATING POINT.
+* An oscillator's DC operating point is its UNSTABLE EQUILIBRIUM -- the
+* symmetric state the cross-coupled pair sits in before it starts, with each
+* device carrying half the tail current continuously. The running oscillator's
+* noise sources are CYCLOSTATIONARY: they are modulated over the cycle as the
+* pair switches. This deck therefore measures the noise of the devices at a
+* bias they hold only on average, and treats it as stationary and white.
+*
+* That is a real approximation with a known sign for a switching pair (the
+* equilibrium bias overstates the time each device spends in its high-noise
+* state for a hard-switching oscillator, and understates it for a
+* nearly-linear one), and this experiment does NOT correct it -- it states it,
+* per CLAUDE.md. It is the single largest stated limit on the reported number.
+* Capturing it properly needs the cyclostationary noise-modulation function of
+* the full Hajimiri-Lee treatment, which in turn needs per-device noise
+* waveforms over the cycle that ngspice cannot produce.
+*
+* A second, smaller consequence: because Z_port at an unstable equilibrium has
+* a NEGATIVE real part near resonance, the raw output noise is not physically
+* meaningful there. The input-referred RATIO is, and is what this deck reads --
+* both numerator and denominator carry the same Z_port. The run script
+* evaluates it over a band and records the whole band, not one point, so a
+* reader can see whether the number was taken somewhere the referral was
+* well conditioned.
+
+.lib @@MODELS_DIR@@/cornerHBT.lib @@HBT_SECTION@@
+.lib @@MODELS_DIR@@/cornerMOShv.lib @@MOS_SECTION@@
+.lib @@MODELS_DIR@@/cornerCAP.lib @@CAP_SECTION@@
+.include @@IND_MODEL@@
+.temp @@TEMP_C@@
+
+* ---- begin design/vco.spice device section ----
+@@VCO_BODY@@
+* ---- end design/vco.spice device section ----
+
+* The probe defines the port. It is `dc 0`, so it perturbs no bias; only the
+* `noise` analysis reads its AC value. @@PROBE_CARD@@ and @@NOISE_OUT@@ are
+* substituted as a matched pair by pn_bench.sh, so the probe and the output
+* can never name different ports.
+@@PROBE_CARD@@
+
+.control
+pre_osdi @@OSDI_MOSVAR@@
+alter VCT dc = @@VCTRL@@
+op
+echo op_point_follows
+print v(NBIAS) v(TE) v(TAIL) v(OUTP) v(OUTN) i(VSUP)
+noise @@NOISE_OUT@@ IPROBE lin @@NPTS@@ @@FSTART@@ @@FSTOP@@
+setplot noise1
+print inoise_spectrum
+.endc
+.end

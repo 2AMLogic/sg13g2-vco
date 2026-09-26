@@ -1,0 +1,24 @@
+quantity,value,unit,note
+f0_measured,5.384250e+09,Hz,crossing-counted over the reference run
+vpp_diff,1.086791e+00,V,peak-to-peak of v(OUTP)-v(OUTN) over the measurement window
+si_tank,2.64526811e-23,A^2/Hz,input-referred one-sided noise current at the differential tank port
+si_tail,5.98291421e-23,A^2/Hz,input-referred one-sided noise current at the tail node
+si_tank_band_spread_pct,9.296,%,peak-to-peak over 3e9..9e9 Hz
+si_tail_band_spread_pct,56.652,%,peak-to-peak over 3e9..9e9 Hz
+gq_rms_tank_mean,1.329958e+13,rad/C,mean over 4 realisations
+gq_rms_tank_sd,4.596977e+11,rad/C,sample standard deviation over 4 realisations
+gq_rms_tail,4.16277044e+12,rad/C,single realisation
+isf_linearity_spread_pct,3.746,%,spread of Gq_rms between the two injected-charge magnitudes
+l_1mhz_mean,-102.2763,dBc/Hz,mean over the tank-port realisations
+l_1mhz_sd,0.2953,dBc/Hz,sample standard deviation over the tank-port realisations
+l_1mhz_min,-102.4447,dBc/Hz,best realisation
+l_1mhz_max,-101.8343,dBc/Hz,worst realisation
+l_10mhz_mean,-122.2763,dBc/Hz,mean over the tank-port realisations
+l_10mhz_sd,0.2953,dBc/Hz,sample standard deviation over the tank-port realisations
+l_1mhz_tail_port,-108.8171,dBc/Hz,the same circuit noise weighted by the TAIL port ISF instead
+port_isf_ratio_db,-10.09,dB,20*log10(Gq_rms tail / Gq_rms tank)
+inductor_bar_q,0.414,dB,propagated from the EM model's +-10% Q bar
+inductor_bar_fit,0.078,dB,propagated from the EM model's 0.90% rms fit residual
+inductor_bar_total,0.421,dB,the two added in quadrature
+rate_ps_per_wallclock_s,11.19,ps/s,measured on the reference transient
+wall_clock_total_s,2870,s,all 6 transients of this record

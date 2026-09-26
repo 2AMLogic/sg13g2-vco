@@ -1,0 +1,53 @@
+* tb_portnoise_known_answer -- closed-form check of the port-noise extraction
+* record @@RECORD_ID@@   corner @@CORNER_ID@@
+*
+* GENERATED FILE. Committed source:
+* sim/phase-noise/testbench/tb_portnoise_known_answer.spice.tmpl.
+*
+* WHAT IT CHECKS
+* --------------
+* The phase-noise kernel takes two measured inputs: the ISF (checked by
+* tb_isf_known_answer.spice.tmpl) and S_i, the ONE-SIDED equivalent noise
+* current PSD at the injection port. This experiment obtains S_i from
+* ngspice's `noise` analysis with a unit AC current probe ACROSS THE PORT and
+* the port voltage as the output, in which case
+*
+*     gain      = v(port) / i(probe) = Z_port
+*     onoise    = (total output noise voltage density)
+*     inoise    = onoise / |Z_port|
+*               = the Norton-equivalent noise current density at the port,
+*
+* which is exactly the quantity the kernel wants -- and, being a ratio of two
+* quantities that share the port impedance, it is well conditioned even where
+* Z_port is large or (as at an oscillator's unstable equilibrium) has a
+* negative real part.
+*
+* That referral is an identity, not a measurement, but whether ngspice's
+* `noise` implements it -- and whether this deck asks for it correctly -- is
+* not. So it is checked against a network with an exact answer: a single
+* resistor @@RN@@ ohm in parallel with @@CN@@ F. The only noise source is the
+* resistor's thermal noise, so
+*
+*     inoise_spectrum = sqrt(4 k T / R)    [A/sqrt(Hz)], frequency-independent
+*
+* at every frequency, whatever the capacitor does to Z_port. The capacitor is
+* in the deck precisely so that Z_port is NOT flat: a deck whose Z_port were
+* constant could not distinguish a correct input-referral from an output-noise
+* reading scaled by a constant.
+*
+* T is the deck's own @@TEMP_C@@ C, and the closed form is evaluated at that
+* same temperature by run_method_check.sh -- so a temperature mismatch between
+* the deck and the check is a failure, not a silently absorbed offset.
+
+.temp @@TEMP_C@@
+
+RN  PNODE 0 @@RN@@
+CN  PNODE 0 @@CN@@
+IPROBE PNODE 0 dc 0 ac 1
+
+.control
+noise v(PNODE) IPROBE lin @@NPTS@@ @@FSTART@@ @@FSTOP@@
+setplot noise1
+print inoise_spectrum
+.endc
+.end

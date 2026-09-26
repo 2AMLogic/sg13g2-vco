@@ -1,0 +1,121 @@
+* tb_isf_known_answer -- synthetic oscillator with a CLOSED-FORM ISF
+* record 20260926-071150-7a02483   corner isf_highq
+*
+* GENERATED FILE. The committed source is
+* sim/phase-noise/testbench/tb_isf_known_answer.spice.tmpl; every @@TOKEN@@
+* below is substituted by sim/phase-noise/run_method_check.sh. A copy of the
+* substituted deck is frozen per case under
+* sim/phase-noise/netlist-snapshots/<record-id>/, per sim/README.md rule 3.
+*
+* WHY THIS DECK EXISTS
+* --------------------
+* The measured phase-noise number in this experiment is produced by an
+* impulse-response measurement of the impulse sensitivity function, reduced by
+* sim/lib.sh's pn_crossings / pn_isf_steps / pn_gamma_stats / pn_l_dbc. A
+* broken ISF extractor does not announce itself: it produces a perfectly
+* plausible L(df) that is simply wrong, which is precisely the failure
+* CLAUDE.md's "numbers without methods are not results" rule exists to catch.
+* This deck is an oscillator whose ISF is known in CLOSED FORM, so the
+* extractor can be measured against algebra instead of trusted.
+*
+* THE CLOSED FORM
+* ---------------
+* An ideal parallel LC resonator oscillating as v(t) = A cos(theta) has state
+* (v, i_L/(w0*C)) = A*(cos theta, sin theta): a circle in the normalised state
+* plane. Injecting charge dq onto the capacitor displaces the state purely
+* along the v axis by dv = dq/C, which is
+*   * purely RADIAL at theta = 0, pi        -> pure amplitude change, no phase
+*     shift; and
+*   * purely TANGENTIAL at theta = +-pi/2   -> pure phase shift.
+* To first order the excess phase step is
+*
+*     d(phi) = -(dq / (C*A)) * sin(theta).
+*
+* The extractor measures phase from a RISING crossing of the trace's own
+* window mean, i.e. phi = 0 at theta = -pi/2, so theta = phi - pi/2 and
+*
+*     Gq(phi) = d(phi)/dq = cos(phi) / (C*A)   [rad/C]      <- the known answer
+*     Gq_rms  = 1 / (sqrt(2) * C * A)
+*
+* Both are checked: the SHAPE at every sampled phase (including the two zero
+* crossings of the ISF, where a purely-amplitude perturbation must produce no
+* phase shift at all -- the falsification case for this deck) and the scalar
+* Gq_rms the phase-noise kernel actually consumes.
+*
+* TWO CASES, BECAUSE ONE OF THEM IS TOO EASY
+*   isf_highq = isf_lossless
+*     R_LOSS ~ infinite, no active element. The closed form above is EXACT:
+*     there is no amplitude relaxation and no harmonic content, so the
+*     tolerance is set only by the extractor's own discretisation error. It
+*     validates the arithmetic.
+*     It is also, deliberately, not representative: a lossless resonator has
+*     no limit cycle, so an impulse's amplitude component never decays and the
+*     plateau-extraction logic is never exercised.
+*   isf_highq = isf_limitcycle
+*     The same tank with a real loss conductance G = 1/R_LOSS and a cubic
+*     negative-conductance element  I = -Gn*v + Bn*v^3  across it. This is a
+*     genuine limit cycle: amplitude perturbations DECAY, exactly as they do in
+*     design/vco.sch, so pn_isf_steps' "measure the plateau over the last
+*     fraction of the inter-impulse interval" logic is under test. Its
+*     describing-function amplitude is A = sqrt((Gn - G)/(0.75*Bn)) and its
+*     ISF is the closed form above to O(eps), eps = (Gn-G)/(w0*C) -- which is
+*     why this case carries a LOOSER, DERIVED tolerance than the lossless one
+*     rather than the same one.
+*
+* The tank also carries a real conductance in the limit-cycle case so that the
+* SAME deck can be re-used for the end-to-end kernel check: `noise` over it
+* gives the port's equivalent noise current sqrt(4kTG), and the closed-form
+* Leeson kernel for this tank is kTG/(C^2 A^2 dw^2), which pn_l_dbc must
+* reproduce from the measured Gq_rms. See run_method_check.sh.
+
+.param ct = 1e-12
+.param lt = 1e-9
+
+L1 TANK 0 {lt}
+C1 TANK 0 {ct}
+RLOSS TANK 0 1e4
+
+* Negative-conductance element. In the lossless case 7e-4 and 8.0000000000e-04 are
+* both 0, so this source is identically zero and the tank is a bare LC; it is
+* left in the deck rather than conditionally omitted so that both cases have
+* the same node set and the same matrix structure.
+BNEG TANK 0 I = -1*7e-4*V(TANK) + 8.0000000000e-04*V(TANK)*V(TANK)*V(TANK)
+
+* The impulse train. A symmetric triangle of half-width 2e-12 s and peak
+* 5.0000000000e-03 A injects exactly q = amp*hw coulombs, and its centroid -- the
+* time the extractor treats as the impulse instant -- is the triangle's apex.
+* The REFERENCE run uses this same PWL with 5.0000000000e-03 = 0, so both runs carry
+* an identical breakpoint set and the solver takes identical timesteps until
+* the first non-zero impulse: the pre-impulse crossing-offset residual is then
+* an exact null test of the whole comparison, and it is recorded as this
+* method's noise floor.
+IIMP 0 TANK PWL(0 0 3.971835306400e-09 0 3.973835306400e-09 5.0000000000e-03 3.975835306400e-09 0 1.074391297440e-08 0 1.074591297440e-08 5.0000000000e-03 1.074791297440e-08 0 1.751599064240e-08 0 1.751799064240e-08 5.0000000000e-03 1.751999064240e-08 0 2.428806831040e-08 0 2.429006831040e-08 5.0000000000e-03 2.429206831040e-08 0 3.106014597840e-08 0 3.106214597840e-08 5.0000000000e-03 3.106414597840e-08 0 3.783222364640e-08 0 3.783422364640e-08 5.0000000000e-03 3.783622364640e-08 0 4.460430131440e-08 0 4.460630131440e-08 5.0000000000e-03 4.460830131440e-08 0 5.137637898240e-08 0 5.137837898240e-08 5.0000000000e-03 5.138037898240e-08 0 5.814845665040e-08 0 5.815045665040e-08 5.0000000000e-03 5.815245665040e-08 0 6.492053431840e-08 0 6.492253431840e-08 5.0000000000e-03 6.492453431840e-08 0 7.169261198640e-08 0 7.169461198640e-08 5.0000000000e-03 7.169661198640e-08 0 7.846468965440e-08 0 7.846668965440e-08 5.0000000000e-03 7.846868965440e-08 0)
+
+* AC-only probe for the port-noise half of the kernel. `dc 0` means it is
+* invisible to the transient above (and its AC value is only read by `noise`),
+* so the SAME deck supplies the measured ISF and the measured port noise that
+* the end-to-end kernel check combines. Running them on one deck rather than
+* two is deliberate: it removes any possibility that the ISF and the noise
+* were taken on subtly different networks.
+IPROBE TANK 0 dc 0 ac 1
+
+* Sitting the initial condition on the limit-cycle amplitude means there is no
+* startup transient to discard in the limit-cycle case, and (with i_L = 0) it
+* puts t = 0 exactly at a cosine peak in both cases.
+.ic v(TANK)=1.0
+
+.control
+tran 0.5p 8.5238767322e-08 0 0.5p uic
+let tankv = v(TANK)
+wrdata mc_isf_highq_pert_tank tankv
+* Port noise at the SAME node the impulses were injected into. At an
+* oscillator's DC operating point the small-signal admittance has a negative
+* real part, so Z_port is finite but not passive; the input-referred ratio is
+* still exactly the Norton noise current, because the only noise source in
+* this deck is RLOSS (the behavioural negative conductance BNEG is noiseless).
+* The closed form is therefore sqrt(4kT/RLOSS), independent of GNEG.
+noise v(TANK) IPROBE lin 3 4.529629e+09 5.536213e+09
+setplot noise1
+print inoise_spectrum
+.endc
+.end

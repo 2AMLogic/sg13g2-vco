@@ -279,3 +279,324 @@ osc_settle() {
       printf "%.6e %.6e %d\n", et[idx], vppf, m
     }' "$1"
 }
+
+# ---------------------------------------------------------------------------
+# Phase-noise / ISF extractors (sim/phase-noise/, issue #49)
+# ---------------------------------------------------------------------------
+#
+# These implement the ONE estimator sim/phase-noise/ grades row 4 through: an
+# impulse-response measurement of the oscillator's impulse sensitivity function
+# (ISF), in its UNNORMALIZED form
+#
+#     Gq(phi) = d(phi_excess) / d(q_injected)          [rad / coulomb]
+#
+# so that the Hajimiri-Lee kernel can be evaluated WITHOUT ever measuring
+# q_max = C_node * V_swing separately (Gq = Gamma / q_max identically, and
+# q_max cancels out of the phase-noise expression -- see pn_l_dbc below). That
+# is not a cosmetic choice: q_max on a tank loaded by 32 varactor instances,
+# two EM-fitted inductor ladders and a MIM is not a quantity this repo can
+# measure without introducing an error bar larger than the one the ISF itself
+# carries.
+#
+# They live HERE and not in sim/phase-noise/pn_bench.sh for the same reason
+# osc_metrics/osc_settle do: sim/phase-noise/run_method_check.sh has to
+# validate the SAME functions the measured run grades with, against synthetic
+# oscillators whose ISF and phase noise are known in closed form, and it must
+# do so with no PDK install. A private copy inside the experiment would be a
+# copy the method check does not check (issue #16).
+#
+# Bash-3.2 / POSIX-awk clean, like the rest of this file.
+
+# pn_window_mean <datafile> <t_start_s> <t_end_s>
+# Trapezoidal time average of a wrdata two-column trace over the window
+# (t_end <= 0 means "to the end of the run"). Printed separately from
+# osc_metrics because the ISF bench must apply the SAME crossing threshold to
+# the reference and the perturbed run: letting each run compute its own mean
+# would fold any DC shift the perturbation caused into the measured crossing
+# times, which is exactly the quantity being measured.
+pn_window_mean() {
+  awk -v ts="${2:-0}" -v te="${3:-0}" '
+    NF >= 2 {
+      t = $1 + 0; v = $2 + 0
+      if (t < ts) next
+      if (te > 0 && t > te) next
+      n++
+      if (n > 1) { area += 0.5 * (pv + v) * (t - pt) }
+      else { t0 = t }
+      pt = t; pv = v
+    }
+    END {
+      if (n < 2) { print "nan"; exit }
+      span = pt - t0
+      printf "%.10e\n", (span > 0) ? area / span : pv
+    }' "$1"
+}
+
+# pn_crossings <datafile> <t_start_s> <t_end_s> <threshold_v>
+# Print the LINEARLY INTERPOLATED time of every rising crossing of <threshold_v>
+# inside the window, one per line, in increasing time order.
+#
+# Same interpolated-rising-crossing estimator osc_metrics() counts frequency
+# with -- deliberately, so the phase-noise bench and the frequency bench share
+# one validated notion of "when did this oscillation cross" -- but emitting the
+# crossing TIMES rather than a frequency, because the ISF measurement is a
+# comparison of two runs' crossing times, not of their frequencies.
+#
+# The threshold is an ARGUMENT, not a per-run mean: see pn_window_mean.
+pn_crossings() {
+  awk -v ts="${2:-0}" -v te="${3:-0}" -v thr="${4:-0}" '
+    NF >= 2 {
+      t = $1 + 0; v = $2 + 0
+      if (t < ts) { pt = t; pv = v; have = 1; next }
+      if (te > 0 && t > te) next
+      if (have) {
+        a = pv - thr; b = v - thr
+        if (a < 0 && b >= 0) printf "%.12e\n", pt + (t - pt) * (-a) / (b - a)
+      }
+      pt = t; pv = v; have = 1
+    }' "$1"
+}
+
+# pn_isf_steps <ref_crossfile> <pert_crossfile> <imp_times_csv> <plateau_frac> <t_end_s>
+# The core of the ISF measurement. Given the crossing times of a REFERENCE run
+# and of a run identical to it except for a train of charge impulses at the
+# times in <imp_times_csv>, recover the permanent excess-phase STEP each
+# impulse produced, and the phase of the carrier at which it landed.
+#
+# Method, stated because the number is only a result with its method
+# (CLAUDE.md):
+#   * crossings are matched between the two runs by NEAREST TIME, not by index:
+#     a phase step large enough to move a crossing across a window boundary
+#     would silently misalign an index match. A match further than a quarter
+#     period away is counted in the GUARD line rather than used.
+#   * tau_n = t_pert,n - t_ref,n is the crossing-time offset. An impulse
+#     produces a permanent step in tau and, after the amplitude transient has
+#     died, nothing else -- so tau(t) is a STAIRCASE. That is not assumed: the
+#     per-plateau spread is reported (`ripple`), and the flatness of the
+#     pre-first-impulse baseline is reported as the method's own null floor.
+#   * a plateau is measured over only the LAST <plateau_frac> of each
+#     inter-impulse interval, so the amplitude transient the impulse also
+#     excited is excluded by construction rather than assumed to be absent.
+#   * excess phase is dphi = -2*pi*(tau_after - tau_before)/T. The sign is the
+#     physical one: a later crossing is a phase LAG. T is the mean period of
+#     the perturbed run over the whole window.
+#   * the phase at which impulse k landed is measured from the PERTURBED run's
+#     own crossings (phi = 2*pi*(t_imp - t_cross)/(t_next - t_cross)), so the
+#     cumulative phase the earlier impulses already imposed cannot bias the
+#     phase axis. phi = 0 is a rising crossing of the threshold.
+#
+# Prints, in this order:
+#   GUARD <n_ref> <n_pert> <n_matched> <n_far> <period_s>
+#   BASE  <tau_mean_s> <tau_rms_s> <n_samples>
+#   IMP <k> <t_imp_s> <phi_rad> <tau_before_s> <tau_after_s> <dtau_s> <dphi_rad> <ripple_after_s> <n_after>
+# one IMP line per impulse.
+pn_isf_steps() {
+  local ref="$1" pert="$2" imps="$3" pfrac="${4:-0.4}" tend="$5"
+  awk -v imps="${imps}" -v pfrac="${pfrac}" -v tend="${tend}" '
+    BEGIN { PI = 4*atan2(1,1) }
+    FNR == NR { nr++; tr[nr] = $1 + 0; next }
+    { np++; tp[np] = $1 + 0 }
+    END {
+      if (nr < 4 || np < 4) { print "GUARD " nr+0 " " np+0 " 0 0 nan"; exit }
+      period = (tp[np] - tp[1]) / (np - 1)
+      nfar = 0; nm = 0
+      for (i = 1; i <= nr; i++) {
+        best = -1; bd = 1e30
+        for (j = 1; j <= np; j++) {
+          d = tp[j] - tr[i]; if (d < 0) d = -d
+          if (d < bd) { bd = d; best = j }
+        }
+        if (bd > 0.25 * period) { nfar++; continue }
+        nm++; mt[nm] = tr[i]; mtau[nm] = tp[best] - tr[i]
+      }
+      printf "GUARD %d %d %d %d %.10e\n", nr, np, nm, nfar, period
+      m = split(imps, ti, ",")
+      # ---- baseline: everything before the first impulse
+      s = 0; s2 = 0; nb = 0
+      for (i = 1; i <= nm; i++) if (mt[i] < ti[1]) { nb++; s += mtau[i]; s2 += mtau[i]*mtau[i] }
+      bmean = (nb > 0) ? s / nb : 0
+      brms = (nb > 1) ? sqrt((s2 - nb*bmean*bmean) / (nb - 1)) : 0
+      printf "BASE %.10e %.10e %d\n", bmean, brms, nb
+      prev = bmean
+      for (k = 1; k <= m; k++) {
+        hi  = (k < m) ? ti[k+1] : tend + 0
+        dtk = hi - ti[k]
+        lo  = hi - pfrac * dtk
+        s = 0; s2 = 0; n = 0
+        for (i = 1; i <= nm; i++) if (mt[i] >= lo && mt[i] < hi) { n++; s += mtau[i]; s2 += mtau[i]*mtau[i] }
+        if (n == 0) { printf "IMP %d %.10e nan nan nan nan nan nan 0\n", k, ti[k]; continue }
+        cur  = s / n
+        ripp = (n > 1) ? sqrt((s2 - n*cur*cur) / (n - 1)) : 0
+        # phase of the carrier at the impulse, from the perturbed run itself
+        phi = -1
+        for (j = 1; j < np; j++) if (tp[j] <= ti[k] && tp[j+1] > ti[k]) {
+          phi = 2*PI * (ti[k] - tp[j]) / (tp[j+1] - tp[j]); break
+        }
+        dtau = cur - prev
+        dphi = -2*PI * dtau / period
+        if (phi < 0) printf "IMP %d %.10e nan %.10e %.10e %.10e %.10e %.10e %d\n", \
+                            k, ti[k], prev, cur, dtau, dphi, ripp, n
+        else          printf "IMP %d %.10e %.8f %.10e %.10e %.10e %.10e %.10e %d\n", \
+                            k, ti[k], phi, prev, cur, dtau, dphi, ripp, n
+        prev = cur
+      }
+    }' "${ref}" "${pert}"
+}
+
+# pn_gamma_stats <phi_gamma_file>
+# Reduce a measured ISF -- a file of "<phi_rad> <Gq_rad_per_coulomb>" lines,
+# sampled at M phases over one period -- to the scalars the phase-noise kernel
+# needs. Prints ONE space-separated line:
+#
+#   rms_trapz rms_sample c0 c1 c2 c3 max_phase_gap_rad n
+#
+# rms_trapz is the PRIMARY figure: Gamma_rms^2 is defined as the mean of
+# Gamma^2 over the CYCLE, (1/2pi) * integral(Gamma^2 dphi), and the samples are
+# not exactly equally spaced in phase (the impulse train's spacing is designed
+# to walk the phase by T/M per impulse, but the oscillator's own period is only
+# known to the accuracy of the run that measured it). The trapezoidal integral
+# over the phase-sorted, wrapped samples is correct to O(dphi^2) at any
+# spacing; the naive sample mean-square (rms_sample) is only correct for an
+# exactly uniform grid, and is printed alongside so the reader can see how much
+# the non-uniformity mattered.
+#
+# c0..c3 are the ISF's DC and first three Fourier coefficient MAGNITUDES, by
+# the same quadrature. They are not used in the 1/f^2 kernel -- they are
+# recorded because c0 is what converts low-frequency (1/f, and any bias-network)
+# noise into close-in phase noise, and because a c3 comparable to c1 is the
+# signature that M samples per period is too few (see max_phase_gap_rad).
+pn_gamma_stats() {
+  awk '
+    BEGIN { PI = 4*atan2(1,1) }
+    NF >= 2 && $1 != "nan" && $2 != "nan" { n++; p[n] = $1 + 0; g[n] = $2 + 0 }
+    END {
+      if (n < 4) { print "nan nan nan nan nan nan nan " n+0; exit }
+      for (i = 1; i <= n; i++) for (j = i+1; j <= n; j++) if (p[j] < p[i]) {
+        tp = p[i]; p[i] = p[j]; p[j] = tp; tg = g[i]; g[i] = g[j]; g[j] = tg
+      }
+      # close the cycle by wrapping the first sample round to phi+2pi
+      p[n+1] = p[1] + 2*PI; g[n+1] = g[1]
+      s2 = 0; ssamp = 0; maxgap = 0
+      for (k = 0; k <= 3; k++) { a[k] = 0; b[k] = 0 }
+      for (i = 1; i <= n; i++) {
+        d = p[i+1] - p[i]
+        if (d > maxgap) maxgap = d
+        s2 += 0.5 * (g[i]*g[i] + g[i+1]*g[i+1]) * d
+        ssamp += g[i]*g[i]
+        for (k = 0; k <= 3; k++) {
+          a[k] += 0.5 * (g[i]*cos(k*p[i]) + g[i+1]*cos(k*p[i+1])) * d
+          b[k] += 0.5 * (g[i]*sin(k*p[i]) + g[i+1]*sin(k*p[i+1])) * d
+        }
+      }
+      rms_t = sqrt(s2 / (2*PI))
+      rms_s = sqrt(ssamp / n)
+      c0 = a[0] / (2*PI); if (c0 < 0) c0 = -c0
+      printf "%.8e %.8e %.8e", rms_t, rms_s, c0
+      for (k = 1; k <= 3; k++) printf " %.8e", sqrt((a[k]/PI)^2 + (b[k]/PI)^2)
+      printf " %.6f %d\n", maxgap, n
+    }' "$1"
+}
+
+# pn_l_dbc <gamma_q_rms_rad_per_C> <s_i_a2_per_hz> <offset_hz>
+# The 1/f^2-region phase-noise kernel, in dBc/Hz. Prints TWO numbers:
+#
+#   L_both_sidebands   L_hl_paper_form
+#
+# BOTH are printed, and the record states which is quoted, because the two
+# differ by exactly 3 dB and the difference is a real, documented ambiguity in
+# the literature rather than an arithmetic slip:
+#
+#   L(df) = Gq_rms^2 * S_i / (2 * (2*pi*df)^2)          <- quoted as primary
+#   L(df) = Gq_rms^2 * S_i / (4 * (2*pi*df)^2)          <- Hajimiri-Lee 1998
+#                                                          eq. 14 as literally
+#                                                          written
+#
+# The first is what the cyclostationary derivation gives when noise at BOTH
+# ω0+Δω and ω0-Δω is counted (they fold to the same offset and are
+# independent, so their powers add); the HL paper's worked substitution counts
+# only the upper sideband. The first also reproduces Leeson's linear-tank
+# kernel EXACTLY for an ideal LC (Gamma = cos, Gq_rms = 1/(sqrt2 * C * A),
+# S_i = 4kTG): both reduce to kTG/(C^2 A^2 dw^2). sim/phase-noise's method
+# check verifies that identity numerically, which is why the both-sideband
+# form -- the more pessimistic of the two -- is the one this repo quotes.
+#
+# S_i is the ONE-SIDED equivalent noise-current PSD at the injection port,
+# A^2/Hz (i.e. the square of ngspice's `inoise_spectrum`, which is A/sqrt(Hz)).
+pn_l_dbc() {
+  awk -v g="$1" -v si="$2" -v df="$3" 'BEGIN {
+    PI = 4*atan2(1,1); dw = 2*PI*df
+    if (g == "nan" || si == "nan" || g <= 0 || si <= 0 || dw <= 0) { print "nan nan"; exit }
+    l2 = g*g*si / (2*dw*dw)
+    printf "%.4f %.4f\n", 10*log(l2)/log(10), 10*log(l2/2)/log(10)
+  }'
+}
+
+# pn_imp_times <t_first_s> <dt_s> <n>
+# The impulse-train schedule, as a comma-separated list of centroid times.
+# Shared by sim/phase-noise's method check and its measured run for the same
+# reason the extractors are: the method check has to exercise the same train
+# the measured run is read through, not a lookalike.
+pn_imp_times() {
+  awk -v t1="$1" -v dt="$2" -v n="$3" 'BEGIN {
+    for (k = 0; k < n; k++) printf "%s%.12e", (k ? "," : ""), t1 + k*dt
+    printf "\n"
+  }'
+}
+
+# pn_pwl_train <imp_times_csv> <half_width_s> <amplitude_a>
+# Render the schedule as an ngspice PWL argument list: a symmetric TRIANGLE of
+# half-width hw and peak amp at each centroid, i.e. exactly q = amp*hw coulombs
+# per impulse, with the centroid at the apex.
+#
+# A triangle rather than a rectangle because its charge and its centroid are
+# both exact under trapezoidal integration once the solver takes the PWL's
+# breakpoints (which it always does), so neither the injected charge nor the
+# effective impulse instant depends on the timestep. Its cost is that it is not
+# a delta: it attenuates the ISF's n-th harmonic by roughly (1 - (n*pi*w/T0)^2/6)
+# for full width w, which is the `width` term in the method check's derived
+# tolerance.
+#
+# An amplitude of 0 still emits every breakpoint. That is load-bearing: the
+# reference run uses this same call with amp = 0 so that the reference and the
+# perturbed deck have an identical timestep schedule until the first non-zero
+# impulse.
+pn_pwl_train() {
+  awk -v imps="$1" -v hw="$2" -v amp="$3" 'BEGIN {
+    n = split(imps, t, ",")
+    printf "0 0"
+    for (k = 1; k <= n; k++)
+      printf " %.12e 0 %.12e %.10e %.12e 0", t[k]-hw, t[k], amp+0, t[k]+hw
+    printf "\n"
+  }'
+}
+
+# pn_inoise_table <ngspice-log>
+# Print "<frequency> <inoise_spectrum>" for every row of the `print
+# inoise_spectrum` table an ngspice `noise` analysis emitted into a batch log.
+# ngspice prints these as "<index>\t<freq>\t<value>" under an "Index
+# frequency inoise_spectrum" header; nothing else in the log has that shape.
+pn_inoise_table() {
+  awk '
+    /^Index[ \t]+frequency[ \t]+inoise_spectrum/ { inblk = 1; next }
+    inblk && /^-+$/ { next }
+    inblk && NF >= 3 && $1 ~ /^[0-9]+$/ { print $2, $3; next }
+    inblk && NF == 0 { next }
+    inblk { inblk = 0 }
+  ' "$1"
+}
+
+# pn_inoise_from_log <ngspice-log>
+# The MEDIAN inoise_spectrum over the rows pn_inoise_table found, or "nan".
+# The median rather than a single point because the band is swept deliberately
+# (see tb_vco_port_noise.spice.tmpl's header): a referral that was ill
+# conditioned at one frequency shows up as a spread across the band, which the
+# caller records, rather than as a silently wrong scalar.
+pn_inoise_from_log() {
+  pn_inoise_table "$1" | awk '
+    { n++; v[n] = $2 + 0 }
+    END {
+      if (n == 0) { print "nan"; exit }
+      for (i = 1; i <= n; i++) for (j = i+1; j <= n; j++) if (v[j] < v[i]) { t=v[i]; v[i]=v[j]; v[j]=t }
+      printf "%.8e\n", (n % 2) ? v[(n+1)/2] : 0.5*(v[n/2] + v[n/2+1])
+    }'
+}

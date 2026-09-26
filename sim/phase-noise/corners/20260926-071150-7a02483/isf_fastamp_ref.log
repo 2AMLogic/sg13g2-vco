@@ -1,0 +1,29 @@
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_isf_known_answer -- synthetic oscillator with a closed-form isf
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Operating point simulation skipped by 'uic',
+  now using transient initial conditions.
+ Reference value :  1.13478e-08
+No. of Data Rows : 37070
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 3
+
+No. of Data Rows : 1
+      * tb_isf_known_answer -- synthetic oscillator with a closed-form isf
+      Noise Spectral Density Curves  Sat Sep 26 07:11:54  2026
+--------------------------------------------------------------------------------
+Index   frequency       inoise_spectrum 
+--------------------------------------------------------------------------------
+0	4.529629e+09	1.287481e-12	
+1	5.032921e+09	1.287481e-12	
+2	5.536213e+09	1.287481e-12	
+Note: Simulation executed from .control section 
