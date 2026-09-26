@@ -246,163 +246,142 @@ EOF
   done
 }
 
-# ---------------------------------------------------------------- MOS sweep
-for i in "${!MOS_SECTIONS[@]}"; do
-  section="${MOS_SECTIONS[$i]}"
-  label="${MOS_LABELS[$i]}"
-  for temp in "${TEMPS[@]}"; do
-    C_small=(); C_mid=(); C_large=(); C_xlarge=()
+# sweep_family <device_class> <corner_id_prefix> <template_basename> \
+#              <space-separated corner sections> <space-separated corner labels> \
+#              <dev_spec>...
+#
+# One corner x temperature x Vctrl x device sweep for ONE device family. The
+# MOS and diode sweeps were byte-identical here bar the five scalars above and
+# the device table, so they are one function with two call sites (#52; #29/#30
+# had already factored the Kvco-report tail out of the same two loops).
+#
+# Only the leading "<key>:" of each <dev_spec> is read here -- the geometry
+# fields belong to the testbench template. The device table is the trailing
+# variadic argument because bash 3.2 has no namerefs, so exactly one list can
+# be passed by value; the section/label lists travel as space-joined strings.
+#
+# Two of the old MOS/diode differences collapse rather than parameterize:
+# @@OSDI_MOSVAR@@ is substituted unconditionally (the token appears twice in
+# the MOS template and zero times in the diode one, so it is a no-op there),
+# and the model-load grep is the union of both old patterns ("Unable to find
+# definition of model" is a generic ngspice diagnostic -- the same string
+# sim/tools/build-osdi.sh greps for -- so matching it on a diode log is
+# correct, not a false positive).
+#
+# Reads the VCTRL_LIST / TEMPS / RECORD_ID / sweep-knob / output-path globals,
+# and updates the run-wide tallies total, passed, failed_points and
+# method_fail -- deliberately NOT declared local here.
+sweep_family() {
+  local device_class="$1" corner_prefix="$2" template="$3"
+  local sections_str="$4" labels_str="$5"
+  shift 5
+  local specs=("$@")
 
-    for vctrl in "${VCTRL_LIST[@]}"; do
-      corner_id="svaricap_mos_${label}_${temp}c_${vctrl}v"
-      netlist="${NETLIST_DIR}/${corner_id}.spice"
-      log="${LOG_DIR}/${corner_id}.log"
-      curve="${CURVE_DIR}/${corner_id}.csv"
-      total=$((total + 1))
+  # shellcheck disable=SC2206
+  local sections=(${sections_str})
+  # shellcheck disable=SC2206
+  local labels=(${labels_str})
 
-      sed \
-        -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
-        -e "s|@@OSDI_MOSVAR@@|${OSDI_MOSVAR}|g" \
-        -e "s|@@CORNER_SECTION@@|${section}|g" \
-        -e "s|@@TEMP_C@@|${temp}|g" \
-        -e "s|@@VCTRL@@|${vctrl}|g" \
-        -e "s|@@CORNER_ID@@|${corner_id}|g" \
-        -e "s|@@RECORD_ID@@|${RECORD_ID}|g" \
-        -e "s|@@FMIN@@|${FMIN}|g" \
-        -e "s|@@FMAX@@|${FMAX}|g" \
-        -e "s|@@NDEC_MEAS@@|${NDEC_MEAS}|g" \
-        -e "s|@@NDEC_CURVE@@|${NDEC_CURVE}|g" \
-        -e "s|@@CURVE_CSV@@|${curve}|g" \
-        "${EXPERIMENT_DIR}/testbench/tb_mos_varactor_vscan.spice.tmpl" > "${netlist}"
+  local i si section label temp vctrl corner_id netlist log curve rc model_error
+  local spec key srf srf_field c1 c5 c10 c20 q1 q5 q10 q20 status point_status
+  local -a C_ACC pairs
 
-      rc=0
-      ( cd "${WORKDIR}" && ngspice -b "${netlist}" ) > "${log}" 2>&1 || rc=$?
+  for i in "${!sections[@]}"; do
+    section="${sections[$i]}"
+    label="${labels[$i]}"
+    for temp in "${TEMPS[@]}"; do
+      # C_ACC[si] accumulates the C(1 GHz) values of specs[si] across
+      # VCTRL_LIST, in order, as one space-separated string -- an indexed
+      # array parallel to the device table, so adding a device needs no
+      # per-device accumulator -- and no associative array, which bash 3.2
+      # does not have (see lib.sh's header).
+      C_ACC=()
+      for si in "${!specs[@]}"; do C_ACC[si]=""; done
 
-      model_error=0
-      if grep -qiE "unknown subckt|could not find|can't find|no such (parameter|model)|Unable to find definition of model" "${log}"; then
-        model_error=1
-      fi
-      echo "[${corner_id}] ngspice rc=${rc} model_error=${model_error}"
+      for vctrl in "${VCTRL_LIST[@]}"; do
+        corner_id="${corner_prefix}_${label}_${temp}c_${vctrl}v"
+        netlist="${NETLIST_DIR}/${corner_id}.spice"
+        log="${LOG_DIR}/${corner_id}.log"
+        curve="${CURVE_DIR}/${corner_id}.csv"
+        total=$((total + 1))
 
-      for spec in "${MOS_DEV_SPECS[@]}"; do
-        key="${spec%%:*}"
-        srf="$(meas_value "${log}" "srf_${key}")"
-        c1="$(meas_value  "${log}" "c_${key}_1g")"
-        c5="$(meas_value  "${log}" "c_${key}_5g")"
-        c10="$(meas_value "${log}" "c_${key}_10g")"
-        c20="$(meas_value "${log}" "c_${key}_20g")"
-        q1="$(meas_value  "${log}" "q_${key}_1g")"
-        q5="$(meas_value  "${log}" "q_${key}_5g")"
-        q10="$(meas_value "${log}" "q_${key}_10g")"
-        q20="$(meas_value "${log}" "q_${key}_20g")"
+        sed \
+          -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
+          -e "s|@@OSDI_MOSVAR@@|${OSDI_MOSVAR}|g" \
+          -e "s|@@CORNER_SECTION@@|${section}|g" \
+          -e "s|@@TEMP_C@@|${temp}|g" \
+          -e "s|@@VCTRL@@|${vctrl}|g" \
+          -e "s|@@CORNER_ID@@|${corner_id}|g" \
+          -e "s|@@RECORD_ID@@|${RECORD_ID}|g" \
+          -e "s|@@FMIN@@|${FMIN}|g" \
+          -e "s|@@FMAX@@|${FMAX}|g" \
+          -e "s|@@NDEC_MEAS@@|${NDEC_MEAS}|g" \
+          -e "s|@@NDEC_CURVE@@|${NDEC_CURVE}|g" \
+          -e "s|@@CURVE_CSV@@|${curve}|g" \
+          "${EXPERIMENT_DIR}/testbench/${template}" > "${netlist}"
 
-        # sg13_hv_svaricap has no plate/feed inductance -- a missing SRF is
-        # the EXPECTED, physically meaningful answer at every point, not a
-        # measurement miss. See the testbench template header.
-        srf_field="${srf}"
-        [[ -z "${srf}" ]] && srf_field="none"
+        rc=0
+        ( cd "${WORKDIR}" && ngspice -b "${netlist}" ) > "${log}" 2>&1 || rc=$?
 
-        status=FAIL
-        if [[ ${rc} -eq 0 && ${model_error} -eq 0 && -n "${c1}" && -n "${q1}" ]]; then
-          status=PASS
+        model_error=0
+        if grep -qiE "unknown subckt|could not find|can't find|no such (parameter|model)|Unable to find definition of model" "${log}"; then
+          model_error=1
         fi
-        echo "mos,${key},${label},${temp},${vctrl},${status},${srf_field},${c1},${c5},${c10},${c20},${q1},${q5},${q10},${q20}" >> "${CSV_OUT}"
-        if [[ "${status}" == "FAIL" ]]; then failed_points+=("${corner_id}/${key}"); fi
+        echo "[${corner_id}] ngspice rc=${rc} model_error=${model_error}"
 
-        case "${key}" in
-          small)  C_small+=("${c1:-nan}") ;;
-          mid)    C_mid+=("${c1:-nan}") ;;
-          large)  C_large+=("${c1:-nan}") ;;
-          xlarge) C_xlarge+=("${c1:-nan}") ;;
-        esac
+        for si in "${!specs[@]}"; do
+          spec="${specs[$si]}"
+          key="${spec%%:*}"
+          srf="$(meas_value "${log}" "srf_${key}")"
+          c1="$(meas_value  "${log}" "c_${key}_1g")"
+          c5="$(meas_value  "${log}" "c_${key}_5g")"
+          c10="$(meas_value "${log}" "c_${key}_10g")"
+          c20="$(meas_value "${log}" "c_${key}_20g")"
+          q1="$(meas_value  "${log}" "q_${key}_1g")"
+          q5="$(meas_value  "${log}" "q_${key}_5g")"
+          q10="$(meas_value "${log}" "q_${key}_10g")"
+          q20="$(meas_value "${log}" "q_${key}_20g")"
+
+          # Neither family has plate/feed inductance -- sg13_hv_svaricap has
+          # none, and a plain reverse-biased junction has none -- so a missing
+          # SRF is the EXPECTED, physically meaningful answer at every point,
+          # not a measurement miss. Both testbench templates say so at their
+          # `meas ac srf_*` blocks.
+          srf_field="${srf}"
+          [[ -z "${srf}" ]] && srf_field="none"
+
+          status=FAIL
+          if [[ ${rc} -eq 0 && ${model_error} -eq 0 && -n "${c1}" && -n "${q1}" ]]; then
+            status=PASS
+          fi
+          echo "${device_class},${key},${label},${temp},${vctrl},${status},${srf_field},${c1},${c5},${c10},${c20},${q1},${q5},${q10},${q20}" >> "${CSV_OUT}"
+          if [[ "${status}" == "FAIL" ]]; then failed_points+=("${corner_id}/${key}"); fi
+
+          C_ACC[si]="${C_ACC[si]:+${C_ACC[si]} }${c1:-nan}"
+        done
+
+        point_status="$(method_check_point "${label}" "${temp}" "${vctrl}" "${log}" "${METHOD_CSV}" "${METHOD_TOL_PCT}")"
+        if [[ "${point_status}" != "PASS" ]]; then method_fail=$((method_fail + 1)); fi
+
+        if [[ ${rc} -eq 0 && ${model_error} -eq 0 ]]; then passed=$((passed + 1)); fi
       done
 
-      point_status="$(method_check_point "${label}" "${temp}" "${vctrl}" "${log}" "${METHOD_CSV}" "${METHOD_TOL_PCT}")"
-      if [[ "${point_status}" != "PASS" ]]; then method_fail=$((method_fail + 1)); fi
-
-      if [[ ${rc} -eq 0 && ${model_error} -eq 0 ]]; then passed=$((passed + 1)); fi
+      pairs=()
+      for si in "${!specs[@]}"; do
+        pairs+=("${specs[$si]%%:*}:${C_ACC[$si]}")
+      done
+      emit_kvco_rows "${device_class}" "${label}" "${temp}" "${pairs[@]}"
     done
-
-    emit_kvco_rows mos "${label}" "${temp}" "small:${C_small[*]}" "mid:${C_mid[*]}" "large:${C_large[*]}" "xlarge:${C_xlarge[*]}"
   done
-done
+}
+
+# ---------------------------------------------------------------- MOS sweep
+sweep_family mos svaricap_mos tb_mos_varactor_vscan.spice.tmpl \
+  "${MOS_SECTIONS[*]}" "${MOS_LABELS[*]}" "${MOS_DEV_SPECS[@]}"
 
 # --------------------------------------------------------------- diode sweep
-for i in "${!DIO_SECTIONS[@]}"; do
-  section="${DIO_SECTIONS[$i]}"
-  label="${DIO_LABELS[$i]}"
-  for temp in "${TEMPS[@]}"; do
-    C_dasm=(); C_dalg=(); C_dpsm=(); C_dplg=()
-
-    for vctrl in "${VCTRL_LIST[@]}"; do
-      corner_id="svaricap_dio_${label}_${temp}c_${vctrl}v"
-      netlist="${NETLIST_DIR}/${corner_id}.spice"
-      log="${LOG_DIR}/${corner_id}.log"
-      curve="${CURVE_DIR}/${corner_id}.csv"
-      total=$((total + 1))
-
-      sed \
-        -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
-        -e "s|@@CORNER_SECTION@@|${section}|g" \
-        -e "s|@@TEMP_C@@|${temp}|g" \
-        -e "s|@@VCTRL@@|${vctrl}|g" \
-        -e "s|@@CORNER_ID@@|${corner_id}|g" \
-        -e "s|@@RECORD_ID@@|${RECORD_ID}|g" \
-        -e "s|@@FMIN@@|${FMIN}|g" \
-        -e "s|@@FMAX@@|${FMAX}|g" \
-        -e "s|@@NDEC_MEAS@@|${NDEC_MEAS}|g" \
-        -e "s|@@NDEC_CURVE@@|${NDEC_CURVE}|g" \
-        -e "s|@@CURVE_CSV@@|${curve}|g" \
-        "${EXPERIMENT_DIR}/testbench/tb_diode_varactor_vscan.spice.tmpl" > "${netlist}"
-
-      rc=0
-      ( cd "${WORKDIR}" && ngspice -b "${netlist}" ) > "${log}" 2>&1 || rc=$?
-
-      model_error=0
-      if grep -qiE "unknown subckt|could not find|can't find|no such (parameter|model)" "${log}"; then
-        model_error=1
-      fi
-      echo "[${corner_id}] ngspice rc=${rc} model_error=${model_error}"
-
-      for spec in "${DIODE_DEV_SPECS[@]}"; do
-        key="${spec%%:*}"
-        srf="$(meas_value "${log}" "srf_${key}")"
-        c1="$(meas_value  "${log}" "c_${key}_1g")"
-        c5="$(meas_value  "${log}" "c_${key}_5g")"
-        c10="$(meas_value "${log}" "c_${key}_10g")"
-        c20="$(meas_value "${log}" "c_${key}_20g")"
-        q1="$(meas_value  "${log}" "q_${key}_1g")"
-        q5="$(meas_value  "${log}" "q_${key}_5g")"
-        q10="$(meas_value "${log}" "q_${key}_10g")"
-        q20="$(meas_value "${log}" "q_${key}_20g")"
-
-        srf_field="${srf}"
-        [[ -z "${srf}" ]] && srf_field="none"
-
-        status=FAIL
-        if [[ ${rc} -eq 0 && ${model_error} -eq 0 && -n "${c1}" && -n "${q1}" ]]; then
-          status=PASS
-        fi
-        echo "diode,${key},${label},${temp},${vctrl},${status},${srf_field},${c1},${c5},${c10},${c20},${q1},${q5},${q10},${q20}" >> "${CSV_OUT}"
-        if [[ "${status}" == "FAIL" ]]; then failed_points+=("${corner_id}/${key}"); fi
-
-        case "${key}" in
-          dasm) C_dasm+=("${c1:-nan}") ;;
-          dalg) C_dalg+=("${c1:-nan}") ;;
-          dpsm) C_dpsm+=("${c1:-nan}") ;;
-          dplg) C_dplg+=("${c1:-nan}") ;;
-        esac
-      done
-
-      point_status="$(method_check_point "${label}" "${temp}" "${vctrl}" "${log}" "${METHOD_CSV}" "${METHOD_TOL_PCT}")"
-      if [[ "${point_status}" != "PASS" ]]; then method_fail=$((method_fail + 1)); fi
-
-      if [[ ${rc} -eq 0 && ${model_error} -eq 0 ]]; then passed=$((passed + 1)); fi
-    done
-
-    emit_kvco_rows diode "${label}" "${temp}" "dasm:${C_dasm[*]}" "dalg:${C_dalg[*]}" "dpsm:${C_dpsm[*]}" "dplg:${C_dplg[*]}"
-  done
-done
+sweep_family diode svaricap_dio tb_diode_varactor_vscan.spice.tmpl \
+  "${DIO_SECTIONS[*]}" "${DIO_LABELS[*]}" "${DIODE_DEV_SPECS[@]}"
 
 # ------------------------------------------------------------------- record
 {
