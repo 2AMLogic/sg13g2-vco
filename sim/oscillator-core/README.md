@@ -138,7 +138,7 @@ not better than no proxy:
    injection. The run therefore **measures** `I_tail` at every rung from
    `V(TE)/R(RTE)` instead of assuming it tracks `1/RREF`, so a departure shows
    up in the recorded ladder rather than hiding inside it. The measured ladder
-   confirms this is not academic: at ×8 the measured current ratio is 6.96,
+   confirms this is not academic: at ×8 the measured current ratio is 6.93,
    not 8.
 2. G<sub>tank</sub> is treated as constant along the ladder. It is not exactly:
    `V(TAIL)`'s DC level moves as the current falls, which moves the varactor
