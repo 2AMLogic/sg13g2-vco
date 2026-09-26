@@ -24,9 +24,10 @@ is the correct result: no evidence envelope exists yet for any item to
 grade — no layout, no schematic-derived netlist, no `klt`-native run
 artifact, and no PVT corner pass — and that absence, not the spec's
 ratification state, is why the render is all-`unmet`.
-`spec/target-spec.md` is now partially ratified (DR-003: nine rows
-RATIFIED as targets, three explicitly open) — a ratified target is
-explicitly *not met by any measurement*. Per issue #34: an
+`spec/target-spec.md` is now fully ratified (DR-003: nine rows RATIFIED
+as targets; DR-004: rows 0/3/7, the three DR-003 left open) — and a
+ratified target is explicitly *not met by any measurement*, so the
+ratification state moves no row of this report. Per issue #34: an
 all-`unmet` manifest is the honest
 machine-readable statement of the gap — never hold the manifest back
 until the block is further along, and never cite an envelope that does
