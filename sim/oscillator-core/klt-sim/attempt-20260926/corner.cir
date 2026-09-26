@@ -1,0 +1,11 @@
+* klt sim -- generated corner deck, do not edit
+.lib @@ATTEMPT_DIR@@/corners_sg13g2.lib tt_captyp_hbttyp
+.include @@ATTEMPT_DIR@@/vco_core_body.spice
+.temp 27
+.meas tran t_100_periods TRIG v(vdiff) VAL=0 RISE=5 TARG v(vdiff) VAL=0 RISE=105
+.control
+alter vct=1.65
+tran 1p 20n 0 2p
+quit
+.endc
+.end

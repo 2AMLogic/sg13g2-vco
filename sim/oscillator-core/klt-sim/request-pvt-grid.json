@@ -1,0 +1,456 @@
+{
+  "_comment": [
+    "sim/oscillator-core's graded PVT grid, expressed as a `klt sim` request.",
+    "NOT RUNNABLE against klt 0.6.0 -- see klt-sim/README.md for the two",
+    "reproduced blocking gaps and the upstream issue. Kept committed and",
+    "current so that closing those gaps is a submit, not a rewrite.",
+    "@@MODELS_DIR@@ and @@IND_MODEL@@ are the same tokens the ngspice",
+    "testbench templates in ../testbench/ carry; the two generated inputs",
+    "(`vco_core_body.spice`, the circuit body derived from design/vco.spice,",
+    "and `corners_sg13g2.lib`, the nested-.lib aggregator that gives the",
+    "single-file `models.lib` axis three families' corner sections) are",
+    "produced by the reproduction recipe in README.md.",
+    "Kept in step with osc_bench.sh's OSC_TSTOP / OSC_TMEAS_START: the",
+    "transient is 5 ns with a 2.5 ns discard, derived from the MEASURED",
+    "0.883 ns settling time, not the 20 ns design/vco.spice's comments",
+    "propose. The `.meas` period count below is coarser than sim/lib.sh's",
+    "osc_metrics -- TRIG/TARG RISE=n counts a FIXED number of crossings",
+    "and cannot be told to count inside a time window -- so its own",
+    "discarded-startup window moves with frequency. run_method_check.sh",
+    "does not validate this estimator, only the one in sim/lib.sh."
+  ],
+  "netlist": "vco_core_body.spice",
+  "netlist_source": "schematic",
+  "engine": "ngspice",
+  "models": {
+    "lib": "corners_sg13g2.lib"
+  },
+  "corners": {
+    "process": [
+      {
+        "name": "tt_typ_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_tt",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "tt_typ_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_tt",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "tt_typ_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_tt",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "tt_bcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_tt",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "tt_bcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_tt",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "tt_bcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_tt",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "tt_wcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_tt",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "tt_wcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_tt",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "tt_wcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_tt",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "ss_typ_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_ss",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "ss_typ_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_ss",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "ss_typ_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_ss",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "ss_bcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_ss",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "ss_bcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_ss",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "ss_bcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_ss",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "ss_wcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_ss",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "ss_wcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_ss",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "ss_wcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_ss",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "ff_typ_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_ff",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "ff_typ_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_ff",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "ff_typ_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_ff",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "ff_bcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_ff",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "ff_bcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_ff",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "ff_bcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_ff",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "ff_wcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_ff",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "ff_wcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_ff",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "ff_wcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_ff",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "sf_typ_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_sf",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "sf_typ_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_sf",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "sf_typ_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_sf",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "sf_bcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_sf",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "sf_bcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_sf",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "sf_bcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_sf",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "sf_wcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_sf",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "sf_wcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_sf",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "sf_wcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_sf",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "fs_typ_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_fs",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "fs_typ_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_fs",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "fs_typ_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_fs",
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "fs_bcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_fs",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "fs_bcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_fs",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "fs_bcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_fs",
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "fs_wcs_typ",
+        "sections": [
+          "hbt_typ",
+          "mos_fs",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "fs_wcs_bcs",
+        "sections": [
+          "hbt_bcs",
+          "mos_fs",
+          "cap_wcs"
+        ]
+      },
+      {
+        "name": "fs_wcs_wcs",
+        "sections": [
+          "hbt_wcs",
+          "mos_fs",
+          "cap_wcs"
+        ]
+      }
+    ],
+    "supply_v": {
+      "vct": [
+        0.0,
+        0.3,
+        0.6,
+        0.9,
+        1.2,
+        1.65,
+        1.8,
+        2.4,
+        3.0,
+        3.3
+      ]
+    },
+    "temperature_c": [
+      -40,
+      27,
+      125
+    ]
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 5n 0 2p"
+  },
+  "measurements": [
+    {
+      "name": "t_10_periods",
+      "unit": "s",
+      "spice": ".meas tran t_10_periods TRIG v(vdiff) VAL=0 RISE=11 TARG v(vdiff) VAL=0 RISE=21"
+    },
+    {
+      "name": "vdiff_max",
+      "unit": "V",
+      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "vdiff_min",
+      "unit": "V",
+      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "vcm_max",
+      "unit": "V",
+      "spice": ".meas tran vcm_max MAX v(vcm) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "vcm_min",
+      "unit": "V",
+      "spice": ".meas tran vcm_min MIN v(vcm) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "isup_avg",
+      "unit": "A",
+      "spice": ".meas tran isup_avg AVG i(vsup) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "vtail_avg",
+      "unit": "V",
+      "spice": ".meas tran vtail_avg AVG v(tail) FROM=2.5n TO=5n"
+    }
+  ],
+  "options": {
+    "timeout_s": 3600,
+    "keep_artifacts": true
+  }
+}

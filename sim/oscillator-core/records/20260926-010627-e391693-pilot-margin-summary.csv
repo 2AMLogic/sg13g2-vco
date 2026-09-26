@@ -1,0 +1,2 @@
+corner,mos,cap,hbt,temp_c,itail_nominal_a,itail_last_osc_a,itail_first_fail_a,margin_lower_bound,margin_upper_bound,row6_verdict,row6_bound,ngspice_rc,model_error
+pilot_tt_cap_typ_hbt_typ_27c,tt,cap_typ,hbt_typ,27,2.041926e-04,2.948111e-05,1.966006e-05,6.92622,10.3862,MET,3.0,rc=0,model_error=0

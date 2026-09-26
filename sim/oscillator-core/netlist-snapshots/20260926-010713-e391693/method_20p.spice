@@ -1,0 +1,85 @@
+* tb_period_count_known_answer -- known-answer check of the period-count
+* extractor this experiment grades every oscillator number with.
+* record 20260926-010713-e391693   timestep ceiling 20p
+*
+* GENERATED FILE. Committed source:
+* sim/oscillator-core/testbench/tb_period_count_known_answer.spice.tmpl,
+* substituted by sim/oscillator-core/run_method_check.sh.
+*
+* WHAT IS UNDER TEST HERE
+* -----------------------
+* Not a device, and not the VCO: the ARITHMETIC. sim/lib.sh's osc_metrics()
+* (crossing-counted frequency, peak-to-peak, trapezoidal time average) and
+* osc_settle() (envelope settling time) are the estimators every f_osc, Kvco,
+* tuning-ratio, supply-current and startup number in this experiment is
+* derived through. They are applied here to waveforms whose frequency,
+* amplitude, mean and settling time are known in CLOSED FORM, so a run whose
+* extraction silently went wrong is caught by a failing number rather than by
+* a plausible-looking one. This follows the precedent of the other three
+* sim/ studies, each of which ships a known-answer check of its own
+* extraction (see sim/tank-characterization's reference R-L-C network and
+* sim/inductor-model's 27/27 analytic points).
+*
+* This deck deliberately uses ONLY ngspice-native behavioural sources: it
+* needs no PDK install, no model library and no OSDI build, so the method
+* check runs on a bare checkout and a failing extractor can never be confused
+* with a PDK or toolchain problem.
+*
+* THE FIVE TRACES AND THEIR CLOSED FORMS
+*   PURE_LO / PURE_MID / PURE_HI -- pure sinusoids at 4.5e9 / 5.0e9 /
+*       5.5e9 Hz on a 3.3 V DC offset with amplitude 0.55 V.
+*       Closed form: f = the stated frequency exactly, Vpp = 2*0.55,
+*       time-average = 3.3. The three frequencies bracket
+*       spec/target-spec.md row 1's 4.5 / 5.0 / 5.5 GHz band, so the check
+*       covers the band the bench actually reports in, not one convenient
+*       point.
+*   RAMP -- the same 5.0e9 Hz sinusoid with an exponentially rising
+*       envelope of time constant 0.5e-9 s:
+*           v(t) = 3.3 + 0.55 * (1 - exp(-t/0.5e-9))
+*                               * sin(2*pi*5.0e9*t)
+*       Closed form for the settling time to a fraction q of the final
+*       envelope: t_settle = -0.5e-9 * ln(1 - q). 0.5e-9 is chosen so that
+*       exp(-20n/0.5e-9) is negligible, which makes the final envelope
+*       exactly 2*0.55 and removes the closed form's dependence on where
+*       the "final" window starts. osc_settle() resolves to the nearest local
+*       extremum, i.e. to a half period, which is a KNOWN quantization of the
+*       estimator and is why the settling-time tolerance in the record is
+*       looser than the frequency one rather than arbitrarily chosen.
+*   DC_ONLY -- a constant 3.3 V. Closed form: there is no
+*       oscillation, so the correct extractor output is f = 0 and Vpp = 0
+*       with the mean still recovered. This is the falsification case: an
+*       extractor that manufactures a frequency out of a flat trace would
+*       pass every sinusoid above and still be useless, because a
+*       non-starting PVT corner is exactly the finding the sweep must not
+*       misreport.
+*
+* Vector names below avoid ngspice's predefined constants (`c`, `e`, `i`,
+* `pi`): a `let e = ...` is silently swallowed and leaves an empty output
+* file, which looked exactly like a failed measurement while prototyping this.
+
+Bpure_lo  PURE_LO  0 V = 3.3 + 0.55*sin(6.283185307179586*4.5e9*time)
+Bpure_mid PURE_MID 0 V = 3.3 + 0.55*sin(6.283185307179586*5.0e9*time)
+Bpure_hi  PURE_HI  0 V = 3.3 + 0.55*sin(6.283185307179586*5.5e9*time)
+Bramp     RAMP     0 V = 3.3 + 0.55*(1-exp(-time/0.5e-9))*sin(6.283185307179586*5.0e9*time)
+Bdconly   DC_ONLY  0 V = 3.3
+Rpure_lo  PURE_LO  0 1G
+Rpure_mid PURE_MID 0 1G
+Rpure_hi  PURE_HI  0 1G
+Rramp     RAMP     0 1G
+Rdconly   DC_ONLY  0 1G
+
+.control
+save all
+tran 1p 20n 0 20p
+let trace_pure_lo = v(PURE_LO)
+wrdata mc_method_20p_pure_lo trace_pure_lo
+let trace_pure_mid = v(PURE_MID)
+wrdata mc_method_20p_pure_mid trace_pure_mid
+let trace_pure_hi = v(PURE_HI)
+wrdata mc_method_20p_pure_hi trace_pure_hi
+let trace_ramp = v(RAMP)
+wrdata mc_method_20p_ramp trace_ramp
+let trace_dconly = v(DC_ONLY)
+wrdata mc_method_20p_dconly trace_dconly
+.endc
+.end

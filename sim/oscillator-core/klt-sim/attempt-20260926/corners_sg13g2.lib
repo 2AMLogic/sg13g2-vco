@@ -1,0 +1,5 @@
+.lib tt_captyp_hbttyp
+.lib @@MODELS_DIR@@/cornerMOShv.lib mos_tt
+.lib @@MODELS_DIR@@/cornerCAP.lib cap_typ
+.lib @@MODELS_DIR@@/cornerHBT.lib hbt_typ
+.endl tt_captyp_hbttyp

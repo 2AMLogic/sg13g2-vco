@@ -2,7 +2,8 @@
 #
 # Shared scaffolding for the sim/*/run_*.sh experiment scripts
 # (sim/tank-characterization/run_pvt_sweep.sh, sim/inductor-model/run_model_check.sh,
-# sim/varactor-characterization/run_varactor_sweep.sh).
+# sim/varactor-characterization/run_varactor_sweep.sh,
+# sim/oscillator-core/run_pvt_sweep.sh + run_pilot_grid.sh + run_method_check.sh).
 # These are legitimate, distinct experiments -- this file exists
 # because the bash *scaffolding* around them (hashing, record-ID minting, a
 # scratch ngspice workdir, pulling a scalar out of a .meas log) was
@@ -134,4 +135,147 @@ method_check_point() {
       }
     }')
   if [[ ${point_ok} -eq 1 ]]; then echo PASS; else echo FAIL; fi
+}
+
+# ---------------------------------------------------------------------------
+# Oscillator transient extractors (sim/oscillator-core/, issue #47)
+# ---------------------------------------------------------------------------
+#
+# ngspice ships no PSS/pnoise, so every oscillator number in this repo comes
+# out of a TRANSIENT plus period counting. The two functions below are that
+# estimator, factored here rather than into the experiment because
+# sim/oscillator-core/ has two entry points that must share one extractor:
+# the graded PVT sweep, and the known-answer check that validates the
+# extractor against synthetic waveforms whose frequency and settling time are
+# known in closed form (run_method_check.sh). A private copy in the sweep
+# script would be a copy the method check does not actually check -- see
+# issue #16 for the duplication lib.sh exists to prevent.
+#
+# Both read an ngspice `wrdata` two-column file ("<time> <value>", whitespace
+# separated) and both work on a caller-chosen measurement window, so the
+# startup ramp can be excluded from a settled-oscillation measurement.
+
+# osc_metrics <datafile> <t_start_s> [t_end_s]
+# Crossing-counted frequency and amplitude of a (possibly DC-offset)
+# oscillation, over the window t_start <= t <= t_end (t_end omitted or <= 0
+# means "to the end of the run"). Prints ONE space-separated line:
+#
+#   f_hz vpp_v cycles mean_v tx_first_s tx_last_s dt_max_s n_samples
+#
+# Method, stated because the number is only a result with its method
+# (CLAUDE.md):
+#   * mean_v is the TRAPEZOIDAL time average over the window, not the
+#     arithmetic mean of the samples -- ngspice's timestep is adaptive, so a
+#     sample mean silently weights the densely-stepped parts of a cycle more
+#     heavily. Row 8's average supply current leans on this directly.
+#   * crossings are counted RISING through mean_v, not through zero: the
+#     common-mode, tail and supply-current traces all ride on a DC level, and
+#     counting about zero there counts nothing at all.
+#   * each crossing time is LINEARLY INTERPOLATED between the two bracketing
+#     samples, so the resolution floor is set by the interpolation error, not
+#     by the integer crossing count. f = (nx-1) / (tx_last - tx_first) uses
+#     only the first and last crossing, so per-cycle jitter averages out over
+#     the window.
+#   * dt_max_s is the largest sample spacing inside the window: the caller
+#     needs it to state the quantization floor (a conservative bound on the
+#     interpolated estimate is dt_max * f / cycles; the no-interpolation
+#     bound is 1/cycles).
+#
+# Fewer than 3 samples, or fewer than 3 crossings, is reported as f_hz = 0
+# with the amplitude still filled in -- "it did not oscillate" is a result,
+# not an error (sim/README.md rule 4), and the caller decides what it means.
+osc_metrics() {
+  awk -v ts="${2:-0}" -v te="${3:-0}" '
+    NF >= 2 {
+      t = $1 + 0; v = $2 + 0
+      if (t < ts) next
+      if (te > 0 && t > te) next
+      n++; tt[n] = t; vv[n] = v
+    }
+    END {
+      if (n < 3) { print "0 0 0 0 0 0 0 " n+0; exit }
+      lo = vv[1]; hi = vv[1]; area = 0; dtmax = 0
+      for (i = 1; i <= n; i++) {
+        if (vv[i] < lo) lo = vv[i]
+        if (vv[i] > hi) hi = vv[i]
+        if (i < n) {
+          dt = tt[i+1] - tt[i]
+          if (dt > dtmax) dtmax = dt
+          area += 0.5 * (vv[i] + vv[i+1]) * dt
+        }
+      }
+      span = tt[n] - tt[1]
+      av = (span > 0) ? area / span : vv[1]
+      vpp = hi - lo
+      nx = 0
+      for (i = 1; i < n; i++) {
+        a = vv[i] - av; b = vv[i+1] - av
+        if (a < 0 && b >= 0) {
+          nx++
+          x[nx] = tt[i] + (tt[i+1] - tt[i]) * (-a) / (b - a)
+        }
+      }
+      if (nx < 3) { printf "0 %.6e 0 %.6e 0 0 %.6e %d\n", vpp, av, dtmax, n; exit }
+      T = (x[nx] - x[1]) / (nx - 1)
+      printf "%.6e %.6e %d %.6e %.6e %.6e %.6e %d\n", \
+             1.0 / T, vpp, nx - 1, av, x[1], x[nx], dtmax, n
+    }' "$1"
+}
+
+# osc_settle <datafile> <frac> <t_final_start_s>
+# Startup settling time: when the oscillation envelope first reaches <frac>
+# of its FINAL peak-to-peak amplitude and stays there. Prints ONE line:
+#
+#   t_settle_s vpp_final_v n_extrema
+#
+# Method: vpp_final is the peak-to-peak over [t_final_start, end of run] --
+# the window the caller has already decided is settled. The envelope is then
+# taken from successive local extrema of the trace (sign changes of the
+# first difference), with extrema closer than 2 % of vpp_final to the
+# previous kept extremum discarded so numerical ripple on a stiff solution
+# does not register as a cycle. t_settle is the time of the earliest extremum
+# from which EVERY later half-cycle swing is >= frac * vpp_final, i.e. the
+# envelope's last crossing of that level, not its first -- a ringing or
+# beating envelope must not be reported as settled at its first excursion.
+# "nan" means the envelope never reached the level and stayed: a non-starting
+# or still-ramping corner, which is a finding to record, not an error.
+osc_settle() {
+  awk -v frac="${2:-0.9}" -v tfs="${3:-0}" '
+    NF >= 2 { n++; tt[n] = $1 + 0; vv[n] = $2 + 0 }
+    END {
+      if (n < 5) { print "nan 0 0"; exit }
+      lo = ""; hi = ""
+      for (i = 1; i <= n; i++) {
+        if (tt[i] < tfs) continue
+        if (lo == "" || vv[i] < lo) lo = vv[i]
+        if (hi == "" || vv[i] > hi) hi = vv[i]
+      }
+      if (lo == "") { print "nan 0 0"; exit }
+      vppf = hi - lo
+      if (vppf <= 0) { printf "nan %.6e 0\n", vppf; exit }
+      # local extrema of the whole trace, ripple-filtered
+      m = 0
+      for (i = 2; i < n; i++) {
+        d0 = vv[i] - vv[i-1]; d1 = vv[i+1] - vv[i]
+        if (d0 == 0 && d1 == 0) continue
+        if ((d0 >= 0 && d1 < 0) || (d0 <= 0 && d1 > 0)) {
+          if (m > 0) {
+            dv = vv[i] - ev[m]; if (dv < 0) dv = -dv
+            if (dv < 0.02 * vppf) continue
+          }
+          m++; et[m] = tt[i]; ev[m] = vv[i]
+        }
+      }
+      if (m < 3) { printf "nan %.6e %d\n", vppf, m; exit }
+      # last index from which every later half-cycle swing clears the level
+      lim = frac * vppf
+      idx = 0
+      for (k = m - 1; k >= 1; k--) {
+        sw = ev[k+1] - ev[k]; if (sw < 0) sw = -sw
+        if (sw < lim) { idx = k + 1; break }
+      }
+      if (idx == 0) { printf "%.6e %.6e %d\n", et[1], vppf, m; exit }
+      if (idx > m - 1) { printf "nan %.6e %d\n", vppf, m; exit }
+      printf "%.6e %.6e %d\n", et[idx], vppf, m
+    }' "$1"
 }

@@ -1,0 +1,17 @@
+{
+  "netlist": "vco_core_body.spice",
+  "engine": "ngspice",
+  "models": { "lib": "corners_sg13g2.lib" },
+  "corners": {
+    "process": ["tt_captyp_hbttyp"],
+    "supply_v": { "vct": [1.65] },
+    "temperature_c": [27]
+  },
+  "analysis": { "kind": "tran", "args": "1p 20n 0 2p" },
+  "measurements": [
+    { "name": "t_100_periods",
+      "spice": ".meas tran t_100_periods TRIG v(vdiff) VAL=0 RISE=5 TARG v(vdiff) VAL=0 RISE=105",
+      "unit": "s" }
+  ],
+  "options": { "timeout_s": 600, "keep_artifacts": true }
+}

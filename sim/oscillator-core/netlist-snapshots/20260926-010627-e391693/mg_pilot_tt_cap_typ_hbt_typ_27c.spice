@@ -1,0 +1,146 @@
+* tb_vco_core_margin -- row-6 startup-margin bench (tail-current-scaling proxy)
+* record 20260926-010627-e391693   corner mg_pilot_tt_cap_typ_hbt_typ_27c
+*
+* GENERATED FILE. Committed source:
+* sim/oscillator-core/testbench/tb_vco_core_margin.spice.tmpl. Tokens are
+* substituted by sim/oscillator-core/osc_bench.sh; the substituted deck is
+* frozen per corner under netlist-snapshots/<record-id>/.
+*
+* WHAT ROW 6 ASKS FOR, AND WHAT THIS MEASURES INSTEAD
+* --------------------------------------------------
+* spec/target-spec.md row 6 is a RATIO -- total g_m >= 3.0 x tank loss
+* conductance -- not "it oscillated". An oscillation proves the ratio exceeds
+* 1, never that it exceeds 3, so "it started, therefore row 6 is met" is not
+* a measurement of row 6 and this bench does not make that claim.
+*
+* This deck measures the declared PROXY of the two the issue allows: the
+* oscillation THRESHOLD TAIL CURRENT. It walks the bias mirror's reference
+* resistor RREF up a ladder, which walks the tail current down, measures the
+* tail current at each rung from the tail device's own emitter resistor, and
+* finds the rung at which the oscillation stops establishing. The reported
+* margin is
+*
+*     margin_proxy = I_tail(nominal) / I_tail(threshold)
+*
+* WHY THAT MAPS ONTO THE ROW'S g_m / G_tank
+* For a bipolar cross-coupled pair each device carries I_tail/2 at balance
+* and g_m = I_C / V_T, so g_m is proportional to I_tail EXACTLY in the
+* forward-active exponential region -- not approximately, and with no
+* geometry factor. Startup requires g_m >= G_tank, so the current at which
+* startup ceases is the current at which g_m = G_tank, and the ratio of the
+* nominal current to it IS g_m,nom / G_tank, the row's own quantity.
+*
+* WHERE THE MAP IS IMPERFECT -- the stated limits, not a disclaimer:
+*   1. g_m ∝ I_tail assumes the HBT stays in forward active and out of high
+*      injection. The run therefore MEASURES I_tail at every rung from
+*      V(TE)/R(RTE) rather than assuming it tracks 1/RREF, so a departure is
+*      visible in the recorded ladder instead of hidden inside it.
+*   2. G_tank is treated as constant along the ladder. It is not exactly:
+*      V(TAIL)'s DC level moves as the current falls, which moves the
+*      varactor bank's bias and the pair's own base/collector loading. The
+*      recorded V(TAIL) per rung bounds that drift.
+*   3. The threshold is BRACKETED, never interpolated: the record reports the
+*      last rung that oscillated and the first that did not, and the margin
+*      as the interval between the two ratios. A single number would imply a
+*      resolution the ladder does not have.
+*   4. Near threshold the startup time constant diverges, so a rung whose
+*      envelope is still growing when the 6n window ends is recorded
+*      as NOT oscillating. That biases the measured threshold current UP and
+*      therefore the margin DOWN: the proxy is conservative, and a row-6 PASS
+*      from it is a lower bound, while a row-6 MISS from it could in
+*      principle be a window artifact and is recorded with its envelope
+*      growth so a reader can see which.
+*
+* The oscillation criterion per rung is stated, not implied: the envelope's
+* peak-to-peak over the last quarter of the transient must reach
+* 10 x the 10 mV differential initial condition.
+* An envelope that merely fails to decay is not an oscillation.
+
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib hbt_typ
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib mos_tt
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib cap_typ
+.include /home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-47/sim/inductor-model/sg13g2_inductor_em.spice
+.temp 27
+
+* ---- begin design/vco.spice device section ----
+XL1 VDD OUTP 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XL2 VDD OUTN 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XC1 OUTP OUTN cap_cmim w=3.65e-6 l=3.65e-6 m=1
+XCVP1 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP2 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP3 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP4 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP5 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP6 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP7 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP8 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP9 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP10 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP11 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP12 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP13 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP14 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP15 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP16 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN1 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN2 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN3 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN4 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN5 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN6 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN7 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN8 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN9 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN10 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN11 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN12 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN13 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN14 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN15 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN16 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XQ1 OUTP OUTN TAIL 0 npn13G2v Nx=1 El=1.0
+XQ2 OUTN OUTP TAIL 0 npn13G2v Nx=1 El=1.0
+XQ3 TAIL NBIAS TE 0 npn13G2v Nx=1 El=2.0
+RTE TE 0 2k m=1
+RREF VDD NBIAS 20.5k m=1
+XQ4 NBIAS NBIAS RE 0 npn13G2v Nx=1 El=1.0
+RRE RE 0 4k m=1
+VSUP VDD 0 dc 3.3
+VCT VCTRL 0 dc 1.65
+* ---- end design/vco.spice device section ----
+
+Bvdiff VDIFF 0 V = V(OUTP) - V(OUTN)
+Bvtail VTL   0 V = V(TAIL)
+Rvdiff VDIFF 0 1G
+Rvtail VTL   0 1G
+
+.ic v(OUTP)=3.305 v(OUTN)=3.295
+
+.control
+pre_osdi /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+* Named rather than `save all`, for the reason stated in
+* tb_vco_core_tran.spice.tmpl: storing every internal subcircuit node at every
+* accepted timepoint costs ~10 % of the run and changes no extracted number.
+save v(VDIFF) v(VTL) i(VSUP) v(NBIAS) v(TE) v(TAIL) v(OUTP) v(OUTN)
+alter VCT dc = 1.65
+* The ladder is a list of ABSOLUTE RREF values in ohms, computed by
+* osc_bench.sh from the nominal RREF it read out of the derived netlist --
+* not a list of multipliers, because ngspice's `foreach` iterates over
+* literal words and cannot do the arithmetic. The first entry is always the
+* netlist's own nominal value, so the nominal tail current is measured by
+* the same path as every scaled one.
+foreach rr 20500 41000 61500 82000 123000 164000 246000 328000 492000
+  alter @RREF[resistance] = $rr
+  op
+  echo margin_rung $rr
+  print v(NBIAS) v(TE) v(TAIL) i(VSUP)
+  tran 1p 6n 0 2p
+  let vdiff_m = v(VDIFF)
+  wrdata mg_pilot_tt_cap_typ_hbt_typ_27c_vdiff_$rr vdiff_m
+  let vte_m = v(TE)
+  wrdata mg_pilot_tt_cap_typ_hbt_typ_27c_vte_$rr vte_m
+  let vtail_m = v(VTL)
+  wrdata mg_pilot_tt_cap_typ_hbt_typ_27c_vtail_$rr vtail_m
+end
+.endc
+.end
