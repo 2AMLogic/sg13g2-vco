@@ -1,0 +1,184 @@
+* tb_vco_isf_impulse -- ISF impulse-train bench for design/vco.sch
+* record 20260926-071903-7a02483   corner tank_r3
+*
+* GENERATED FILE. The committed source is
+* sim/phase-noise/testbench/tb_vco_isf_impulse.spice.tmpl; every @@TOKEN@@
+* below is substituted by sim/phase-noise/pn_bench.sh. A copy of the
+* substituted deck is frozen per simulated run under
+* sim/phase-noise/netlist-snapshots/<record-id>/, per sim/README.md rule 3.
+*
+* WHAT THIS MEASURES, AND WHY IT IS NOT A SPECTRUM
+* -----------------------------------------------
+* ngspice ships neither PSS nor pnoise, so there is no periodic-steady-state
+* noise solve to ask for L(df). It also -- and this is the fact that decides
+* the estimator -- runs .tran with DEVICE NOISE SOURCES SWITCHED OFF: a
+* transient of this netlist is deterministic, and the only stochastic sources
+* ngspice offers in a transient are the trnoise()/trrandom() generators on
+* INDEPENDENT sources, which this circuit has none of. A periodogram (or a
+* period-jitter conversion) of this deck's own transient therefore measures
+* the solver's truncation error, not the circuit's phase noise, however long
+* the transient is run. See README.md, "Why not a periodogram".
+*
+* So the measurement here is not spectral at all. It is the ISF: the
+* oscillator's small-signal excess-phase response to an injected charge
+* impulse, as a function of the carrier phase at which the impulse lands. It
+* needs a few tens of carrier periods, not the hundreds of thousands a 1 MHz
+* offset resolution would need, and it is the frame CLAUDE.md names as
+* canonical (Hajimiri & Lee 1998).
+*
+* HOW ONE RUN MEASURES MANY PHASES
+* A single transient carries a TRAIN of 10 impulses spaced
+* 5.757800891530e-10 s apart. The spacing is deliberately NOT an integer number of
+* carrier periods: it is (3 + 1/10) periods at the declared
+* nominal carrier, so successive impulses walk the carrier phase by one
+* 10-th of a period and one run samples the whole ISF. The integer part
+* is what separates the impulses in time, so that the amplitude perturbation
+* each one also excites has decayed before the next arrives.
+*
+* Nothing about that is assumed:
+*   * the phase at which each impulse actually landed is MEASURED from the
+*     run's own crossing times, not computed from the nominal period, so a
+*     carrier that is not at the declared nominal frequency degrades the
+*     uniformity of the phase grid (recorded) and nothing else;
+*   * the excess-phase step is read off a PLATEAU taken over the last part of
+*     each inter-impulse interval, so an amplitude transient that had NOT
+*     decayed would show up as plateau ripple (recorded) rather than as a
+*     silently wrong step.
+*
+* THE REFERENCE RUN IS THIS SAME DECK WITH ZERO-AMPLITUDE IMPULSES
+* Both PWL sources below are present in EVERY deck this bench generates, with
+* the same breakpoint times; only their amplitudes change. The reference run
+* sets both to zero. Because PWL breakpoints are inserted into the timestep
+* schedule whatever the values are, the reference and the perturbed run take
+* identical timesteps until the first non-zero impulse -- so the crossing-time
+* difference before that impulse is an EXACT null, and its residual is the
+* honest noise floor of this comparison. A reference run without the PWL
+* sources would have had a different timestep schedule and would have mixed
+* the solver's own step-sequence divergence into every measured step.
+*
+* Transient settings:
+*   timestep ceiling 2p   -- the same ceiling sim/oscillator-core's
+*       graded bench uses, ~100 samples per period at 5 GHz. Measured there
+*       NOT to be a cost lever on this netlist (169 s at 2 ps vs 183 s at
+*       5 ps for the same 2 ns transient), so coarsening would buy only
+*       discretisation error.
+*   discarded startup window 0 .. 2.5e-9 s -- crossings before this
+*       are not compared. sim/oscillator-core measured this netlist's
+*       90 %-envelope settling time at 0.487 .. 1.256 ns over its pilot
+*       corners.
+*   first impulse at 3.5e-9 s -- later than the discard, so there is a
+*       run of pre-impulse crossings to form the null baseline from.
+*   stop time 9.257800891530e-09.
+*
+* THE TWO INJECTION PORTS
+*   IISFD  differential tank port, OUTN -> OUTP, so a POSITIVE impulse
+*          current injects positive charge into OUTP and removes it from OUTN,
+*          i.e. it increases v(OUTP)-v(OUTN). This is the port the primary
+*          number is taken at.
+*   IISFT  tail node, 0 -> TAIL, positive impulse injects positive charge into
+*          TAIL. Measured so that the primary estimate's central assumption --
+*          that the circuit's whole Norton-equivalent noise can be referred to
+*          the tank port and weighted by the TANK port's ISF -- has a measured
+*          number attached to it instead of a hand wave. README.md states the
+*          limit this bounds.
+* Both are ideal current sources: they add no conductance and no capacitance
+* to the nodes, so the unperturbed limit cycle is bit-identical to the one
+* sim/oscillator-core measures.
+
+* ----------------------------------------------------------------- models
+* Three separate PDK corner libraries, because SG13G2 ships one per device
+* family and this circuit contains all three. The non-PDK inductor model is
+* named by path here and by path + content sha256 in the record: the PDK ships
+* NO spiral-inductor model (sim/pdk.json known_model_gaps), so every number
+* this bench produces inherits that model's stated error bars.
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib hbt_typ
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib mos_tt
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib cap_typ
+.include /home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-49/sim/inductor-model/sg13g2_inductor_em.spice
+.temp 27
+
+* --------------------------------------------- device under test (verbatim)
+* The lines between the markers are copied UNCHANGED out of design/vco.spice,
+* which is itself derived from design/vco.sch by design/netlist.sh. The run
+* script calls `design/netlist.sh --check` before it generates anything, so
+* this deck can never measure a netlist that has drifted from the schematic.
+* Two lines of design/vco.spice are deliberately not copied: its
+* `.save i(vsup)` card (a .save RESTRICTS the saved set) and its own
+* elaboration `.control` block (this bench supplies its own analysis).
+* ---- begin design/vco.spice device section ----
+XL1 VDD OUTP 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XL2 VDD OUTN 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XC1 OUTP OUTN cap_cmim w=3.65e-6 l=3.65e-6 m=1
+XCVP1 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP2 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP3 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP4 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP5 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP6 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP7 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP8 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP9 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP10 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP11 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP12 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP13 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP14 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP15 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP16 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN1 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN2 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN3 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN4 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN5 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN6 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN7 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN8 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN9 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN10 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN11 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN12 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN13 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN14 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN15 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN16 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XQ1 OUTP OUTN TAIL 0 npn13G2v Nx=1 El=1.0
+XQ2 OUTN OUTP TAIL 0 npn13G2v Nx=1 El=1.0
+XQ3 TAIL NBIAS TE 0 npn13G2v Nx=1 El=2.0
+RTE TE 0 2k m=1
+RREF VDD NBIAS 20.5k m=1
+XQ4 NBIAS NBIAS RE 0 npn13G2v Nx=1 El=1.0
+RRE RE 0 4k m=1
+VSUP VDD 0 dc 3.3
+VCT VCTRL 0 dc 1.65
+* ---- end design/vco.spice device section ----
+
+* ------------------------------------------------------- observation node
+* High-impedance observation of the differential tank voltage: 1 Gohm to
+* ground, no path into the tank, so it cannot load it. The crossing times of
+* this trace are the entire measurement.
+Bvdiff VDIFF 0 V = V(OUTP) - V(OUTN)
+Rvdiff VDIFF 0 1G
+
+* ------------------------------------------------------- impulse injection
+IISFD OUTN OUTP PWL(0 0 3.498000000000e-09 0 3.500000000000e-09 4.0000000000e-03 3.502000000000e-09 0 4.073780089153e-09 0 4.075780089153e-09 4.0000000000e-03 4.077780089153e-09 0 4.649560178306e-09 0 4.651560178306e-09 4.0000000000e-03 4.653560178306e-09 0 5.225340267459e-09 0 5.227340267459e-09 4.0000000000e-03 5.229340267459e-09 0 5.801120356612e-09 0 5.803120356612e-09 4.0000000000e-03 5.805120356612e-09 0 6.376900445765e-09 0 6.378900445765e-09 4.0000000000e-03 6.380900445765e-09 0 6.952680534918e-09 0 6.954680534918e-09 4.0000000000e-03 6.956680534918e-09 0 7.528460624071e-09 0 7.530460624071e-09 4.0000000000e-03 7.532460624071e-09 0 8.104240713224e-09 0 8.106240713224e-09 4.0000000000e-03 8.108240713224e-09 0 8.680020802377e-09 0 8.682020802377e-09 4.0000000000e-03 8.684020802377e-09 0)
+IISFT 0    TAIL PWL(0 0 3.498000000000e-09 0 3.500000000000e-09 0.0000000000e+00 3.502000000000e-09 0 4.073780089153e-09 0 4.075780089153e-09 0.0000000000e+00 4.077780089153e-09 0 4.649560178306e-09 0 4.651560178306e-09 0.0000000000e+00 4.653560178306e-09 0 5.225340267459e-09 0 5.227340267459e-09 0.0000000000e+00 5.229340267459e-09 0 5.801120356612e-09 0 5.803120356612e-09 0.0000000000e+00 5.805120356612e-09 0 6.376900445765e-09 0 6.378900445765e-09 0.0000000000e+00 6.380900445765e-09 0 6.952680534918e-09 0 6.954680534918e-09 0.0000000000e+00 6.956680534918e-09 0 7.528460624071e-09 0 7.530460624071e-09 0.0000000000e+00 7.532460624071e-09 0 8.104240713224e-09 0 8.106240713224e-09 0.0000000000e+00 8.108240713224e-09 0 8.680020802377e-09 0 8.682020802377e-09 0.0000000000e+00 8.684020802377e-09 0)
+
+.ic v(OUTP)=3.305 v(OUTN)=3.295
+
+.control
+* pre_osdi must come before the first analysis command: ngspice defers OSDI
+* instantiation to analysis setup, so a later pre_osdi leaves the 32
+* sg13_hv_svaricap instances unresolved. sim/tools/build-osdi.sh builds this
+* binary and the run script calls it, so a cold checkout needs no manual step.
+pre_osdi /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+* Naming the saved set rather than `save all` was measured in
+* sim/oscillator-core to be worth ~10 % of the run time at bit-identical
+* extracted results. This bench reads exactly one vector, so it saves exactly
+* one.
+save v(VDIFF)
+alter VCT dc = 1.65
+tran 1p 9.257800891530e-09 0 2p
+let vdiff_w = v(VDIFF)
+wrdata pn_tank_r3_vdiff vdiff_w
+.endc
+.end

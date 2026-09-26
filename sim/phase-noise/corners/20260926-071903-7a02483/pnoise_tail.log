@@ -1,0 +1,40 @@
+Warning: m=xx on .subckt line will override multiplier m hierarchy!
+
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_vco_port_noise -- equivalent noise current at an injection port of design/vco.sch
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+ Reference value :  0.00000e+00
+No. of Data Rows : 1
+op_point_follows
+v(nbias) = 1.193915e+00
+v(te) = 4.081101e-01
+v(tail) = 2.515667e+00
+v(outp) = 3.299563e+00
+v(outn) = 3.299563e+00
+i(vsup) = -3.06518e-04
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+ Reference value :  3.00000e+09
+No. of Data Rows : 7
+
+No. of Data Rows : 1
+* tb_vco_port_noise -- equivalent noise current at an injection port of design/vco.sch
+Noise Spectral Density Curves  Sat Sep 26 07:19:05  2026
+--------------------------------------------------------------------------------
+Index   frequency       inoise_spectrum 
+--------------------------------------------------------------------------------
+0	3.000000e+09	9.966034e-12	
+1	4.000000e+09	9.212099e-12	
+2	5.000000e+09	7.548358e-12	
+3	6.000000e+09	5.566315e-12	
+4	7.000000e+09	6.310149e-12	
+5	8.000000e+09	7.734930e-12	
+6	9.000000e+09	8.569923e-12	
+Note: Simulation executed from .control section 

@@ -1,0 +1,24 @@
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_portnoise_known_answer -- closed-form check of the port-noise extraction
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 5
+
+No. of Data Rows : 1
+ * tb_portnoise_known_answer -- closed-form check of the port-noise extraction
+ Noise Spectral Density Curves  Sat Sep 26 07:11:55  2026
+--------------------------------------------------------------------------------
+Index   frequency       inoise_spectrum 
+--------------------------------------------------------------------------------
+0	1.000000e+09	4.071372e-12	
+1	3.500000e+09	4.071372e-12	
+2	6.000000e+09	4.071372e-12	
+3	8.500000e+09	4.071372e-12	
+4	1.100000e+10	4.071372e-12	
+Note: Simulation executed from .control section 

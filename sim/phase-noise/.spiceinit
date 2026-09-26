@@ -1,0 +1,21 @@
+* Hermetic ngspice init for sim/phase-noise.
+*
+* Every run_*.sh in this directory copies this file into the scratch directory
+* it runs ngspice from, so a run does NOT depend on whether $HOME/.spiceinit
+* exists (the PDK ships libs.tech/ngspice/install.py, which symlinks one into
+* $HOME; a cold-start checkout on a machine where that was never run must
+* still reproduce the committed numbers).
+*
+* ngbehavior=hsa is the compatibility mode the PDK's own .spiceinit sets and
+* the mode its model libraries are written against. It is load-bearing on the
+* PDK-dependent decks here for the same reason it is in
+* sim/oscillator-core/.spiceinit: design/vco.spice instantiates npn13G2v,
+* cap_cmim and sg13_hv_svaricap, whose model cards use HSPICE-style
+* constructs ngspice only accepts in this mode.
+*
+* run_method_check.sh copies it too, even though its synthetic decks use only
+* ngspice-native L/C/R and behavioural sources and do not need the mode: the
+* method check exists to validate the SAME extractors the measured run grades
+* with, so it runs under the same ngspice configuration rather than quietly
+* diverging from it.
+set ngbehavior=hsa
