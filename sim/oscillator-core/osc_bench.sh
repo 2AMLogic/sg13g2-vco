@@ -351,14 +351,14 @@ osc_render() {
 # classification is returned as data and the caller decides.
 #
 # ngspice keeps going after an unresolvable device and can still exit 0, so
-# the exit status alone is not a verdict -- the log is grepped for the
-# model-resolution failures explicitly, the same patterns
-# design/run_elaborate.sh uses.
+# the exit status alone is not a verdict -- the log is checked with
+# sim/lib.sh's shared ngspice_model_error() (issue #55), the one place this
+# pattern is now stated instead of a private copy here.
 # --------------------------------------------------------------------------
 osc_run_ngspice() {
   local netlist="$1" log="$2" rc=0 model_error=0
   ( cd "${WORKDIR}" && ngspice -b "${netlist}" ) > "${log}" 2>&1 || rc=$?
-  if grep -qiE "unknown subckt|could not find a valid modelname|Unable to find definition of model|no such device or model name" "${log}"; then
+  if ngspice_model_error "${log}"; then
     model_error=1
   fi
   echo "rc=${rc} model_error=${model_error}"

@@ -233,6 +233,10 @@ check_models() {
     cat "${tmp}/check.log" >&2
     return 1
   fi
+  # Deliberately NOT sim/lib.sh's shared ngspice_model_error() (issue #55):
+  # this validates that a FRESHLY COMPILED .osdi loads, and "couldn't be
+  # loaded" / "Unknown model type" are OSDI-load-specific wordings that have
+  # no meaning for the sim/*/run_*.sh benches the shared helper serves.
   if grep -qiE "Unable to find definition of model|couldn't be loaded|Unknown model type|unknown subckt" "${tmp}/check.log"; then
     echo "build-osdi.sh: model-load errors in the check run:" >&2
     grep -iE "Unable to find definition of model|couldn't be loaded|Unknown model type|unknown subckt" "${tmp}/check.log" >&2

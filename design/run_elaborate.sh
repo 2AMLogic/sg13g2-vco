@@ -116,9 +116,11 @@ NG_RC=$?
 set -e
 
 # ngspice reports an unresolvable device as "unknown subckt" / "Unable to find
-# definition of model", and keeps going, so the exit status alone is not
-# enough -- grep for the model-resolution failures explicitly.
-MODEL_ERRORS="$(grep -icE "unknown subckt|could not find a valid modelname|Unable to find definition of model|no such device or model name" "${LOG}" || true)"
+# definition of model" (among other wordings), and keeps going, so the exit
+# status alone is not enough -- grep for the model-resolution failures
+# explicitly, via sim/lib.sh's shared NGSPICE_MODEL_ERROR_PATTERN (issue #55)
+# so this file states the pattern once instead of twice.
+MODEL_ERRORS="$(grep -icE "${NGSPICE_MODEL_ERROR_PATTERN}" "${LOG}" || true)"
 
 echo
 echo "---------------------------------------------------------------"
@@ -128,7 +130,7 @@ echo "ngspice exit status      : ${NG_RC}"
 echo "model-resolution errors  : ${MODEL_ERRORS}"
 if [[ "${MODEL_ERRORS}" -ne 0 ]]; then
   echo
-  grep -nE "unknown subckt|could not find a valid modelname|Unable to find definition of model|no such device or model name" "${LOG}" >&2
+  ngspice_model_error_lines "${LOG}" >&2
 fi
 
 echo

@@ -194,9 +194,10 @@ for i in "${!CAP_SECTIONS[@]}"; do
       rc=0
       ( cd "${WORKDIR}" && ngspice -b "${netlist}" ) > "${log}" 2>&1 || rc=$?
 
-      # A model-load failure is not always a nonzero exit, so check the text too.
+      # A model-load failure is not always a nonzero exit, so check the text
+      # too, via sim/lib.sh's shared ngspice_model_error() (issue #55).
       model_error=0
-      if grep -qiE "unknown subckt|could not find|can't find|no such (parameter|model)" "${log}"; then
+      if ngspice_model_error "${log}"; then
         model_error=1
       fi
 
@@ -302,6 +303,10 @@ sed \
 ind_rc=0
 ( cd "${WORKDIR}" && ngspice -b "${ind_netlist}" ) > "${ind_log}" 2>&1 || ind_rc=$?
 ind_model_absent=0
+# Deliberately NOT sim/lib.sh's shared ngspice_model_error() (issue #55): this
+# is a narrow probe for "is the inductor model file absent?", not the general
+# model-resolution failure detector, so it stays on the single bare
+# "unknown subckt" string rather than the union pattern.
 if grep -qiE "unknown subckt" "${ind_log}"; then ind_model_absent=1; fi
 echo "[${ind_corner_id}] ngspice rc=${ind_rc} model_absent=${ind_model_absent}"
 

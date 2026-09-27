@@ -160,8 +160,10 @@ EOF
 
     rc=0
     ( cd "${WORKDIR}" && ngspice -b "${netlist}" ) > "${log}" 2>&1 || rc=$?
+    # A model-load failure is not always a nonzero exit, so check the log
+    # too, via sim/lib.sh's shared ngspice_model_error() (issue #55).
     model_error=0
-    if grep -qiE "unknown subckt|could not find|can't find|undefined parameter|no such (parameter|model)" "${log}"; then
+    if ngspice_model_error "${log}"; then
       model_error=1
     fi
     echo "[${corner_id}] ngspice rc=${rc} model_error=${model_error}"
