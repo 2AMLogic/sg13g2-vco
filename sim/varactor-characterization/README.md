@@ -269,8 +269,8 @@ own RC roll-off (see below). `records/<record-id>-kvco.csv` reports the
 peak and minimum `|dC/dV|` (signed) plus `Cmax`, `Cmin` and `Cmax/Cmin`, per
 device × corner × temperature × domain.
 
-**Method validation**: the identical ideal R-L-C reference network
-`tank-characterization/testbench/tb_mimcap_zscan.spice.tmpl` uses
+**Method validation**: the ideal R-L-C reference network every testbench in
+these two studies expands from `sim/testbench-common/ref-network.inc`
 (`R = 2 Ω`, `L = 1 nH`, `C = 100 fF`, closed-form `Leff`/`Q`/`SRF`), re-run
 at every one of the 216 points and checked to 0.1 %. All 216 points passed;
 worst disagreement across the whole grid was on `SRF` (the interpolated

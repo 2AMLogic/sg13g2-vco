@@ -93,6 +93,13 @@ mkdir -p "${NETLIST_DIR}" "${LOG_DIR}" "${CURVE_DIR}"
 # symlinked one into $HOME.
 make_scratch_workdir "sg13g2-tank"
 
+# Reference-network sections for the template expansion below: ONE shared
+# definition (sim/testbench-common/ref-network.inc), three netlist regions.
+# Materialized once per run; the scratch files ride WORKDIR's EXIT cleanup.
+REF_CARDS_INC="$(ref_network_section cards "${WORKDIR}")"
+REF_LETS_INC="$(ref_network_section lets "${WORKDIR}")"
+REF_MEAS_INC="$(ref_network_section meas "${WORKDIR}")"
+
 # --------------------------------------------------------------- sweep ranges
 # The target band for this block is NOT chosen yet (spec/target-spec.md row 1
 # is blank, and choosing it is downstream of this very study), so the sweep is
@@ -165,6 +172,12 @@ for i in "${!CAP_SECTIONS[@]}"; do
       total=$((total + 1))
 
       sed \
+        -e "/@@REF_NET_CARDS@@/r ${REF_CARDS_INC}" \
+        -e "/@@REF_NET_CARDS@@/d" \
+        -e "/@@REF_NET_LETS@@/r ${REF_LETS_INC}" \
+        -e "/@@REF_NET_LETS@@/d" \
+        -e "/@@REF_NET_MEAS@@/r ${REF_MEAS_INC}" \
+        -e "/@@REF_NET_MEAS@@/d" \
         -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
         -e "s|@@CAP_SECTION@@|${section}|g" \
         -e "s|@@TEMP_C@@|${temp}|g" \
@@ -223,9 +236,11 @@ EOF
 
       # ---- known-answer check on the extraction arithmetic -----------------
       # See sim/lib.sh's method_check_point for the shared reference-network
-      # implementation (ideal R=2, L=1n, C=100f) and why it is re-checked at
-      # every corner.
-      point_status="$(method_check_point "${label}" "${temp}" "${vbias}" "${log}" "${METHOD_CSV}" "${METHOD_TOL_PCT}")"
+      # implementation (the ideal network sim/testbench-common/ref-network.inc
+      # expands into the netlist; R/L/C are parsed back out of it, so the
+      # closed form cannot drift from the simulated network) and why it is
+      # re-checked at every corner.
+      point_status="$(method_check_point "${label}" "${temp}" "${vbias}" "${log}" "${netlist}" "${METHOD_CSV}" "${METHOD_TOL_PCT}")"
       if [[ "${point_status}" != "PASS" ]]; then method_fail=$((method_fail + 1)); fi
 
       if [[ ${rc} -eq 0 && ${model_error} -eq 0 && "${point_status}" == "PASS" ]]; then
