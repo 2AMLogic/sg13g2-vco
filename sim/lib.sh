@@ -55,6 +55,59 @@ detect_ngspice_version() {
   echo "${v:-unknown}"
 }
 
+# NGSPICE_MODEL_ERROR_PATTERN
+# The one regex (grep -E, matched case-insensitively by ngspice_model_error /
+# ngspice_model_error_lines below) that answers "did ngspice fail to resolve
+# a device model or subcircuit in this log". ngspice keeps going after an
+# unresolvable device and can still exit 0, so every sim/*/run_*.sh bench
+# that invokes ngspice has to grep its own log for this instead of trusting
+# the exit status alone -- this variable and the two functions below are the
+# ONE place that does it (issue #55: six call sites had independently grown
+# FOUR different pattern lists, each missing at least one string another one
+# caught). Exposed as a readonly variable, not hidden inside the functions,
+# so design/run_elaborate.sh -- which needs the pattern once to count matches
+# and again to print the offending lines -- states it once, not twice.
+#
+# Each alternative below is a distinct wording ngspice actually emits for
+# this failure class; extend this ONE list the next time a bench needs
+# another, rather than forking a fifth private copy:
+#   * "unknown subckt"                     -- an X-instance's subcircuit/model
+#     card was never defined at all (e.g. a missing inductor-model .include).
+#   * "could not find"                     -- covers ngspice's longer
+#     "...could not find a valid modelname..." wording (a device references a
+#     model name ngspice never saw defined), and any shorter form of it.
+#   * "can't find"                         -- ngspice's alternate wording for
+#     the same "no such model/subckt" condition on some code paths.
+#   * "Unable to find definition of model" -- a Verilog-A/OSDI compact model
+#     (sg13_hv_svaricap here) failed to load, so its .model reference
+#     resolves to nothing.
+#   * "no such device or model name"       -- another distinct ngspice
+#     wording for an unresolved device/model reference (seen at the
+#     design/vco.spice elaboration site).
+#   * "no such (parameter|model)"          -- ngspice's ".param" / model
+#     lookup failure wording.
+#   * "undefined parameter"                -- a testbench .param reference
+#     ngspice never saw defined; the inductor-model check has always folded
+#     this into the same "netlist did not elaborate cleanly" class.
+readonly NGSPICE_MODEL_ERROR_PATTERN="unknown subckt|could not find|can't find|Unable to find definition of model|no such device or model name|no such (parameter|model)|undefined parameter"
+
+# ngspice_model_error <log>
+# Return 0 (true, in the shell sense) if <log> contains any
+# NGSPICE_MODEL_ERROR_PATTERN alternative, 1 (false) otherwise. Matches
+# case-insensitively, like every site this replaces.
+ngspice_model_error() {
+  grep -qiE "${NGSPICE_MODEL_ERROR_PATTERN}" "$1"
+}
+
+# ngspice_model_error_lines <log>
+# Print the matching lines from <log> (with line numbers, case-insensitive),
+# for a caller that wants to show the offending text after
+# ngspice_model_error already reported one -- e.g. design/run_elaborate.sh,
+# which counts matches first and only prints them if the count is nonzero.
+ngspice_model_error_lines() {
+  grep -niE "${NGSPICE_MODEL_ERROR_PATTERN}" "$1"
+}
+
 # mint_record_id <repo_root>
 # Print a fresh RECORD_ID of the form <UTC timestamp>-<short git SHA>
 # (<git SHA> is "nogit" outside a git checkout). Every sim/*/run_*.sh script
