@@ -182,6 +182,41 @@ osc_preflight() {
 }
 
 # --------------------------------------------------------------------------
+# osc_provenance_md
+# Print the PDK + loaded-library provenance bullets that every record written
+# by a runner sourcing this file must carry: the pinned PDK, then the sha256
+# digest of each model library the decks load and of the OSDI binary this run
+# built. Emits exactly eight markdown lines on stdout -- no `## Provenance`
+# heading (only run_isf_pilot.sh wants one, and it prints its own) and no
+# trailing blank line -- so a caller drops it inside its own record block
+# without reflowing anything around it.
+#
+# WHY THIS IS A FUNCTION AND NOT COPIED PER RUNNER
+# This block is the record's statement of WHICH model files produced its
+# numbers, and sim/ records are append-only evidence (CLAUDE.md). A deck that
+# gains a library, or an OSDI path that moves, has to be reflected in every
+# runner's copy; a copy that is missed writes records with an incomplete
+# provenance list, nothing fails, and the records cannot be corrected
+# afterwards. One definition means the list cannot drift between runners.
+#
+# REQUIRES osc_preflight to have run: it reads SG13G2_NGSPICE_MODELS and
+# OSC_OSDI_MOSVAR, which osc_preflight resolves and validates (a missing
+# library or OSDI binary is that function's error, not a digest of
+# "unavailable" here), plus PDK / PDK_ROOT from sim/env.sh. `sha256_of` must
+# be in scope from sim/lib.sh, which every runner sources before this file.
+# --------------------------------------------------------------------------
+osc_provenance_md() {
+  echo "- **PDK**: \`${PDK}\` at \`${PDK_ROOT}\` -- pinned release in"
+  echo "  \`sim/pdk.json\`. Loaded libraries and the OSDI binary by digest:"
+  echo "  - \`cornerHBT.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerHBT.lib")\`"
+  echo "  - \`cornerMOShv.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerMOShv.lib")\`"
+  echo "  - \`cornerCAP.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib")\`"
+  echo "  - \`sg13g2_svaricaphv_mod.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_svaricaphv_mod.lib")\`"
+  echo "  - \`sg13g2_hbt_mod.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_hbt_mod.lib")\`"
+  echo "  - \`mosvar.osdi\` (this run's build) sha256 \`$(sha256_of "${OSC_OSDI_MOSVAR}")\`"
+}
+
+# --------------------------------------------------------------------------
 # osc_derive_body
 # Extract the DEVICE SECTION of design/vco.spice into ${WORKDIR}/vco_body.spice
 # and set OSC_VCO_BODY to that path, plus OSC_RREF_NOM_OHM / OSC_RTE_OHM read
