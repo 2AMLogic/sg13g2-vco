@@ -69,8 +69,13 @@
 *   Zref(w) = (R + jwL) / ((1 - w^2 LC) + jw R C)
 *   Leff(w) = Im(Zref)/w ;  Q(w) = Im(Zref)/Re(Zref)
 *   SRF     = sqrt((L - R^2 C) / (L^2 C)) / (2*pi)
-* run_pvt_sweep.sh evaluates those closed forms independently (in awk) and
-* fails the run if the simulated values disagree by more than 0.1 %.
+* run_pvt_sweep.sh expands this network from the ONE shared definition,
+* sim/testbench-common/ref-network.inc (sed r-command injection at the
+* @@REF_NET_*@@ placeholders -- the two varactor testbenches expand the same
+* fragment, so the three copies cannot drift). sim/lib.sh's
+* method_check_point() evaluates those closed forms independently (in awk,
+* deriving R/L/C from this netlist's own Lref/Rref/Cref cards) and fails the
+* run if the simulated values disagree by more than 0.1 %.
 * This is what lets the inductive-branch extraction (Leff, Q, SRF from Z) be
 * trusted even though this PDK ships no inductor model to exercise it on --
 * see tb_inductor_zscan.spice.tmpl.
@@ -113,10 +118,7 @@ Ldb50 b50 bias 1
 Xb50 b50 0 0 cap_rfcmim w=50u l=50u wfeed=15u
 
 * --------------------------------- ideal reference network (known answers)
-Iref 0 ref dc 0 ac 1
-Lref ref refn 1n
-Rref refn 0 2
-Cref ref 0 100f
+@@REF_NET_CARDS@@
 
 .control
 * --- pass 1: dense sweep, used only for the scalar .meas extractions -------
@@ -145,9 +147,7 @@ let zb50 = imag(v(b50))
 let cb50 = imag(1/v(b50))/wrad
 let qb50 = abs(imag(1/v(b50)))/real(1/v(b50))
 
-let zref = imag(v(ref))
-let lref = imag(v(ref))/wrad
-let qref = imag(v(ref))/real(v(ref))
+@@REF_NET_LETS@@
 
 * SRF: Im(Z) crossing zero upward (capacitive -> inductive). For cap_cmim
 * this measurement is EXPECTED to fail with "out of interval" -- that model
@@ -159,9 +159,6 @@ meas ac srf_a50 WHEN za50=0 RISE=1
 meas ac srf_b20 WHEN zb20=0 RISE=1
 meas ac srf_b35 WHEN zb35=0 RISE=1
 meas ac srf_b50 WHEN zb50=0 RISE=1
-* The reference network is inductive below its SRF, so its Im(Z) crosses
-* zero DOWNWARD.
-meas ac srf_ref WHEN zref=0 FALL=1
 
 meas ac c_a20_1g   FIND ca20 AT=1e9
 meas ac c_a20_2g   FIND ca20 AT=2e9
@@ -229,8 +226,7 @@ meas ac q_b50_5g   FIND qb50 AT=5e9
 meas ac q_b50_10g  FIND qb50 AT=1e10
 meas ac q_b50_20g  FIND qb50 AT=2e10
 
-meas ac l_ref_1g   FIND lref AT=1e9
-meas ac q_ref_1g   FIND qref AT=1e9
+@@REF_NET_MEAS@@
 
 * --- pass 2: coarse sweep, written out as the committed curve file --------
 * Re-run at lower resolution purely to keep the committed CSV small; the

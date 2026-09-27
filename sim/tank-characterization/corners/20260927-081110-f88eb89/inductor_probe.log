@@ -1,0 +1,38 @@
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * tb_inductor_zscan -- sg13g2 spiral-inductor small-signal impedance scan
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 1739
+srf_p1              =  2.00268e+11
+srf_p13             =  8.16733e+09
+srf_p11             =  9.50489e+09
+l_p1_1g             =  9.79238e-11
+l_p1_5g             =  9.48600e-11
+l_p1_10g            =  9.17013e-11
+q_p1_1g             =  1.89453e+00
+q_p1_5g             =  6.29325e+00
+q_p1_10g            =  8.75290e+00
+l_p13_1g            =  5.11715e-09
+l_p13_5g            =  7.93804e-09
+l_p13_10g           =  -9.79129e-09
+q_p13_1g            =  4.47799e+00
+q_p13_5g            =  7.99518e+00
+q_p13_10g           =  -6.45469e+00
+l_p11_1g            =  4.26788e-09
+l_p11_5g            =  5.72391e-09
+l_p11_10g           =  -2.77764e-08
+q_p11_1g            =  5.68789e+00
+q_p11_5g            =  1.07019e+01
+q_p11_10g           =  -1.58735e+00
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 174
+Note: Simulation executed from .control section 

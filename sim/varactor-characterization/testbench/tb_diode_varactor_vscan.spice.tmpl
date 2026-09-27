@@ -46,10 +46,12 @@
 * geometries' C range" for why that bracket was abandoned for this half of
 * the study.
 *
-* REFERENCE NETWORK (known-answer check on the extraction math) -- identical
-* to tank-characterization/testbench/tb_mimcap_zscan.spice.tmpl's; see that
-* file's header for the algebra and tb_mos_varactor_vscan.spice.tmpl's
-* header for why it is re-run at every point.
+* REFERENCE NETWORK (known-answer check on the extraction math) -- expanded,
+* like every other testbench in these two studies, from the ONE shared
+* fragment sim/testbench-common/ref-network.inc (so the copies cannot
+* drift); see sim/tank-characterization/testbench/tb_mimcap_zscan.spice.tmpl's
+* header for the algebra and tb_mos_varactor_vscan.spice.tmpl's header for
+* why it is re-run at every point.
 *
 * CORNER-INVARIANCE, MEASURED NOT ASSUMED
 * ----------------------------------------
@@ -95,10 +97,7 @@ Ldplg hdplg 0 1
 Xdplg hdplg ctrl dpantenna l=20u w=20u
 
 * --------------------------------- ideal reference network (known answers)
-Iref 0 ref dc 0 ac 1
-Lref ref refn 1n
-Rref refn 0 2
-Cref ref 0 100f
+@@REF_NET_CARDS@@
 
 .control
 * --- pass 1: dense sweep, used only for the scalar .meas extractions -------
@@ -120,9 +119,7 @@ let zdplg = imag(v(hdplg))
 let cdplg = imag(1/v(hdplg))/wrad
 let qdplg = abs(imag(1/v(hdplg)))/real(1/v(hdplg))
 
-let zref = imag(v(ref))
-let lref = imag(v(ref))/wrad
-let qref = imag(v(ref))/real(v(ref))
+@@REF_NET_LETS@@
 
 * SRF: same convention as the MOS template -- a plain reverse-biased
 * junction has no plate/feed inductance, so this is EXPECTED to fail (SRF =
@@ -131,7 +128,6 @@ meas ac srf_dasm WHEN zdasm=0 RISE=1
 meas ac srf_dalg WHEN zdalg=0 RISE=1
 meas ac srf_dpsm WHEN zdpsm=0 RISE=1
 meas ac srf_dplg WHEN zdplg=0 RISE=1
-meas ac srf_ref  WHEN zref=0  FALL=1
 
 meas ac c_dasm_1g   FIND cdasm AT=1e9
 meas ac c_dasm_5g   FIND cdasm AT=5e9
@@ -169,8 +165,7 @@ meas ac q_dplg_5g   FIND qdplg AT=5e9
 meas ac q_dplg_10g  FIND qdplg AT=1e10
 meas ac q_dplg_20g  FIND qdplg AT=2e10
 
-meas ac l_ref_1g   FIND lref AT=1e9
-meas ac q_ref_1g   FIND qref AT=1e9
+@@REF_NET_MEAS@@
 
 * --- pass 2: coarse sweep, written out as the committed curve file --------
 set wr_singlescale

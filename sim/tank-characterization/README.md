@@ -162,7 +162,10 @@ Leff(ω) = Im(Zref)/ω        Q(ω) = Im(Zref)/Re(Zref)
 SRF     = sqrt((L − R²C) / (L²C)) / 2π
 ```
 
-`run_pvt_sweep.sh` evaluates those independently (in `awk`) and **fails the
+`run_pvt_sweep.sh` expands the network from the shared fragment
+`sim/testbench-common/ref-network.inc` and evaluates those closed forms
+independently (in `awk`, deriving `R`/`L`/`C` from the generated netlist's
+own reference cards) and **fails the
 run** if the simulated values disagree by more than 0.1 %. On the committed
 record the worst disagreement across all 18 corners is **0.0026 %** (on SRF,
 which is the interpolated quantity; `Leff` and `Q` land within 0.0002 %).

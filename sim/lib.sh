@@ -85,16 +85,54 @@ make_scratch_workdir() {
   cp "${EXPERIMENT_DIR}/.spiceinit" "${WORKDIR}/.spiceinit"
 }
 
-# method_check_point <label> <temp> <axis_val> <log> <method_csv> <tol_pct>
+# ref_network_section <section> <scratch_dir>
+# Print the path of a scratch file holding one section (cards|lets|meas) of
+# sim/testbench-common/ref-network.inc -- the shared ideal-RLC reference
+# network the testbench templates expand. sed's `r` command can only append a
+# WHOLE file, and the three sections land in three different netlist regions
+# (pre-.control device cards, in-.control lets, in-.control meas), so each
+# run script materializes the sections it needs into its scratch WORKDIR
+# once per run (the files ride make_scratch_workdir's EXIT-trap cleanup) and
+# points the `r` command at the scratch copies. Returns non-zero if the
+# section is absent or empty, so a renamed marker fails the run loudly
+# instead of silently expanding to nothing. No PDK dependency: the fragment
+# is located relative to this file, not to any PDK install.
+ref_network_section() {
+  local section="$1" scratch_dir="$2"
+  local frag out
+  frag="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/testbench-common/ref-network.inc"
+  out="${scratch_dir}/ref-network-${section}.inc"
+  awk -v m="* @@ref-network:${section}@@" '
+    $0 == m { on = 1; next }
+    on && /^\* @@ref-network:/ { exit }
+    on { print }
+  ' "${frag}" > "${out}"
+  if [[ ! -s "${out}" ]]; then
+    echo "ref_network_section: section '${section}' not found (or empty) in ${frag}" >&2
+    return 1
+  fi
+  echo "${out}"
+}
+
+# method_check_point <label> <temp> <axis_val> <log> <netlist> <method_csv> <tol_pct>
 # Known-answer check on the extraction arithmetic itself, not on any device
 # under test: pulls l_ref_1g/q_ref_1g/srf_ref out of <log> (a testbench's
-# .meas outputs for the ideal reference network R=2 ohm, L=1 nH, C=100 fF)
-# and compares each against that network's closed form at w = 2*pi*1 GHz.
-# The reference network is corner- and temperature-independent, so its
-# closed forms are constants; it is re-checked at every corner anyway,
-# because the whole point is to catch a run whose extraction arithmetic
-# silently went wrong. Appends one row per quantity (leff_1ghz_h, q_1ghz,
-# srf_hz) to <method_csv>, in the shared
+# .meas outputs for the ideal reference network) and compares each against
+# that network's closed form at w = 2*pi*1 GHz. The reference network is
+# corner- and temperature-independent, so a healthy network's closed forms
+# are constants; it is re-checked at every corner anyway, because the whole
+# point is to catch a run whose extraction arithmetic silently went wrong.
+#
+# SINGLE SOURCE (issue #66): the closed form's R/L/C are not restated here.
+# They are parsed out of <netlist>'s own Lref/Rref/Cref device cards -- the
+# cards sim/testbench-common/ref-network.inc expands into every testbench --
+# and decoded (ngspice scaled suffixes: 2, 1n, 100f, 1.2meg, ...) inside the
+# awk below. Editing the fragment therefore re-derives every corner's check
+# automatically, and a netlist whose reference network is missing or
+# malformed fails every row loudly rather than silently comparing a correct
+# simulation against the closed form of values it no longer contains.
+# Appends one row per quantity (leff_1ghz_h, q_1ghz, srf_hz) to <method_csv>,
+# in the shared
 # "label,temp,axis_val,quantity,simulated,closed_form,rel_err_pct,tol_pct,status"
 # format. Prints "PASS" on stdout if every quantity was within <tol_pct> of
 # its closed form, "FAIL" otherwise -- deliberately a print, not a mutated
@@ -103,32 +141,76 @@ make_scratch_workdir() {
 # sim/varactor-characterization/run_varactor_sweep.sh for the two different
 # ways that turns out to matter).
 method_check_point() {
-  local label="$1" temp="$2" axis_val="$3" log="$4" method_csv="$5" tol_pct="$6"
-  local l_sim q_sim s_sim point_ok
+  local label="$1" temp="$2" axis_val="$3" log="$4" netlist="$5" method_csv="$6" tol_pct="$7"
+  local l_sim q_sim s_sim point_ok ref_r ref_l ref_c ref_rlc
   l_sim="$(meas_value "${log}" "l_ref_1g")"
   q_sim="$(meas_value "${log}" "q_ref_1g")"
   s_sim="$(meas_value "${log}" "srf_ref")"
   point_ok=1
+  # The guard: derive the closed form's R/L/C from the netlist actually
+  # simulated. An empty field means that card is absent or malformed, which
+  # fails every row loudly below.
+  ref_rlc="$(awk '
+    /^Lref ref refn / { l = $4 }
+    /^Rref refn 0 /   { r = $4 }
+    /^Cref ref 0 /    { c = $4 }
+    END { print r, l, c }
+  ' "${netlist}")"
+  read -r ref_r ref_l ref_c <<EOF
+${ref_rlc}
+EOF
+  if [[ -z "${ref_r}" || -z "${ref_l}" || -z "${ref_c}" ]]; then
+    echo "method_check_point: no reference network (Lref/Rref/Cref cards) found in ${netlist} -- expected the ref-network.inc expansion; failing every row" >&2
+    ref_r=""; ref_l=""; ref_c=""
+  fi
   while read -r qty sim ref err st; do
     echo "${label},${temp},${axis_val},${qty},${sim},${ref},${err},${tol_pct},${st}" >> "${method_csv}"
     if [[ "${st}" != "PASS" ]]; then point_ok=0; fi
-  done < <(awk -v ls="${l_sim:-nan}" -v qs="${q_sim:-nan}" -v ss="${s_sim:-nan}" -v tol="${tol_pct}" '
+  done < <(awk -v ls="${l_sim:-nan}" -v qs="${q_sim:-nan}" -v ss="${s_sim:-nan}" -v tol="${tol_pct}" -v RRAW="${ref_r}" -v LRAW="${ref_l}" -v CRAW="${ref_c}" '
+    function val(s,  n, u) {
+      # Decode an ngspice scaled number ("2", "1n", "100f", "1.2meg").
+      # Anything else is a broken reference card: return "" so the whole
+      # point fails loudly instead of comparing against a coerced zero.
+      if (s !~ /^[0-9.+-]+(meg|[TtGgKkMmUuNnPpFfAa])?$/) return ""
+      n = s + 0
+      u = tolower(s); gsub(/[0-9.+-]/, "", u)
+      if (u == "")  return n
+      if (u == "t")   return n * 1e12
+      if (u == "g")   return n * 1e9
+      if (u == "meg") return n * 1e6
+      if (u == "k")   return n * 1e3
+      if (u == "m")   return n * 1e-3
+      if (u == "u")   return n * 1e-6
+      if (u == "n")   return n * 1e-9
+      if (u == "p")   return n * 1e-12
+      if (u == "f")   return n * 1e-15
+      if (u == "a")   return n * 1e-18
+      return ""
+    }
     BEGIN {
-      PI = 4*atan2(1,1); R = 2.0; L = 1e-9; C = 100e-15; w = 2*PI*1e9;
-      # Z(w) = (R + jwL) / ((1 - w^2 LC) + jwRC)
-      nr = R;  ni = w*L;
-      dr = 1 - w*w*L*C;  di = w*R*C;
-      den = dr*dr + di*di;
-      zr = (nr*dr + ni*di)/den;
-      zi = (ni*dr - nr*di)/den;
-      l_ref = zi/w;
-      q_ref = zi/zr;
-      srf_ref = sqrt((L - R*R*C)/(L*L*C))/(2*PI);
+      PI = 4*atan2(1,1)
+      R = val(RRAW); L = val(LRAW); C = val(CRAW)
+      # w pairs with the meas cards AT=1e9 (l_ref_1g names it too): the
+      # 1 GHz scalar-extraction frequency, not a network property.
+      w = 2*PI*1e9
+      if (R != "" && L != "" && C != "") {
+        # Z(w) = (R + jwL) / ((1 - w^2 LC) + jwRC)
+        nr = R;  ni = w*L;
+        dr = 1 - w*w*L*C;  di = w*R*C;
+        den = dr*dr + di*di;
+        zr = (nr*dr + ni*di)/den;
+        zi = (ni*dr - nr*di)/den;
+        l_ref = zi/w;
+        q_ref = zi/zr;
+        srf_ref = sqrt((L - R*R*C)/(L*L*C))/(2*PI);
+      } else {
+        l_ref = "nan"; q_ref = "nan"; srf_ref = "nan"
+      }
       split("leff_1ghz_h q_1ghz srf_hz", names, " ");
       sims[1] = ls; sims[2] = qs; sims[3] = ss;
       refs[1] = l_ref; refs[2] = q_ref; refs[3] = srf_ref;
       for (i = 1; i <= 3; i++) {
-        if (sims[i] == "nan" || sims[i] == "") { printf "%s %s %.6e nan %s\n", names[i], "", refs[i], "FAIL"; continue }
+        if (sims[i] == "nan" || sims[i] == "" || refs[i] == "nan") { printf "%s nan nan nan FAIL\n", names[i]; continue }
         e = (sims[i] - refs[i]) / refs[i] * 100.0;
         ae = (e < 0) ? -e : e;
         printf "%s %.6e %.6e %+.5f %s\n", names[i], sims[i], refs[i], e, (ae <= tol ? "PASS" : "FAIL");
