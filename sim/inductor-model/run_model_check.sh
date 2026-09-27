@@ -356,10 +356,14 @@ GEOMTABLE
 echo
 echo "record       : ${RECORD_ID}"
 echo "points       : ${passed}/${total} PASS"
+echo "failed rows  : ${#failed_points[@]}"
 echo "known-answer : $(( total - method_fail ))/${total} within ${CHECK_TOL_PCT}%"
 echo "written      : ${MD_OUT#"${REPO_ROOT}"/}"
 
-if [[ ${passed} -ne ${total} ]]; then
+# A FAIL device row (e.g. an empty l/q scalar from a .meas miss, which does not
+# make ngspice exit nonzero) is a run failure even when every simulation point
+# ran: the record already says so, so the exit code must agree.
+if [[ ${passed} -ne ${total} || ${#failed_points[@]} -gt 0 ]]; then
   echo "error: ${#failed_points[@]} device row(s) and/or $(( total - passed )) simulation point(s) did not pass." >&2
   exit 1
 fi
