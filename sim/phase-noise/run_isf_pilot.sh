@@ -489,14 +489,7 @@ GRID_HOURS="$(awk -v t="${T_WALL_TOTAL}" -v n="${N_RUNS}" 'BEGIN{ printf "%.0f",
   echo
   echo "## Provenance"
   echo
-  echo "- **PDK**: \`${PDK}\` at \`${PDK_ROOT}\` -- pinned release in"
-  echo "  \`sim/pdk.json\`. Loaded libraries and the OSDI binary by digest:"
-  echo "  - \`cornerHBT.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerHBT.lib")\`"
-  echo "  - \`cornerMOShv.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerMOShv.lib")\`"
-  echo "  - \`cornerCAP.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib")\`"
-  echo "  - \`sg13g2_svaricaphv_mod.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_svaricaphv_mod.lib")\`"
-  echo "  - \`sg13g2_hbt_mod.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_hbt_mod.lib")\`"
-  echo "  - \`mosvar.osdi\` (this run's build) sha256 \`$(sha256_of "${OSC_OSDI_MOSVAR}")\`"
+  osc_provenance_md
   echo "- **Netlist under test**: \`design/vco.spice\`, verified current with"
   echo "  \`design/vco.sch\` by \`design/netlist.sh --check\` before this run"
   echo "  generated anything. Device section sha256"
