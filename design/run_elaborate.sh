@@ -88,9 +88,11 @@ NGSPICE_VERSION="$(detect_ngspice_version)"
 
 # ngspice must run from a directory holding a .spiceinit, so a cold-start run
 # does not depend on whether the PDK's install.py ever symlinked one into $HOME.
-SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/sg13g2-vco-elab.XXXXXX")"
-trap 'rm -rf "${SCRATCH}"' EXIT
-cp "${DESIGN_DIR}/.spiceinit" "${SCRATCH}/.spiceinit"
+# sim/lib.sh's make_scratch_workdir provides exactly that scratch setup (mktemp
+# dir, EXIT-trap cleanup, .spiceinit copy -- contract at sim/lib.sh:70-79).
+# shellcheck disable=SC2034  # read by lib.sh's make_scratch_workdir
+EXPERIMENT_DIR="${DESIGN_DIR}"
+make_scratch_workdir "sg13g2-vco-elab"
 
 # ------------------------------------------------------ token substitution
 # The committed netlist carries @@TOKEN@@ placeholders instead of absolute
@@ -99,19 +101,19 @@ cp "${DESIGN_DIR}/.spiceinit" "${SCRATCH}/.spiceinit"
 sed -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
     -e "s|@@IND_MODEL@@|${IND_MODEL}|g" \
     -e "s|@@OSDI_MOSVAR@@|${OSDI_MOSVAR}|g" \
-    "${DESIGN_DIR}/vco.spice" > "${SCRATCH}/vco_elab.spice"
+    "${DESIGN_DIR}/vco.spice" > "${WORKDIR}/vco_elab.spice"
 
-if grep -vE '^[[:space:]]*\*' "${SCRATCH}/vco_elab.spice" | grep -q '@@'; then
+if grep -vE '^[[:space:]]*\*' "${WORKDIR}/vco_elab.spice" | grep -q '@@'; then
   echo "error: unsubstituted placeholder token left in the elaborated netlist:" >&2
-  grep -nE '@@' "${SCRATCH}/vco_elab.spice" | grep -vE ':[[:space:]]*\*' >&2
+  grep -nE '@@' "${WORKDIR}/vco_elab.spice" | grep -vE ':[[:space:]]*\*' >&2
   exit 1
 fi
 
 # -------------------------------------------------------------- elaborate
 echo "sg13g2: elaborating design/vco.spice under ${NGSPICE_VERSION} ..."
-LOG="${SCRATCH}/ngspice.log"
+LOG="${WORKDIR}/ngspice.log"
 set +e
-( cd "${SCRATCH}" && ngspice -b vco_elab.spice ) >"${LOG}" 2>&1
+( cd "${WORKDIR}" && ngspice -b vco_elab.spice ) >"${LOG}" 2>&1
 NG_RC=$?
 set -e
 
@@ -143,31 +145,14 @@ awk '/^v\(nbias\)|^v\(te\)|^v\(tail\)|^v\(outp\)|^v\(outn\)|^i\(vsup\)/ { print 
 # measured is the settled oscillation. Amplitude is peak-to-peak over the same
 # window. This is a period count, not a spectral estimate: it states no phase
 # noise and no line width, and it is not a substitute for the row-4 method.
-read_osc() {  # <datafile> -> "f_Hz vpp_V cycles mean"
-  awk '
-    NF >= 2 { t = $1 + 0; v = $2 + 0
-              if (t >= 10e-9) { n++; tt[n] = t; vv[n] = v; s += v } }
-    END {
-      if (n < 3) { print "0 0 0 0"; exit }
-      av = s / n
-      lo = vv[1]; hi = vv[1]
-      for (i = 1; i <= n; i++) { if (vv[i] < lo) lo = vv[i]; if (vv[i] > hi) hi = vv[i] }
-      # Crossings are counted about the in-window MEAN, not about zero: the
-      # common-mode and tail traces carry a DC level the fundamental rides on,
-      # and counting about zero there would count nothing at all.
-      nx = 0
-      for (i = 1; i < n; i++) {
-        a = vv[i] - av; b = vv[i+1] - av
-        if (a < 0 && b >= 0) {
-          nx++
-          x[nx] = tt[i] + (tt[i+1] - tt[i]) * (-a) / (b - a)
-        }
-      }
-      if (nx < 3) { printf "0 %.6f 0 %.6e\n", hi - lo, av; exit }
-      T = (x[nx] - x[1]) / (nx - 1)
-      printf "%.6e %.6f %d %.6e\n", 1.0 / T, hi - lo, nx - 1, av
-    }' "$1"
-}
+# The extractor itself is sim/lib.sh's method-checked osc_metrics() (the same
+# estimator sim/oscillator-core/run_method_check.sh validates against synthetic
+# waveforms with closed-form frequency, amplitude and time average), called
+# with the same 10 ns window start read_osc used to hardcode. Note the mean it
+# reports -- the one P_core below leans on -- is the TRAPEZOIDAL time average
+# over the window, not the arithmetic mean of the samples: ngspice's timestep
+# is adaptive, so a sample mean silently weights the densely-stepped parts of a
+# cycle more heavily (sim/lib.sh:167-170).
 
 echo
 echo "---------------------------------------------------------------"
@@ -181,16 +166,16 @@ F_AT_0=""
 F_AT_33=""
 OSC_FAIL=0
 for vv in 0 1.65 3.3; do
-  DAT="${SCRATCH}/vco_tran_${vv}"
+  DAT="${WORKDIR}/vco_tran_${vv}"
   if [[ ! -f "${DAT}" ]]; then
     printf "  %-10s %s\n" "${vv}" "NO DATA -- the transient did not run"
     OSC_FAIL=1
     continue
   fi
-  read -r f vpp cyc _mean <<<"$(read_osc "${DAT}")"
+  read -r f vpp cyc _mean _txf _txl _dtmax _ns <<<"$(osc_metrics "${DAT}" 10e-9)"
   PMW="n/a"
-  if [[ -f "${SCRATCH}/vco_isup_${vv}" ]]; then
-    read -r _fi _vppi _cyci imean <<<"$(read_osc "${SCRATCH}/vco_isup_${vv}")"
+  if [[ -f "${WORKDIR}/vco_isup_${vv}" ]]; then
+    read -r _fi _vppi _cyci imean _txf _txl _dtmax _ns <<<"$(osc_metrics "${WORKDIR}/vco_isup_${vv}" 10e-9)"
     PMW="$(awk -v i="${imean}" 'BEGIN{ printf "%.4f", i*3.3*1e3 }')"
   fi
   printf "  %-10s %-13.5f %-13.4f %-9s %s\n" \
@@ -215,10 +200,10 @@ echo "---------------------------------------------------------------"
 printf "  %-10s %-13s %-13s %-13s %s\n" \
        "Vctrl (V)" "Vpp_cm/Vpp_d" "f_cm/f_diff" "f_tail/f_diff" "V(TAIL) DC (V)"
 for vv in 0 1.65 3.3; do
-  [[ -f "${SCRATCH}/vco_tran_${vv}" ]] || continue
-  read -r fd vppd _c _m <<<"$(read_osc "${SCRATCH}/vco_tran_${vv}")"
-  read -r fc vppc _c2 _m2 <<<"$(read_osc "${SCRATCH}/vco_cm_${vv}")"
-  read -r ft _vppt _c3 _m3 <<<"$(read_osc "${SCRATCH}/vco_tail_${vv}")"
+  [[ -f "${WORKDIR}/vco_tran_${vv}" ]] || continue
+  read -r fd vppd _c _m _txf _txl _dtmax _ns <<<"$(osc_metrics "${WORKDIR}/vco_tran_${vv}" 10e-9)"
+  read -r fc vppc _c2 _m2 _txf _txl _dtmax _ns <<<"$(osc_metrics "${WORKDIR}/vco_cm_${vv}" 10e-9)"
+  read -r ft _vppt _c3 _m3 _txf _txl _dtmax _ns <<<"$(osc_metrics "${WORKDIR}/vco_tail_${vv}" 10e-9)"
   TAILDC="$(awk '/^v\(tail\)/ { print $3 }' "${LOG}")"
   awk -v vv="${vv}" -v fd="${fd}" -v vppd="${vppd}" -v fc="${fc}" \
       -v vppc="${vppc}" -v ft="${ft}" -v tdc="${TAILDC}" 'BEGIN {
