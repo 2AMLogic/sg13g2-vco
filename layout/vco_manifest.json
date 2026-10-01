@@ -1,0 +1,2127 @@
+{
+  "acceptance_checks": [
+    {
+      "expected": 32,
+      "measured": 32,
+      "pass": true,
+      "pcell": "SG13_dev/SVaricap"
+    },
+    {
+      "expected": 1,
+      "measured": 1,
+      "pass": true,
+      "pcell": "SG13_dev/cmim"
+    },
+    {
+      "expected": 2,
+      "measured": 2,
+      "pass": true,
+      "pcell": "SG13_dev/inductor2"
+    },
+    {
+      "expected": 4,
+      "measured": 4,
+      "pass": true,
+      "pcell": "SG13_dev/npn13G2V"
+    },
+    {
+      "expected": 3,
+      "measured": 3,
+      "pass": true,
+      "pcell": "SG13_dev/rppd"
+    },
+    {
+      "check": "all 9 nets labelled in the stream",
+      "expected": [
+        "0",
+        "NBIAS",
+        "OUTN",
+        "OUTP",
+        "RE",
+        "TAIL",
+        "TE",
+        "VCTRL",
+        "VDD"
+      ],
+      "measured": [
+        "  width=8.2\n  space=3.7\n  diameter=141.97\n  turns=4",
+        "0",
+        "Ae=1*1.00*0.12",
+        "Ae=1*2.00*0.12",
+        "B",
+        "C",
+        "E",
+        "LA",
+        "LB",
+        "NBIAS",
+        "OUTN",
+        "OUTP",
+        "RE",
+        "SVaricap",
+        "TAIL",
+        "TE",
+        "VCTRL",
+        "VDD",
+        "inductor2",
+        "npn13G2V",
+        "rppd",
+        "rppd r=2000.099",
+        "rppd r=20499.901",
+        "rppd r=3999.980",
+        "sub!"
+      ],
+      "pass": true
+    },
+    {
+      "check": "no EM-only layers (201/0, 202/0, 210/0)",
+      "expected": [],
+      "measured": [],
+      "pass": true
+    },
+    {
+      "check": "all 9 nets of design/vco.spice extract as 9 distinct, singly-connected nets once the two spirals (DC shorts) are removed",
+      "expected": [
+        "0",
+        "NBIAS",
+        "OUTN",
+        "OUTP",
+        "RE",
+        "TAIL",
+        "TE",
+        "VCTRL",
+        "VDD"
+      ],
+      "measured": [
+        "0",
+        "NBIAS",
+        "OUTN",
+        "OUTP",
+        "RE",
+        "TAIL",
+        "TE",
+        "VCTRL",
+        "VDD"
+      ],
+      "pass": true
+    },
+    {
+      "check": "no dead routing metal in vco (every shape joins a net)",
+      "expected": 0,
+      "measured": 0,
+      "pass": true
+    },
+    {
+      "check": "no dead routing metal in vco_nospiral (every shape joins a net)",
+      "expected": 0,
+      "measured": 0,
+      "pass": true
+    }
+  ],
+  "artifact": {
+    "area_mm2": 0.241835,
+    "bbox_um": {
+      "x0": -305.128,
+      "x1": 305.128,
+      "y0": -106.03,
+      "y1": 290.255
+    },
+    "dbu_um": 0.001,
+    "digest": "sha256:36819f8ef3f97bc0a6a6942fa315746c0ebcc2d4a2fb6f1326544e234d8fbcf1",
+    "gds": "layout/vco.gds",
+    "top_cell": "vco"
+  },
+  "composition": {
+    "core": {
+      "bbox_um": {
+        "x0": -14.0,
+        "x1": 95.7,
+        "y0": -100.61,
+        "y1": -20.342
+      },
+      "cell_name": "vco_core",
+      "drc_hints_notes": [],
+      "generator": "gen-compose",
+      "nets": [
+        {
+          "net": "TE",
+          "route_length_um": 19.35199999999999,
+          "routed": true,
+          "status": "routed"
+        },
+        {
+          "net": "RE",
+          "route_length_um": 16.11399999999999,
+          "routed": true,
+          "status": "routed"
+        },
+        {
+          "net": "NBIAS",
+          "route_length_um": 143.90500000000003,
+          "routed": true,
+          "status": "routed"
+        }
+      ],
+      "unrouted_nets": [],
+      "warnings": []
+    },
+    "top": {
+      "bbox_um": {
+        "x0": -305.12800000000004,
+        "x1": 305.12800000000004,
+        "y0": -106.03,
+        "y1": 290.255
+      },
+      "cell_name": "vco",
+      "drc_hints_notes": [],
+      "generator": "gen-compose",
+      "nets": [],
+      "unrouted_nets": [],
+      "warnings": []
+    },
+    "varbank_n": {
+      "bbox_um": {
+        "x0": 33.6,
+        "x1": 68.0,
+        "y0": -52.62,
+        "y1": -46.61
+      },
+      "cell_name": "vco_varbank_n",
+      "drc_hints_notes": [],
+      "generator": "gen-compose",
+      "nets": [],
+      "unrouted_nets": [],
+      "warnings": []
+    },
+    "varbank_p": {
+      "bbox_um": {
+        "x0": -68.0,
+        "x1": -33.599999999999994,
+        "y0": -52.62,
+        "y1": -46.61
+      },
+      "cell_name": "vco_varbank_p",
+      "drc_hints_notes": [],
+      "generator": "gen-compose",
+      "nets": [],
+      "unrouted_nets": [],
+      "warnings": []
+    },
+    "wiring": {
+      "bbox_um": {
+        "x0": -186.315,
+        "x1": 186.315,
+        "y0": -105.85000000000001,
+        "y1": 1.0
+      },
+      "cell_name": "vco_wiring",
+      "generator": "draw",
+      "label_count": 9,
+      "shape_count": 76,
+      "warnings": [
+        "written verbatim by `klt draw`: no PDK awareness and no rule checking were applied; this cell is not guaranteed to be design-legal"
+      ]
+    }
+  },
+  "connectivity": {
+    "vco": {
+      "dead_metal_clusters": 0,
+      "deck": "sg13g2",
+      "device_counts": {
+        "cap_cmim": 1
+      },
+      "net_count": 7,
+      "netlist_sha256": "4bf00db3773fb96a0d68b831f4500fd82785b65e56ec522843a7feb058fe0000",
+      "nets": [
+        "0",
+        "NBIAS",
+        "OUTN|OUTP|VDD",
+        "RE",
+        "TAIL",
+        "TE",
+        "VCTRL"
+      ],
+      "variant": "as composed"
+    },
+    "vco_nospiral": {
+      "dead_metal_clusters": 0,
+      "deck": "sg13g2",
+      "device_counts": {
+        "cap_cmim": 1
+      },
+      "net_count": 9,
+      "netlist_sha256": "58b4c54506271093f229d6937334d03c7836668a987e155b54b6bfe5694e848e",
+      "nets": [
+        "0",
+        "NBIAS",
+        "OUTN",
+        "OUTP",
+        "RE",
+        "TAIL",
+        "TE",
+        "VCTRL",
+        "VDD"
+      ],
+      "variant": "with the two spiral instances deleted"
+    }
+  },
+  "device_map": [
+    {
+      "block": "ind",
+      "card": "inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4",
+      "nets": {
+        "la": "VDD",
+        "lb": "OUTP",
+        "sub": "0"
+      },
+      "pcell": "SG13_dev/inductor2",
+      "schematic": "XL1"
+    },
+    {
+      "block": "ind",
+      "card": "inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4",
+      "nets": {
+        "la": "VDD",
+        "lb": "OUTN",
+        "sub": "0"
+      },
+      "pcell": "SG13_dev/inductor2",
+      "schematic": "XL2"
+    },
+    {
+      "block": "cmim",
+      "card": "cap_cmim w=3.65e-6 l=3.65e-6",
+      "nets": {
+        "MINUS": "OUTN",
+        "PLUS": "OUTP"
+      },
+      "pcell": "SG13_dev/cmim",
+      "schematic": "XC1"
+    },
+    {
+      "block": "svaricap_p",
+      "card": "sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "nets": {
+        "G1": "VCTRL",
+        "G2": "VCTRL",
+        "W": "OUTP (n-well island)",
+        "bn": "0 (p-substrate via guard ring; netlist says OUTP -- deliberate deviation, see PROVENANCE.md section 6)"
+      },
+      "pcell": "SG13_dev/SVaricap",
+      "schematic": "XCVP1..16"
+    },
+    {
+      "block": "svaricap_n",
+      "card": "sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "nets": {
+        "G1": "VCTRL",
+        "G2": "VCTRL",
+        "W": "OUTN (n-well island)",
+        "bn": "0 (p-substrate via guard ring; netlist says OUTN -- deliberate deviation, see PROVENANCE.md section 6)"
+      },
+      "pcell": "SG13_dev/SVaricap",
+      "schematic": "XCVN1..16"
+    },
+    {
+      "block": "npn_le1",
+      "card": "npn13G2v Nx=1 El=1.0",
+      "nets": {
+        "B": "OUTN",
+        "C": "OUTP",
+        "E": "TAIL",
+        "sub": "0"
+      },
+      "pcell": "SG13_dev/npn13G2V",
+      "schematic": "XQ1"
+    },
+    {
+      "block": "npn_le1",
+      "card": "npn13G2v Nx=1 El=1.0",
+      "nets": {
+        "B": "OUTP",
+        "C": "OUTN",
+        "E": "TAIL",
+        "sub": "0"
+      },
+      "pcell": "SG13_dev/npn13G2V",
+      "schematic": "XQ2"
+    },
+    {
+      "block": "npn_le2",
+      "card": "npn13G2v Nx=1 El=2.0",
+      "nets": {
+        "B": "NBIAS",
+        "C": "TAIL",
+        "E": "TE",
+        "sub": "0"
+      },
+      "pcell": "SG13_dev/npn13G2V",
+      "schematic": "XQ3"
+    },
+    {
+      "block": "npn_le1",
+      "card": "npn13G2v Nx=1 El=1.0",
+      "nets": {
+        "B": "NBIAS",
+        "C": "NBIAS",
+        "E": "RE",
+        "sub": "0"
+      },
+      "pcell": "SG13_dev/npn13G2V",
+      "schematic": "XQ4"
+    },
+    {
+      "block": "rppd_rte",
+      "card": "2k",
+      "nets": {
+        "P_HI": "TE",
+        "P_LO": "0"
+      },
+      "pcell": "SG13_dev/rppd (res_rppd)",
+      "schematic": "RTE"
+    },
+    {
+      "block": "rppd_rref",
+      "card": "20.5k",
+      "nets": {
+        "P_HI": "VDD",
+        "P_LO": "NBIAS"
+      },
+      "pcell": "SG13_dev/rppd (res_rppd)",
+      "schematic": "RREF"
+    },
+    {
+      "block": "rppd_rre",
+      "card": "4k",
+      "nets": {
+        "P_HI": "RE",
+        "P_LO": "0"
+      },
+      "pcell": "SG13_dev/rppd (res_rppd)",
+      "schematic": "RRE"
+    },
+    {
+      "block": null,
+      "card": "dc 3.3 (testbench source)",
+      "nets": {},
+      "pcell": "-- no layout counterpart --",
+      "schematic": "VSUP"
+    },
+    {
+      "block": null,
+      "card": "dc 1.65 (testbench source)",
+      "nets": {},
+      "pcell": "-- no layout counterpart --",
+      "schematic": "VCT"
+    }
+  ],
+  "devices": {
+    "cmim": {
+      "bbox_um": {
+        "x0": -0.6,
+        "x1": 4.25,
+        "y0": -0.6,
+        "y1": 4.25
+      },
+      "cell_name": "vco_cmim",
+      "gds_digest": "sha256:eeaae0c3f91d20dd158e4424666f732697b31d0f86fd523106bc57f67eebde9c",
+      "params": {
+        "Calculate": "w&l",
+        "l": "3.65u",
+        "w": "3.65u"
+      },
+      "pcell": "SG13_dev/cmim",
+      "terminals": {
+        "MINUS": {
+          "layer": {
+            "datatype": 0,
+            "layer": 67
+          },
+          "x_um": 1.825,
+          "y_um": 1.825
+        },
+        "PLUS": {
+          "layer": {
+            "datatype": 0,
+            "layer": 126
+          },
+          "x_um": 1.825,
+          "y_um": 1.825
+        }
+      }
+    },
+    "ind": {
+      "bbox_um": {
+        "x0": -145.12800000000001,
+        "x1": 145.12800000000001,
+        "y0": -1.0,
+        "y1": 290.255
+      },
+      "cell_name": "vco_ind",
+      "gds_digest": "sha256:ae83e866d18b7a5b2f0911a54d06b580e488fa2a23c9e56f56dbbb122db47e14",
+      "params": {
+        "d": "141.975u",
+        "nr_r": 4,
+        "s": "3.74u",
+        "w": "8.22u"
+      },
+      "pcell": "SG13_dev/inductor2",
+      "terminals": {
+        "LA": {
+          "layer": {
+            "datatype": 0,
+            "layer": 126
+          },
+          "x_um": -25.315,
+          "y_um": 0.0
+        },
+        "LB": {
+          "layer": {
+            "datatype": 0,
+            "layer": 126
+          },
+          "x_um": 25.315,
+          "y_um": 0.0
+        }
+      }
+    },
+    "npn_le1": {
+      "bbox_um": {
+        "x0": 0.0,
+        "x1": 7.74,
+        "y0": 0.0,
+        "y1": 7.2
+      },
+      "cell_name": "vco_npn_le1",
+      "gds_digest": "sha256:feef02450be01b064e18640a810732064303fb2b43636cca72ab54c0c71a00ba",
+      "params": {
+        "Nx": 1,
+        "le": "1.0u"
+      },
+      "pcell": "SG13_dev/npn13G2V",
+      "terminals": {
+        "B": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 3.87,
+          "y_um": 1.775
+        },
+        "C": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 3.87,
+          "y_um": 5.425
+        },
+        "E": {
+          "layer": {
+            "datatype": 0,
+            "layer": 10
+          },
+          "x_um": 3.87,
+          "y_um": 3.6
+        }
+      }
+    },
+    "npn_le2": {
+      "bbox_um": {
+        "x0": 0.0,
+        "x1": 7.74,
+        "y0": 0.0,
+        "y1": 8.2
+      },
+      "cell_name": "vco_npn_le2",
+      "gds_digest": "sha256:794185e746758072cf7644a8e659ed0c9705e1a69de688c00a718c23117bd3b1",
+      "params": {
+        "Nx": 1,
+        "le": "2.0u"
+      },
+      "pcell": "SG13_dev/npn13G2V",
+      "terminals": {
+        "B": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 3.87,
+          "y_um": 1.775
+        },
+        "C": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 3.87,
+          "y_um": 6.425
+        },
+        "E": {
+          "layer": {
+            "datatype": 0,
+            "layer": 10
+          },
+          "x_um": 3.87,
+          "y_um": 4.1
+        }
+      }
+    },
+    "ptap_h": {
+      "bbox_um": {
+        "x0": -0.03,
+        "x1": 185.03,
+        "y0": -0.03,
+        "y1": 2.0300000000000002
+      },
+      "cell_name": "vco_ptap_h",
+      "gds_digest": "sha256:c52e5d54c046676d236b6c76c2924f781d1c2db710077f0c5f2fd521ca534ef4",
+      "params": {
+        "l": "2.0u",
+        "w": "185.0u"
+      },
+      "pcell": "SG13_dev/ptap1",
+      "terminals": {
+        "TAP": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 92.5,
+          "y_um": 1.0
+        }
+      }
+    },
+    "ptap_v": {
+      "bbox_um": {
+        "x0": -0.03,
+        "x1": 2.0300000000000002,
+        "y0": -0.03,
+        "y1": 86.03
+      },
+      "cell_name": "vco_ptap_v",
+      "gds_digest": "sha256:7a0f57bf3f97e8eb81a1421120e6ccbb8395c9b94b0740936c54f52da4e97129",
+      "params": {
+        "l": "86.0u",
+        "w": "2.0u"
+      },
+      "pcell": "SG13_dev/ptap1",
+      "terminals": {
+        "TAP": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 1.0,
+          "y_um": 43.0
+        }
+      }
+    },
+    "rppd_rre": {
+      "bbox_um": {
+        "x0": -0.2,
+        "x1": 1.2,
+        "y0": -0.61,
+        "y1": 15.816
+      },
+      "cell_name": "vco_rppd_rre",
+      "gds_digest": "sha256:d8706ae839ac3e1dee49ffcafd043733e804e784291ce05e772a54cd0ee6c7ac",
+      "params": {
+        "Calculate": "l",
+        "l": "15.206u",
+        "w": "1.0u"
+      },
+      "pcell": "SG13_dev/rppd",
+      "pcell_annotations": [
+        "rppd r=3999.980"
+      ],
+      "terminals": {
+        "P_HI": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.5,
+          "y_um": 15.486
+        },
+        "P_LO": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.5,
+          "y_um": -0.28
+        }
+      }
+    },
+    "rppd_rref": {
+      "bbox_um": {
+        "x0": -0.2,
+        "x1": 1.2,
+        "y0": -0.61,
+        "y1": 79.658
+      },
+      "cell_name": "vco_rppd_rref",
+      "gds_digest": "sha256:4f033d7bd51db8f998bc43d32da0d45f2932be4a3ac4943eb7e1e1dcda38bdbd",
+      "params": {
+        "Calculate": "l",
+        "l": "79.048u",
+        "w": "1.0u"
+      },
+      "pcell": "SG13_dev/rppd",
+      "pcell_annotations": [
+        "rppd r=20499.901"
+      ],
+      "terminals": {
+        "P_HI": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.5,
+          "y_um": 79.328
+        },
+        "P_LO": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.5,
+          "y_um": -0.28
+        }
+      }
+    },
+    "rppd_rte": {
+      "bbox_um": {
+        "x0": -0.2,
+        "x1": 1.2,
+        "y0": -0.61,
+        "y1": 8.078
+      },
+      "cell_name": "vco_rppd_rte",
+      "gds_digest": "sha256:139134950c0d2af2bd489d742fdb06f6e135594cba038c97e7c2416700ced24e",
+      "params": {
+        "Calculate": "l",
+        "l": "7.468u",
+        "w": "1.0u"
+      },
+      "pcell": "SG13_dev/rppd",
+      "pcell_annotations": [
+        "rppd r=2000.099"
+      ],
+      "terminals": {
+        "P_HI": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.5,
+          "y_um": 7.748
+        },
+        "P_LO": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.5,
+          "y_um": -0.28
+        }
+      }
+    },
+    "svaricap_n": {
+      "bbox_um": {
+        "x0": 0.0,
+        "x1": 2.15,
+        "y0": -0.62,
+        "y1": 5.39
+      },
+      "cell_name": "vco_svaricap_n",
+      "gds_digest": "sha256:ace38e619f1a4c6db76ee55965f8f095afca4474ab02d7e876ae5368ab088584",
+      "params": {
+        "Nx": 1,
+        "bn": "OUTN",
+        "l": "0.3u",
+        "w": "3.74u"
+      },
+      "pcell": "SG13_dev/SVaricap",
+      "terminals": {
+        "G1": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 1.155,
+          "y_um": 0.14
+        },
+        "G2": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 1.155,
+          "y_um": 4.63
+        },
+        "W": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.39,
+          "y_um": 2.385
+        }
+      }
+    },
+    "svaricap_p": {
+      "bbox_um": {
+        "x0": 0.0,
+        "x1": 2.15,
+        "y0": -0.62,
+        "y1": 5.39
+      },
+      "cell_name": "vco_svaricap_p",
+      "gds_digest": "sha256:a54c280e149f7c148f2eaedc2f0eb87e4f22f9bc9a8b34f273c78e76eebcc440",
+      "params": {
+        "Nx": 1,
+        "bn": "OUTP",
+        "l": "0.3u",
+        "w": "3.74u"
+      },
+      "pcell": "SG13_dev/SVaricap",
+      "terminals": {
+        "G1": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 1.155,
+          "y_um": 0.14
+        },
+        "G2": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 1.155,
+          "y_um": 4.63
+        },
+        "W": {
+          "layer": {
+            "datatype": 0,
+            "layer": 8
+          },
+          "x_um": 0.39,
+          "y_um": 2.385
+        }
+      }
+    },
+    "vs_m1_m2": {
+      "bbox_um": {
+        "x0": -0.35000000000000003,
+        "x1": 0.35000000000000003,
+        "y0": -0.31,
+        "y1": 0.31
+      },
+      "cell_name": "vco_vs_m1_m2",
+      "gds_digest": "sha256:f2cef58910fc7762e61890d0eb6e6edd0e755eb99696284b9c3f2db167138277",
+      "pads": {
+        "Metal1": [
+          -0.35,
+          -0.31,
+          0.35,
+          0.31
+        ],
+        "Metal2": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ]
+      },
+      "params": {
+        "b_layer": "Metal1",
+        "t_layer": "Metal2",
+        "vn_columns": 2,
+        "vn_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    },
+    "vs_m1_m2_slim": {
+      "bbox_um": {
+        "x0": -0.105,
+        "x1": 0.105,
+        "y0": -0.35000000000000003,
+        "y1": 0.35000000000000003
+      },
+      "cell_name": "vco_vs_m1_m2_slim",
+      "gds_digest": "sha256:e58cd1bdcfd65aed93d135e6c00b6f782d95d5dc5522a7f51c32f3683a3dbcca",
+      "pads": {
+        "Metal1": [
+          -0.105,
+          -0.35,
+          0.105,
+          0.35
+        ],
+        "Metal2": [
+          -0.1,
+          -0.35,
+          0.1,
+          0.35
+        ]
+      },
+      "params": {
+        "b_layer": "Metal1",
+        "t_layer": "Metal2",
+        "vn_columns": 1,
+        "vn_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    },
+    "vs_m1_m3": {
+      "bbox_um": {
+        "x0": -0.35000000000000003,
+        "x1": 0.35000000000000003,
+        "y0": -0.31,
+        "y1": 0.31
+      },
+      "cell_name": "vco_vs_m1_m3",
+      "gds_digest": "sha256:46d7ba83c62ed3c19f29aaac3e9d09669d61f3dbde5bad5da5486647e23504e3",
+      "pads": {
+        "Metal1": [
+          -0.35,
+          -0.31,
+          0.35,
+          0.31
+        ],
+        "Metal2": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal3": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ]
+      },
+      "params": {
+        "b_layer": "Metal1",
+        "t_layer": "Metal3",
+        "vn_columns": 2,
+        "vn_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    },
+    "vs_m1_tm1": {
+      "bbox_um": {
+        "x0": -1.05,
+        "x1": 1.05,
+        "y0": -1.05,
+        "y1": 1.05
+      },
+      "cell_name": "vco_vs_m1_tm1",
+      "gds_digest": "sha256:fc20634cd1fc87139e20d05a8663411d1372d0e92c96dbd8174b4f8f42a20902",
+      "pads": {
+        "Metal1": [
+          -0.35,
+          -0.31,
+          0.35,
+          0.31
+        ],
+        "Metal2": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal3": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal4": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal5": [
+          -0.73,
+          -0.73,
+          0.73,
+          0.73
+        ],
+        "TopMetal1": [
+          -1.05,
+          -1.05,
+          1.05,
+          1.05
+        ]
+      },
+      "params": {
+        "b_layer": "Metal1",
+        "t_layer": "TopMetal1",
+        "vn_columns": 2,
+        "vn_rows": 2,
+        "vt1_columns": 2,
+        "vt1_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    },
+    "vs_m1_tm2": {
+      "bbox_um": {
+        "x0": -1.93,
+        "x1": 1.93,
+        "y0": -1.93,
+        "y1": 1.93
+      },
+      "cell_name": "vco_vs_m1_tm2",
+      "gds_digest": "sha256:7317462b27a9a0eca9aad31bda1e17b7446a652bd43d4930d0849539dea5062d",
+      "pads": {
+        "Metal1": [
+          -0.35,
+          -0.31,
+          0.35,
+          0.31
+        ],
+        "Metal2": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal3": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal4": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal5": [
+          -0.73,
+          -0.73,
+          0.73,
+          0.73
+        ],
+        "TopMetal1": [
+          -1.93,
+          -1.93,
+          1.93,
+          1.93
+        ],
+        "TopMetal2": [
+          -1.93,
+          -1.93,
+          1.93,
+          1.93
+        ]
+      },
+      "params": {
+        "b_layer": "Metal1",
+        "t_layer": "TopMetal2",
+        "vn_columns": 2,
+        "vn_rows": 2,
+        "vt1_columns": 2,
+        "vt1_rows": 2,
+        "vt2_columns": 2,
+        "vt2_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    },
+    "vs_m2_m3": {
+      "bbox_um": {
+        "x0": -0.35000000000000003,
+        "x1": 0.35000000000000003,
+        "y0": -0.305,
+        "y1": 0.305
+      },
+      "cell_name": "vco_vs_m2_m3",
+      "gds_digest": "sha256:0dfd57959d9cedf575851b6e67bc0768d07468a1b00a3ad4275f31072cd8a8cd",
+      "pads": {
+        "Metal2": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal3": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ]
+      },
+      "params": {
+        "b_layer": "Metal2",
+        "t_layer": "Metal3",
+        "vn_columns": 2,
+        "vn_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    },
+    "vs_tm1_tm2": {
+      "bbox_um": {
+        "x0": -1.93,
+        "x1": 1.93,
+        "y0": -1.93,
+        "y1": 1.93
+      },
+      "cell_name": "vco_vs_tm1_tm2",
+      "gds_digest": "sha256:17ffec6617262f675c9d85f0e6d05daea9567828c7733418c7f902df3360491d",
+      "pads": {
+        "TopMetal1": [
+          -1.93,
+          -1.93,
+          1.93,
+          1.93
+        ],
+        "TopMetal2": [
+          -1.93,
+          -1.93,
+          1.93,
+          1.93
+        ]
+      },
+      "params": {
+        "b_layer": "TopMetal1",
+        "t_layer": "TopMetal2",
+        "vt2_columns": 2,
+        "vt2_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    }
+  },
+  "measured": {
+    "labels": [
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "  width=8.2\n  space=3.7\n  diameter=141.97\n  turns=4",
+        "x_um": -14.872,
+        "y_um": 213.858
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "  width=8.2\n  space=3.7\n  diameter=141.97\n  turns=4",
+        "x_um": 14.872,
+        "y_um": 213.858
+      },
+      {
+        "datatype": 25,
+        "layer": 8,
+        "text": "0",
+        "x_um": 12.5,
+        "y_um": -105.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "Ae=1*1.00*0.12",
+        "x_um": 27.63,
+        "y_um": -75.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "Ae=1*1.00*0.12",
+        "x_um": 12.5,
+        "y_um": -71.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "Ae=1*1.00*0.12",
+        "x_um": -12.5,
+        "y_um": -71.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "Ae=1*2.00*0.12",
+        "x_um": -2.37,
+        "y_um": -85.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "B",
+        "x_um": 30.0,
+        "y_um": -74.225
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "B",
+        "x_um": 0.0,
+        "y_um": -84.225
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "B",
+        "x_um": 10.13,
+        "y_um": -70.225
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "B",
+        "x_um": -10.13,
+        "y_um": -70.225
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "C",
+        "x_um": 30.0,
+        "y_um": -70.575
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "C",
+        "x_um": 0.0,
+        "y_um": -79.575
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "C",
+        "x_um": 10.13,
+        "y_um": -66.575
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "C",
+        "x_um": -10.13,
+        "y_um": -66.575
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "E",
+        "x_um": 30.0,
+        "y_um": -72.4
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "E",
+        "x_um": 0.0,
+        "y_um": -81.9
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "E",
+        "x_um": 10.13,
+        "y_um": -68.4
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "E",
+        "x_um": -10.13,
+        "y_um": -68.4
+      },
+      {
+        "datatype": 25,
+        "layer": 27,
+        "text": "LA",
+        "x_um": -134.685,
+        "y_um": 0.0
+      },
+      {
+        "datatype": 25,
+        "layer": 27,
+        "text": "LA",
+        "x_um": 134.685,
+        "y_um": 0.0
+      },
+      {
+        "datatype": 25,
+        "layer": 27,
+        "text": "LB",
+        "x_um": -185.315,
+        "y_um": 0.0
+      },
+      {
+        "datatype": 25,
+        "layer": 27,
+        "text": "LB",
+        "x_um": 185.315,
+        "y_um": 0.0
+      },
+      {
+        "datatype": 25,
+        "layer": 8,
+        "text": "NBIAS",
+        "x_um": 20.0,
+        "y_um": -88.0
+      },
+      {
+        "datatype": 25,
+        "layer": 8,
+        "text": "NBIAS",
+        "x_um": 30.0,
+        "y_um": -74.225
+      },
+      {
+        "datatype": 25,
+        "layer": 126,
+        "text": "OUTN",
+        "x_um": 120.0,
+        "y_um": -32.0
+      },
+      {
+        "datatype": 25,
+        "layer": 126,
+        "text": "OUTP",
+        "x_um": -120.0,
+        "y_um": -24.0
+      },
+      {
+        "datatype": 25,
+        "layer": 10,
+        "text": "RE",
+        "x_um": 35.943,
+        "y_um": -74.514
+      },
+      {
+        "datatype": 25,
+        "layer": 10,
+        "text": "RE",
+        "x_um": 30.0,
+        "y_um": -72.4
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -67.76,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -65.61,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -63.46,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -61.31,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -59.16,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -57.01,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -54.86,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -52.71,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -50.56,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -48.41,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -46.26,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -44.11,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -41.96,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -39.81,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -37.66,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": -35.51,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 33.84,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 35.99,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 38.14,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 40.29,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 42.44,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 44.59,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 46.74,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 48.89,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 51.04,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 53.19,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 55.34,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 57.49,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 59.64,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 61.79,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 63.94,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "SVaricap",
+        "x_um": 66.09,
+        "y_um": -51.41
+      },
+      {
+        "datatype": 25,
+        "layer": 8,
+        "text": "TAIL",
+        "x_um": 0.0,
+        "y_um": -79.575
+      },
+      {
+        "datatype": 25,
+        "layer": 10,
+        "text": "TE",
+        "x_um": 5.5,
+        "y_um": -86.076
+      },
+      {
+        "datatype": 25,
+        "layer": 8,
+        "text": "TE",
+        "x_um": 0.0,
+        "y_um": -90.252
+      },
+      {
+        "datatype": 25,
+        "layer": 30,
+        "text": "VCTRL",
+        "x_um": 0.0,
+        "y_um": -57.0
+      },
+      {
+        "datatype": 25,
+        "layer": 134,
+        "text": "VDD",
+        "x_um": 0.0,
+        "y_um": -7.5
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "inductor2",
+        "x_um": -160.0,
+        "y_um": 151.326
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "inductor2",
+        "x_um": 160.0,
+        "y_um": 151.326
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "npn13G2V",
+        "x_um": 27.88,
+        "y_um": -75.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "npn13G2V",
+        "x_um": -2.12,
+        "y_um": -85.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "npn13G2V",
+        "x_um": 12.25,
+        "y_um": -71.0
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "npn13G2V",
+        "x_um": -12.25,
+        "y_um": -71.0
+      },
+      {
+        "datatype": 0,
+        "layer": 51,
+        "text": "npn13G2V",
+        "x_um": 30.0,
+        "y_um": -72.4
+      },
+      {
+        "datatype": 0,
+        "layer": 51,
+        "text": "npn13G2V",
+        "x_um": 0.0,
+        "y_um": -81.9
+      },
+      {
+        "datatype": 0,
+        "layer": 51,
+        "text": "npn13G2V",
+        "x_um": 10.13,
+        "y_um": -68.4
+      },
+      {
+        "datatype": 0,
+        "layer": 51,
+        "text": "npn13G2V",
+        "x_um": -10.13,
+        "y_um": -68.4
+      },
+      {
+        "datatype": 0,
+        "layer": 52,
+        "text": "rppd",
+        "x_um": 95.0,
+        "y_um": -60.476
+      },
+      {
+        "datatype": 0,
+        "layer": 52,
+        "text": "rppd",
+        "x_um": 42.0,
+        "y_um": -84.397
+      },
+      {
+        "datatype": 0,
+        "layer": 52,
+        "text": "rppd",
+        "x_um": 0.0,
+        "y_um": -94.266
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "rppd r=2000.099",
+        "x_um": 0.0,
+        "y_um": -94.266
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "rppd r=20499.901",
+        "x_um": 95.0,
+        "y_um": -60.476
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "rppd r=3999.980",
+        "x_um": 42.0,
+        "y_um": -84.397
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "sub!",
+        "x_um": 12.5,
+        "y_um": -105.99
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "sub!",
+        "x_um": 12.5,
+        "y_um": -17.99
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "sub!",
+        "x_um": -79.0,
+        "y_um": -103.99
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "text": "sub!",
+        "x_um": 104.0,
+        "y_um": -103.99
+      },
+      {
+        "datatype": 0,
+        "layer": 40,
+        "text": "sub!",
+        "x_um": 12.5,
+        "y_um": -105.99
+      },
+      {
+        "datatype": 0,
+        "layer": 40,
+        "text": "sub!",
+        "x_um": 12.5,
+        "y_um": -17.99
+      },
+      {
+        "datatype": 0,
+        "layer": 40,
+        "text": "sub!",
+        "x_um": -79.0,
+        "y_um": -103.99
+      },
+      {
+        "datatype": 0,
+        "layer": 40,
+        "text": "sub!",
+        "x_um": 104.0,
+        "y_um": -103.99
+      }
+    ],
+    "layers_present": [
+      {
+        "datatype": 0,
+        "layer": 1,
+        "polygons": 116,
+        "texts": 0
+      },
+      {
+        "datatype": 20,
+        "layer": 1,
+        "polygons": 8,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 1,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 5,
+        "polygons": 140,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 5,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 6,
+        "polygons": 8480,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 8,
+        "polygons": 368,
+        "texts": 0
+      },
+      {
+        "datatype": 2,
+        "layer": 8,
+        "polygons": 114,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 8,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 25,
+        "layer": 8,
+        "polygons": 0,
+        "texts": 5
+      },
+      {
+        "datatype": 0,
+        "layer": 10,
+        "polygons": 66,
+        "texts": 0
+      },
+      {
+        "datatype": 2,
+        "layer": 10,
+        "polygons": 4,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 10,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 25,
+        "layer": 10,
+        "polygons": 0,
+        "texts": 3
+      },
+      {
+        "datatype": 0,
+        "layer": 14,
+        "polygons": 81,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 19,
+        "polygons": 148,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 26,
+        "polygons": 4,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 27,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 2,
+        "layer": 27,
+        "polygons": 4,
+        "texts": 0
+      },
+      {
+        "datatype": 25,
+        "layer": 27,
+        "polygons": 0,
+        "texts": 4
+      },
+      {
+        "datatype": 0,
+        "layer": 28,
+        "polygons": 3,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 29,
+        "polygons": 60,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 30,
+        "polygons": 26,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 30,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 25,
+        "layer": 30,
+        "polygons": 0,
+        "texts": 1
+      },
+      {
+        "datatype": 0,
+        "layer": 31,
+        "polygons": 32,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 32,
+        "polygons": 32,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 36,
+        "polygons": 1,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 40,
+        "polygons": 4,
+        "texts": 4
+      },
+      {
+        "datatype": 21,
+        "layer": 46,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 49,
+        "polygons": 12,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 50,
+        "polygons": 3,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 50,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 51,
+        "polygons": 4,
+        "texts": 4
+      },
+      {
+        "datatype": 0,
+        "layer": 52,
+        "polygons": 3,
+        "texts": 3
+      },
+      {
+        "datatype": 0,
+        "layer": 63,
+        "polygons": 0,
+        "texts": 63
+      },
+      {
+        "datatype": 0,
+        "layer": 66,
+        "polygons": 12,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 67,
+        "polygons": 5,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 67,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 111,
+        "polygons": 9,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 125,
+        "polygons": 12,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 126,
+        "polygons": 23,
+        "texts": 0
+      },
+      {
+        "datatype": 2,
+        "layer": 126,
+        "polygons": 4,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 126,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 25,
+        "layer": 126,
+        "polygons": 0,
+        "texts": 2
+      },
+      {
+        "datatype": 0,
+        "layer": 128,
+        "polygons": 3,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 129,
+        "polygons": 4,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 133,
+        "polygons": 268,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 134,
+        "polygons": 29,
+        "texts": 0
+      },
+      {
+        "datatype": 23,
+        "layer": 134,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 25,
+        "layer": 134,
+        "polygons": 0,
+        "texts": 1
+      },
+      {
+        "datatype": 0,
+        "layer": 148,
+        "polygons": 2,
+        "texts": 0
+      },
+      {
+        "datatype": 0,
+        "layer": 156,
+        "polygons": 4,
+        "texts": 0
+      }
+    ],
+    "pcell_instance_counts": {
+      "SVaricap": 32,
+      "cmim": 1,
+      "inductor2": 2,
+      "npn13G2V": 4,
+      "ptap1": 4,
+      "rppd": 3,
+      "via_stack": 52
+    }
+  },
+  "nets": [
+    "VDD",
+    "OUTP",
+    "OUTN",
+    "VCTRL",
+    "TAIL",
+    "TE",
+    "NBIAS",
+    "RE",
+    "0"
+  ],
+  "provenance": {
+    "generated_by": "layout/generate.sh",
+    "method": "fully scripted, headless: klt gen --pdk-pcell per device, klt gen-compose for placement and the router-owned nets, klt draw for the nets klt's sg13g2 layer-role table cannot name",
+    "not_signoff": "klt draw is PDK-unaware and klt gen-compose's nets[].routed is not a DRC guarantee; DRC closure is issue #61, LVS closure issue #62",
+    "pdk": {
+      "install": "/home/ubuntu/share/pdk/ihp-sg13g2",
+      "note": "the overlay repairs IHP-Open-PDK's two empty git submodules without mutating the shared install; see layout/scripts/pdk_env.sh and 2AMLogic/klayout-tools#1630",
+      "overlay": {
+        "overlay": "/tmp/layout-cold/pdk-klayout-overlay",
+        "pycell4klayout-api": {
+          "repo": "https://github.com/IHP-GmbH/pycell4klayout-api.git",
+          "rev": "2ffdf79fe51a7c35b361cc854369b5d434c8d478"
+        },
+        "pypreprocessor": {
+          "repo": "https://github.com/IHP-GmbH/pypreprocessor.git",
+          "rev": "cf1ff9bad0fb5338cf1c5b990b2b816b1ea01a64"
+        }
+      }
+    },
+    "source_of_truth": {
+      "netlist": "design/vco.spice",
+      "repo_commit": "762fc8ee9f496e691530207ac35936b104c93d60",
+      "repo_describe": "762fc8e-dirty",
+      "schematic": "design/vco.sch"
+    },
+    "tools": {
+      "klayout": "KLayout 0.28.16",
+      "klt": "klt 0.6.0+g2dbe4e6883e2"
+    }
+  },
+  "resistor_sizing": {
+    "device_class": "SG13_dev/rppd (res_rppd)",
+    "lengths_um": {
+      "RRE": 15.206,
+      "RREF": 79.048,
+      "RTE": 7.468
+    },
+    "measured_law_ohm": "r(l_um) = 258.4492*l + 70.001",
+    "nominal_ohm": {
+      "RRE": 3999.98,
+      "RREF": 20499.89,
+      "RTE": 2000.1
+    },
+    "width_um": 1.0
+  },
+  "schema_version": 1
+}
