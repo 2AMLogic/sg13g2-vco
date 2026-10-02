@@ -504,18 +504,18 @@
     "nothing_checked_reasons": []
   },
   "provenance": {
-    "klt_version": "0.6.0+gaf8d6c54312e",
+    "klt_version": "0.6.0",
     "klayout_version": "0.30.12",
     "pdk": null,
     "deck": {
       "name": "sg13g2",
-      "content_hash": "sha256:89ba7c9ee605174b50c4efffe8c601aa4449007038b17a3d9df63ffd8547da13",
-      "released": false
+      "content_hash": "sha256:894326a4e37fb24fef2f7ffc6ae1da55a0e262b0f0bc1c09adc4862909278fda",
+      "released": true
     },
     "input": {
-      "content_hash": "sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a",
+      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
       "role": "layout"
     },
-    "klayout_version_mismatch": false
+    "klayout_version_mismatch": true
   }
 }

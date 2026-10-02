@@ -7,11 +7,13 @@ this file is reproduced there with the measurement that produced it.
 
 **This layout is not signed off.** It is the floorplan / placement / routing
 deliverable (issue #60) plus the design-rule iteration on top of it (issue
-#61); LVS closure is issue #62. **The DRC report of record is not `status:
-clean`** — it carries eight violations of one rule, all of them demonstrated
-to be an artefact of the checking deck rather than of this layout. Read
-§12 before citing any DRC claim, and "What this record does *not* claim" at
-the end before citing any claim at all.
+#61); LVS closure is issue #62. **No DRC report of record carries a
+`status: clean` label yet**: the curated-engine report carries eight
+violations, all demonstrated to be an artefact of the checking deck rather
+than of this layout, and the IHP-native report carries zero findings but a
+`coverage_unknown` label that klt 0.6.0 cannot upgrade to `clean` for an
+externally-run deck. Read §12 before citing any DRC claim, and "What this
+record does *not* claim" at the end before citing any claim at all.
 
 <!-- toc -->
 - [1. Tooling and inputs](#1-tooling-and-inputs)
@@ -32,18 +34,20 @@ the end before citing any claim at all.
 
 | Input | Value |
 |---|---|
-| Source tool | `klt` (klayout-tools) `0.6.0+gaf8d6c54312e` |
-| Read-back helper | `klayout` 0.28.16 on `PATH` (klt bundles its own KLayout 0.30.12 for `extract` and for the curated DRC engine) |
+| Source tool | `klt` (klayout-tools) `0.6.0` — the tagged wheel, the same install `.github/workflows/signoff.yml` pins |
+| Read-back helper | `klayout` 0.30.12 standalone on `PATH` (klt also bundles KLayout 0.30.12 for `extract` and the curated DRC engine) |
 | PDK | IHP-Open-PDK `ihp-sg13g2`, install at `$IHP_PDK_ROOT` (this run: `~/share/pdk/ihp-sg13g2`) |
 | Schematic of record | `design/vco.sch` |
 | Netlist of record | `design/vco.spice` |
 | Generation method | **fully scripted, headless** — no GUI step, no hand-edited geometry |
 
 Two KLayout versions appear deliberately. The repo's `klayout` on `PATH` runs
-the two read-back helpers (`measure_ports.py`, `verify.py`); `klt extract`
-uses the KLayout that ships inside the pinned `klayout-tools` wheel. Both are
-recorded in the manifest so a version drift shows up as evidence rather than
-silently.
+the read-back helpers (`measure_ports.py`, `verify.py`, `snap_grid.py`) and,
+since the DRC-closure pass, the IHP-native DRC deck through
+`klt drc --engine klayout` (IHP's deck needs KLayout 0.30.3+ — the 0.28.16
+of the first pass aborted at `Gat.g`); `klt extract` uses the KLayout that
+ships inside the pinned `klayout-tools` wheel. Both are recorded in the
+manifest so a version drift shows up as evidence rather than silently.
 
 ## 2. How to regenerate
 
@@ -59,10 +63,10 @@ Stages, each independently runnable via `LAYOUT_STAGES`:
 
 | Stage | What it does |
 |---|---|
-| `devices` | `klt gen --pdk-pcell` once per distinct PDK PCell call |
+| `devices` | `klt gen --pdk-pcell` once per distinct PDK PCell call, then `scripts/snap_grid.py` puts each stream on the 5 nm manufacturing grid (§12) — **before** ports are measured, so every derived coordinate is grid-clean by construction |
 | `ports` | measures each generated stream's own terminal geometry (`klayout -zz -r`) |
 | `requests` | emits the `klt gen-compose` / `klt draw` request documents |
-| `compose` | runs them: 2 varactor banks, the bias core, the drawn wiring, the top cell |
+| `compose` | runs them: 2 varactor banks, the bias core, the drawn wiring, the top cell, then `snap_grid.py` over the composed stream (a no-op by construction, kept as a belt-and-braces check) |
 | `connectivity` | `klt extract`s the result and checks every net |
 | `verify` | reads the composed stream back and writes the manifest |
 
@@ -70,9 +74,7 @@ Stages, each independently runnable via `LAYOUT_STAGES`:
 LAYOUT_STAGES="requests compose verify" layout/generate.sh
 ```
 
-The design-rule evidence is a **second, separate script**, because none of it
-instantiates a PCell and so none of it needs the PDK overlay §3 describes — it
-only reads the committed stream:
+The design-rule evidence is a **second, separate script**:
 
 ```sh
 layout/drc.sh
@@ -80,7 +82,13 @@ layout/drc.sh
 
 It rewrites `layout/drc/*.json` and **exits non-zero if any verdict drifts
 from the one §12 records**, so a PDK, PCell or deck change that moves a result
-fails the run instead of quietly rewriting the evidence.
+fails the run instead of quietly rewriting the evidence. Since the
+DRC-closure pass it runs **two** engines: the curated deck (which needs only
+`klt` and reads the committed stream, no PDK overlay) and IHP's own primary
+runset via `--engine klayout` (which additionally needs a standalone
+KLayout ≥ 0.30.3 on `PATH` and a PDK install, resolved through the same
+`$IHP_PDK_ROOT` / `$PDK_ROOT/ihp-sg13g2` / `~/share/pdk/ihp-sg13g2` search
+order as `generate.sh`).
 
 ### The flow is deterministic — verified, not asserted
 
@@ -90,24 +98,30 @@ artifact and produces a **byte-identical** stream:
 ```
 $ LAYOUT_BUILD_DIR=/tmp/layout-cold layout/generate.sh      # from scratch
 $ sha256sum /tmp/layout-cold/vco.gds layout/vco.gds
-c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a  /tmp/layout-cold/vco.gds
-c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a  layout/vco.gds
+937e5b16c3b2bd55…  /tmp/layout-cold/vco.gds
+937e5b16c3b2bd55…  layout/vco.gds
 ```
 
-`layout/vco.gds` @ `sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a`.
-So the committed GDS is exactly what the committed script produces from the
-committed PDK — this is a *reproducibly generated* artifact in the sense
-`signoff/design-evidence-tiers.md` item 2 grades above "documented provenance",
-not merely a hand-made artifact with a description attached. A PCell, PDK or
-`klt` change that alters the geometry will change that hash.
+`layout/vco.gds` @ `sha256:937e5b16c3b2bd55…` (full hash in
+`layout/vco_manifest.json`). Re-verified with the mask-grid step in the flow:
+**two** cold runs from two empty build directories produce byte-identical
+streams — `snap_grid.py` writes GDS with timestamps disabled for exactly this
+reason. So the committed GDS is exactly what the committed script produces
+from the committed PDK — this is a *reproducibly generated* artifact in the
+sense `signoff/design-evidence-tiers.md` item 2 grades above "documented
+provenance", not merely a hand-made artifact with a description attached. A
+PCell, PDK or `klt` change that alters the geometry will change that hash.
 
 **No geometry in this flow is hand-drawn as a literal.** Every device is a PDK
-PCell instance; every via ladder is a `SG13_dev/via_stack` PCell call (52 of
-them), so no via or via-enclosure rectangle is authored here; the guard ring is
-four `SG13_dev/ptap1` bars. The explicitly drawn metal (§8) is expressed as
-rectangles whose coordinates are *derived from measured device terminal
-positions*, not written out as constants — so it follows the devices if a PCell
-changes rather than silently detaching from them.
+PCell instance; every via ladder is a `SG13_dev/via_stack` PCell call (54 of
+them, since TE/RE moved off the router), so no via or via-enclosure rectangle
+is authored here; the guard ring is four `SG13_dev/ptap1` bars. The explicitly
+drawn metal (§8) is expressed as rectangles whose coordinates are *derived
+from measured device terminal positions*, not written out as constants — so it
+follows the devices if a PCell changes rather than silently detaching from
+them. The mask-grid step likewise derives everything from the stream it reads:
+it moves vertices by at most half a grid step and never changes topology
+(§12).
 
 ## 3. The PDK submodule overlay (why it is needed)
 
@@ -376,20 +390,27 @@ inspection.
 
 ## 8. What klt routed and what it did not
 
-Three nets are left to klt's router; six are drawn explicitly. The split is a
+One net is left to klt's router; eight are drawn explicitly. The split is a
 tool-capability boundary, and both sides are stated so a reviewer need not
 infer which metal came from where.
 
 **Routed by `klt gen-compose` (`connectivity[]`, in the `core` composition):**
-`TE`, `RE`, `NBIAS` — the three nets that live entirely inside that
-composition's own clear region.
+`NBIAS` — the one net that lives entirely inside that composition's own clear
+region *and* needs no via drop. `TE` and `RE` were router-routed until the
+DRC-closure pass: their via1 drops are drawn at klt's PDK-independent
+0.22 µm contact constant, which IHP's min-AND-max 0.19 µm via1 rule (V1.a)
+rejects outright (klayout-tools #2698), so both feeds moved to explicit
+Metal2 runs + `via_stack` PCell ladders — the same transition pattern as
+everywhere else in this block.
 
-**Drawn explicitly via `klt draw` (the `wiring` cell, 76 shapes, 9 labels):**
-`VDD`, `OUTP`, `OUTN`, `VCTRL`, `TAIL`, `0`. Each for one of two reasons:
+**Drawn explicitly via `klt draw` (the `wiring` cell, 86 shapes, 9 labels):**
+`VDD`, `OUTP`, `OUTN`, `VCTRL`, `TAIL`, `TE`, `RE`, `0`. Each for one of two
+reasons:
 
 - **(a) it terminates on a device pad the sg13g2 layer-role table cannot
   name** — the spirals' TopMetal1 pins, the MIM cap's Metal5/TopMetal1 plates;
-  the router cannot target a pad it has no role for.
+  the router cannot target a pad it has no role for — or, for `TE`/`RE`, it
+  needs a PDK via the router will not draw.
 - **(b) it needs deliberate, symmetric, wide differential metal** that a
   point-to-point Manhattan router does not produce — the `OUTP`/`OUTN` trunks
   and the `VDD` strap are shaped for tank symmetry, not for shortest path.
@@ -423,7 +444,7 @@ Flattened instance count per PCell, walking the hierarchy and multiplying
 | `SG13_dev/npn13G2V` | 4 | **4** (3 × `le=1.0u`, 1 × `le=2.0u`) |
 | `SG13_dev/rppd` | 3 | **3** |
 | `SG13_dev/ptap1` | 4 | **4** (guard ring) |
-| `SG13_dev/via_stack` | — | 52 (every via ladder in the block) |
+| `SG13_dev/via_stack` | — | 54 (every via ladder in the block, incl. the TE/RE feeds since the DRC-closure pass) |
 
 ### All 9 nets
 
@@ -527,14 +548,18 @@ is between a layer and a label that happens to share its name.
 
 ## 11. What this record does *not* claim
 
-- **Not DRC-clean.** The report of record is `status: violations`, not
-  `status: clean`, so `signoff/design-evidence-tiers.md` item 3 is **not**
-  satisfied and this layout must not be cited for it. Every remaining
-  violation is demonstrated in §12 to be an artefact of the checking deck
-  rather than of this layout — but a demonstration is not a clean report, and
-  the two must not be conflated. The deck also covers only part of the DRM
+- **Not DRC-clean *by label*.** Neither report of record says `status:
+  clean`, so `signoff/design-evidence-tiers.md` item 3 is **not** satisfied
+  and this layout must not be cited for it. The curated report's eight
+  remaining violations are demonstrated in §12 to be artefacts of the
+  checking deck rather than of this layout, and the IHP-native report has
+  zero findings — but a demonstration is not a clean report, and the three
+  must not be conflated. The curated deck also covers only part of the DRM
   (§12 quotes its `deck_scope` and its 37 rule-free drawn layers), so even a
-  clean verdict from it would not have been a full design-rule result.
+  clean verdict from it would not have been a full design-rule result; the
+  native deck's zero findings carry the native deck's own scope, and the
+  §12 optional-deck survey (density fill deferred to chip assembly,
+  maximal's PCell-internal `NW.e`) bounds the rest.
 - **Not LVS-clean.** No device-level netlist comparison was run. Three known
   deliberate differences are already recorded for #62: the drawn `res_rppd`
   against the netlist's ideal `R` (§5), the varactor `bn` tie (§6), and the
@@ -562,23 +587,55 @@ any of them drifts.
 | Report | `layout/drc/vco-drc.json` |
 | Command | `klt drc layout/vco.gds --deck sg13g2 --top vco --format json` |
 | Engine | `curated` (klt's own pip-only Region-primitive deck; default) |
-| Deck | `sg13g2` @ `sha256:89ba7c9ee605174b50c4efffe8c601aa4449007038b17a3d9df63ffd8547da13` |
-| Input | `layout/vco.gds` @ `sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a` |
-| Tooling | `klt 0.6.0+gaf8d6c54312e`, bundled KLayout 0.30.12 |
+| Deck | `sg13g2` @ `sha256:894326a4e37fb24fef2f7ffc6ae1da55a0e262b0f0bc1c09adc4862909278fda` (`released: true`) |
+| Input | `layout/vco.gds` @ `sha256:937e5b16c3b2bd55…` |
+| Tooling | `klt 0.6.0` (tagged wheel, the same install CI pins), standalone KLayout 0.30.12 on `PATH`, bundled KLayout 0.30.12 |
 | **Status** | **`violations`, 8 — NOT `clean`** |
 | Rule counts | `{"activ.enclosing.cont.1": 8}` |
 
-**A reproducibility caveat, stated rather than glossed.** The build used is a
-*post-tag* build: `klt version` reports `git_tag: null`, `is_release: false`,
-and the report's own `provenance.deck.released` is correspondingly `false`.
-The run was repeated through `uvx --from "klayout-tools==0.6.0" klt drc …` to
-pin it to the released wheel and returned the identical verdict and the
-identical deck content hash — **but that invocation resolved to the same
-`0.6.0+gaf8d6c54312e` build**, so it is a repeat, not an independent
-cross-check against the tagged `v0.6.0` wheel that `.github/workflows/
-signoff.yml` installs. The deck hash above is the thing to pin against; if a
-later run on a genuinely tagged `v0.6.0` reports a different deck hash, this
-report must be re-rendered rather than reinterpreted.
+The reproducibility caveat of the first DRC pass is resolved by this one:
+that pass could only run a post-tag `0.6.0+gaf8d6c54312e` build and said so.
+This pass runs the **tagged `0.6.0` wheel** (the same `klayout-tools==0.6.0`
+`.github/workflows/signoff.yml` installs), so `provenance.deck.released` is
+`true` and the deck hash above is the tagged wheel's. A smaller caveat
+replaces it, recorded by the tool itself: the resolved KLayout engine is
+0.30.12 where this klt build was tested against 0.30.10, so
+`provenance.klayout_version_mismatch` is `true` — klt states the verdict is
+unaffected and only count-level fields could differ; `drc.sh` re-asserts the
+counts on every run, so any such difference fails loudly rather than
+silently.
+
+### The second report of record: IHP's own runset, zero findings
+
+`layout/drc/vco-drc-ihp.json` is the same committed stream checked by the
+PDK's own primary DRC runset — `libs.tech/klayout/tech/drc/ihp-sg13g2.drc`,
+the deck that implements the process rules (including `Cnt.c` as IHP wrote
+it, NBL, latch-up, the 5 nm grid of rule 3.1 and the 0/45/90 edge angles of
+rule 3.2) rather than approximating them:
+
+| | |
+|---|---|
+| Report | `layout/drc/vco-drc-ihp.json` |
+| Command | `klt drc layout/vco.gds --engine klayout --deck-file "$IHP_PDK_ROOT/libs.tech/klayout/tech/drc/ihp-sg13g2.drc" --format json` |
+| Deck | `ihp-sg13g2.drc` @ `sha256:0620b737538af7c8…` (590 rule categories) |
+| **Findings** | **0 violations** |
+| **Status label** | **`coverage_unknown`** — see below |
+
+**Why zero findings is not labelled `clean`.** This is klt 0.6.0's documented
+behaviour, not a hedge: there is no instrumentation interface by which an
+externally-run deck can prove every rule executed, and a deck that gates its
+rules behind an unset `-rd` global produces the same zero-item report as one
+that genuinely ran everything, so klt refuses the `clean` label for any
+zero-finding `--engine klayout` run and reports `coverage_unknown` (exit 4)
+instead. A *found* violation always overrides to `violations` — which is how
+the 370 findings this pass started from were reported by the same engine.
+`drc.sh` therefore gates on the **findings** (zero) and records the status
+label verbatim. Filed as a feature request per this repo's friction protocol:
+[2AMLogic/klayout-tools#2697](https://github.com/2AMLogic/klayout-tools/issues/2697).
+
+The `provenance.deck` field of this report records the host's absolute PDK
+install path; the `content_hash` beside it is the path-independent identity
+to compare across hosts.
 
 ### Coverage disclosure
 
@@ -611,18 +668,27 @@ the tool's. Quoted verbatim from the cited envelope's `coverage` block:
 
 ### What was fixed to get here
 
-One real defect, found by the first run against the layout #60 committed and
-fixed in place in the same generator (`layout/scripts/floorplan.py`) rather
-than in a parallel copy:
+Two iteration passes over the layout #60 committed, both fixing in place in
+the same generator (`layout/scripts/floorplan.py`) rather than in a parallel
+copy. **Pass 1** (PR #74) fixed the curated deck's findings. **Pass 2** (the
+DRC-closure pass, this change) ran IHP's own primary runset for the first
+time — it reported **370 real findings** — and fixed all of them:
 
-| Rule | Count | Where | Cause | Fix |
-|---|---|---|---|---|
-| `metal1.space.1` | 2 (one per bank) | `VS_VCTRL_P1` / `VS_VCTRL_N1` | the inboard VCTRL tap's `vs_m1_m3` ladder sat at a round `BANK_X0 + 2.0 µm`, leaving its 0.70 µm Metal1 pad **0.09 µm** from the adjacent `SVaricap` cell's own gate metal — half the 0.18 µm `M1.b` minimum | the tap's x is now **derived from the measured `G1` port box and the measured via-stack pad width**, centred in the gap between two adjacent cells' gate metal, giving **0.32 µm** each side; the clearance is `assert`ed against `M1_SP`, so a PCell or pitch change fails generation instead of silently reopening the violation |
+| Pass | Rule | Count | Where | Cause | Fix |
+|---|---|---|---|---|---|
+| 1 | `metal1.space.1` | 2 (one per bank) | `VS_VCTRL_P1` / `VS_VCTRL_N1` | the inboard VCTRL tap's `vs_m1_m3` ladder sat at a round `BANK_X0 + 2.0 µm`, leaving its 0.70 µm Metal1 pad **0.09 µm** from the adjacent `SVaricap` cell's own gate metal — half the 0.18 µm `M1.b` minimum | the tap's x is now **derived from the measured `G1` port box and the measured via-stack pad width**, centred in the gap between two adjacent cells' gate metal, giving **0.32 µm** each side; the clearance is `assert`ed against `M1_SP`, so a PCell or pitch change fails generation instead of silently reopening the violation |
+| 2 | `*_Offgrid` (23 layer keys) | 306 | everywhere: spiral PCell internals, `rppd` internals, hand-drawn wiring, via-ladder origins | IHP rule 3.1 requires every vertex on a **5 nm** grid; PCell arithmetic (`d = 141.975 µm`…) and port-measurement-derived wiring coordinates land on arbitrary nanometres | **`layout/scripts/snap_grid.py`**, a new mask-grid step in `generate.sh`: per cell and layer it merges the shapes (snapping overlapping PCell pieces independently would open seam slivers inside solid metal), rounds every vertex to 5 nm, and restores raw edge *directions* — axis-aligned edges stay axis-aligned, near-45° edges (dx = 41588, dy = 41587 → 44.9993°) become exact. Device streams are snapped **before** port measurement, so ports, requests, wiring and placements are grid-clean by construction; the composed stream is snapped again as a no-op-check. Vertices move ≤ 2.5 nm; two cold builds are byte-identical (§2) |
+| 2 | `topmetal2_drw_Angle45` | 36 | both spiral instances | rule 3.2 has **no angle tolerance**: a 45° edge one nanometre off exact is a violation, not a rounding footnote | same snap step's exact-45 restoration (see above) |
+| 2 | `NBL.b` | 60 | both varactor banks | IHP requires **1.5 µm** between NBL regions (or a notch-free union) even on the same net; the 16-cell banks' abutted `SVaricap` NBL shapes leave 0–130 nm gaps | **one same-net NBL plate per bank** (`wiring_request`), spanning the measured `nbl_box_um` of cells 1..16 at each bank's tank node; the banks stay 67.2 µm apart (≫ `NBL.c`'s 3.2 µm different-net minimum), and `measure_ports.py` now measures the cell's own NBL box so the plate is derived, never transcribed |
+| 2 | `V1.a` (introduced and fixed within the pass) | 4 | TE/RE router via-drops | klt's router draws its via1 drops at its PDK-independent **0.22 µm** contact constant; IHP's rule V1.a fixes via1 at **0.19 µm min *and* max**, so the drop violates in both directions on this PDK | TE and RE moved from the router to explicit Metal2 runs + `SG13_dev/via_stack` PCell ladders at each resistor feed (same pattern as every other transition in this block); filed generically as [2AMLogic/klayout-tools#2698](https://github.com/2AMLogic/klayout-tools/issues/2698) |
 
-Nothing else about the layout changed: same devices, same nets, same
-floorplan, same 610.256 × 396.285 µm bounding box, and `generate.sh`'s
-connectivity stage still reports the same nine distinct nets with
-`dead_metal = 0` (§9). The stream hash changed because the stream changed.
+Two intermediate findings the pass introduced on its own path and then
+cleared are recorded for honesty: the first snap implementation rounded
+vertices per-piece instead of per-merged-layer, which opened 3 seam notches
+per spiral that rule TM2.a (Euclidian width) correctly flagged, and the
+router's 220 nm via1s appeared only once the snapped inputs made the router
+switch via variant. Both are gone in the committed stream; the deck's zero
+finding count covers them.
 
 ### The eight that remain are the deck's, not the layout's
 
@@ -681,27 +747,44 @@ term* the difference comes from.
 Filed upstream as a tool gap per this repo's friction protocol:
 [2AMLogic/klayout-tools#2688](https://github.com/2AMLogic/klayout-tools/issues/2688).
 
-### Why the PDK's own deck was not used instead
+### The PDK's own deck: how it became runnable here
 
-`klt drc --engine klayout` would run IHP's deck of record, which implements
-`Cnt.c` correctly. It does not run here: that engine shells out to the
-standalone `klayout` on `PATH`, which is **0.28.16**, and IHP's deck aborts
-part-way through at rule `Gat.g` with
+`klt drc --engine klayout` runs IHP's deck of record, which implements
+`Cnt.c` correctly. It could not run on the first pass's host: that engine
+shells out to the standalone `klayout` on `PATH`, which was **0.28.16**, and
+IHP's deck aborted part-way through at rule `Gat.g` with
 
 ```
 ERROR: undefined local variable or method `absolute' for DRCEngine
   rule_decks/feol/5_8_gatpoly.drc:70
 ```
 
-— a DRC-DSL metric newer than that KLayout. klt's handling is correct and not
-the gap: it refused the partial report rather than reporting its zero
-violations as a clean verdict. The gap is that klt *bundles* KLayout 0.30.12
-(it is what the curated engine and `klt extract` run) but `--engine klayout`
-cannot use it, and nothing preflights the PATH binary's feature level against
-the deck's. Filed as
+— a DRC-DSL metric newer than that KLayout (IHP's own DRC requirements say
+KLayout 0.30.3+). klt's handling is correct and not the gap: it refused the
+partial report rather than reporting its zero violations as a clean verdict.
+The gap — klt *bundles* KLayout 0.30.12 but `--engine klayout` cannot use
+it, and nothing preflights the PATH binary's feature level — was filed as
 [2AMLogic/klayout-tools#2689](https://github.com/2AMLogic/klayout-tools/issues/2689).
-Installing a newer standalone KLayout on the build host was not an option
-available to this phase.
+
+This pass ran on a host with a standalone **KLayout 0.30.12** on `PATH`, so
+the same engine + deck now runs to completion — that is where the 370 real
+findings (and, after the fixes above, the zero-finding report of record)
+come from. `drc.sh` resolves the PDK install through the same search order
+as `generate.sh` (`$IHP_PDK_ROOT`, `$PDK_ROOT/ihp-sg13g2`,
+`~/share/pdk/ihp-sg13g2`), so the native-deck leg of the drift gate now
+needs a PDK install too — recorded in §2.
+
+### IHP's optional decks, surveyed once and not gated
+
+IHP's own runner (`tech/drc/run_drc.py`) additionally offers three optional
+decks. All three were run once against this stream, for state, and are
+deliberately **not** part of `drc.sh`'s gate:
+
+| Deck | IHP default | This stream | Scope decision |
+|---|---|---|---|
+| `antenna.drc` | opt-in (`--antenna`) | **0 findings** (`coverage_unknown` label, same §12 instrumentation cap) | none needed |
+| `density.drc` | on (`--no_density` to disable) | 9 findings: `AFil.g`, `GFil.g`, `M1.j`…`M5.j`, `TM1.c` — min-*fill* rules | fill insertion is a chip-assembly step (the rules are the *Fil* filler layers); this block ships un-filled by design and #59's signoff phase owns the fill decision |
+| `rule_decks/sg13g2_maximal.drc` | on (`--disable_extra_rules` to disable) | 4 × `NW.e`, all inside the PDK's **own** `SVaricap` PCell | the PDK's README self-declares this deck "not verified or tested"; the 4 findings are PCell-internal (well-tie enclosure), unreachable from this repo's floorplan — same class as the curated deck's `Cnt.c` artefact |
 
 ### Guard-ring / tap continuity
 
@@ -720,27 +803,45 @@ on one side and changes nothing else.
 |---|---|---|---|
 | Activ `1/0` | `continuous` | `broken` (37) | **continuity verified** |
 | pSD `14/0` | `continuous` | `broken` (72) | **continuity verified** |
-| Metal1 `8/0` | `continuous` | `continuous` | **not evidence** |
+| Metal1 `8/0` | `continuous` | `broken` (56) | **continuity verified** |
 
-The tap ring itself — the p+ diffusion that actually ties the substrate to `0`
-— is verified on both of its layers. **The Metal1 row is reported and
-explicitly not claimed**: its negative control also passes, which means a
-`continuous` verdict on `8/0` inside that window can be produced by core
-routing that merely shares the layer, with the ring's own Metal1 open. `klt
-ring-check` has no way to scope its layer set to a cell or instance subset, so
-there is no way to ask the question about the ring's Metal1 alone; filed as
+All three of the ring's layers are now verified with discriminating negative
+controls. (On the first pass the Metal1 row was reported as *not evidence*:
+its negative control also passed, because unrelated Metal1 core routing
+shared the clip window and could satisfy `klt ring-check`'s continuity test
+with the ring's own Metal1 open —
 [2AMLogic/klayout-tools#2690](https://github.com/2AMLogic/klayout-tools/issues/2690).
-Treat Metal1 ring continuity as **unverified**, not as passing.
+The DRC-closure pass's wiring changes — TE/RE moved to explicit Metal2 runs,
+the grid snap merging each cell's Metal1 — changed what the window contains,
+and on the committed stream the control now breaks it: 56 Metal1 ring
+violations appear when one `ptap1` bar is deleted, so the `continuous`
+verdict on the committed layout is attributable to the ring. The upstream
+scoping gap stays open for other layouts; this one no longer leans on it.)
 
 ### What this leaves for #62 and beyond
 
 - **Item 3 of `signoff/design-evidence-tiers.md` is not met** and no citation
-  of this layout should claim it. The blocker is upstream (klayout-tools
-  #2688), not in this repo: once the curated deck carries `Cnt.c`'s
-  `activ_mask` join, re-running `layout/drc.sh` against an unchanged
-  `layout/vco.gds` is expected to report `status: clean` — the control above
-  is exactly that experiment, run early.
-- **The scope caveat survives a future clean verdict.** Even then, the 16
+  of this layout should claim it. Every *real* design-rule violation IHP's
+  own primary runset can find is fixed (zero findings,
+  `layout/drc/vco-drc-ihp.json`), but the literal `status: clean` label is
+  produced by neither engine, for two **upstream** reasons, and this repo
+  does not relax a ratified criterion to make a result pass:
+  1. the curated deck's `Cnt.c` artefact — 8 findings inside the PDK's own
+     `npn13G2V` PCell (klayout-tools #2688); once fixed upstream,
+     re-running `layout/drc.sh` against an unchanged `layout/vco.gds` is
+     expected to report `status: clean` — the §12 control is exactly that
+     experiment, run early;
+  2. klt 0.6.0's `--engine klayout` caps every zero-finding run at
+     `coverage_unknown` because external-deck execution cannot be
+     instrumented (klayout-tools #2697).
+  Either landing turns one of the two reports of record into `clean` with no
+  geometry change expected.
+- **The scope caveat survives a future clean verdict.** The curated deck's 16
   deck-scope chapters and 37 rule-free drawn layers above remain the honest
-  bound on what "clean" would mean, and must be restated with the claim.
-- **Metal1 guard-ring continuity remains unverified** (klayout-tools #2690).
+  bound on what its "clean" would mean, and must be restated with the claim.
+  The IHP-native report has no per-layer coverage at all (only its 590 rule
+  categories), so its zero-findings claim carries the deck's own scope, and
+  the optional-deck survey above (density fill deferred to chip assembly;
+  maximal's PCell-internal `NW.e`) is the rest of the story.
+- **Density fill is deferred by design**, not forgotten: the 9 fill-rule
+  findings are recorded above and belong to the fill/chip-assembly phase.

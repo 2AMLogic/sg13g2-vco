@@ -209,6 +209,16 @@ elif KIND == "SVaricap":
     ports = {"G1": port("G1", g1, LY_METAL1_PIN, 270),
              "W": port("W", w, LY_METAL1_PIN, 180),
              "G2": port("G2", g2, LY_METAL1_PIN, 90)}
+    # The cell's own NBL shape (32/0), measured so the composed bank can draw
+    # one same-net NBL plate per bank over the 16 cells (IHP rule NBL.b: min
+    # NBL space/notch 1.5 um -- the array pitch leaves 0.48 um gaps, see
+    # layout/PROVENANCE.md section 12).  Transcribed values would go stale the
+    # day the PCell changes, exactly like the port boxes above.
+    nbl = boxes(LY_NSD)
+    if len(nbl) != 1:
+        raise RuntimeError("SVaricap: expected 1 NBL (32/0) shape, got %d"
+                           % len(nbl))
+    extra["nbl_box_um"] = nbl[0]
 
 elif KIND == "rppd":
     pins = sorted(boxes(LY_METAL1_PIN), key=lambda b: (b[1] + b[3]) / 2.0)
