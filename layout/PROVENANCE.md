@@ -6,9 +6,12 @@ Provenance for `layout/vco.gds`, the physical layout of the LC-VCO described by
 this file is reproduced there with the measurement that produced it.
 
 **This layout is not signed off.** It is the floorplan / placement / routing
-deliverable only (issue #60). DRC closure is issue #61 and LVS closure is
-issue #62. Nothing here claims design-rule legality — see
-"What this record does *not* claim" at the end.
+deliverable (issue #60) plus the design-rule iteration on top of it (issue
+#61); LVS closure is issue #62. **The DRC report of record is not `status:
+clean`** — it carries eight violations of one rule, all of them demonstrated
+to be an artefact of the checking deck rather than of this layout. Read
+§12 before citing any DRC claim, and "What this record does *not* claim" at
+the end before citing any claim at all.
 
 <!-- toc -->
 - [1. Tooling and inputs](#1-tooling-and-inputs)
@@ -22,14 +25,15 @@ issue #62. Nothing here claims design-rule legality — see
 - [9. Evidence: how each acceptance criterion was measured](#9-evidence-how-each-acceptance-criterion-was-measured)
 - [10. EM-only layers are absent](#10-em-only-layers-are-absent)
 - [11. What this record does *not* claim](#11-what-this-record-does-not-claim)
+- [12. DRC state (issue #61)](#12-drc-state-issue-61)
 <!-- /toc -->
 
 ## 1. Tooling and inputs
 
 | Input | Value |
 |---|---|
-| Source tool | `klt` (klayout-tools) `0.6.0+g2dbe4e6883e2` |
-| Read-back helper | `klayout` 0.28.16 on `PATH` (klt bundles its own KLayout 0.30.12 for `extract`) |
+| Source tool | `klt` (klayout-tools) `0.6.0+gaf8d6c54312e` |
+| Read-back helper | `klayout` 0.28.16 on `PATH` (klt bundles its own KLayout 0.30.12 for `extract` and for the curated DRC engine) |
 | PDK | IHP-Open-PDK `ihp-sg13g2`, install at `$IHP_PDK_ROOT` (this run: `~/share/pdk/ihp-sg13g2`) |
 | Schematic of record | `design/vco.sch` |
 | Netlist of record | `design/vco.spice` |
@@ -66,6 +70,18 @@ Stages, each independently runnable via `LAYOUT_STAGES`:
 LAYOUT_STAGES="requests compose verify" layout/generate.sh
 ```
 
+The design-rule evidence is a **second, separate script**, because none of it
+instantiates a PCell and so none of it needs the PDK overlay §3 describes — it
+only reads the committed stream:
+
+```sh
+layout/drc.sh
+```
+
+It rewrites `layout/drc/*.json` and **exits non-zero if any verdict drifts
+from the one §12 records**, so a PDK, PCell or deck change that moves a result
+fails the run instead of quietly rewriting the evidence.
+
 ### The flow is deterministic — verified, not asserted
 
 A **cold run from an empty build directory** was re-run against the committed
@@ -74,11 +90,11 @@ artifact and produces a **byte-identical** stream:
 ```
 $ LAYOUT_BUILD_DIR=/tmp/layout-cold layout/generate.sh      # from scratch
 $ sha256sum /tmp/layout-cold/vco.gds layout/vco.gds
-36819f8ef3f97bc0a6a6942fa315746c0ebcc2d4a2fb6f1326544e234d8fbcf1  /tmp/layout-cold/vco.gds
-36819f8ef3f97bc0a6a6942fa315746c0ebcc2d4a2fb6f1326544e234d8fbcf1  layout/vco.gds
+c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a  /tmp/layout-cold/vco.gds
+c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a  layout/vco.gds
 ```
 
-`layout/vco.gds` @ `sha256:36819f8ef3f97bc0a6a6942fa315746c0ebcc2d4a2fb6f1326544e234d8fbcf1`.
+`layout/vco.gds` @ `sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a`.
 So the committed GDS is exactly what the committed script produces from the
 committed PDK — this is a *reproducibly generated* artifact in the sense
 `signoff/design-evidence-tiers.md` item 2 grades above "documented provenance",
@@ -352,8 +368,11 @@ merely similar.
 **The guard ring's four `ptap1` bars abut at the corners, they do not
 overlap.** Measured both ways: an overlap interleaves the two bars' own contact
 arrays and `klt drc` reports ~600 `cont.space`/`cont.width` violations that
-neither bar has on its own. This is a #61 concern recorded here because it is a
-placement decision, not a rule-fixing one.
+neither bar has on its own. The abutting arrangement carries none of them —
+confirmed by #61's report of record (§12), whose only remaining rule is
+unrelated to the ring — and the abutment still closes the annulus, which §12
+verifies with `klt ring-check` against a negative control rather than by
+inspection.
 
 ## 8. What klt routed and what it did not
 
@@ -508,9 +527,14 @@ is between a layer and a label that happens to share its name.
 
 ## 11. What this record does *not* claim
 
-- **Not DRC-clean.** No design-rule check gates this phase. `klt draw` is
-  PDK-unaware and stamps its own output as not guaranteed design-legal; the
-  guard-ring corner note in §7 is a known live example. **DRC closure is #61.**
+- **Not DRC-clean.** The report of record is `status: violations`, not
+  `status: clean`, so `signoff/design-evidence-tiers.md` item 3 is **not**
+  satisfied and this layout must not be cited for it. Every remaining
+  violation is demonstrated in §12 to be an artefact of the checking deck
+  rather than of this layout — but a demonstration is not a clean report, and
+  the two must not be conflated. The deck also covers only part of the DRM
+  (§12 quotes its `deck_scope` and its 37 rule-free drawn layers), so even a
+  clean verdict from it would not have been a full design-rule result.
 - **Not LVS-clean.** No device-level netlist comparison was run. Three known
   deliberate differences are already recorded for #62: the drawn `res_rppd`
   against the netlist's ideal `R` (§5), the varactor `bn` tie (§6), and the
@@ -523,3 +547,200 @@ is between a layer and a label that happens to share its name.
 - **No electrical or EM claim.** Nothing here supersedes the tank study in
   `sim/inductor-model/`; no inductance, Q, frequency or phase-noise number is
   asserted or implied by this layout.
+
+## 12. DRC state (issue #61)
+
+This section is the DRC record. Its machine-readable half is
+`layout/drc/*.json`, rewritten by `layout/drc.sh` (§2); every number below is
+quoted from those files rather than typed from memory, and `drc.sh` fails if
+any of them drifts.
+
+### The verdict of record
+
+| | |
+|---|---|
+| Report | `layout/drc/vco-drc.json` |
+| Command | `klt drc layout/vco.gds --deck sg13g2 --top vco --format json` |
+| Engine | `curated` (klt's own pip-only Region-primitive deck; default) |
+| Deck | `sg13g2` @ `sha256:89ba7c9ee605174b50c4efffe8c601aa4449007038b17a3d9df63ffd8547da13` |
+| Input | `layout/vco.gds` @ `sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a` |
+| Tooling | `klt 0.6.0+gaf8d6c54312e`, bundled KLayout 0.30.12 |
+| **Status** | **`violations`, 8 — NOT `clean`** |
+| Rule counts | `{"activ.enclosing.cont.1": 8}` |
+
+**A reproducibility caveat, stated rather than glossed.** The build used is a
+*post-tag* build: `klt version` reports `git_tag: null`, `is_release: false`,
+and the report's own `provenance.deck.released` is correspondingly `false`.
+The run was repeated through `uvx --from "klayout-tools==0.6.0" klt drc …` to
+pin it to the released wheel and returned the identical verdict and the
+identical deck content hash — **but that invocation resolved to the same
+`0.6.0+gaf8d6c54312e` build**, so it is a repeat, not an independent
+cross-check against the tagged `v0.6.0` wheel that `.github/workflows/
+signoff.yml` installs. The deck hash above is the thing to pin against; if a
+later run on a genuinely tagged `v0.6.0` reports a different deck hash, this
+report must be re-rendered rather than reinterpreted.
+
+### Coverage disclosure
+
+`signoff/design-evidence-tiers.md` item 3 requires these three fields to be
+stated with any DRC claim, and makes the disclosure the claimant's job, not
+the tool's. Quoted verbatim from the cited envelope's `coverage` block:
+
+- **`coverage.rules_skipped`** — `[]`. Empty: every rule the deck carries was
+  evaluated on this run.
+- **`coverage.deck_scope`** — `Act`, `Cnt`, `Gat`, `M1`, `M2`, `M3`, `M4`,
+  `M5`, `TM1`, `TM2`, `TV1`, `TV2`, `V1`, `V2`, `V3`, `V4`. Sixteen DRM
+  chapters: the Activ/Cont/GatPoly front end and the Metal1–TopMetal2 /
+  Via1–TopVia2 back end. **Everything else in the DRM is outside this deck
+  entirely** — no NWell, nBuLay, pSD/nSD implant, SRAM/DigiBnd, recommended,
+  density/fill, antenna, latch-up, edge-seal or device-specific (HBT,
+  SVaricap, MIM, inductor) chapter is checked at all. A clean verdict from
+  this deck would still not be a full sg13g2 DRC result.
+- **`coverage.layers_in_stream_without_rules`** — 37 layers are drawn in this
+  stream that the deck has no rule for: `1/20` `1/23` `5/23` `8/2` `8/23`
+  `8/25` `10/2` `10/23` `10/25` `14/0` `26/0` `27/0` `27/2` `27/25` `28/0`
+  `30/23` `30/25` `31/0` `32/0` `36/0` `40/0` `46/21` `50/23` `51/0` `52/0`
+  `63/0` `67/23` `111/0` `126/2` `126/23` `126/25` `128/0` `129/0` `134/23`
+  `134/25` `148/0` `156/0`. Most are pin (`*/2`), label (`*/23`, `*/25`) and
+  device-recognition layers that carry no width/space rule anywhere, but the
+  list also contains real mask layers this deck simply does not model — NWell
+  `31/0`, nSD `32/0`, pSD `14/0`, Activ:mask `1/20`, polyres `128/0`, HBT and
+  SVaricap markers. **Nothing on any of those 37 layers was checked.** The
+  `1/20` entry is also the direct cause of the eight remaining violations,
+  below.
+
+### What was fixed to get here
+
+One real defect, found by the first run against the layout #60 committed and
+fixed in place in the same generator (`layout/scripts/floorplan.py`) rather
+than in a parallel copy:
+
+| Rule | Count | Where | Cause | Fix |
+|---|---|---|---|---|
+| `metal1.space.1` | 2 (one per bank) | `VS_VCTRL_P1` / `VS_VCTRL_N1` | the inboard VCTRL tap's `vs_m1_m3` ladder sat at a round `BANK_X0 + 2.0 µm`, leaving its 0.70 µm Metal1 pad **0.09 µm** from the adjacent `SVaricap` cell's own gate metal — half the 0.18 µm `M1.b` minimum | the tap's x is now **derived from the measured `G1` port box and the measured via-stack pad width**, centred in the gap between two adjacent cells' gate metal, giving **0.32 µm** each side; the clearance is `assert`ed against `M1_SP`, so a PCell or pitch change fails generation instead of silently reopening the violation |
+
+Nothing else about the layout changed: same devices, same nets, same
+floorplan, same 610.256 × 396.285 µm bounding box, and `generate.sh`'s
+connectivity stage still reports the same nine distinct nets with
+`dead_metal = 0` (§9). The stream hash changed because the stream changed.
+
+### The eight that remain are the deck's, not the layout's
+
+All eight are `activ.enclosing.cont.1` inside the PDK's **own** `npn13G2V`
+PCell — two per HBT, on all four of `Q1`/`Q2`/`Q3`/`Q4` — so no placement,
+routing or spacing decision in this repo can move them. They are a known,
+*self-declared* approximation in klt's curated deck, and the approximation is
+over-strict rather than merely narrow.
+
+klt's rule description says so itself: it "approximates the official rule's
+SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional
+Activ-encloses-Cont floor". IHP's deck of record
+(`libs.tech/klayout/tech/drc/rule_decks/feol/5_14_cont.drc`, rule `Cnt.c`)
+writes the enclosing region as
+
+```ruby
+cnt_c_act = act_nsram.join(activ_mask).not(digibnd_drw)
+cnt_c_l   = cont_nsvaricap.enclosed(cnt_c_act, 0.07.um, euclidian)
+```
+
+while klt's curated form is `enclosing(Activ.drawing 1/0, Cont.drawing 6/0)
+>= 0.07 µm`. The dropped `.join(activ_mask)` term is the problem: `activ_mask`
+is layer **`1/20`**, it *enlarges* the enclosing region, and **IHP's HBT PCell
+draws its emitter/base windows on `1/20` rather than on `1/0`**. Dropping it
+therefore makes the enclosing region smaller than the rule's, so contacts that
+the real rule passes are reported as under-enclosed. (A second dropped term,
+`contbar = cont_nseal.non_squares`, likewise puts non-square contact *bars*
+into a check `Cnt.c` never applied to them.)
+
+**This is measured with klt's own check, not re-implemented.** A first attempt
+to re-derive the enclosure in `pya` by hand produced a different number than
+klt's `enclosing` primitive and was discarded — a hand-rolled check is a
+second thing that can be wrong. Instead, `layout/drc.sh` runs a
+single-variable control: the **same deck, same engine, same layout**, re-run
+against a diagnostic copy of the stream that supplies exactly the one dropped
+term (`layout/scripts/activ_mask_overlay.py` copies the 8 `1/20` shapes onto
+`1/0` and changes nothing else).
+
+| Stream | `klt drc --deck sg13g2` |
+|---|---|
+| `layout/vco.gds` as committed | `status: violations`, 8 × `activ.enclosing.cont.1` |
+| + the `.join(activ_mask)` term `Cnt.c` has and klt's deck drops | **`status: clean`, 0** |
+
+Supplying that one term accounts for every remaining violation and introduces
+none of its own. Recorded in `layout/drc/vco-cnt-c-control.json`; `drc.sh`
+fails if the control stream ever stops coming back clean, because that would
+mean the remaining violations are real and the explanation here is stale.
+
+**The control stream is an experiment, not a layout.** It lives in
+`layout/build/drc/` (gitignored) and is never committed, never shipped, and
+never cited as evidence about the block. Copying Activ:mask geometry onto
+Activ:drawing in the real stream would be falsifying mask data to make a
+report go green; the point of the control is only to identify *which rule
+term* the difference comes from.
+
+Filed upstream as a tool gap per this repo's friction protocol:
+[2AMLogic/klayout-tools#2688](https://github.com/2AMLogic/klayout-tools/issues/2688).
+
+### Why the PDK's own deck was not used instead
+
+`klt drc --engine klayout` would run IHP's deck of record, which implements
+`Cnt.c` correctly. It does not run here: that engine shells out to the
+standalone `klayout` on `PATH`, which is **0.28.16**, and IHP's deck aborts
+part-way through at rule `Gat.g` with
+
+```
+ERROR: undefined local variable or method `absolute' for DRCEngine
+  rule_decks/feol/5_8_gatpoly.drc:70
+```
+
+— a DRC-DSL metric newer than that KLayout. klt's handling is correct and not
+the gap: it refused the partial report rather than reporting its zero
+violations as a clean verdict. The gap is that klt *bundles* KLayout 0.30.12
+(it is what the curated engine and `klt extract` run) but `--engine klayout`
+cannot use it, and nothing preflights the PATH binary's feature level against
+the deck's. Filed as
+[2AMLogic/klayout-tools#2689](https://github.com/2AMLogic/klayout-tools/issues/2689).
+Installing a newer standalone KLayout on the build host was not an option
+available to this phase.
+
+### Guard-ring / tap continuity
+
+`layout/drc/vco-ring-check.json`. The ring is the four `SG13_dev/ptap1` bars
+of §7, clipped to its own Activ outer box `[-80.0, -106.0, 105.0, -16.0]`;
+`--ignore-enclosed` is required because the ring encloses core geometry on the
+same layers.
+
+**Each layer is run twice.** A `continuous` verdict means nothing on its own —
+a check that cannot fail is indistinguishable from one that passes — so the
+same invocation is also run against a copy of the stream with one of the four
+`ptap1` bars deleted (`layout/scripts/break_ring.py`), which opens the annulus
+on one side and changes nothing else.
+
+| Ring layer | Committed layout | Negative control | Verdict |
+|---|---|---|---|
+| Activ `1/0` | `continuous` | `broken` (37) | **continuity verified** |
+| pSD `14/0` | `continuous` | `broken` (72) | **continuity verified** |
+| Metal1 `8/0` | `continuous` | `continuous` | **not evidence** |
+
+The tap ring itself — the p+ diffusion that actually ties the substrate to `0`
+— is verified on both of its layers. **The Metal1 row is reported and
+explicitly not claimed**: its negative control also passes, which means a
+`continuous` verdict on `8/0` inside that window can be produced by core
+routing that merely shares the layer, with the ring's own Metal1 open. `klt
+ring-check` has no way to scope its layer set to a cell or instance subset, so
+there is no way to ask the question about the ring's Metal1 alone; filed as
+[2AMLogic/klayout-tools#2690](https://github.com/2AMLogic/klayout-tools/issues/2690).
+Treat Metal1 ring continuity as **unverified**, not as passing.
+
+### What this leaves for #62 and beyond
+
+- **Item 3 of `signoff/design-evidence-tiers.md` is not met** and no citation
+  of this layout should claim it. The blocker is upstream (klayout-tools
+  #2688), not in this repo: once the curated deck carries `Cnt.c`'s
+  `activ_mask` join, re-running `layout/drc.sh` against an unchanged
+  `layout/vco.gds` is expected to report `status: clean` — the control above
+  is exactly that experiment, run early.
+- **The scope caveat survives a future clean verdict.** Even then, the 16
+  deck-scope chapters and 37 rule-free drawn layers above remain the honest
+  bound on what "clean" would mean, and must be restated with the claim.
+- **Metal1 guard-ring continuity remains unverified** (klayout-tools #2690).

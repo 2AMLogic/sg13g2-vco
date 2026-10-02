@@ -10,7 +10,9 @@ Layout (klayout-tools driven) and DRC/LVS signoff artifacts.
 | `vco_manifest.json` | Machine-readable provenance + measured acceptance evidence |
 | `PROVENANCE.md` | **The provenance record** — tool, method, device mapping, every design decision and how each claim was measured |
 | `generate.sh` | Regenerates both artifacts from the PDK, end to end, headless |
-| `scripts/` | The generation stages `generate.sh` drives |
+| `drc.sh` | Re-runs the design-rule and guard-ring evidence; fails on any verdict drift |
+| `drc/` | The committed `klt drc` / `klt ring-check` reports (`PROVENANCE.md` §12) |
+| `scripts/` | The generation stages `generate.sh` drives, plus `drc.sh`'s two controls |
 | `build/` | Scratch (gitignored, like `sim/build/` and `design/build/`) |
 
 ## The layout
@@ -55,13 +57,20 @@ stock tarball install; `scripts/pdk_env.sh` reuses the committed workaround at
 `sim/inductor-model/em-extraction/scripts/setup_pdk_overlay.sh` and never
 mutates the shared PDK install (`PROVENANCE.md` §3).
 
-## Status: drawn, not signed off
+## Status: drawn and design-rule iterated, not signed off
 
-This is the floorplan / placement / routing deliverable only.
-
-- **DRC closure is issue #61** — not run here, and not a gate on this phase.
-  `klt draw` is PDK-unaware and stamps its own output as not guaranteed
-  design-legal.
+- **DRC (issue #61) — run, and the report of record is NOT `status: clean`.**
+  It is `violations`, 8, all of one rule, all inside the PDK's own `npn13G2V`
+  PCell. `PROVENANCE.md` §12 shows — with the same deck, re-run against a
+  control stream — that every one of them is an artefact of klt's curated
+  deck approximating IHP's `Cnt.c` by dropping its `activ_mask` term, and not
+  a defect in this layout (filed upstream as `klayout-tools#2688`). One real
+  violation *was* found and fixed in place: two `metal1.space.1` hits from
+  the VCTRL tap ladders. **`signoff/design-evidence-tiers.md` item 3 is not
+  met and must not be cited.** The deck also covers only 16 DRM chapters and
+  has no rule for 37 of the layers this stream draws — §12 discloses both.
+- **Guard-ring continuity is verified on Activ and pSD** against a negative
+  control, and explicitly **not** verified on Metal1 (§12).
 - **LVS closure is issue #62** — not run here. Three deliberate
   schematic/layout differences are already recorded for it in `PROVENANCE.md`
   (the `rppd` vs ideal `R` substitution, the varactor `bn` substrate tie, and

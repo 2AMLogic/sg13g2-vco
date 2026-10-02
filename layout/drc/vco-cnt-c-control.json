@@ -1,0 +1,23 @@
+{
+  "committed_stream": {
+    "rule_counts": {
+      "activ.enclosing.cont.1": 8
+    },
+    "status": "violations",
+    "violation_count": 8
+  },
+  "conclusion": "the one dropped rule term accounts for every remaining violation and introduces none of its own: supplying it alone takes the identical deck from 8 violation(s) to clean. The layout satisfies IHP's Cnt.c as written; klt's approximation of it does not.",
+  "control_stream_with_activ_mask_joined": {
+    "rule_counts": {},
+    "status": "clean",
+    "violation_count": 0
+  },
+  "deck_content_hash": "sha256:89ba7c9ee605174b50c4efffe8c601aa4449007038b17a3d9df63ffd8547da13",
+  "layout": {
+    "content_hash": "sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a",
+    "file": "layout/vco.gds"
+  },
+  "method": "single-variable control: the same deck (same content_hash), same engine and same layout are re-run against a diagnostic copy of the stream in which Activ:mask (1/20) has been copied onto Activ:drawing (1/0) -- i.e. carrying the `.join(activ_mask)` term that IHP's own Cnt.c has and klt's approximation drops, and carrying no other change. The control stream is scratch (layout/build/drc/), never committed: it is an experiment, not a layout.",
+  "question": "are the activ.enclosing.cont.1 violations in layout/drc/vco-drc.json a defect in this layout, or an artefact of klt's curated deck approximating IHP's Cnt.c?",
+  "schema_version": 1
+}

@@ -1,0 +1,62 @@
+{
+  "file": "layout/vco.gds",
+  "layers": [
+    {
+      "committed_layout": {
+        "status": "continuous",
+        "violation_count": 0
+      },
+      "discriminating": true,
+      "evidence": "guard-ring continuity on this layer is VERIFIED: continuous on the committed layout, broken on the negative control",
+      "layer": [
+        1,
+        0
+      ],
+      "negative_control": {
+        "status": "broken",
+        "violation_count": 37
+      }
+    },
+    {
+      "committed_layout": {
+        "status": "continuous",
+        "violation_count": 0
+      },
+      "discriminating": true,
+      "evidence": "guard-ring continuity on this layer is VERIFIED: continuous on the committed layout, broken on the negative control",
+      "layer": [
+        14,
+        0
+      ],
+      "negative_control": {
+        "status": "broken",
+        "violation_count": 72
+      }
+    },
+    {
+      "committed_layout": {
+        "status": "continuous",
+        "violation_count": 0
+      },
+      "discriminating": false,
+      "evidence": "NOT evidence: the negative control also passes, so a `continuous` verdict on this layer can come from non-ring geometry sharing it inside the clip window",
+      "layer": [
+        8,
+        0
+      ],
+      "negative_control": {
+        "status": "continuous",
+        "violation_count": 0
+      }
+    }
+  ],
+  "negative_control": "layout/scripts/break_ring.py deletes one of the four ptap1 bars, opening the annulus on one side",
+  "region_um": [
+    -80.0,
+    -106.0,
+    105.0,
+    -16.0
+  ],
+  "ring_source": "the guard ring's four SG13_dev/ptap1 bars",
+  "schema_version": 1
+}
