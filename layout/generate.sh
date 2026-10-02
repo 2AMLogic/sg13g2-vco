@@ -55,7 +55,15 @@ echo "== overlay: ${PDK_OVERLAY_ROOT}"
 
 PDKARGS=(--pdk ihp-sg13g2 --pdk-root "${PDK_OVERLAY_ROOT}")
 # KLayout emits a `psutil` warning per PCell-library load that is pure noise.
-filt() { grep -v "^Warning: Python package 'psutil' not found!$" || true; }
+# KLayout emits a `psutil` warning per library load that is pure noise, and
+# its bundled Python prints "Could not import tkinter" on hosts whose
+# KLayout has no GUI Tk -- also pure noise for every headless use here
+# (PCell evaluation without callbacks is exactly how this flow runs; the
+# rppd `Calculate:` limitation is handled by supplying `l` directly).
+filt() { grep -v -e "^Warning: Python package 'psutil' not found!$" \
+                 -e "^Could not import tkinter. No callback support.$" \
+                 -e "^Warning: No tkinter installed. No callback support.*$" \
+                 || true; }
 KLSCRATCH="${BUILD}/klayout-scratch"
 mkdir -p "${KLSCRATCH}"
 
@@ -83,6 +91,12 @@ print("  %-12s %-22s bbox %.3f x %.3f um" % (
     d["bbox_um"]["x1"] - d["bbox_um"]["x0"],
     d["bbox_um"]["y1"] - d["bbox_um"]["y0"]))
 PY
+    # Mask-grid step: IHP rules 3.1/3.2 require 5 nm vertices and exact
+    # 0/45/90 edges; PCell arithmetic guarantees neither (see
+    # scripts/snap_grid.py).  Runs before port measurement, so every
+    # measured coordinate is the snapped one the stream really carries.
+    KLAYOUT_PATH="${KLSCRATCH}" klayout -zz -r "${HERE}/scripts/snap_grid.py" \
+      -rd gds="${BUILD}/dev/${id}.gds" 2>&1 | filt | sed 's/^/  /'
   done < "${BUILD}/log/devices.tsv"
 fi
 
@@ -152,6 +166,13 @@ print("  %-14s cell=%s  shapes=%s  labels=%s" % (
     "wiring", d.get("cell_name"), d.get("shape_count"), d.get("label_count")))
 PY
   run_compose "${BUILD}/req/top.json" top
+  # Mask-grid step over the composed stream: snaps the hand-drawn wiring
+  # rectangles, the router's inter-core wires and every fractional instance
+  # origin (via ladders, taps) onto the same 5 nm grid the device streams
+  # were snapped to.  Runs BEFORE connectivity so the extraction evidence
+  # describes the final geometry.
+  KLAYOUT_PATH="${KLSCRATCH}" klayout -zz -r "${HERE}/scripts/snap_grid.py" \
+    -rd gds="${BUILD}/vco.gds" 2>&1 | filt | sed 's/^/  /'
 fi
 
 # ---------------------------------------------------------- connectivity --

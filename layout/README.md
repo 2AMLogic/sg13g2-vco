@@ -10,9 +10,9 @@ Layout (klayout-tools driven) and DRC/LVS signoff artifacts.
 | `vco_manifest.json` | Machine-readable provenance + measured acceptance evidence |
 | `PROVENANCE.md` | **The provenance record** — tool, method, device mapping, every design decision and how each claim was measured |
 | `generate.sh` | Regenerates both artifacts from the PDK, end to end, headless |
-| `drc.sh` | Re-runs the design-rule and guard-ring evidence; fails on any verdict drift |
+| `drc.sh` | Re-runs the design-rule evidence on **two engines** (klt's curated deck + IHP's own runset) and the guard-ring checks; fails on any verdict drift |
 | `drc/` | The committed `klt drc` / `klt ring-check` reports (`PROVENANCE.md` §12) |
-| `scripts/` | The generation stages `generate.sh` drives, plus `drc.sh`'s two controls |
+| `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s two controls |
 | `build/` | Scratch (gitignored, like `sim/build/` and `design/build/`) |
 
 ## The layout
@@ -31,7 +31,7 @@ dominated by the two `p11` spirals.
 | SiGe HBT | 4 | `SG13_dev/npn13G2V` |
 | Resistor | 3 | `SG13_dev/rppd` — see `PROVENANCE.md` §5 for why |
 | Guard-ring tap | 4 | `SG13_dev/ptap1` |
-| Via ladder | 52 | `SG13_dev/via_stack` |
+| Via ladder | 54 | `SG13_dev/via_stack` |
 
 All 9 nets of `design/vco.spice` are routed and labelled: `VDD`, `OUTP`,
 `OUTN`, `VCTRL`, `TAIL`, `TE`, `NBIAS`, `RE`, `0`.
@@ -59,18 +59,29 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
 
 ## Status: drawn and design-rule iterated, not signed off
 
-- **DRC (issue #61) — run, and the report of record is NOT `status: clean`.**
-  It is `violations`, 8, all of one rule, all inside the PDK's own `npn13G2V`
-  PCell. `PROVENANCE.md` §12 shows — with the same deck, re-run against a
-  control stream — that every one of them is an artefact of klt's curated
-  deck approximating IHP's `Cnt.c` by dropping its `activ_mask` term, and not
-  a defect in this layout (filed upstream as `klayout-tools#2688`). One real
-  violation *was* found and fixed in place: two `metal1.space.1` hits from
-  the VCTRL tap ladders. **`signoff/design-evidence-tiers.md` item 3 is not
-  met and must not be cited.** The deck also covers only 16 DRM chapters and
-  has no rule for 37 of the layers this stream draws — §12 discloses both.
-- **Guard-ring continuity is verified on Activ and pSD** against a negative
-  control, and explicitly **not** verified on Metal1 (§12).
+- **DRC (issue #61) — two reports of record, neither labelled `clean`.**
+  - *IHP's own primary runset* (`ihp-sg13g2.drc` via `klt drc --engine
+    klayout`, `drc/vco-drc-ihp.json`): **zero findings.** Getting there from
+    the first run's **370 real violations** took three generator fixes, all in
+    place in the committed stream: a mask-grid step (`scripts/snap_grid.py`,
+    5 nm vertices + exact 45° edges per IHP rules 3.1/3.2), one same-net NBL
+    plate per varactor bank (rule `NBL.b`), and PDK via ladders for the two
+    emitter feeds (klt's router draws 0.22 µm via1 against IHP's fixed
+    0.19 µm). klt 0.6.0 caps a zero-finding external-deck run at
+    `coverage_unknown` — it has no way to prove every rule executed — so the
+    report cannot say `clean` even at zero findings (§12).
+  - *klt's curated deck* (`drc/vco-drc.json`): `violations`, 8, all inside
+    the PDK's own `npn13G2V` PCell — shown by a same-deck control to be an
+    artefact of the deck's `Cnt.c` approximation (upstream
+    `klayout-tools#2688`), not a layout defect.
+  **`signoff/design-evidence-tiers.md` item 3 is not met and must not be
+  cited** — a zero-finding report without the `clean` label is not a clean
+  report. IHP's optional decks were surveyed once (§12): antenna clean,
+  density = fill-insertion rules deferred to chip assembly, and the
+  self-declared-untested "maximal" deck's 4 findings are inside the PDK's
+  own SVaricap PCell.
+- **Guard-ring continuity is verified on all three of its layers** (Activ,
+  pSD, Metal1), each against a negative control that breaks it (§12).
 - **LVS closure is issue #62** — not run here. Three deliberate
   schematic/layout differences are already recorded for it in `PROVENANCE.md`
   (the `rppd` vs ideal `R` substitution, the varactor `bn` substrate tie, and

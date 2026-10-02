@@ -16,6 +16,10 @@
 #
 # WHAT IT WRITES (all committed, all repo-root-relative inside, no host paths):
 #   layout/drc/vco-drc.json         `klt drc --deck sg13g2` report of record
+#   layout/drc/vco-drc-ihp.json     IHP's own primary runset (tech/drc/
+#                                   ihp-sg13g2.drc) via `klt drc --engine
+#                                   klayout` -- the PDK-native second opinion
+#                                   whose findings this phase drove to zero
 #   layout/drc/vco-ring-check.json  guard-ring annulus evidence + its negative
 #                                   control
 #   layout/drc/vco-cnt-c-control.json  the same deck re-run against a
@@ -25,10 +29,14 @@
 #                                   `activ.enclosing.cont.1` hits are an
 #                                   artefact of that approximation
 #
-# READ layout/PROVENANCE.md section 12 BEFORE CITING ANY OF THIS.  The report
-# of record is NOT `status: clean`, and the reason is a deck defect rather
-# than a layout defect; signoff/design-evidence-tiers.md item 3 is therefore
-# NOT satisfied by it.
+# READ layout/PROVENANCE.md section 12 BEFORE CITING ANY OF THIS.  The
+# curated-engine report of record is NOT `status: clean`, and the reason is
+# a deck defect rather than a layout defect; signoff/design-evidence-tiers.md
+# item 3 is therefore NOT satisfied by it.  The IHP-native report carries
+# zero violations but `status: coverage_unknown` -- klt 0.6.0 has no
+# instrumentation interface that lets an externally-run deck claim known
+# full coverage, so a zero-finding native-deck run can never be labelled
+# `clean` (see PROVENANCE.md section 12, "the two upstream caps").
 
 set -euo pipefail
 
@@ -53,7 +61,12 @@ RING_REGION='[-80.0,-106.0,105.0,-16.0]'
 RING_LAYERS="1,0 14,0 8,0"
 
 # KLayout emits a `psutil` warning per library load that is pure noise.
-filt() { grep -v "^Warning: Python package 'psutil' not found!$" || true; }
+# Same noise filter as generate.sh: the psutil warning and the headless-host
+# tkinter notice are both pure noise for these read-back helpers.
+filt() { grep -v -e "^Warning: Python package 'psutil' not found!$" \
+                 -e "^Could not import tkinter. No callback support.$" \
+                 -e "^Warning: No tkinter installed. No callback support.*$" \
+                 || true; }
 KLSCRATCH="${SCRATCH}/klayout-scratch"
 mkdir -p "${KLSCRATCH}"
 
@@ -202,6 +215,37 @@ print("  cnt-c-control: committed=%s(%d)  with Cnt.c's activ_mask term=%s(%d)"
          ovl["status"], ovl["violation_count"]))
 PY
 
+# ------------------------------------------------- IHP-native deck of record --
+# IHP's own primary DRC runset, run through klt's klayout engine against the
+# same committed stream.  This is the deck that implements the process rules
+# the curated deck approximates -- including Cnt.c as IHP wrote it, NBL.b,
+# the 5 nm grid (rule 3.1) and the 0/45/90 edge-angle rules (3.2) -- so it
+# is the strongest available statement about the layout itself.  klt 0.6.0
+# caps a zero-finding external-deck run at `status: coverage_unknown`
+# (exit 4): there is no instrumentation interface by which an externally-run
+# deck can claim known full coverage, so "clean" is not a label this engine
+# can produce.  The drift gate below therefore asserts the FINDINGS (zero),
+# and the status label is recorded verbatim.  See PROVENANCE.md section 12.
+if [[ -n "${IHP_PDK_ROOT:-}" ]]; then
+  PDK="${IHP_PDK_ROOT}"
+elif [[ -n "${PDK_ROOT:-}" && -d "${PDK_ROOT}/ihp-sg13g2" ]]; then
+  PDK="${PDK_ROOT}/ihp-sg13g2"
+elif [[ -d "${HOME}/share/pdk/ihp-sg13g2" ]]; then
+  PDK="${HOME}/share/pdk/ihp-sg13g2"
+else
+  echo "error: cannot find an IHP-Open-PDK install for the native deck (set IHP_PDK_ROOT)" >&2
+  exit 1
+fi
+IHDECK="${PDK}/libs.tech/klayout/tech/drc/ihp-sg13g2.drc"
+[[ -f "${IHDECK}" ]] || { echo "error: no ihp-sg13g2.drc under ${PDK}" >&2; exit 1; }
+echo "== ihp-native: klt drc --engine klayout --deck-file ihp-sg13g2.drc"
+rc=0
+klt drc "${GDS}" --engine klayout --deck-file "${IHDECK}" --format json \
+  > "${OUT}/vco-drc-ihp.json" || rc=$?
+[[ "${rc}" -eq 0 || "${rc}" -eq 3 || "${rc}" -eq 4 ]] || {
+  echo "error: klt drc (native deck) failed (exit ${rc}), not a verdict" >&2
+  cat "${OUT}/vco-drc-ihp.json" >&2; exit 1; }
+
 # ------------------------------------------------------------- assertions --
 # The recorded verdict, asserted rather than described.  Any drift fails.
 python3 - "${OUT}" <<'PY'
@@ -245,6 +289,20 @@ if ctl["violation_count"] != 0:
                 "dropped activ_mask term and must be re-diagnosed"
                 % (ctl["violation_count"], ctl["rule_counts"]))
 
+# 5. The IHP-native deck of record reports ZERO findings.  Any violation it
+#    reports is a real process-rule violation in this layout (that deck
+#    implements the process rules, not an approximation of them) and must
+#    fail this script.  Its `status` stays `coverage_unknown` on a
+#    zero-finding run by klt design -- that label is not drift; the
+#    violation count is the gate.
+ihp = json.load(open(os.path.join(out, "vco-drc-ihp.json")))
+if ihp["violation_count"] != 0:
+    fail.append("the IHP-native deck reports %d violation(s) %s"
+                % (ihp["violation_count"], ihp["rule_counts"]))
+if ihp["status"] not in ("coverage_unknown", "clean"):
+    fail.append("the IHP-native deck's status is %r, expected "
+                "coverage_unknown (zero findings) or clean" % ihp["status"])
+
 if fail:
     print("\n== DRIFT: the committed verdict no longer holds")
     for f in fail:
@@ -261,4 +319,7 @@ print("                   layout defect.  NOT a clean report; see section 12.")
 for e in ring["layers"]:
     print("  ring %-6s    : %s" % ("%d/%d" % tuple(e["layer"]),
                                    e["evidence"].split(":")[0]))
+print("  ihp-native    : %d violation(s) (status %s -- section 12 explains"
+      " why zero findings is not labelled clean)"
+      % (ihp["violation_count"], ihp["status"]))
 PY

@@ -38,15 +38,15 @@
         "status": "continuous",
         "violation_count": 0
       },
-      "discriminating": false,
-      "evidence": "NOT evidence: the negative control also passes, so a `continuous` verdict on this layer can come from non-ring geometry sharing it inside the clip window",
+      "discriminating": true,
+      "evidence": "guard-ring continuity on this layer is VERIFIED: continuous on the committed layout, broken on the negative control",
       "layer": [
         8,
         0
       ],
       "negative_control": {
-        "status": "continuous",
-        "violation_count": 0
+        "status": "broken",
+        "violation_count": 56
       }
     }
   ],

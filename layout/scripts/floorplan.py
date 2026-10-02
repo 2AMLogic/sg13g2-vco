@@ -46,6 +46,11 @@ METAL3 = (30, 0)
 METAL5 = (67, 0)
 TOPMETAL1 = (126, 0)
 TOPMETAL2 = (134, 0)
+# NBL drawing layer (the PDK DRC deck's nbulay_drw = 32/0; IHP rule NBL.b:
+# min NBL space or notch, same net, 1.5 um).  The SVaricap PCell draws one
+# small NBL shape per cell; the composed banks draw one plate per bank over
+# all 16 cells' shapes -- see wiring_request and PROVENANCE.md section 12.
+NBULAY = (32, 0)
 
 TEXT = {
     METAL1: (8, 25),
@@ -309,10 +314,13 @@ def varbank_request(build, side):
 def core_request(build):
     """The bias/core devices, placed and partly routed by `klt gen-compose`.
 
-    `connectivity[]` here carries the three nets that live entirely inside this
-    composition's own clear region and so can be left to klt's router: TE, RE
-    and NBIAS.  The six remaining nets (VDD, OUTP, OUTN, VCTRL, TAIL, 0) are
-    drawn explicitly in `wiring_request` -- not because the router could not
+    `connectivity[]` here carries the one net that lives entirely inside this
+    composition's own clear region and can be left to klt's router without a
+    via drop: NBIAS.  TE and RE would need router via1 drops, which klt draws
+    at 0.22 um against IHP's fixed 0.19 um via1 (rule V1.a checks min AND
+    max), so they are drawn explicitly in `wiring_request` with via_stack
+    PCell ladders instead.  The remaining nets (VDD, OUTP, OUTN, VCTRL, TAIL,
+    0) are also drawn in `wiring_request` -- not because the router could not
     be coaxed into them, but because each one either (a) terminates on a device
     pad the sg13g2 layer-role table cannot name (the spirals' TopMetal1 pins,
     the MIM cap's Metal5/TopMetal1 plates), or (b) needs deliberate,
@@ -351,32 +359,18 @@ def core_request(build):
     }
     # Waypoints are derived from the measured terminal positions, not written
     # out as literals, so they follow the devices if a PCell changes.
-    q3e = place(q3["ports"]["E"], Q3_ORG)
-    q4e = place(q1["ports"]["E"], Q4_ORG)
-    rte_hi = place(rte["ports"]["P_HI"], RTE_ORG)
-    rre_hi = place(rre["ports"]["P_HI"], RRE_ORG)
     rref_lo = place(rref["ports"]["P_LO"], RREF_ORG)
     rref_box = pinbox(rref["ports"]["P_LO"], RREF_ORG)
 
+    # TE and RE are NOT routed here.  klt's router draws its own via1 drops
+    # at its PDK-independent 0.22 um contact size, but IHP's rule V1.a fixes
+    # via1 at 0.19 um in BOTH directions (min and max), so the router's drop
+    # is an automatic V1.a violation on this PDK.  Both nets are drawn in
+    # wiring_request instead -- explicit Metal2 runs plus SG13_dev/via_stack
+    # PCell ladders (PDK via1) at each resistor feed, the same pattern as
+    # every other layer transition in this block.  See PROVENANCE.md
+    # section 12.
     connectivity = [
-        # TE and RE both start on an npn's Metal2 emitter pad, which is boxed
-        # in by that device's own Metal1 base and collector -- so both route on
-        # the metal2 plane (klt via-drops to each resistor's Metal1 pad at the
-        # far end) and both escape sideways before turning, which is the only
-        # clear side of an emitter pad.  Each resistor's P_HI faces +y, so the
-        # last waypoint brings the approach round above it.
-        {"net": "TE",
-         "pins": [{"block": "Q3", "port": "E"}, {"block": "RTE", "port": "P_HI"}],
-         "layer_role": "metal2",
-         "waypoints_um": [[q3e[0] + 5.5, q3e[1]],
-                          [q3e[0] + 5.5, rte_hi[1] + 1.75],
-                          [rte_hi[0], rte_hi[1] + 1.75]]},
-        {"net": "RE",
-         "pins": [{"block": "Q4", "port": "E"}, {"block": "RRE", "port": "P_HI"}],
-         "layer_role": "metal2",
-         "waypoints_um": [[q4e[0] + 5.5, q4e[1]],
-                          [q4e[0] + 5.5, rre_hi[1] + 2.0],
-                          [rre_hi[0], rre_hi[1] + 2.0]]},
         # NBIAS: Q4's own B-C diode strap is drawn (a Metal2 landing inside an
         # npn13G2V footprint would short to its emitter pad), so the router is
         # given the three *inter-device* pins only, with each leg steered clear
@@ -417,8 +411,8 @@ def wiring_request(build):
     drawn is the planar metal between them: the TopMetal2 VDD trunk, the
     TopMetal1 OUTP/OUTN tank straps, the Metal5 cap return, the Metal2 tank
     trunks and their cross-couple branches, the Metal3 cross-over, the Metal1
-    varactor-bank buses, the Metal3 VCTRL trunk, the substrate returns, the
-    Q4 diode strap, and the nine net labels.
+    varactor-bank buses, the per-bank NBL plates, the Metal3 VCTRL trunk, the
+    substrate returns, the Q4 diode strap, and the nine net labels.
     """
     ind = load_ports(build, "ind")
     cap = load_ports(build, "cmim")
@@ -511,6 +505,18 @@ def wiring_request(build):
     for side, x0, net in (("p", BANK_P_X0, "OUTP"), ("n", BANK_N_X0, "OUTN")):
         var = load_ports(build, "svaricap_" + side)
         g1, g2, w = (var["ports"][k] for k in ("G1", "G2", "W"))
+        # One same-net NBL plate per bank, spanning all 16 cells' own NBL
+        # shapes.  IHP rule NBL.b requires 1.5 um between NBL regions (or a
+        # notch-free union) even on the same net, and VAR_PITCH = the cell's
+        # own NWell width leaves only ~0.48 um cell-to-cell -- the plate
+        # unions the bank's NBL into one notch-free region at the bank's
+        # tank node.  The two banks are 67.2 um apart (>> NBL.c's 3.2 um
+        # different-net minimum), so the plates cannot bridge them.  Derived
+        # from the measured nbl_box_um, never a transcribed constant.
+        nbl = var["nbl_box_um"]
+        s.append(rect(NBULAY, x0 + nbl[0], BANK_Y + nbl[1],
+                      x0 + (VAR_N - 1) * VAR_PITCH + nbl[2],
+                      BANK_Y + nbl[3], net))
         # Per-cell Metal1 landing pads over the n-well (W) contacts.  0.20 um
         # clear of the cell's own gate metal at local x = 0.75 (metal1.space
         # 0.18); 1.62 um clear of the neighbouring cell's pad.
@@ -572,6 +578,25 @@ def wiring_request(build):
     t.append(label(METAL1, "NBIAS", *g["Q4_B"]))
     t.append(label(METAL2, "RE", *g["Q4_E"]))
     t.append(label(METAL1, "TE", *g["RTE_HI"]))
+
+    # ---------------------------------------------- TE / RE (drawn, not routed) --
+    # The emitter-feed nets, previously left to klt's router: both start on
+    # an npn Metal2 emitter pad (boxed in by that device's own Metal1 base
+    # and collector, so the run escapes sideways before turning) and end on
+    # a resistor's Metal1 P_HI pad, reached from above.  Drawn here so the
+    # only via1 in each feed is a SG13_dev/via_stack PCell's own -- klt's
+    # router via1 is 0.22 um, which IHP rule V1.a (min AND max 0.19) rejects
+    # outright.  Waypoints follow the measured pads, not literals.
+    for net, pad, emit, escape_x, drop_dy in (
+            ("TE", g["RTE_HI"], g["Q3_E"], 5.5, 1.75),
+            ("RE", g["RRE_HI"], g["Q4_E"], 5.5, 2.0)):
+        wpx = round(emit[0] + escape_x, 4)      # sideways escape from the pad
+        wpy = round(pad[1] + drop_dy, 4)        # approach plane above the pad
+        s.append(rect(METAL2, emit[0] - 0.2, emit[1] - 0.2, wpx + 0.2,
+                      emit[1] + 0.2, net))                       # pad escape
+        s.append(rect(METAL2, wpx - 0.2, wpy, wpx + 0.2, emit[1] + 0.2, net))
+        s.append(rect(METAL2, pad[0] - 0.2, wpy - 0.2, wpx + 0.2, wpy + 0.2, net))
+        s.append(rect(METAL2, pad[0] - 0.2, pad[1], pad[0] + 0.2, wpy + 0.2, net))
 
     # ------------------------------------------------- substrate return (0) --
     # Each resistor's cold end returns to the guard ring on Metal3, chosen so
@@ -689,7 +714,9 @@ def geometry(build):
         "Q4_C_BOX": pinbox(q1["ports"]["C"], Q4_ORG),
         "Q4_B": place(q1["ports"]["B"], Q4_ORG),
         "Q4_E": place(q1["ports"]["E"], Q4_ORG),
+        "Q3_E": place(q3["ports"]["E"], Q3_ORG),
         "RTE_HI": place(rte["ports"]["P_HI"], RTE_ORG),
+        "RRE_HI": place(rre["ports"]["P_HI"], RRE_ORG),
         "RREF_HI_BOX": pinbox(rref["ports"]["P_HI"], RREF_ORG),
     }
     g["VS_Q1C"] = place(q1["ports"]["C"], (Q1_ORG_X, Q12_Y))
@@ -755,6 +782,8 @@ def geometry(build):
         ("VS_Q3C", "vs_m1_m2", g["VS_Q3C"]),
         ("VS_RTE_LO", "vs_m1_m3", g["VS_RTE_LO"]),
         ("VS_RRE_LO", "vs_m1_m3", g["VS_RRE_LO"]),
+        ("VS_TE", "vs_m1_m2", g["RTE_HI"]),
+        ("VS_RE", "vs_m1_m2", g["RRE_HI"]),
         ("VS_RING_RTE", "vs_m1_m3", (g["VS_RTE_LO"][0], RING[1] + RING_W / 2.0)),
         ("VS_RING_RRE", "vs_m1_m3", (g["VS_RRE_LO"][0], RING[1] + RING_W / 2.0)),
         ("VS_VCTRL_P1", "vs_m1_m3", g["VS_VCTRL_P1"]),

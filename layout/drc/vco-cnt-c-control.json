@@ -12,9 +12,9 @@
     "status": "clean",
     "violation_count": 0
   },
-  "deck_content_hash": "sha256:89ba7c9ee605174b50c4efffe8c601aa4449007038b17a3d9df63ffd8547da13",
+  "deck_content_hash": "sha256:894326a4e37fb24fef2f7ffc6ae1da55a0e262b0f0bc1c09adc4862909278fda",
   "layout": {
-    "content_hash": "sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a",
+    "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
     "file": "layout/vco.gds"
   },
   "method": "single-variable control: the same deck (same content_hash), same engine and same layout are re-run against a diagnostic copy of the stream in which Activ:mask (1/20) has been copied onto Activ:drawing (1/0) -- i.e. carrying the `.join(activ_mask)` term that IHP's own Cnt.c has and klt's approximation drops, and carrying no other change. The control stream is scratch (layout/build/drc/), never committed: it is an experiment, not a layout.",
