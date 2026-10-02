@@ -1,0 +1,521 @@
+{
+  "schema_version": 2,
+  "file": "layout/vco.gds",
+  "deck": "sg13g2",
+  "dbu_um": 0.001,
+  "status": "violations",
+  "violation_count": 8,
+  "rule_counts": {
+    "activ.enclosing.cont.1": 8
+  },
+  "metrics": {
+    "drc__error__count": 8
+  },
+  "violations": [
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V",
+      "source_path": [
+        "CORE__vco_core",
+        "Q1__vco_npn_le1",
+        "npn13G2V"
+      ],
+      "bbox": {
+        "left": -10260,
+        "bottom": -69009,
+        "right": -10210,
+        "top": -67791
+      },
+      "polygon": [
+        [
+          -10260,
+          -69009
+        ],
+        [
+          -10260,
+          -67791
+        ],
+        [
+          -10210,
+          -68960
+        ],
+        [
+          -10210,
+          -67840
+        ]
+      ]
+    },
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V",
+      "source_path": [
+        "CORE__vco_core",
+        "Q1__vco_npn_le1",
+        "npn13G2V"
+      ],
+      "bbox": {
+        "left": -10050,
+        "bottom": -69009,
+        "right": -10000,
+        "top": -67791
+      },
+      "polygon": [
+        [
+          -10000,
+          -69009
+        ],
+        [
+          -10050,
+          -67840
+        ],
+        [
+          -10050,
+          -68960
+        ],
+        [
+          -10000,
+          -67791
+        ]
+      ]
+    },
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V$2",
+      "source_path": [
+        "CORE__vco_core",
+        "Q3__vco_npn_le2",
+        "npn13G2V$2"
+      ],
+      "bbox": {
+        "left": -130,
+        "bottom": -83009,
+        "right": -80,
+        "top": -80791
+      },
+      "polygon": [
+        [
+          -130,
+          -83009
+        ],
+        [
+          -130,
+          -80791
+        ],
+        [
+          -80,
+          -82960
+        ],
+        [
+          -80,
+          -80840
+        ]
+      ]
+    },
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V$2",
+      "source_path": [
+        "CORE__vco_core",
+        "Q3__vco_npn_le2",
+        "npn13G2V$2"
+      ],
+      "bbox": {
+        "left": 80,
+        "bottom": -83009,
+        "right": 130,
+        "top": -80791
+      },
+      "polygon": [
+        [
+          130,
+          -83009
+        ],
+        [
+          80,
+          -80840
+        ],
+        [
+          80,
+          -82960
+        ],
+        [
+          130,
+          -80791
+        ]
+      ]
+    },
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V$1",
+      "source_path": [
+        "CORE__vco_core",
+        "Q2__vco_npn_le1",
+        "npn13G2V$1"
+      ],
+      "bbox": {
+        "left": 10000,
+        "bottom": -69009,
+        "right": 10050,
+        "top": -67791
+      },
+      "polygon": [
+        [
+          10000,
+          -69009
+        ],
+        [
+          10000,
+          -67791
+        ],
+        [
+          10050,
+          -68960
+        ],
+        [
+          10050,
+          -67840
+        ]
+      ]
+    },
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V$1",
+      "source_path": [
+        "CORE__vco_core",
+        "Q2__vco_npn_le1",
+        "npn13G2V$1"
+      ],
+      "bbox": {
+        "left": 10210,
+        "bottom": -69009,
+        "right": 10260,
+        "top": -67791
+      },
+      "polygon": [
+        [
+          10260,
+          -69009
+        ],
+        [
+          10210,
+          -67840
+        ],
+        [
+          10210,
+          -68960
+        ],
+        [
+          10260,
+          -67791
+        ]
+      ]
+    },
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V$3",
+      "source_path": [
+        "CORE__vco_core",
+        "Q4__vco_npn_le1",
+        "npn13G2V$3"
+      ],
+      "bbox": {
+        "left": 29870,
+        "bottom": -73009,
+        "right": 29920,
+        "top": -71791
+      },
+      "polygon": [
+        [
+          29870,
+          -73009
+        ],
+        [
+          29870,
+          -71791
+        ],
+        [
+          29920,
+          -72960
+        ],
+        [
+          29920,
+          -71840
+        ]
+      ]
+    },
+    {
+      "rule": "activ.enclosing.cont.1",
+      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
+      "check": "enclosing",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "npn13G2V$3",
+      "source_path": [
+        "CORE__vco_core",
+        "Q4__vco_npn_le1",
+        "npn13G2V$3"
+      ],
+      "bbox": {
+        "left": 30080,
+        "bottom": -73009,
+        "right": 30130,
+        "top": -71791
+      },
+      "polygon": [
+        [
+          30130,
+          -73009
+        ],
+        [
+          30080,
+          -71840
+        ],
+        [
+          30080,
+          -72960
+        ],
+        [
+          30130,
+          -71791
+        ]
+      ]
+    }
+  ],
+  "coverage": {
+    "deck_layers": [
+      "1/0",
+      "5/0",
+      "6/0",
+      "8/0",
+      "10/0",
+      "19/0",
+      "29/0",
+      "30/0",
+      "49/0",
+      "50/0",
+      "66/0",
+      "67/0",
+      "125/0",
+      "126/0",
+      "133/0",
+      "134/0"
+    ],
+    "layers_checked": [
+      "1/0",
+      "5/0",
+      "6/0",
+      "8/0",
+      "10/0",
+      "19/0",
+      "29/0",
+      "30/0",
+      "49/0",
+      "50/0",
+      "66/0",
+      "67/0",
+      "125/0",
+      "126/0",
+      "133/0",
+      "134/0"
+    ],
+    "layers_in_stream_without_rules": [
+      "1/20",
+      "1/23",
+      "5/23",
+      "8/2",
+      "8/23",
+      "8/25",
+      "10/2",
+      "10/23",
+      "10/25",
+      "14/0",
+      "26/0",
+      "27/0",
+      "27/2",
+      "27/25",
+      "28/0",
+      "30/23",
+      "30/25",
+      "31/0",
+      "32/0",
+      "36/0",
+      "40/0",
+      "46/21",
+      "50/23",
+      "51/0",
+      "52/0",
+      "63/0",
+      "67/23",
+      "111/0",
+      "126/2",
+      "126/23",
+      "126/25",
+      "128/0",
+      "129/0",
+      "134/23",
+      "134/25",
+      "148/0",
+      "156/0"
+    ],
+    "rules_checked": [
+      "activ.enclosing.cont.1",
+      "activ.space.1",
+      "activ.width.1",
+      "cont.space.1",
+      "cont.width.1",
+      "gatpoly.enclosing.cont.1",
+      "gatpoly.separation.activ.1",
+      "gatpoly.space.1",
+      "gatpoly.width.1",
+      "metal1.enclosing.via1.1",
+      "metal1.space.1",
+      "metal1.width.1",
+      "metal2.enclosing.via2.1",
+      "metal2.space.1",
+      "metal2.width.1",
+      "metal3.enclosing.via3.1",
+      "metal3.space.1",
+      "metal3.width.1",
+      "metal4.enclosing.via4.1",
+      "metal4.space.1",
+      "metal4.width.1",
+      "metal5.enclosing.topvia1.1",
+      "metal5.space.1",
+      "metal5.width.1",
+      "topmetal1.enclosing.topvia1.1",
+      "topmetal1.enclosing.topvia2.1",
+      "topmetal1.space.1",
+      "topmetal1.width.1",
+      "topmetal2.enclosing.topvia2.1",
+      "topmetal2.space.1",
+      "topmetal2.width.1",
+      "topvia1.space.1",
+      "topvia1.width.1",
+      "topvia2.space.1",
+      "topvia2.width.1",
+      "via1.space.1",
+      "via1.width.1",
+      "via2.space.1",
+      "via2.width.1",
+      "via3.space.1",
+      "via3.width.1",
+      "via4.space.1",
+      "via4.width.1"
+    ],
+    "rules_skipped": [],
+    "voltage_domain_warnings": [],
+    "deck_scope": [
+      "Act",
+      "Cnt",
+      "Gat",
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "M5",
+      "TM1",
+      "TM2",
+      "TV1",
+      "TV2",
+      "V1",
+      "V2",
+      "V3",
+      "V4"
+    ],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "activ.enclosing.cont.1",
+      "activ.space.1",
+      "activ.width.1",
+      "cont.space.1",
+      "cont.width.1",
+      "gatpoly.enclosing.cont.1",
+      "gatpoly.separation.activ.1",
+      "gatpoly.space.1",
+      "gatpoly.width.1",
+      "metal1.enclosing.via1.1",
+      "metal1.space.1",
+      "metal1.width.1",
+      "metal2.enclosing.via2.1",
+      "metal2.space.1",
+      "metal2.width.1",
+      "metal3.enclosing.via3.1",
+      "metal3.space.1",
+      "metal3.width.1",
+      "metal4.enclosing.via4.1",
+      "metal4.space.1",
+      "metal4.width.1",
+      "metal5.enclosing.topvia1.1",
+      "metal5.space.1",
+      "metal5.width.1",
+      "topmetal1.enclosing.topvia1.1",
+      "topmetal1.enclosing.topvia2.1",
+      "topmetal1.space.1",
+      "topmetal1.width.1",
+      "topmetal2.enclosing.topvia2.1",
+      "topmetal2.space.1",
+      "topmetal2.width.1",
+      "topvia1.space.1",
+      "topvia1.width.1",
+      "topvia2.space.1",
+      "topvia2.width.1",
+      "via1.space.1",
+      "via1.width.1",
+      "via2.space.1",
+      "via2.width.1",
+      "via3.space.1",
+      "via3.width.1",
+      "via4.space.1",
+      "via4.width.1"
+    ],
+    "skipped": [],
+    "inapplicable": [],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.6.0+gaf8d6c54312e",
+    "klayout_version": "0.30.12",
+    "pdk": null,
+    "deck": {
+      "name": "sg13g2",
+      "content_hash": "sha256:89ba7c9ee605174b50c4efffe8c601aa4449007038b17a3d9df63ffd8547da13",
+      "released": false
+    },
+    "input": {
+      "content_hash": "sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a",
+      "role": "layout"
+    },
+    "klayout_version_mismatch": false
+  }
+}

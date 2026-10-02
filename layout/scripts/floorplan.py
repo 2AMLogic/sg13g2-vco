@@ -667,6 +667,7 @@ def geometry(build):
     rre = load_ports(build, "rppd_rre")
     rref = load_ports(build, "rppd_rref")
     var_p = load_ports(build, "svaricap_p")
+    vs_m1m3 = load_ports(build, "vs_m1_m3")
 
     L1 = (-SPIRAL_DX, 0.0)
     L2 = (SPIRAL_DX, 0.0)
@@ -710,9 +711,26 @@ def geometry(build):
     wbox = var_p["ports"]["W"]["box_um"]
     g1box = var_p["ports"]["G1"]["box_um"]
     wy_mid = round(BANK_Y + (wbox[1] + wbox[3]) / 2.0, 4)
+    # The inboard VCTRL tap drops the bottom Metal1 rail onto the Metal3 trunk
+    # through a vs_m1_m3 ladder whose Metal1 pad is 0.70 um wide (measured
+    # below).  That pad sits in the gap BETWEEN two adjacent SVaricap cells' gate
+    # metal, which the PCell draws at local x in [G1.x0, G1.x1] on every cell.
+    # Placing it at a round offset instead left 0.09 um to the neighbouring
+    # cell's metal and cost two `metal1.space.1` violations (one per bank) --
+    # so the position is derived from the measured G1 box and centred in the
+    # gap, and the remaining clearance is asserted rather than assumed.
+    m1pad = vs_m1m3["pads"]["Metal1"]   # measured, not transcribed
+    gap_lo = g1box[2]                   # right edge of cell k's gate metal
+    gap_hi = VAR_PITCH + g1box[0]       # left edge of cell k+1's gate metal
+    vctrl_tap_dx = round((gap_lo + gap_hi) / 2.0, 4)
+    _clear = (gap_hi - gap_lo - (m1pad[2] - m1pad[0])) / 2.0
+    assert _clear >= M1_SP, (
+        "VCTRL tap pad clears the SVaricap gate metal by only %.3f um "
+        "(metal1.space is %.2f um); the PCell's G1 box, the via stack's "
+        "Metal1 pad, or VAR_PITCH changed" % (_clear, M1_SP))
     for side, x0 in (("P", BANK_P_X0), ("N", BANK_N_X0)):
         rx0, rx1 = g["VCTRL_RISER_" + side]
-        g["VS_VCTRL_%s1" % side] = (round(x0 + 2.0, 4),
+        g["VS_VCTRL_%s1" % side] = (round(x0 + vctrl_tap_dx, 4),
                                     round(BANK_Y + (g1box[1] + g1box[3]) / 2.0, 4))
         g["VS_VCTRL_%s2" % side] = (round((rx0 + rx1) / 2.0, 4),
                                     round(BANK_Y - 1.0, 4))

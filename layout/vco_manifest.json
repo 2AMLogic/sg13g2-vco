@@ -126,7 +126,7 @@
       "y1": 290.255
     },
     "dbu_um": 0.001,
-    "digest": "sha256:36819f8ef3f97bc0a6a6942fa315746c0ebcc2d4a2fb6f1326544e234d8fbcf1",
+    "digest": "sha256:c8c3485079d4634edd96cc5b459422c96706c18e48a5a896db2a009ba132333a",
     "gds": "layout/vco.gds",
     "top_cell": "vco"
   },
@@ -2099,13 +2099,13 @@
     },
     "source_of_truth": {
       "netlist": "design/vco.spice",
-      "repo_commit": "762fc8ee9f496e691530207ac35936b104c93d60",
-      "repo_describe": "762fc8e-dirty",
+      "repo_commit": "5c5a72b686c515146ace94e500f298b13e918e03",
+      "repo_describe": "5c5a72b-dirty",
       "schematic": "design/vco.sch"
     },
     "tools": {
       "klayout": "KLayout 0.28.16",
-      "klt": "klt 0.6.0+g2dbe4e6883e2"
+      "klt": "klt 0.6.0+gaf8d6c54312e"
     }
   },
   "resistor_sizing": {
