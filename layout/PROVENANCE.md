@@ -437,24 +437,51 @@ This is a *connectivity* check, not LVS. It demonstrates that the nets exist
 and are distinct; it does not demonstrate device-level correspondence, which is
 #62.
 
-### A tool limitation this phase measured, relevant to #62
+### Tool limitations this phase measured, relevant to #62
 
-`klt extract --deck sg13g2` reports its device classes as:
+`device_counts` on the committed layout is `{"cap_cmim": 1}` — **1 of this
+block's 42 devices extracts**. This bounds what #62 can do with `klt lvs` on
+the current deck. It is **not** a defect in this layout, and it is why §9's net
+evidence is framed as a connectivity check rather than as an LVS result.
+
+Three separate causes, each checked against the `klt` 0.6.0 deck source and the
+upstream tracker rather than assumed:
+
+| Device | Status | Where it stands |
+|---|---|---|
+| SiGe HBT (4×) | **declined upstream, with rationale** | `klayout-tools` #1232 investigated populating `EXTRACTION_DECK.bipolars` and concluded the model does not fit: IHP uses a `CustomBJTExtractor`, not the `DeviceExtractorBJT3Transistor` that `BipolarDevice` wires up, and `npn_mk` is a boolean expression (`trans_drw AND pwell AND ptap_holes`) where `BipolarDevice.marker` takes a single layer/datatype pair. The deck documents this decision in its own source. **Do not re-file.** The `npn13G2V` emitters also produce `Gate shape touches no diffusion - ignored` warnings, which is a symptom of the same gap. |
+| MOS varactor (32×), spiral inductor (2×) | **known not curated** | The deck's own source lists `sg13_hv_svaricap`, inductors, ESD devices and the RF MOS as uncurated. Already-known upstream; not re-filed. |
+| Poly resistor (3×) | **newly filed: `klayout-tools` #2679** | The deck *does* carry `rsil`/`rppd`/`rhigh` `ResistorDevice` classes, so this one was expected to work and does not. Diagnosed below. |
+
+#### The poly-resistor finding (klayout-tools#2679)
+
+Worth recording because it is a measurement, not a guess, and because #62 would
+otherwise chase it as a layout defect. The deck declares
+`ResistorDevice(name="rppd", body=(5,0) GatPoly, marker=(128,0) polyres)` — the
+usual "marker overlaps body" convention. The PDK's `SG13_dev/rppd` PCell draws
+the **opposite**: `polyres` is the resistive body, `GatPoly` is only the two
+head/contact pads. Measured on `rppd_rref` (w = 1.0 µm, l = 79.048 µm):
 
 ```
-nfet, pfet, cap_cmim, rfcmim, cap_cmomi, cap_cmomf, resistor, dantenna, dpantenna
+GatPoly 5/0   -> 2 polygons   (0.000,-0.430)-(1.000, 0.000)    <- head
+                              (0.000,79.048)-(1.000,79.478)    <- head
+polyres 128/0 -> 1 polygon    (0.000, 0.000)-(1.000,79.048)    <- the BODY
+body AND marker area = 0.000 um2
 ```
 
-There is **no HBT, no spiral inductor and no MOS-varactor class**, and the
-drawn `rppd` did not extract as a `resistor` either — `device_counts` on the
-committed layout is `{"cap_cmim": 1}`, i.e. 1 of this block's 42 devices. The
-`npn13G2V` emitters additionally produce `Gate shape touches no diffusion -
-ignored` warnings.
+The marker's extent is *exactly* the requested length and the two GatPoly pads
+sit outside it, so the polarity is unambiguous. `body AND marker` is empty, so
+the device region is empty and no drawn resistor is ever recognized — silently,
+with `status: "extracted"` and exit 0. Every layer the class `requires`
+(111/0, 14/0, 28/0) **is** present, so this is a polarity mismatch and not a
+missing-layer problem. It is the same shape of bug as the already-fixed #2591
+(`tap_nplus` inverting the upstream convention).
 
-This bounds what #62 can do with `klt lvs` on the current deck and is filed
-generically (see "Friction protocol" in the repo `CLAUDE.md`). It is **not** a
-defect in this layout: it is why §9's net evidence is framed as a connectivity
-check rather than as an LVS result.
+This is also why the three `rppd` instances' Metal1 terminal pads would show up
+as `dead_metal` if the resistors were extracted in isolation — with no device
+body, the poly never joins the metal. In the **composed** block they are not
+dead, because the `TE`/`RE`/`NBIAS`/`0` routing lands on them; hence
+`dead_metal = 0` in §9.
 
 ## 10. EM-only layers are absent
 
