@@ -12,6 +12,11 @@ bsim4v5.out
 !sim/*/corners/**/*.log
 sim/build/
 design/build/
+# layout/ generation scratch: per-device streams, compose logs, extracted
+# netlists and the PDK submodule overlay. The committed artifacts are
+# layout/vco.gds + layout/vco_manifest.json; everything else is regenerable
+# by layout/generate.sh.
+layout/build/
 # synthesis / P&R scratch
 flow/build/
 # local klt install, created by the setup script
