@@ -5,8 +5,14 @@ An LC voltage-controlled oscillator on IHP SG13G2 on
 [klayout-tools](https://github.com/2AMLogic/klayout-tools) and the
 open-source xschem + ngspice flow.
 
-**Status: just opened.** Nothing is designed yet. The first work is
-the tank inventory — what the PDK's shipped inductor and MIM-cap models actually support, at which frequencies, with which Q.
+**Status: schematic and layout committed; validation incomplete.** The
+[target specification](spec/target-spec.md) is ratified as targets. The
+[schematic](design/README.md), [simulation benches](sim/README.md), and
+[reproducible layout](layout/README.md) are committed, with native DRC
+evidence and coverage limits documented in
+[layout provenance](layout/PROVENANCE.md). LVS closure and the graded PVT
+simulation grids remain outstanding; the
+[signoff report](signoff/t1-report.json) is the verdict of record.
 
 **Built agent-native.** Every specification, decision record, testbench, and
 line of documentation here is produced by AI agents working from a ratified
