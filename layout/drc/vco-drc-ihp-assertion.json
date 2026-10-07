@@ -1,0 +1,279 @@
+{
+  "assertion_rationale": {
+    "cross_check": "the run's declared category SET equals the statically enumerated set (not only its size)",
+    "data_dependent_categories": [
+      {
+        "category": "Seal.l",
+        "declared_for_this_input": false,
+        "declared_when": "the stream carries an EdgeSeal boundary (39/4) shape interacting the chip extent",
+        "fact": "edgeseal_boundary_shapes",
+        "file": "rule_decks/beol/6_10_sealring.drc"
+      },
+      {
+        "category": "MIM.gR",
+        "declared_for_this_input": false,
+        "declared_when": "total MIM (36/0) area exceeds Mim_gR (174800 um^2) -- the category only exists when it is also a finding",
+        "fact": "mim_area_um2",
+        "file": "rule_decks/beol/6_11_mim.drc"
+      }
+    ],
+    "derived_from": "the deck SOURCE, not this run: layout/scripts/ihp_deck_categories.py enumerates every .output(...) name reachable under the modelled invocation, expanding each interpolated name over the loop domain its own file defines",
+    "expected_unique_categories": 590,
+    "included_files": 38,
+    "invocation_modelled": {
+      "ANGLE": true,
+      "BEOL": true,
+      "FEOL": true,
+      "FORBIDDEN": true,
+      "OFFGRID": true,
+      "PIN": true,
+      "PRECHECK_DRC": false,
+      "RECOMMENDED": true,
+      "run_mode": "deep",
+      "tables": "main"
+    },
+    "per_file": [
+      {
+        "categories": 0,
+        "file": "rule_decks/layers_def.drc"
+      },
+      {
+        "categories": 4,
+        "file": "rule_decks/feol/5_1_nwell.drc"
+      },
+      {
+        "categories": 4,
+        "file": "rule_decks/feol/5_2_pwellblock.drc"
+      },
+      {
+        "categories": 5,
+        "file": "rule_decks/feol/5_3_nbulay.drc"
+      },
+      {
+        "categories": 2,
+        "file": "rule_decks/feol/5_5_activ.drc"
+      },
+      {
+        "categories": 5,
+        "file": "rule_decks/feol/5_6_activfiller.drc"
+      },
+      {
+        "categories": 1,
+        "file": "rule_decks/feol/5_7_thickgateox.drc"
+      },
+      {
+        "categories": 6,
+        "file": "rule_decks/feol/5_8_gatpoly.drc"
+      },
+      {
+        "categories": 3,
+        "file": "rule_decks/feol/5_9_gatpolyfiller.drc"
+      },
+      {
+        "categories": 1,
+        "file": "rule_decks/feol/5_10_psd.drc"
+      },
+      {
+        "categories": 9,
+        "file": "rule_decks/feol/5_14_cont.drc"
+      },
+      {
+        "categories": 2,
+        "file": "rule_decks/feol/5_15_contbar.drc"
+      },
+      {
+        "categories": 3,
+        "file": "rule_decks/feol/6_1_npnsubstratetie.drc"
+      },
+      {
+        "categories": 4,
+        "file": "rule_decks/feol/6_7_schottkydiode.drc"
+      },
+      {
+        "categories": 1,
+        "file": "rule_decks/feol/7_2_latchup.drc"
+      },
+      {
+        "categories": 6,
+        "file": "rule_decks/beol/5_16_metal1.drc"
+      },
+      {
+        "categories": 24,
+        "file": "rule_decks/beol/5_17_metaln.drc"
+      },
+      {
+        "categories": 10,
+        "file": "rule_decks/beol/5_18_metalnfiller.drc"
+      },
+      {
+        "categories": 3,
+        "file": "rule_decks/beol/5_19_via1.drc"
+      },
+      {
+        "categories": 9,
+        "file": "rule_decks/beol/5_20_vian.drc"
+      },
+      {
+        "categories": 4,
+        "file": "rule_decks/beol/5_21_topvia1.drc"
+      },
+      {
+        "categories": 2,
+        "file": "rule_decks/beol/5_22_topmetal1.drc"
+      },
+      {
+        "categories": 2,
+        "file": "rule_decks/beol/5_23_topmetal1filler.drc"
+      },
+      {
+        "categories": 4,
+        "file": "rule_decks/beol/5_24_topvia2.drc"
+      },
+      {
+        "categories": 3,
+        "file": "rule_decks/beol/5_25_topmetal2.drc"
+      },
+      {
+        "categories": 2,
+        "file": "rule_decks/beol/5_26_topmetal2filler.drc"
+      },
+      {
+        "categories": 3,
+        "file": "rule_decks/beol/5_27_passiv.drc"
+      },
+      {
+        "categories": 4,
+        "file": "rule_decks/beol/6_9_copperpillar.drc"
+      },
+      {
+        "categories": 9,
+        "file": "rule_decks/beol/6_9_pad.drc"
+      },
+      {
+        "categories": 5,
+        "file": "rule_decks/beol/6_9_solderbump.drc"
+      },
+      {
+        "categories": 12,
+        "file": "rule_decks/beol/6_10_sealring.drc"
+      },
+      {
+        "categories": 2,
+        "file": "rule_decks/beol/6_11_mim.drc"
+      },
+      {
+        "categories": 7,
+        "file": "rule_decks/beol/7_3_metalslits.drc"
+      },
+      {
+        "categories": 6,
+        "file": "rule_decks/beol/9_1_lbe.drc"
+      },
+      {
+        "categories": 9,
+        "file": "rule_decks/pin/7_4_pin.drc"
+      },
+      {
+        "categories": 193,
+        "file": "rule_decks/geometry/3_1_offgrid.drc"
+      },
+      {
+        "categories": 210,
+        "file": "rule_decks/geometry/3_2_angle.drc"
+      },
+      {
+        "categories": 11,
+        "file": "rule_decks/forbidden/3_2_forbidden.drc"
+      }
+    ],
+    "pinned_to_deck_hash": "sha256:0620b737538af7c86dfb7c6ca0ba3a38f8410b0d51412978ca977ea3df3fb693",
+    "stream_facts": {
+      "edgeseal_boundary_shapes": 0,
+      "mim_area_um2": 13.3225,
+      "mim_gr_um2": 174800.0,
+      "top_cell": "vco"
+    }
+  },
+  "deck": {
+    "content_hash": "sha256:0620b737538af7c86dfb7c6ca0ba3a38f8410b0d51412978ca977ea3df3fb693",
+    "pdk_relative_path": "libs.tech/klayout/tech/drc/ihp-sg13g2.drc"
+  },
+  "input": {
+    "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+    "file": "layout/vco.gds"
+  },
+  "invocation": [
+    "klt",
+    "drc",
+    "layout/vco.gds",
+    "--engine",
+    "klayout",
+    "--deck-file",
+    "$IHP_PDK_ROOT/libs.tech/klayout/tech/drc/ihp-sg13g2.drc",
+    "--deck-var",
+    "threads=2",
+    "--expect-rule-categories",
+    "590",
+    "--format",
+    "json"
+  ],
+  "limits": [
+    "the assertion is a caller's documented claim about which rule categories this deck declares under this invocation; KLayout creates a category when a rule's output() is reached, so it shows every rule's code ran, not that each rule faithfully transcribes the DRM",
+    "scope is IHP's PRIMARY runset ihp-sg13g2.drc only; IHP's own run_drc.py additionally runs rule_decks/density.drc and rule_decks/sg13g2_maximal.drc by default and antenna.drc on request -- none of them is covered by this report (PROVENANCE.md sections 12 and 13)",
+    "chip-level density/fill is deferred to chip assembly: the block ships un-filled and fails the min-global-density rules by design",
+    "Seal.l and MIM.gR are data-dependent categories this stream does not trigger (no EdgeSeal boundary; MIM area far below Mim_gR)",
+    "block-level run: sealring, pad, bump and pillar rules are declared and pass vacuously because the block carries no such structures",
+    "DRC only: no LVS claim (issue #62)"
+  ],
+  "negative_controls": [
+    {
+      "control": "--expect-rule-categories 591 (reviewed count + 1)",
+      "discriminating": true,
+      "error": "rule-category coverage assertion failed: expected 591 unique rule categories (--expect-rule-categories) but the deck's report declared 590 -- the deck did not declare the rule set you vouched for (a gated-off rule group, a missing --deck-var, or a changed deck?). Fix the deck invocation or update the expected count.",
+      "exit": 1,
+      "report_written": false
+    },
+    {
+      "control": "--deck-var no_angle=true --expect-rule-categories 590 (the 3.2 angle group gated off, reviewed count kept)",
+      "discriminating": true,
+      "error": "rule-category coverage assertion failed: expected 590 unique rule categories (--expect-rule-categories) but the deck's report declared 380 -- the deck did not declare the rule set you vouched for (a gated-off rule group, a missing --deck-var, or a changed deck?). Fix the deck invocation or update the expected count.",
+      "exit": 1,
+      "report_written": false
+    },
+    {
+      "control": "same invocation without --expect-rule-categories",
+      "coverage_known": false,
+      "exit": 4,
+      "keeps_conservative_verdict": true,
+      "status": "coverage_unknown",
+      "violation_count": 0
+    }
+  ],
+  "report": "layout/drc/vco-drc-ihp.json",
+  "schema_version": 1,
+  "tools": {
+    "klayout_engine": {
+      "source": "KLayout's own Ubuntu-24 package klayout_0.30.12-1_amd64.deb (sha256 23480767fec91bc9a15e075a9bd6906ba85cd7fdda8b4040dde4ffc95c26a742), extracted, not installed, by layout/scripts/native_drc_env.sh",
+      "version": "0.30.12"
+    },
+    "klt": {
+      "package": "klayout-tools",
+      "provisioned_by": "layout/scripts/native_drc_env.sh",
+      "reported_version": "0.6.0+g70dee3b679a6",
+      "revision": "70dee3b679a6451c5f4d830fb995c5eeb16084ee",
+      "source": "git+https://github.com/2AMLogic/klayout-tools",
+      "why": "the merge commit of PR #2803, which added --expect-rule-categories; no release carries it yet"
+    }
+  },
+  "verdict": {
+    "coverage_assertion": {
+      "expected": 590,
+      "kind": "expected_rule_categories",
+      "observed": 590,
+      "satisfied": true
+    },
+    "coverage_known": true,
+    "status": "clean",
+    "violation_count": 0
+  }
+}

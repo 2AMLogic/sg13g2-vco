@@ -7,13 +7,15 @@ this file is reproduced there with the measurement that produced it.
 
 **This layout is not signed off.** It is the floorplan / placement / routing
 deliverable (issue #60) plus the design-rule iteration on top of it (issue
-#61); LVS closure is issue #62. **No DRC report of record carries a
-`status: clean` label yet**: the curated-engine report carries eight
-violations, all demonstrated to be an artefact of the checking deck rather
-than of this layout, and the IHP-native report carries zero findings but a
-`coverage_unknown` label that klt 0.6.0 cannot upgrade to `clean` for an
-externally-run deck. Read §12 before citing any DRC claim, and "What this
-record does *not* claim" at the end before citing any claim at all.
+#61); LVS closure is issue #62. **Since 2026-10-07 (§13) the IHP-native
+DRC report of record is `status: clean`** under IHP's primary runset, with
+an independently reviewed coverage assertion. That result has the scope
+§13 states: it excludes density/fill, the "maximal" runset and antenna, and
+it is block-level. The curated-engine report is kept as a diagnostic
+carrying eight violations, all shown to come from the checking deck rather
+than this layout. §12 is the record of the state before §13, including the
+earlier `coverage_unknown` label. Read §12–§13 before citing any DRC claim,
+and "What this record does *not* claim" before citing any claim at all.
 
 <!-- toc -->
 - [1. Tooling and inputs](#1-tooling-and-inputs)
@@ -28,6 +30,7 @@ record does *not* claim" at the end before citing any claim at all.
 - [10. EM-only layers are absent](#10-em-only-layers-are-absent)
 - [11. What this record does *not* claim](#11-what-this-record-does-not-claim)
 - [12. DRC state (issue #61)](#12-drc-state-issue-61)
+- [13. DRC closure record (2026-10-07, issue #61)](#13-drc-closure-record-2026-10-07-issue-61)
 <!-- /toc -->
 
 ## 1. Tooling and inputs
@@ -548,7 +551,9 @@ is between a layer and a label that happens to share its name.
 
 ## 11. What this record does *not* claim
 
-- **Not DRC-clean *by label*.** Neither report of record says `status:
+- *(Superseded 2026-10-07 by §13: the IHP-native report is now `status:
+  clean` inside §13's stated scope. The text of this bullet is kept as
+  the earlier state.)* **Not DRC-clean *by label*.** Neither report of record says `status:
   clean`, so `signoff/design-evidence-tiers.md` item 3 is **not** satisfied
   and this layout must not be cited for it. The curated report's eight
   remaining violations are demonstrated in §12 to be artefacts of the
@@ -845,3 +850,169 @@ scoping gap stays open for other layouts; this one no longer leans on it.)
   maximal's PCell-internal `NW.e`) is the rest of the story.
 - **Density fill is deferred by design**, not forgotten: the 9 fill-rule
   findings are recorded above and belong to the fill/chip-assembly phase.
+
+## 13. DRC closure record (2026-10-07, issue #61)
+
+*Appended. §12 is kept unchanged as the record of the earlier passes. Where
+the two differ, this section describes the current state, and §12 records
+how things stood before it.*
+
+The IHP-native report of record now reads **`status: clean`**. The layout
+did not change for this: `layout/vco.gds` is byte-identical,
+`sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6`
+on both sides of this change, and no geometry was touched. What changed is
+that the run now **vouches for** its rule coverage through klt's opt-in
+coverage assertion, and the vouched number was derived and checked
+independently. §12's limit 2 (klt caps every zero-finding external-deck
+run at `coverage_unknown`, klayout-tools#2697) is what this resolves. The
+upstream fix is
+[PR #2803](https://github.com/2AMLogic/klayout-tools/pull/2803), merged at
+`70dee3b679a6451c5f4d830fb995c5eeb16084ee`.
+
+### The report of record
+
+| | |
+|---|---|
+| Report | `layout/drc/vco-drc-ihp.json` (unedited `klt drc` output; `klt drc --check` cheap mode: `match`) |
+| Assertion record | `layout/drc/vco-drc-ihp-assertion.json` (written by `drc.sh`: rationale, tools, invocation, controls, limits) |
+| Command | `klt drc layout/vco.gds --engine klayout --deck-file "$IHP_PDK_ROOT/libs.tech/klayout/tech/drc/ihp-sg13g2.drc" --deck-var threads=2 --expect-rule-categories 590 --format json` |
+| klt | klayout-tools **source revision `70dee3b679a6451c5f4d830fb995c5eeb16084ee`** (reports `0.6.0+g70dee3b679a6`), installed into a throwaway venv under `layout/build/` by `layout/scripts/native_drc_env.sh`. No release carries `--expect-rule-categories` yet. |
+| KLayout engine | **0.30.12** (`klayout_version_mismatch: false`), KLayout's own `klayout_0.30.12-1_amd64.deb` (sha256 `23480767fec91bc9…`, MD5 matches klayout.de's published value) **extracted, not installed** into the same scratch dir. The host's distro KLayout 0.28.16 cannot run this deck: §12's `absolute` NameError at `Gat.g` reproduced. |
+| Deck | `ihp-sg13g2.drc` @ `sha256:0620b737538af7c86dfb7c6ca0ba3a38f8410b0d51412978ca977ea3df3fb693` (the same deck as §12) |
+| Input | `layout/vco.gds` @ `sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6` |
+| **Verdict** | **`status: clean`, exit 0, 0 violations, `coverage.known: true`, `coverage.unknown: []`, no `engine_deck_errors`** |
+| **Assertion** | **`{"kind": "expected_rule_categories", "expected": 590, "observed": 590, "satisfied": true}`** |
+
+`threads=2` is the only deck variable passed. In `ihp-sg13g2.drc` it sets
+KLayout's worker count and gates no rule. It keeps the run modest on a
+shared host, and klt records it in `provenance.deck.options`. Every
+rule-group switch stays at the deck's default.
+
+### Where 590 comes from (not from the run it vouches for)
+
+The issue's 590 was the category count of the earlier `coverage_unknown`
+run, so it was only a starting measurement. Copying it into the assertion
+would make the assertion vouch for itself. The count was instead re-derived
+from the **deck source** by `layout/scripts/ihp_deck_categories.py`. That
+script is committed so the review can be re-run, and `drc.sh` re-runs it on
+every invocation:
+
+1. **Which files run.** `ihp-sg13g2.drc` declares no outputs itself. It
+   `# %include`s 38 files: `layers_def.drc` plus 37 rule files (14 FEOL, 19
+   BEOL, pin, offgrid, angle, forbidden).
+2. **Which switches hold under this invocation.** No switch deck-vars are
+   passed, so `tables = main`; FEOL, BEOL, OFFGRID, ANGLE, PIN, FORBIDDEN
+   and RECOMMENDED are on; `PRECHECK_DRC` is off; the run mode is deep. Under
+   those switches every included file's top-level guard is true. Inside the
+   files, `unless PRECHECK_DRC` / `next if PRECHECK_DRC` and
+   `if RECOMMENDED` are taken, and `if en_tiles` wraps no `output`. The
+   script refuses any guard it has not been reviewed against.
+3. **Which names are declared.** Every literal `output('NAME', …)` counts.
+   Every interpolated name (`"#{base_name}_Offgrid"`, `"M#{met_no}.a"`,
+   `"Pin.#{pin_rule}"`, …) is expanded over the loop domain its own file
+   defines: a hash's keys, a `%w[]` list, or an array length plus a start
+   index. The script holds 20 reviewed templates. An unreviewed template, or
+   a reviewed one that has disappeared, is a hard error.
+4. **Two categories depend on the stream, not the switches.** IHP declares
+   them only when a data condition holds, so the script takes them as stream
+   facts from `layout/scripts/ihp_deck_facts.py`. Those facts are read from
+   the GDS and the deck's rule table, never from a DRC report.
+   - `Seal.l` (`6_10_sealring.drc`): declared only if an EdgeSeal boundary
+     (39/4) exists. This stream has **0** such shapes, so it is not declared.
+   - `MIM.gR` (`6_11_mim.drc`): declared only if the total MIM (36/0) area
+     exceeds `Mim_gR` = 174 800 µm². This stream has **13.3225 µm²**, so it
+     is not declared. The category only exists when it is also a finding.
+
+Result: FEOL 50, BEOL 117, pin 9, offgrid 193 (one `_Offgrid` per
+non-excluded polygon layer), angle 210 (193 `_Acute`, 8 `_Angle90` for the
+cut layers, 9 `_Angle45` for the routing layers), forbidden 11. That gives
+**590 unique categories**, with no name shared between files. As a cross-check
+beyond the count, the run's declared category **set** equals the statically
+enumerated set name for name, and `drc.sh` gates on that set equality. A run
+that dropped one category and gained another would therefore fail, even
+though the count alone would pass.
+
+The constant 590 is **pinned to the deck hash** in `drc.sh`. Any other deck
+fails before the run, with an instruction to re-review the count, rather
+than being re-vouched automatically.
+
+### Negative controls
+
+All controls ran in scratch (`layout/build/drc/`) and are re-run by `drc.sh`
+every time. Their outcomes are recorded in the assertion record:
+
+| Control | Result | What it shows |
+|---|---|---|
+| `--expect-rule-categories 591` (reviewed count + 1) | exit 1, **no report written**, "expected 591 … declared 590" | a wrong count fails and cannot produce a clean report |
+| `--deck-var no_angle=true` with the reviewed 590 | exit 1, **no report written** | a gated-off rule group (the 210 angle categories) is caught |
+| same invocation **without** the assertion | exit 4, `status: coverage_unknown`, 0 violations, `coverage.known: false` | the conservative default is intact; only the vouched run is `clean` |
+
+`drc.sh` was also mutation-tested, using throwaway copies of the script.
+Each mutated run failed and left the committed native report untouched:
+
+| Mutation | `drc.sh` |
+|---|---|
+| Reviewed count set to 591 | fails: the static review disagrees, and the run's assertion fails |
+| Reviewed deck hash altered | fails before running |
+| Deck error injected (`--deck-var drc_json=<missing>`) | fails: klt refuses the partial report |
+| PIN group gated off (`no_pin=true`) | fails: 581 declared, 590 vouched |
+| New finding: a 1 nm off-grid Metal1 box added to a copy of the stream | fails: `NEW NATIVE FINDING(S) {'metal1_drw_Offgrid': 4}` |
+
+### The curated diagnostic gates are unchanged and still discriminate
+
+The curated `klt drc --deck sg13g2` report, the `Cnt.c` single-variable
+control and the guard-ring intact/broken pairs (§12) are re-run unchanged.
+All three reports are **byte-identical** to the committed ones: 8 ×
+`activ.enclosing.cont.1` → `clean` with the `activ_mask` term supplied, and
+all three ring layers `continuous` with a `broken` control. They still run
+on the **tagged `klayout-tools==0.6.0` wheel** that CI pins. `drc.sh` now
+refuses any other `klt` on `PATH` for them. A post-tag git build also
+reports "0.6.0+g…" but ships a different curated deck (a different hash,
+`released: false`). On this host such a build silently rewrote those
+diagnostics on the first attempt, before this gate existed. The native run
+alone uses the PR #2803 revision.
+
+### Scope and limits: what `clean` here does and does not mean
+
+- **The assertion is a documented claim, not a proof.** KLayout creates a
+  rule category when that rule's `output(...)` is reached. Declaring all 590
+  therefore shows that every rule's code in this runset ran on this
+  invocation. It does not show that each rule faithfully transcribes IHP's
+  design-rule manual.
+- **Deck scope is IHP's *primary* runset only.** IHP's own runner
+  (`run_drc.py`) runs two more decks by default and a third on request.
+  None is covered by this report. All three were re-run for this record with
+  the same klt revision and KLayout 0.30.12, each in scratch and without an
+  assertion:
+
+  | Deck | IHP default | This stream (2026-10-07 re-run) |
+  |---|---|---|
+  | `rule_decks/density.drc` | on | `violations`, 9: `AFil.g`, `GFil.g`, `M1.j`–`M5.j`, `TM1.c`, `TM2.c`. All are minimum *global* density rules. The block ships un-filled, and fill is deferred to chip assembly (§12 lists eight of these by name; this run confirms the ninth is `TM2.c`). |
+  | `rule_decks/sg13g2_maximal.drc` | on | `violations`, 4 × `NW.e`, all in the PDK's own `SVaricap` / `SVaricap$1` PCell cells. This matches §12. The deck is self-declared untested, and the findings have **not** been re-diagnosed as artefacts in this pass. |
+  | `rule_decks/antenna.drc` | opt-in | 0 findings, `coverage_unknown` |
+
+  So "clean" here means clean under `ihp-sg13g2.drc`, not under IHP's full
+  default runner flow.
+- **Block-level, not chip-level.** The sealring, pad, solder-bump and
+  copper-pillar rules are declared and pass vacuously, because this block
+  carries none of those structures.
+- **The `deck` field** of the report records this host's absolute PDK path.
+  The deck `content_hash` is the identity to compare across hosts (as in
+  §12).
+- **No LVS claim.** LVS closure and the signoff-manifest refresh are #62.
+  `.github/workflows/signoff.yml` still pins `klayout-tools==0.6.0`, and
+  that pin is not changed here. The signoff manifest cites no `layout/drc/`
+  artifact, so its drift check is unaffected.
+
+### Tool friction filed (per the friction protocol)
+
+- [2AMLogic/klayout-tools#2806](https://github.com/2AMLogic/klayout-tools/issues/2806):
+  klt offers no way to derive or check the `--expect-rule-categories` value
+  independently of the run being vouched for. The assertion compares a count
+  rather than a set, and categories declared conditionally on the input data
+  make the count input-dependent. `ihp_deck_categories.py` exists because of
+  this gap.
+- [2AMLogic/klayout-tools#2689](https://github.com/2AMLogic/klayout-tools/issues/2689)
+  (open): hit again. The engine runs the standalone `klayout` on `PATH` and
+  cannot use the KLayout 0.30.12 that klt's own venv ships, so a second
+  KLayout had to be provisioned. A recurrence note was added to the issue.

@@ -10,9 +10,9 @@ Layout (klayout-tools driven) and DRC/LVS signoff artifacts.
 | `vco_manifest.json` | Machine-readable provenance + measured acceptance evidence |
 | `PROVENANCE.md` | **The provenance record** — tool, method, device mapping, every design decision and how each claim was measured |
 | `generate.sh` | Regenerates both artifacts from the PDK, end to end, headless |
-| `drc.sh` | Re-runs the design-rule evidence on **two engines** (klt's curated deck + IHP's own runset) and the guard-ring checks; fails on any verdict drift |
-| `drc/` | The committed `klt drc` / `klt ring-check` reports (`PROVENANCE.md` §12) |
-| `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s two controls |
+| `drc.sh` | Re-runs the design-rule evidence on **two engines** (IHP's own runset, which produces the report of record, and klt's curated deck as a diagnostic) plus the guard-ring checks. Fails on any verdict drift |
+| `drc/` | The committed `klt drc` / `klt ring-check` reports and the native run's assertion record (`PROVENANCE.md` §12–§13) |
+| `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s controls, the static rule-category review (`ihp_deck_categories.py`, `ihp_deck_facts.py`) and the pinned native-DRC environment (`native_drc_env.sh`) |
 | `build/` | Scratch (gitignored, like `sim/build/` and `design/build/`) |
 
 ## The layout
@@ -59,27 +59,31 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
 
 ## Status: drawn and design-rule iterated, not signed off
 
-- **DRC (issue #61) — two reports of record, neither labelled `clean`.**
-  - *IHP's own primary runset* (`ihp-sg13g2.drc` via `klt drc --engine
-    klayout`, `drc/vco-drc-ihp.json`): **zero findings.** Getting there from
-    the first run's **370 real violations** took three generator fixes, all in
-    place in the committed stream: a mask-grid step (`scripts/snap_grid.py`,
-    5 nm vertices + exact 45° edges per IHP rules 3.1/3.2), one same-net NBL
-    plate per varactor bank (rule `NBL.b`), and PDK via ladders for the two
-    emitter feeds (klt's router draws 0.22 µm via1 against IHP's fixed
-    0.19 µm). klt 0.6.0 caps a zero-finding external-deck run at
-    `coverage_unknown` — it has no way to prove every rule executed — so the
-    report cannot say `clean` even at zero findings (§12).
-  - *klt's curated deck* (`drc/vco-drc.json`): `violations`, 8, all inside
-    the PDK's own `npn13G2V` PCell — shown by a same-deck control to be an
-    artefact of the deck's `Cnt.c` approximation (upstream
-    `klayout-tools#2688`), not a layout defect.
-  **`signoff/design-evidence-tiers.md` item 3 is not met and must not be
-  cited** — a zero-finding report without the `clean` label is not a clean
-  report. IHP's optional decks were surveyed once (§12): antenna clean,
-  density = fill-insertion rules deferred to chip assembly, and the
-  self-declared-untested "maximal" deck's 4 findings are inside the PDK's
-  own SVaricap PCell.
+- **DRC (issue #61): IHP's primary runset reports `status: clean`, inside a
+  stated scope** (`PROVENANCE.md` §13).
+  - *Report of record*: `drc/vco-drc-ihp.json`, from IHP's own primary runset
+    (`ihp-sg13g2.drc` via `klt drc --engine klayout`). It has **zero
+    findings, known coverage, and a satisfied coverage assertion**
+    (`--expect-rule-categories 590`). The 590 comes from a static review of
+    the deck source (`scripts/ihp_deck_categories.py`), not from the run it
+    vouches for. `drc/vco-drc-ihp-assertion.json` records how it was derived,
+    the exact tool revisions and invocation, and three negative controls: a
+    wrong count, a gated-off rule group, and a run without the assertion.
+    Getting to zero from the first run's **370 real violations** took three
+    generator fixes, all applied in place to the committed stream (§12).
+  - *What "clean" covers*: the assertion is a documented claim that every
+    rule category in that runset was declared on this invocation. It does
+    not prove that each rule faithfully transcribes the DRM. Outside the
+    report: IHP's `density.drc` (9 min-density findings, because the block
+    ships un-filled; fill is deferred to chip assembly), `sg13g2_maximal.drc`
+    (4 `NW.e` findings inside the PDK's own SVaricap PCell, a deck the PDK
+    labels untested), and `antenna.drc` (0 findings). All three were re-run
+    for this record and are listed in §13. This is a block-level result, not
+    a chip-level one.
+  - *klt's curated deck* (`drc/vco-drc.json`, a diagnostic): `violations`, 8,
+    all inside the PDK's own `npn13G2V` PCell. A same-deck control shows
+    they come from the deck's `Cnt.c` approximation (upstream
+    `klayout-tools#2688`), not from the layout.
 - **Guard-ring continuity is verified on all three of its layers** (Activ,
   pSD, Metal1), each against a negative control that breaks it (§12).
 - **LVS closure is issue #62** — not run here. Three deliberate
@@ -89,3 +93,24 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
 
 No electrical, EM or phase-noise claim is made or implied by this layout.
 Read `PROVENANCE.md` §11 before citing any of it as evidence.
+
+## Reproducing the DRC evidence
+
+```sh
+# curated deck + helpers: the tagged klt release CI pins, KLayout 0.30.12
+uv venv layout/build/klt-0.6.0
+VIRTUAL_ENV=layout/build/klt-0.6.0 uv pip install klayout-tools==0.6.0
+layout/scripts/native_drc_env.sh layout/build/native-drc-env   # Ubuntu 24.04: KLayout 0.30.12 wrapper
+export PATH="$PWD/layout/build/klt-0.6.0/bin:$PWD/layout/build/native-drc-env/bin:$PATH"
+export IHP_PDK_ROOT=~/share/pdk/ihp-sg13g2            # deck sha256:0620b737…
+layout/drc.sh
+```
+
+`drc.sh` provisions the IHP-native run's environment itself, into the
+gitignored `layout/build/native-drc-env/` (`scripts/native_drc_env.sh`). That
+environment is klayout-tools at `70dee3b679a6451c5f4d830fb995c5eeb16084ee`
+(the PR #2803 merge, the first revision with `--expect-rule-categories`) and
+KLayout 0.30.12, extracted from KLayout's own Ubuntu 24.04 package; elsewhere,
+set `NATIVE_KLAYOUT` to a 0.30.12 binary. Nothing is installed host-wide. The
+script fails if the deck hash, either tool revision, the expected category
+count, any negative control, or any verdict moves.
