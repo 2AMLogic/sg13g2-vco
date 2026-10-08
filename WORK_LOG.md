@@ -6,6 +6,10 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-08
 
+- **Issue #82** (closed): sim: require complete voltage coverage before grading tuning curves
+- **Issue #83** (closed): sim: reject missing transient measurements instead of reporting zero power
+- **PR #86**: sim: reject missing transient measurements instead of reporting zero power
+- **PR #87**: sim: require complete voltage coverage before grading tuning curves
 - **PR #81**: feat(layout): device-aware LVS runner and record (verdict: mismatch) + signoff item 2
 
 ### 2026-10-07

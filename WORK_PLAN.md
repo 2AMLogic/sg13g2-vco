@@ -22,15 +22,13 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3)
-- **#82**: sim: require complete voltage coverage before grading tuning curves
-- **#83**: sim: reject missing transient measurements instead of reporting zero power
+_None._
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3)
 
 ## PRs Awaiting Review
 
@@ -54,7 +52,8 @@ Issues carrying `loom:curated`.
 
 ## Proposed (Architect / Hermit)
 
-_None._
+- **#88**: ci: enforce append-only sim/ evidence (records, netlist-snapshots, corners) at PR time *(architect)*
+- **#89**: ci: require a decision record in the same PR as any spec/target-spec.md edit *(architect)*
 
 ## Epics
 
@@ -66,11 +65,11 @@ _None._
 |------|-------|
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
-| Ready (`loom:issue`) | 3 |
-| In Progress (`loom:building`) | 0 |
+| Ready (`loom:issue`) | 0 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 3 |
-| Architect / Hermit proposals | 0 |
+| Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
