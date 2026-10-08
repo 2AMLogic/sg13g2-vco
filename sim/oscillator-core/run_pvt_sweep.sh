@@ -243,7 +243,7 @@ for mos in ${MOS_LABELS}; do
             fi
           fi
         done
-        osc_emit_tuning "${mos}" "${cap}" "${hbt}" "${temp}"
+        osc_emit_tuning "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${VCTRL_LIST}"
       done
     done
   done
@@ -275,9 +275,9 @@ ROW1_AT_CENTRE="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v lo="${OSC_ROW1_F_MIN_H
   NR > 1 && $6 == vc && $8 == "PASS" { n++; if (fmin == "" || $9 < fmin) fmin = $9; if ($9 > fmax) fmax = $9; if ($9 >= lo && $9 <= hi) inband++ }
   END { if (n == 0) { print "no oscillating point at the band-centre control voltage"; exit }
         printf "%d/%d corners inside %g..%g Hz; measured %g..%g Hz", inband+0, n, lo, hi, fmin, fmax }' "${CSV_OUT}")"
-ROW2_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($19 == "MET") met++; else if ($19 ~ /QUANTIZATION/) floor++ }
+ROW2_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($19 == "MET") met++; else if ($19 ~ /QUANTIZATION/) floor++; else if ($19 == "INCOMPLETE") inc++ }
   END { if (n == 0) { print "no corner produced a tuning ratio"; exit }
-        printf "%d/%d corners MET, %d within the quantization floor of the bound", met+0, n, floor+0 }' "${TUNING_CSV}")"
+        printf "%d/%d corners MET, %d within the quantization floor of the bound, %d ungraded (incomplete Vctrl coverage)", met+0, n, floor+0, inc+0 }' "${TUNING_CSV}")"
 ROW6_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($11 == "MET") met++; else if ($11 ~ /STRADDLES/) strad++ }
   END { if (n == 0) { print "no margin corner completed"; exit }
         printf "%d/%d corners MET, %d straddling the bound", met+0, n, strad+0 }' "${MARGIN_SUM_CSV}")"
