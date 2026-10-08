@@ -4,6 +4,10 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-08
+
+- **PR #81**: feat(layout): device-aware LVS runner and record (verdict: mismatch) + signoff item 2
+
 ### 2026-10-07
 
 - **Issue #61** (closed): layout: DRC closure for sg13g2-vco GDS (T1 item 1/2, part 2/3)
