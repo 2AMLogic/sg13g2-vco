@@ -42,12 +42,13 @@ estimation, or an ISF/impulse method), with the method's limits stated next
 to every number. A phase-noise claim without its measurement method is not a
 result. Expect and file tool friction — that is this canary's job.
 
-## Target specification (DRAFT — engineering to ratify)
+## Target specification (ratified targets)
 
-Deliberately thin until the tank study lands: target band (to be chosen
-against the PDK passives, likely low-GHz), tuning range, phase noise at a
-stated offset, supply/power, output swing into a stated load. Every row gets
-min/typ/max only when a committed testbench can produce it.
+All 12 rows of the [target specification](spec/target-spec.md) are ratified
+as targets through DR-003 and DR-004, including the frequency band, tuning
+range, phase noise, supply/power, and output swing. Ratification sets the
+requirements; it does not establish that measurements meet them. The graded
+corner grids and remaining validation evidence are still outstanding.
 
 ## License
 
