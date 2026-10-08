@@ -1,0 +1,271 @@
+{
+  "schema_version": 1,
+  "verdict_of_record": {
+    "status": "mismatch",
+    "report": "layout/lvs/vco-lvs-ihp.json",
+    "device_census": {
+      "layout": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "reference": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "devices_in_design": 42,
+      "extra": "ptap1 = the guard-ring substrate tie (T5b)"
+    },
+    "explained_differences": [
+      {
+        "id": "bn",
+        "devices": 32,
+        "kind": "schematic/layout disagreement",
+        "detail": "sg13_hv_svaricap SUB (bn) pin: design/vco.spice ties it to OUTP/OUTN, the layout to the p-substrate (PROVENANCE.md section 6). Isolated by control C1.",
+        "resolution": "prerequisite schematic correction: issue #79"
+      },
+      {
+        "id": "L1-terminal-order",
+        "devices": 1,
+        "kind": "extractor artefact",
+        "detail": "IHP's GeneralNTerminalExtractor sorts inductor ports by x position; L1 is placed mirrored (m90), so its LA (on VDD) sorts second, while the inductor class declares its two winding terminals non-equivalent. The LA/LB labels in the stream put LA on VDD for both spirals, as the schematic says. Isolated by control C2.",
+        "resolution": "upstream runset fix or a reviewed accommodation: issue #80"
+      }
+    ],
+    "supply_pairing": {
+      "record": {
+        "paired": [
+          {
+            "layout": "0",
+            "reference": "0"
+          }
+        ],
+        "not_paired": [
+          {
+            "status": "mismatch",
+            "layout": "$1",
+            "reference": "SUB"
+          },
+          {
+            "status": "mismatch",
+            "layout": "LA,VDD",
+            "reference": "VDD"
+          }
+        ]
+      },
+      "control_C2": {
+        "paired": [
+          {
+            "layout": "$1",
+            "reference": "SUB"
+          },
+          {
+            "layout": "0",
+            "reference": "0"
+          },
+          {
+            "layout": "LA,VDD",
+            "reference": "VDD"
+          }
+        ],
+        "not_paired": []
+      },
+      "reading": "in the record compare the supply nets do not pair cleanly because the L1 terminal-order artefact and the bn ties perturb VDD/OUTP/OUTN and the substrate; with both differences isolated (C2), VDD, 0 and the substrate each pair 1:1 with the reference"
+    },
+    "power_connectivity": {
+      "status": "not_produced",
+      "why": "klt lvs's power_connectivity block exists only in a klt lvs report, and klt 0.6.0 cannot produce one for this design (klt_leg below). Supply pairing in the device-aware compare is reported per net in vco-lvs-ihp.json -> compare.nets."
+    }
+  },
+  "tools": {
+    "runset_engine": {
+      "klayout": "0.30.12",
+      "klayout_python_module": "0.30.12",
+      "source": "layout/scripts/native_drc_env.sh (KLayout's own 0.30.12 .deb, extracted)"
+    },
+    "runset": {
+      "path": "$IHP_PDK_ROOT/libs.tech/klayout/tech/lvs/run_lvs.py",
+      "content_hash": "sha256:fd11fced5b0bd5ee0bb66b700acbe359f23c30c5900b16e5f647ed9a430dcc09"
+    },
+    "klt_leg": "klayout-tools==0.6.0 (tagged wheel, the CI pin)"
+  },
+  "inputs": {
+    "layout": {
+      "file": "layout/vco.gds",
+      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
+    },
+    "schematic_netlist": {
+      "file": "design/vco.spice",
+      "sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+    },
+    "reference": {
+      "file": "layout/lvs/vco-reference.cir",
+      "content_hash": "sha256:d3ea33309ebeb164ceaf7956f853dcc197e29887d6da4ca81a0c687e4828d446"
+    }
+  },
+  "invocation": [
+    "python3",
+    "$IHP_PDK_ROOT/libs.tech/klayout/tech/lvs/run_lvs.py",
+    "--layout=layout/vco.gds",
+    "--netlist=layout/lvs/vco-reference.cir",
+    "--topcell=vco",
+    "--run_dir=<scratch>"
+  ],
+  "invocation_notes": "run_lvs.py defaults: flat mode, simplify on, strict top-port mode (flag_missing_ports); run_lvs.py exits 0 on a mismatch, so the verdict is read from the .lvsdb",
+  "reference_crosscheck_xschem": {
+    "status": "agree",
+    "devices_compared": 39,
+    "differences": [],
+    "scope": "every Q/L/C card (T3 device-form mapping): nodes, model, parameters; xschem keeps ideal resistors and writes substrate as 0, so R cards and T4/T5 are outside it"
+  },
+  "single_variable_controls": [
+    {
+      "control": "C1",
+      "reference_change": "varactor bn -> substrate (T5a applied to bn)",
+      "verdict": "mismatch",
+      "remaining_device_differences": [
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$41",
+            "class": "inductor",
+            "terminals": {
+              "inductor_1": "LB,OUTP",
+              "inductor_2": "LA,VDD",
+              "inductor_sub": "$1"
+            },
+            "parameters": {
+              "w": 8.215,
+              "s": 3.734,
+              "d": 142.106,
+              "nr_r": 4.0
+            }
+          },
+          "reference": {
+            "name": "L1",
+            "class": "INDUCTOR",
+            "terminals": {
+              "INDUCTOR_1": "VDD",
+              "INDUCTOR_2": "OUTP",
+              "INDUCTOR_sub": "SUB"
+            },
+            "parameters": {
+              "w": 8.22,
+              "s": 3.74,
+              "d": 141.975,
+              "nr_r": 4.0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "control": "C2",
+      "reference_change": "C1 + L1 winding terminals swapped",
+      "verdict": "match",
+      "device_pairs_matched": 43,
+      "nets_matched": 10,
+      "pins_matched": 9
+    }
+  ],
+  "control_scope": "C1/C2 references are scratch diagnostics produced by lvs_reference.py's --bn-to-substrate/--swap-inductor switches; they are never committed and are not references of record. They establish that bn and L1's terminal order are the ONLY differences, not that the layout matches.",
+  "negative_controls": [
+    {
+      "control": "n1-supply",
+      "change": "VS_VDD_REF via ladder removed: RREF's VDD end detached from the VDD strap (supply connection)",
+      "reference": "C2 diagnostic (matches the intact stream)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 3,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      }
+    },
+    {
+      "control": "n2-signal",
+      "change": "VS_Q1B via ladder removed: Q1's base detached from OUTN (cross-coupling signal connection)",
+      "reference": "C2 diagnostic (matches the intact stream)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 5,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      }
+    },
+    {
+      "control": "n3-device",
+      "change": "C1 MIM instance removed (a missing device)",
+      "reference": "C2 diagnostic (matches the intact stream)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 2,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      }
+    }
+  ],
+  "klt_leg": {
+    "lvs": {
+      "request": {
+        "layout": {
+          "file": "layout/vco.gds",
+          "deck": "sg13g2",
+          "top": "vco"
+        },
+        "reference": {
+          "netlist": "<design/vco.spice minus T1, wrapped per T2>",
+          "form": "subckt-call",
+          "deck": "sg13g2",
+          "top": "vco"
+        }
+      },
+      "exit": 1,
+      "response": {
+        "schema_version": 1,
+        "error": {
+          "command": "lvs",
+          "message": "could not convert subckt-call reference netlist 'layout/build/lvs/klt/ref-subckt.spice' to plain-element form: subcircuit 'inductor' is not a known device for the requested deck (known: cap_cmim, cap_rfcmim, rhigh, rppd, rsil, sg13_hv_nmos, sg13_hv_pmos, sg13_lv_nmos, sg13_lv_pmos); if it is a real device, pass reference.device_map to map it explicitly"
+        }
+      }
+    },
+    "extract": {
+      "exit": 0,
+      "device_counts": {
+        "cap_cmim": 1
+      },
+      "net_count": 7,
+      "devices_in_design": 42
+    },
+    "reading": "klt 0.6.0 refuses the reference (no inductor / 4-terminal varactor / HBT device class for sg13g2) and its curated extraction recognizes 1 of 42 devices, so no klt lvs report of this block can exist at this pin (PROVENANCE.md section 14; 2AMLogic/klayout-tools#2849)"
+  },
+  "limits": [
+    "the verdict is IHP's runset's; klt lvs could not run it, so no klt-native LVS envelope (and no klt power_connectivity block) exists",
+    "one engine only: no second, independent extractor recognizes this block's HBT/varactor/inductor devices",
+    "the reference is DERIVED (T1..T6); T4 (rppd for ideal R) and T5 (substrate net + guard-ring tie) are the layout phase's own physical choices restated, so their parameters are checked against the generator's intent, not against the schematic",
+    "a topological + parameter compare; no parasitic, matching or geometric check"
+  ]
+}

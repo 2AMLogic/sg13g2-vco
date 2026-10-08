@@ -1,0 +1,48 @@
+* Extracted from layout/vco.gds by IHP's sg13g2.lvs runset (layout/lvs.sh);
+* the runset's date-stamp comment line is removed so reruns are byte-stable.
+
+.SUBCKT vco 0 LA|VDD LB|OUTN LB|OUTP NBIAS RE TAIL TE VCTRL
+1$1 NBIAS NBIAS RE \$1 npn13G2v we=120n le=1000n Nx=1 m=1
+2$2 TAIL NBIAS TE \$1 npn13G2v we=120n le=2000n Nx=1 m=1
+3$3 LB|OUTP LB|OUTN TAIL \$1 npn13G2v we=120n le=1000n Nx=1 m=1
+4$4 LB|OUTN LB|OUTP TAIL \$1 npn13G2v we=120n le=1000n Nx=1 m=1
+R$5 NBIAS LA|VDD \$1 rppd w=1u l=79.05u ps=0u b=0 m=1
+R$6 0 TE \$1 rppd w=1u l=7.47u ps=0u b=0 m=1
+R$7 0 RE \$1 rppd w=1u l=15.205u ps=0u b=0 m=1
+C$8 LB|OUTP LB|OUTN cap_cmim w=3.65u l=3.65u A=13.3225p P=14.6u m=1
+C$9 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$10 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$11 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$12 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$13 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$14 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$15 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$16 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$17 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$18 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$19 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$20 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$21 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$22 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$23 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$24 VCTRL LB|OUTP VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$25 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$26 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$27 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$28 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$29 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$30 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$31 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$32 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$33 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$34 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$35 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$36 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$37 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$38 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$39 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+C$40 VCTRL LB|OUTN VCTRL \$1 sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+41$41 LB|OUTP LA|VDD \$1 inductor w=8.215u s=3.734u d=142.106u nr_r=4
+42$42 LA|VDD LB|OUTN \$1 inductor w=8.215u s=3.734u d=142.106u nr_r=4
+R$43 0 \$1 ptap1 A=1084p P=1084u
+.ENDS vco

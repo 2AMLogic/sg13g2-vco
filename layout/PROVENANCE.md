@@ -16,6 +16,11 @@ carrying eight violations, all shown to come from the checking deck rather
 than this layout. §12 is the record of the state before §13, including the
 earlier `coverage_unknown` label. Read §12–§13 before citing any DRC claim,
 and "What this record does *not* claim" before citing any claim at all.
+**Since 2026-10-08 (§14) a device-aware LVS has been run, and its verdict
+is `mismatch`.** IHP's own runset recognizes all 42 devices. It finds
+exactly two differences, the varactor `bn` tie (#79) and an extractor
+artefact on the mirrored spiral L1 (#80). `klt lvs` cannot run this compare
+at the pinned release. Read §14 before citing any LVS claim.
 
 <!-- toc -->
 - [1. Tooling and inputs](#1-tooling-and-inputs)
@@ -31,6 +36,7 @@ and "What this record does *not* claim" before citing any claim at all.
 - [11. What this record does *not* claim](#11-what-this-record-does-not-claim)
 - [12. DRC state (issue #61)](#12-drc-state-issue-61)
 - [13. DRC closure record (2026-10-07, issue #61)](#13-drc-closure-record-2026-10-07-issue-61)
+- [14. LVS record (2026-10-08, issue #62)](#14-lvs-record-2026-10-08-issue-62)
 <!-- /toc -->
 
 ## 1. Tooling and inputs
@@ -565,7 +571,10 @@ is between a layer and a label that happens to share its name.
   native deck's zero findings carry the native deck's own scope, and the
   §12 optional-deck survey (density fill deferred to chip assembly,
   maximal's PCell-internal `NW.e`) bounds the rest.
-- **Not LVS-clean.** No device-level netlist comparison was run. Three known
+- *(Updated 2026-10-08 by §14: a device-level comparison has now been run,
+  and it reports `mismatch`. The layout is still not LVS-clean. The text of
+  this bullet is kept as the earlier state.)*
+  **Not LVS-clean.** No device-level netlist comparison was run. Three known
   deliberate differences are already recorded for #62: the drawn `res_rppd`
   against the netlist's ideal `R` (§5), the varactor `bn` tie (§6), and the
   `VSUP`/`VCT` testbench sources with no layout counterpart (§4). The deck's
@@ -1016,3 +1025,205 @@ alone uses the PR #2803 revision.
   (open): hit again. The engine runs the standalone `klayout` on `PATH` and
   cannot use the KLayout 0.30.12 that klt's own venv ships, so a second
   KLayout had to be provisioned. A recurrence note was added to the issue.
+
+## 14. LVS record (2026-10-08, issue #62)
+
+*Appended. §§1–13 are unchanged. The layout did not change for this
+section: `layout/vco.gds` is still
+`sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6`, so
+§13's DRC record still applies to it.*
+
+**The verdict of record is `mismatch`.** This section is the record of an
+honest device-aware compare. It does not report LVS closure.
+
+| | |
+|---|---|
+| Runner | `layout/lvs.sh` (fails on any verdict drift; two consecutive runs write byte-identical files) |
+| Engine | KLayout **0.30.12** LVS (`NetlistComparer`), running **IHP-Open-PDK's own runset** `libs.tech/klayout/tech/lvs/sg13g2.lvs` through its `run_lvs.py` driver (flat mode, simplify on, strict top-port mode) |
+| Runset identity | `sha256:fd11fced5b0bd5ee0bb66b700acbe359f23c30c5900b16e5f647ed9a430dcc09`, a hash over `sg13g2.lvs`, `run_lvs.py` and all 43 `rule_decks/*.lvs`, pinned in `lvs.sh` |
+| Layout | `layout/vco.gds` @ `sha256:937e5b16…` |
+| Reference | `layout/lvs/vco-reference.cir`, **derived** from `design/vco.spice` @ `sha256:f185c714…` (below) |
+| Compare of record | `layout/lvs/vco-lvs-ihp.json`, read back from KLayout's own `.lvsdb` cross-reference by `scripts/lvsdb_summary.py` |
+| Run record | `layout/lvs/vco-lvs-record.json`: tools, invocation, controls, the klt attempt and the limits |
+| Extracted netlist | `layout/lvs/vco-extracted.cir` (the runset's own writer; only its date-stamp line is removed) |
+| **Device census** | **42 of 42 devices recognized**, plus one `ptap1` guard-ring tie. The per-class census is identical on both sides: `cap_cmim` 1, `inductor` 2, `npn13G2v` 4, `ptap1` 1, `rppd` 3, `sg13_hv_svaricap` 32 |
+| **Status** | **`mismatch`**: exactly two classes of difference, both isolated below |
+
+`run_lvs.py` exits 0 when the netlists do **not** match, and its log says
+only "Netlists don't match". The verdict is therefore never taken from its
+exit status. It is read from the comparison database KLayout writes.
+
+### Why IHP's runset and not `klt lvs`
+
+§9 recorded at klt 0.6.0 that the curated `sg13g2` extraction recognizes
+1 of this block's 42 devices. This was **re-verified, not inherited**,
+against the tagged `klayout-tools==0.6.0` wheel CI pins and against current
+`main` (`3a75c3ae705b`):
+
+| klt | `klt extract --deck sg13g2` | `klt lvs` (inline extraction, `reference.form: "subckt-call"`, `reference.deck: "sg13g2"`) |
+|---|---|---|
+| 0.6.0 (tagged) | `{"cap_cmim": 1}`, 7 nets | exit 1: `subcircuit 'inductor' is not a known device for the requested deck` |
+| `main` @ `3a75c3ae` | `{"cap_cmim": 1}`, 7 nets | the same refusal |
+
+`reference.device_map` has no kind for a 3-terminal inductor or a
+4-terminal varactor, and the HBT class was declined upstream (#1232). A
+netlist extracted by the PDK runset cannot be fed to `klt lvs` as
+`layout.netlist` either. The plain SPICE reader drops its HBT cards with
+only a `Line ignored` warning, and it errors on its 3-node `rppd` cards.
+**So at the pinned release no `klt lvs` report of this block can exist, and
+neither can the `power_connectivity` block that lives in one.** Filed as a
+generic tool gap:
+[2AMLogic/klayout-tools#2849](https://github.com/2AMLogic/klayout-tools/issues/2849)
+(a native-runset LVS engine, symmetric with `klt drc --engine klayout`).
+`lvs.sh` re-runs the klt attempt every time and fails if klt stops refusing,
+so the day the gap closes is visible.
+
+IHP's runset, by contrast, recognizes every device family in this block. It
+uses its own HBT extractor (`CustomBJTExtractor`), a 4-terminal varactor
+class (`G1 W G2 SUB`), an inductor class with a substrate terminal, and a
+3-terminal `rppd`. The same KLayout 0.30.12 that §13 provisioned (KLayout's
+own `.deb`, extracted into gitignored scratch by
+`scripts/native_drc_env.sh`) runs it.
+
+### The reference: derived, traced, never edited
+
+`design/vco.spice` is a simulation deck. `scripts/lvs_reference.py` rewrites
+it into the CDL form the runset reads. It applies only the six
+transformations below. Each output line is traced to its source line in
+`layout/lvs/vco-reference.json`, which also records the source file's
+sha256. `design/vco.spice` itself is only read.
+
+| | Transformation | Why it is justified |
+|---|---|---|
+| T1 | drop `VSUP`/`VCT`, `.save`/`.lib`/`.include`/`.ic`, the `.control` block | testbench-only content with no layout counterpart (§4) |
+| T2 | wrap in `.SUBCKT vco` with the nine named nets as ports | the layout labels all nine on pin layers (§9), so each one is a name-anchored compare point |
+| T3 | `X` device cards → `Q`/`L`/`C` cards; `El`→`le`, `we=120.0n`, `m=Nx` | **the PDK's own mapping**: each `sg13g2_pr/*.sym` symbol's `lvs_format`. Cross-checked against xschem's own LVS-mode netlist of `design/vco.sch`: **agrees on all 39 cards** (nodes, model, parameters) |
+| T4 | ideal `R` → `rppd`, w = 1 µm, l from `floorplan.rppd_length_um()` on the 5 nm grid | the physical device class §5 chose. The R-to-length law is the generator's own, measured from the PCell; 5 nm is the grid `snap_grid.py` places every drawn vertex on (rule 3.1) |
+| T5 | substrate pins the schematic ties to `0` (HBT 4th, inductor 3rd, `rppd` body) → net `sub`; add the guard-ring tie `ptap1 0 sub` with A = 1084 µm², P = 1084 µm | the runset extracts the p-substrate as its own net, joined to `0` only through the `ptap1` tie. ngspice models ignore the tie, so the schematic writes the substrate as `0`. The tie's A/P come from the generator's ring spec (`floorplan.py` `RING`, `RING_W`: four abutting bars = one annulus), **not** from the extraction |
+| T6 | substrate pins the schematic ties to anything **other** than `0` are left exactly as written | this is the varactor `bn`. The difference is kept visible, not reconciled |
+
+T4 and T5 restate the layout phase's own physical choices. Their parameters
+are therefore checked against the generator's intent, not against the
+schematic, which has no physical resistor or substrate to compare against.
+They match the extraction exactly (`l` = 7.47 / 15.205 / 79.05 µm, tie
+A = 1084 µm², P = 1084 µm). The runset also measures the spirals as
+w = 8.215, s = 3.734, d = 142.106 µm against the card's 8.22 / 3.74 /
+141.975, inside the runset's own 5 % inductor tolerance.
+
+### Exactly two differences, isolated by single-variable controls
+
+KLayout's pairing degrades under ambiguity, so the record compare's raw
+counts (5 of 13 nets, 6 of 43 device pairs) overstate the damage. Two
+scratch-only diagnostic references, each changing one thing, show what
+actually differs. They come from `lvs_reference.py`'s `--bn-to-substrate` and
+`--swap-inductor=` switches and are never committed.
+
+| Control | Reference change (scratch) | Verdict | What remains |
+|---|---|---|---|
+| C1 | varactor `bn` → substrate | `mismatch` | **one** device: spiral L1, terminals (`OUTP`, `VDD`) in the layout vs (`VDD`, `OUTP`) in the reference |
+| C2 | C1 + L1's two winding terminals swapped | **`match`** | nothing: 43/43 device pairs, 10/10 nets, 9/9 pins |
+
+So the layout differs from the derived reference in these two ways and **no
+others**.
+
+**1. Varactor `bn` (32 devices), a real schematic/layout disagreement, tracked
+as #79.** The runset's `SUB` terminal of every varactor is the p-substrate.
+`design/vco.spice` ties it to `OUTP`/`OUTN`, which the layout cannot do (§6).
+This is more than an LVS formality. `design/README.md` states that tying `W`
+and `bn` together "shorts out the internal `dsubw` well-to-substrate
+junction rather than hanging it on the tank node". The drawn layout *does*
+hang it on the tank, so every simulation run on the current netlist omits a
+well-to-substrate junction on both tank nodes. Its size has not been
+measured. #79 owns the schematic correction and the re-run of the evidence
+it moves. This section does not edit `design/` and does not relax anything.
+
+**2. Spiral L1 terminal order, an extractor artefact, tracked as #80.** The
+stream's own labels put `LA` on `VDD` for **both** spirals, and `LB` on
+`OUTP`/`OUTN`, exactly as the schematic says. The two spiral cells are
+mirror images (`LA` at x = +25.315 µm in one, −25.315 µm in the other), and
+L1 is placed `m90`. The runset finds the two ports by those labels
+(`ind_derivations.lvs`), but then orders them **by x position**
+(`custom_extractor.lvs`, `define_and_sort_terminals` → `sort_polygons`). Its
+inductor class clears terminal equivalence (`custom_devices.lvs`,
+`DeviceCustomInd`), so a mirrored spiral always extracts with its windings
+reversed. The fix belongs to the runset (or to a reviewed accommodation in
+this flow), not to the layout. The runset is IHP's, not klt's, so it is not
+filed at klayout-tools. #80 holds the options.
+
+### Supply pairing
+
+Checked explicitly, not inferred from the top-level status:
+
+| | `VDD` | `0` | substrate |
+|---|---|---|---|
+| record compare | **not paired** (`LA,VDD` vs `VDD`, perturbed by difference 2) | paired | **not paired** (`$1` vs `SUB`, perturbed by difference 1) |
+| control C2 | paired 1:1 | paired 1:1 | paired 1:1 |
+
+`LA,VDD` is one net carrying two labels, the spiral PCell's `LA` text and the
+`VDD` pin label. It is not two nets.
+
+### Negative controls: the compare rejects a broken layout
+
+Each control is a scratch copy of the stream with **one** top-level instance
+removed (`scripts/lvs_break.py`). Each is compared against the C2 reference,
+which matches the intact stream, so a `match` would mean the compare cannot
+see the break.
+
+| Control | Change | Verdict |
+|---|---|---|
+| N1 (supply) | `VS_VDD_REF` via ladder removed: RREF's `VDD` end detached from the `VDD` strap | **`mismatch`** (rejected) |
+| N2 (signal) | `VS_Q1B` via ladder removed: Q1's base detached from `OUTN` | **`mismatch`** (rejected) |
+| N3 (device) | `C1` MIM instance removed | **`mismatch`** (rejected) |
+
+`lvs.sh` was also mutation-tested with throwaway copies of the script. A
+wrong runset hash fails before running. Pointing C2 at the reference of
+record fails the C2 gate. Both left the committed record untouched.
+
+### Item 1/2 sources, re-verified for this record (2026-10-08)
+
+- **Layout reproducibility (item 2).** A cold regeneration on this Linux host
+  (`layout/generate.sh`, every stage except `verify`, into an empty build
+  directory) with the tagged `klt 0.6.0` and KLayout 0.30.12 produced a
+  stream **byte-identical** to the committed one: `sha256:937e5b16…` on both
+  sides. §2's record was made on a different host (macOS), so this is a
+  cross-host reproduction, not a re-statement.
+- **Netlist freshness (item 1).** `design/netlist.sh --check` (xschem 3.4.7,
+  the PDK symbol library): `design/vco.spice is current with design/vco.sch`.
+
+### What this means for the signoff manifest
+
+- **Item 2 is cited** (`signoff/manifest.json`). It cites the IHP-native DRC
+  envelope `layout/drc/vco-drc-ihp.json`, pinned to the stream's content
+  hash. `klt signoff` grades item 2 on any passing native envelope and cannot
+  check relevance. The envelope is the freshness anchor (it goes stale the
+  moment the stream changes). **The claim it stands for is §2 plus the
+  cross-host reproduction above**, not anything about DRC.
+- **Item 1 is not cited.** No passing klt-native envelope is pinned to
+  `design/vco.spice`. Its freshness check needs xschem and a PDK, which the
+  PDK-free signoff CI does not have. Citing an unrelated envelope would make
+  the row green without evidence.
+- **Item 4 is not cited.** No `klt lvs` report can exist (above), and the
+  device-aware verdict is `mismatch`.
+
+### Limits
+
+- One engine. No second, independent extractor recognizes this block's HBT,
+  varactor and inductor devices, so the result is not cross-checked by a
+  second toolchain.
+- The reference is derived. T4/T5 are the layout phase's own choices
+  restated (see the table).
+- A topological and parameter compare only. No parasitic, matching or
+  geometric check.
+- The runset is IHP's, at the hash above. A PDK update changes it and fails
+  `lvs.sh` until the transformations and expectations are re-reviewed.
+
+### Tool friction filed (per the friction protocol)
+
+- [2AMLogic/klayout-tools#2849](https://github.com/2AMLogic/klayout-tools/issues/2849):
+  no device-aware `klt lvs` path when a PDK's own KLayout LVS runset
+  recognizes devices the curated deck lacks. There is no native-runset
+  engine, and runset netlists cannot be read as `layout.netlist`.
+- [2AMLogic/klayout-tools#2850](https://github.com/2AMLogic/klayout-tools/issues/2850):
+  `klt extract` without `-o` writes its netlist next to the input stream, so
+  a read-only census run leaves an untracked `<block>.spice` in `layout/`. It
+  happened here once, was removed, and `lvs.sh` now passes `-o` into scratch.

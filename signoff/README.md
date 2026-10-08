@@ -19,11 +19,35 @@
 | `t1-report.json` | The **verdict of record**: the committed `klt signoff --format json` output. CI re-renders the report on every push and PR and fails on any byte-drift (`.github/scripts/check-signoff.sh`), so a manifest citation whose artifact has since changed fails rather than rotting. |
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone, at a checklist revision this repo names and hashes, rather than at whatever revision the installed wheel happens to bundle (see "Why the checklist doc is vendored"). |
 
-Today every item renders `unmet` with `reason: "no_evidence"`, and that
-is the correct result: no evidence envelope exists yet for any item to
-grade — no layout, no schematic-derived netlist, no `klt`-native run
-artifact, and no PVT corner pass — and that absence, not the spec's
-ratification state, is why the render is all-`unmet`.
+**Current state (2026-10-08, issue #62): 1 of 11 T1 items `met`, item 2
+(Layout).** Every other item renders `unmet` with `reason: "no_evidence"`.
+The citations, and the ones deliberately left out:
+
+- **Item 2 (Layout): cited, `met`.** The evidence is
+  `layout/drc/vco-drc-ihp.json`, the IHP-native DRC envelope, pinned to
+  `layout/vco.gds`'s content hash. It renders `input_verified: true`. `klt
+  signoff` grades item 2 on *any* passing native envelope and cannot check
+  relevance (see the bullet below), so this envelope is the freshness anchor
+  only: it goes `stale_evidence` the moment the stream changes, which was
+  checked with a wrong pin. **The claim it stands for is the item's own
+  bar**, "committed GDS/OASIS, reproducibly generated". The backing for that
+  is `layout/PROVENANCE.md` §2 (scripted, headless, byte-identical cold
+  builds) and the cross-host cold regeneration re-run for #62, which was
+  byte-identical (`layout/PROVENANCE.md` §14). It says nothing about DRC
+  (item 3 stays uncited) or LVS.
+- **Item 1 (Design sources): not cited.** `design/vco.spice` is verified
+  current against `design/vco.sch` (`design/netlist.sh --check`, xschem), but
+  no passing `klt`-native envelope is pinned to it. That freshness check
+  needs xschem and a PDK, which this PDK-free CI does not have. Citing an
+  unrelated envelope would turn the row green without evidence.
+- **Item 4 (LVS): not cited.** The device-aware LVS (`layout/lvs.sh`, IHP's
+  own runset) reports **`mismatch`**, with two isolated differences (#79,
+  #80; `layout/PROVENANCE.md` §14). `klt lvs` at the `0.6.0` pin cannot
+  produce a report for this block at all (klayout-tools#2849). So there is
+  neither a passing nor a `klt`-format envelope to cite.
+
+Earlier records rendered all 11 items `unmet` because no evidence envelope
+existed yet. That absence, not the spec's ratification state, was why.
 `spec/target-spec.md` is now fully ratified (DR-003: nine rows RATIFIED
 as targets; DR-004: rows 0/3/7, the three DR-003 left open) — and a
 ratified target is explicitly *not met by any measurement*, so the
@@ -40,8 +64,8 @@ not actually support an item just to make a row go green.
   voltage-controlled oscillator* and `spec/porting-plan.md` §2 confirms
   there is no digital partition (no divider chain, no RTL). A
   mixed-signal declaration would be wrong here.
-- **`evidence`** — the map from item id to evidence entry, currently
-  empty. When evidence starts landing, cite it honestly:
+- **`evidence`** — the map from item id to evidence entry. Item 2 is the
+  one entry so far (above). Cite every entry honestly:
   - **File-backed** — `{"file": "<repo-root-relative path>", "content_hash": "sha256:<hash>"}`.
     Every citation MUST pin `content_hash` to the committed artifact it
     was produced against (`provenance.input.content_hash` of the cited
@@ -164,6 +188,14 @@ at least one item unmet) are both successful renders — an all-unmet
 report is a correct verdict, not a CI failure. The payload gates on its
 own fields (`block`, `kind`, `schema_version`, 11 rendered items, no
 error envelope), not the exit code alone.
+
+The self-test grades throwaway copies of the tree. Since the first citation
+outside `signoff/` (#62), each copy also carries every file the manifest
+cites, plus the artifact each cited envelope names as its input.
+`input_verified` re-hashes that artifact, so a copy without it would render a
+different report, and the "pristine tree passes" case could never pass. The
+"tampered record" case now rewrites `t1_met_count` whatever its current
+value, so it stays a real tamper as the count moves.
 
 **The build identity is now in the record, not in prose.** The former
 "known field gap" section here described what `klt 0.5.0` could not

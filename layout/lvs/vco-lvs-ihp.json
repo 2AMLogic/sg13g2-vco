@@ -1,0 +1,1346 @@
+{
+  "schema_version": 1,
+  "engine": "KLayout 0.30.12 LVS (NetlistComparer), IHP-Open-PDK sg13g2.lvs runset",
+  "deck": {
+    "pdk_relative_path": "libs.tech/klayout/tech/lvs/sg13g2.lvs",
+    "content_hash": "sha256:fd11fced5b0bd5ee0bb66b700acbe359f23c30c5900b16e5f647ed9a430dcc09",
+    "hash_scope": "sha256 over '<sha256>  <path>' lines of sg13g2.lvs, run_lvs.py and rule_decks/*.lvs, sorted"
+  },
+  "input": {
+    "file": "layout/vco.gds",
+    "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
+  },
+  "reference": {
+    "file": "layout/lvs/vco-reference.cir",
+    "content_hash": "sha256:d3ea33309ebeb164ceaf7956f853dcc197e29887d6da4ca81a0c687e4828d446",
+    "derived_from": {
+      "file": "design/vco.spice",
+      "sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+    }
+  },
+  "status": "mismatch",
+  "compare": {
+    "layout": "vco",
+    "reference": "VCO",
+    "status": "nomatch",
+    "devices": {
+      "layout": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13G2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "reference": {
+        "CAP_CMIM": 1,
+        "INDUCTOR": 2,
+        "NPN13G2V": 4,
+        "PTAP1": 1,
+        "RPPD": 3,
+        "SG13_HV_SVARICAP": 32
+      }
+    },
+    "nets": {
+      "matched": 5,
+      "pairs": [
+        {
+          "layout": "0",
+          "reference": "0"
+        },
+        {
+          "layout": "NBIAS",
+          "reference": "NBIAS"
+        },
+        {
+          "layout": "RE",
+          "reference": "RE"
+        },
+        {
+          "layout": "TAIL",
+          "reference": "TAIL"
+        },
+        {
+          "layout": "TE",
+          "reference": "TE"
+        }
+      ],
+      "not_matched": [
+        {
+          "status": "mismatch",
+          "layout": null,
+          "reference": "OUTN"
+        },
+        {
+          "status": "mismatch",
+          "layout": null,
+          "reference": "OUTP"
+        },
+        {
+          "status": "mismatch",
+          "layout": null,
+          "reference": "VCTRL"
+        },
+        {
+          "status": "mismatch",
+          "layout": "$1",
+          "reference": "SUB"
+        },
+        {
+          "status": "mismatch",
+          "layout": "LA,VDD",
+          "reference": "VDD"
+        },
+        {
+          "status": "mismatch",
+          "layout": "LB,OUTN",
+          "reference": null
+        },
+        {
+          "status": "mismatch",
+          "layout": "LB,OUTP",
+          "reference": null
+        },
+        {
+          "status": "mismatch",
+          "layout": "VCTRL",
+          "reference": null
+        }
+      ]
+    },
+    "device_pairs": {
+      "matched": 6,
+      "not_matched": [
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$8",
+            "class": "cap_cmim",
+            "terminals": {
+              "mim_top": "LB,OUTP",
+              "mim_btm": "LB,OUTN"
+            },
+            "parameters": {
+              "w": 3.65,
+              "l": 3.65,
+              "A": 13.3225,
+              "P": 14.6,
+              "m": 1.0
+            }
+          },
+          "reference": {
+            "name": "C1",
+            "class": "CAP_CMIM",
+            "terminals": {
+              "mim_top": "OUTP",
+              "mim_btm": "OUTN"
+            },
+            "parameters": {
+              "w": 3.65,
+              "l": 3.65,
+              "A": 13.3225,
+              "P": 14.6,
+              "m": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$41",
+            "class": "inductor",
+            "terminals": {
+              "inductor_1": "LB,OUTP",
+              "inductor_2": "LA,VDD",
+              "inductor_sub": "$1"
+            },
+            "parameters": {
+              "w": 8.215,
+              "s": 3.734,
+              "d": 142.106,
+              "nr_r": 4.0
+            }
+          },
+          "reference": {
+            "name": "L2",
+            "class": "INDUCTOR",
+            "terminals": {
+              "INDUCTOR_1": "VDD",
+              "INDUCTOR_2": "OUTN",
+              "INDUCTOR_sub": "SUB"
+            },
+            "parameters": {
+              "w": 8.22,
+              "s": 3.74,
+              "d": 141.975,
+              "nr_r": 4.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$42",
+            "class": "inductor",
+            "terminals": {
+              "inductor_1": "LA,VDD",
+              "inductor_2": "LB,OUTN",
+              "inductor_sub": "$1"
+            },
+            "parameters": {
+              "w": 8.215,
+              "s": 3.734,
+              "d": 142.106,
+              "nr_r": 4.0
+            }
+          },
+          "reference": {
+            "name": "L1",
+            "class": "INDUCTOR",
+            "terminals": {
+              "INDUCTOR_1": "VDD",
+              "INDUCTOR_2": "OUTP",
+              "INDUCTOR_sub": "SUB"
+            },
+            "parameters": {
+              "w": 8.22,
+              "s": 3.74,
+              "d": 141.975,
+              "nr_r": 4.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$4",
+            "class": "npn13G2v",
+            "terminals": {
+              "C": "LB,OUTN",
+              "B": "LB,OUTP",
+              "E": "TAIL",
+              "S": "$1"
+            },
+            "parameters": {
+              "we": 0.12,
+              "le": 1.0,
+              "Nx": 1.0,
+              "m": 1.0
+            }
+          },
+          "reference": {
+            "name": "Q2",
+            "class": "NPN13G2V",
+            "terminals": {
+              "C": "OUTN",
+              "B": "OUTP",
+              "E": "TAIL",
+              "S": "SUB"
+            },
+            "parameters": {
+              "we": 0.12,
+              "le": 1.0,
+              "Nx": 1.0,
+              "m": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$3",
+            "class": "npn13G2v",
+            "terminals": {
+              "C": "LB,OUTP",
+              "B": "LB,OUTN",
+              "E": "TAIL",
+              "S": "$1"
+            },
+            "parameters": {
+              "we": 0.12,
+              "le": 1.0,
+              "Nx": 1.0,
+              "m": 1.0
+            }
+          },
+          "reference": {
+            "name": "Q1",
+            "class": "NPN13G2V",
+            "terminals": {
+              "C": "OUTP",
+              "B": "OUTN",
+              "E": "TAIL",
+              "S": "SUB"
+            },
+            "parameters": {
+              "we": 0.12,
+              "le": 1.0,
+              "Nx": 1.0,
+              "m": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$33",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN2",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$24",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP16",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$26",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN3",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$27",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN4",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$28",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN5",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$29",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN6",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$30",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN7",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$31",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN8",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$32",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN9",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$34",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN10",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$35",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN11",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$36",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN12",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$37",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN13",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$38",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN14",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$39",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN15",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$40",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN16",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$23",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP9",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$9",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP1",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$10",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP2",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$11",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP3",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$12",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP4",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$13",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP5",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$14",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP6",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$15",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP7",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$16",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP8",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$17",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP10",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$18",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP11",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$19",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP12",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$20",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP13",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$21",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP14",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$22",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTP",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVP15",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTP",
+              "G2": "VCTRL",
+              "SUB": "OUTP"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        },
+        {
+          "status": "mismatch",
+          "layout": {
+            "name": "$25",
+            "class": "sg13_hv_svaricap",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "LB,OUTN",
+              "G2": "VCTRL",
+              "SUB": "$1"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          },
+          "reference": {
+            "name": "CVN1",
+            "class": "SG13_HV_SVARICAP",
+            "terminals": {
+              "G1": "VCTRL",
+              "W": "OUTN",
+              "G2": "VCTRL",
+              "SUB": "OUTN"
+            },
+            "parameters": {
+              "w": 3.74,
+              "l": 0.3,
+              "Nx": 1.0
+            }
+          }
+        }
+      ]
+    },
+    "pins": {
+      "matched": 12,
+      "not_matched": []
+    }
+  }
+}

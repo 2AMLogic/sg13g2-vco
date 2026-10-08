@@ -1,0 +1,439 @@
+{
+  "source": {
+    "file": "design/vco.spice",
+    "sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+  },
+  "diagnostic": {
+    "bn_to_substrate": false,
+    "swap_inductor": []
+  },
+  "ports": [
+    "0",
+    "VDD",
+    "OUTP",
+    "OUTN",
+    "VCTRL",
+    "TAIL",
+    "NBIAS",
+    "TE",
+    "RE"
+  ],
+  "constants": {
+    "grid_um": 0.005,
+    "hbt_we": "120.0n",
+    "rppd_w_um": 1.0,
+    "rppd_ohm_per_um": 258.4492,
+    "rppd_head_ohm": 70.001,
+    "ring": [
+      -80.0,
+      -106.0,
+      105.0,
+      -16.0
+    ],
+    "ring_w": 2.0
+  },
+  "output_sha256": "d3ea33309ebeb164ceaf7956f853dcc197e29887d6da4ca81a0c687e4828d446",
+  "lines": [
+    {
+      "line": 3,
+      "source": "XL1 VDD OUTP 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1",
+      "reference": "LL1 VDD OUTP sub inductor w=8.22u s=3.74u d=141.975u nr_r=4 m=1",
+      "transforms": [
+        "T3",
+        "T5a"
+      ]
+    },
+    {
+      "line": 4,
+      "source": "XL2 VDD OUTN 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1",
+      "reference": "LL2 VDD OUTN sub inductor w=8.22u s=3.74u d=141.975u nr_r=4 m=1",
+      "transforms": [
+        "T3",
+        "T5a"
+      ]
+    },
+    {
+      "line": 5,
+      "source": "XC1 OUTP OUTN cap_cmim w=3.65e-6 l=3.65e-6 m=1",
+      "reference": "CC1 OUTP OUTN cap_cmim w=3.65u l=3.65u m=1",
+      "transforms": [
+        "T3"
+      ]
+    },
+    {
+      "line": 6,
+      "source": "XCVP1 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP1 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 7,
+      "source": "XCVP2 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP2 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 8,
+      "source": "XCVP3 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP3 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 9,
+      "source": "XCVP4 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP4 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 10,
+      "source": "XCVP5 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP5 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 11,
+      "source": "XCVP6 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP6 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 12,
+      "source": "XCVP7 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP7 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 13,
+      "source": "XCVP8 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP8 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 14,
+      "source": "XCVP9 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP9 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 15,
+      "source": "XCVP10 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP10 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 16,
+      "source": "XCVP11 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP11 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 17,
+      "source": "XCVP12 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP12 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 18,
+      "source": "XCVP13 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP13 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 19,
+      "source": "XCVP14 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP14 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 20,
+      "source": "XCVP15 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP15 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 21,
+      "source": "XCVP16 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVP16 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 22,
+      "source": "XCVN1 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN1 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 23,
+      "source": "XCVN2 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN2 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 24,
+      "source": "XCVN3 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN3 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 25,
+      "source": "XCVN4 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN4 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 26,
+      "source": "XCVN5 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN5 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 27,
+      "source": "XCVN6 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN6 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 28,
+      "source": "XCVN7 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN7 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 29,
+      "source": "XCVN8 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN8 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 30,
+      "source": "XCVN9 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN9 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 31,
+      "source": "XCVN10 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN10 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 32,
+      "source": "XCVN11 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN11 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 33,
+      "source": "XCVN12 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN12 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 34,
+      "source": "XCVN13 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN13 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 35,
+      "source": "XCVN14 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN14 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 36,
+      "source": "XCVN15 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN15 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 37,
+      "source": "XCVN16 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1",
+      "reference": "CCVN16 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1",
+      "transforms": [
+        "T3",
+        "T6"
+      ]
+    },
+    {
+      "line": 38,
+      "source": "XQ1 OUTP OUTN TAIL 0 npn13G2v Nx=1 El=1.0",
+      "reference": "QQ1 OUTP OUTN TAIL sub npn13G2v le=1u we=120.0n m=1",
+      "transforms": [
+        "T3",
+        "T5a"
+      ]
+    },
+    {
+      "line": 39,
+      "source": "XQ2 OUTN OUTP TAIL 0 npn13G2v Nx=1 El=1.0",
+      "reference": "QQ2 OUTN OUTP TAIL sub npn13G2v le=1u we=120.0n m=1",
+      "transforms": [
+        "T3",
+        "T5a"
+      ]
+    },
+    {
+      "line": 40,
+      "source": "XQ3 TAIL NBIAS TE 0 npn13G2v Nx=1 El=2.0",
+      "reference": "QQ3 TAIL NBIAS TE sub npn13G2v le=2u we=120.0n m=1",
+      "transforms": [
+        "T3",
+        "T5a"
+      ]
+    },
+    {
+      "line": 41,
+      "source": "RTE TE 0 2k m=1",
+      "reference": "RTE TE 0 sub rppd w=1u l=7.47u b=0 m=1",
+      "transforms": [
+        "T4",
+        "T5a"
+      ]
+    },
+    {
+      "line": 42,
+      "source": "RREF VDD NBIAS 20.5k m=1",
+      "reference": "RREF VDD NBIAS sub rppd w=1u l=79.05u b=0 m=1",
+      "transforms": [
+        "T4",
+        "T5a"
+      ]
+    },
+    {
+      "line": 43,
+      "source": "XQ4 NBIAS NBIAS RE 0 npn13G2v Nx=1 El=1.0",
+      "reference": "QQ4 NBIAS NBIAS RE sub npn13G2v le=1u we=120.0n m=1",
+      "transforms": [
+        "T3",
+        "T5a"
+      ]
+    },
+    {
+      "line": 44,
+      "source": "RRE RE 0 4k m=1",
+      "reference": "RRE RE 0 sub rppd w=1u l=15.205u b=0 m=1",
+      "transforms": [
+        "T4",
+        "T5a"
+      ]
+    },
+    {
+      "line": 45,
+      "source": "VSUP VDD 0 dc 3.3",
+      "dropped": true,
+      "transforms": [
+        "T1"
+      ]
+    },
+    {
+      "line": 47,
+      "source": "VCT VCTRL 0 dc 1.65",
+      "dropped": true,
+      "transforms": [
+        "T1"
+      ]
+    },
+    {
+      "line": null,
+      "source": "layout/scripts/floorplan.py RING=(-80.0, -106.0, 105.0, -16.0) RING_W=2.0",
+      "reference": "Rtap_ring 0 sub ptap1 A=1084p P=1084u",
+      "transforms": [
+        "T5b"
+      ]
+    }
+  ]
+}
