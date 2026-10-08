@@ -682,19 +682,45 @@ osc_write_csv_headers() {
 # coarser ceiling to measure the circuit solution's own discretization error,
 # and without this filter that point would enter its own corner's tuning curve
 # as a second, slightly different sample at the same Vctrl.
+#
+# The sixth argument is the EXPECTED Vctrl list (space-separated volts) and is
+# required. A curve is graded only when it is COMPLETE: every expected voltage
+# has exactly one row at this tmax and that row is PASS (voltages compared
+# numerically; a row at an unexpected voltage also makes it incomplete). An
+# incomplete curve -- e.g. the two endpoints oscillating while every interior
+# point failed -- still reports its numbers from the surviving PASS points
+# (n_points = PASS count) but row1/row2/row2_stretch read INCOMPLETE, the
+# linearity is nan, and Kvco is written only for segments whose two voltages
+# are adjacent in the expected list (never a slope across a gap). Fewer than
+# two PASS points stays INSUFFICIENT. Column layout is unchanged.
 osc_emit_tuning() {
   local mos="$1" cap="$2" hbt="$3" temp="$4" tmax="${5:-${OSC_TMAX}}"
-  awk -F, -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
+  local vlist="${6:-}"
+  if [[ -z "${vlist// /}" ]]; then
+    echo "osc_emit_tuning: expected Vctrl list (6th argument) is required" >&2
+    return 2
+  fi
+  awk -F, -v vlist="${vlist}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
       -v tmax="${tmax}" \
       -v f1lo="${OSC_ROW1_F_MIN_HZ}" -v f1hi="${OSC_ROW1_F_MAX_HZ}" \
       -v r2="${OSC_ROW2_RATIO}" -v r2s="${OSC_ROW2_RATIO_STRETCH}" \
       -v kvco_csv="${KVCO_CSV:-/dev/null}" '
+    BEGIN { ne = split(vlist, ev, " ") }
     NR == 1 { next }
-    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax && $8 == "PASS" {
-      n++; v[n] = $6 + 0; f[n] = $9 + 0
-      fl = $12 + 0; if (fl > worstfloor) worstfloor = fl
+    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax {
+      x = $6 + 0; ix = 0
+      for (e = 1; e <= ne; e++) { d = x - ev[e]; if (d < 0) d = -d; if (d < 1e-9) { ix = e; break } }
+      if (ix == 0) unexpected = 1
+      else rows[ix]++
+      if ($8 == "PASS") {
+        n++; v[n] = x; f[n] = $9 + 0; xi[n] = ix
+        fl = $12 + 0; if (fl > worstfloor) worstfloor = fl
+        if (ix > 0) passrows[ix]++
+      }
     }
     END {
+      complete = !unexpected
+      for (e = 1; e <= ne; e++) if (rows[e] != 1 || passrows[e] != 1) complete = 0
       if (n < 2) {
         printf "%s,%s,%s,%s,%d,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,INSUFFICIENT,INSUFFICIENT,INSUFFICIENT\n", \
                mos, cap, hbt, temp, n
@@ -704,6 +730,7 @@ osc_emit_tuning() {
       # monotonic in Vctrl; sort defensively anyway
       for (i = 1; i <= n; i++) for (j = i+1; j <= n; j++) if (v[j] < v[i]) {
         tv = v[i]; v[i] = v[j]; v[j] = tv; tf = f[i]; f[i] = f[j]; f[j] = tf
+        tx = xi[i]; xi[i] = xi[j]; xi[j] = tx
       }
       fmin = f[1]; fmax = f[1]; vmin = v[1]; vmax = v[1]
       for (i = 1; i <= n; i++) {
@@ -717,6 +744,7 @@ osc_emit_tuning() {
       for (i = 1; i < n; i++) {
         dv = v[i+1] - v[i]
         if (dv == 0) continue
+        if (!complete && !(xi[i] > 0 && xi[i+1] == xi[i] + 1 && rows[xi[i]] == 1 && rows[xi[i+1]] == 1)) continue
         k = (f[i+1] - f[i]) / dv
         kn++; ksum += k
         ak = (k < 0) ? -k : k
@@ -728,7 +756,7 @@ osc_emit_tuning() {
       }
       kmean = (kn > 0) ? ksum / kn : "nan"
       lin = "nan"
-      if (kn >= 3 && kmean != 0) {
+      if (complete && kn >= 3 && kmean != 0) {
         lo = ""; hi = ""
         # recompute the slope spread; kpk/kmn are by |k|, the spread is signed
         for (i = 1; i < n; i++) {
@@ -750,6 +778,7 @@ osc_emit_tuning() {
         if (ratio >= r2s * (1 + floorfrac))      row2s = "MET"
         else if (ratio >= r2s * (1 - floorfrac)) row2s = "WITHIN QUANTIZATION FLOOR OF BOUND"
       }
+      if (!complete) { row1 = "INCOMPLETE"; row2 = "INCOMPLETE"; row2s = "INCOMPLETE" }
       printf "%s,%s,%s,%s,%d,%.6e,%.6e,%.6g,%.6g,%.6f,%.4f,%.6e,%.6e,%.6e,%.6e,%s,%.6g,%s,%s,%s\n", \
              mos, cap, hbt, temp, n, fmin, fmax, vmin, vmax, ratio, pct, fgeo, \
              kmean, kpk, kmn, lin, worstfloor, row1, row2, row2s

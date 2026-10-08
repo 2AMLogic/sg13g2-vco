@@ -165,7 +165,7 @@ for vctrl in ${PILOT_VCTRL}; do
   run_point "pilot_${PILOT_MOS}_${PILOT_CAP}_${PILOT_HBT}_${PILOT_TEMP_NOM}c_${vctrl}v" \
             "${PILOT_TEMP_NOM}" "${vctrl}" "${OSC_TMAX}"
 done
-osc_emit_tuning "${PILOT_MOS}" "${PILOT_CAP}" "${PILOT_HBT}" "${PILOT_TEMP_NOM}" "${OSC_TMAX}"
+osc_emit_tuning "${PILOT_MOS}" "${PILOT_CAP}" "${PILOT_HBT}" "${PILOT_TEMP_NOM}" "${OSC_TMAX}" "${PILOT_VCTRL}"
 
 # 2. temperature extremes, endpoints + band centre
 for temp in ${PILOT_TEMPS_EDGE}; do
@@ -173,7 +173,7 @@ for temp in ${PILOT_TEMPS_EDGE}; do
     run_point "pilot_${PILOT_MOS}_${PILOT_CAP}_${PILOT_HBT}_${temp}c_${vctrl}v" \
               "${temp}" "${vctrl}" "${OSC_TMAX}"
   done
-  osc_emit_tuning "${PILOT_MOS}" "${PILOT_CAP}" "${PILOT_HBT}" "${temp}" "${OSC_TMAX}"
+  osc_emit_tuning "${PILOT_MOS}" "${PILOT_CAP}" "${PILOT_HBT}" "${temp}" "${OSC_TMAX}" "${PILOT_VCTRL_EDGE}"
 done
 
 # 3. timestep-convergence repeat of the nominal band-centre point

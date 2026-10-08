@@ -457,6 +457,21 @@ oscillator-core/
 Nothing under `records/`, `netlist-snapshots/` or `corners/` is ever edited or
 deleted: a re-run mints a new record ID (`sim/README.md`).
 
+### Tuning curves are graded only when `Vctrl` coverage is complete
+
+`osc_emit_tuning` takes the expected `Vctrl` list as a required sixth
+argument. A curve is graded (`row1`/`row2`/`row2_stretch`) only if every
+expected voltage has exactly one row at the selected `tmax` and that row is
+`PASS`. Otherwise those three columns read `INCOMPLETE`, `n_points` is the
+number of surviving `PASS` points, linearity is `nan`, and `Kvco` is written
+only for segments between voltages adjacent in the expected list (never a
+slope across a gap). Fewer than two `PASS` points stays `INSUFFICIENT`. The
+column layout is unchanged and a complete curve's output is byte-identical to
+the earlier behaviour. The pilot passes its own sets (`PILOT_VCTRL`,
+`PILOT_VCTRL_EDGE`) and remains ungraded. Records written before this change
+are historical evidence and are not rewritten. PDK-free check:
+`tests/test_emit_tuning.sh`.
+
 ## Records
 
 | Record | What it is |
