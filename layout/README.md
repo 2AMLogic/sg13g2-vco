@@ -12,7 +12,9 @@ Layout (klayout-tools driven) and DRC/LVS signoff artifacts.
 | `generate.sh` | Regenerates both artifacts from the PDK, end to end, headless |
 | `drc.sh` | Re-runs the design-rule evidence on **two engines** (IHP's own runset, which produces the report of record, and klt's curated deck as a diagnostic) plus the guard-ring checks. Fails on any verdict drift |
 | `drc/` | The committed `klt drc` / `klt ring-check` reports and the native run's assertion record (`PROVENANCE.md` §12–§13) |
-| `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s controls, the static rule-category review (`ihp_deck_categories.py`, `ihp_deck_facts.py`) and the pinned native-DRC environment (`native_drc_env.sh`) |
+| `lvs.sh` | Re-runs the LVS evidence: derives the reference from `design/vco.spice`, runs IHP's own LVS runset plus two single-variable controls and three negative controls, and records why `klt lvs` 0.6.0 cannot run this compare. Fails on any verdict drift |
+| `lvs/` | The derived LVS reference and its per-line trace, the runset's device-aware extraction, the compare of record and the run record (`PROVENANCE.md` §14) |
+| `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s controls, the static rule-category review (`ihp_deck_categories.py`, `ihp_deck_facts.py`), the pinned native-DRC environment (`native_drc_env.sh`), and `lvs.sh`'s reference derivation (`lvs_reference.py`), `.lvsdb` reader (`lvsdb_summary.py`) and negative-control helper (`lvs_break.py`) |
 | `build/` | Scratch (gitignored, like `sim/build/` and `design/build/`) |
 
 ## The layout
@@ -86,10 +88,30 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     `klayout-tools#2688`), not from the layout.
 - **Guard-ring continuity is verified on all three of its layers** (Activ,
   pSD, Metal1), each against a negative control that breaks it (§12).
-- **LVS closure is issue #62** — not run here. Three deliberate
-  schematic/layout differences are already recorded for it in `PROVENANCE.md`
-  (the `rppd` vs ideal `R` substitution, the varactor `bn` substrate tie, and
-  the `VSUP`/`VCT` testbench sources with no layout counterpart).
+- **LVS (issue #62): run, device-aware, and the verdict is `mismatch`**
+  (`PROVENANCE.md` §14). Read §14 before citing anything about LVS.
+  - *Engine*: IHP's own KLayout LVS runset (`sg13g2.lvs`, KLayout 0.30.12).
+    It recognizes **all 42 devices** (plus the guard-ring `ptap1` tie), with
+    the same per-class census on both sides. `klt lvs` at the pinned 0.6.0
+    (and at current `main`) cannot run this compare: it refuses the reference
+    (no inductor, varactor or HBT class for `sg13g2`), and its curated
+    extraction recognizes 1 of 42 devices
+    ([klayout-tools#2849](https://github.com/2AMLogic/klayout-tools/issues/2849)).
+    So **no `klt lvs` report and no `power_connectivity` block exist** for
+    this block.
+  - *Reference*: `lvs/vco-reference.cir`, derived from `design/vco.spice` by
+    `scripts/lvs_reference.py`. Its six transformations are listed and traced
+    per line. The PDK symbols' own `lvs_format` mapping is cross-checked
+    against xschem's LVS netlist and agrees on all 39 cards it covers.
+  - *Exactly two differences*, each isolated by a single-variable control:
+    the 32 varactors' `bn` pin (schematic: tank node; layout: substrate),
+    which is schematic correction **#79**; and spiral L1's terminal order, an
+    artefact of the runset's x-sorted inductor ports on a mirrored instance
+    (the labels show L1 wired as the schematic says), tracked in **#80**. With
+    both applied in a scratch reference, the compare reports `match`, with
+    `VDD`, `0` and the substrate each pairing 1:1. Three negative controls
+    (a supply break, a signal break, a missing device) are all rejected.
+    Neither difference is reconciled in the reference of record.
 
 No electrical, EM or phase-noise claim is made or implied by this layout.
 Read `PROVENANCE.md` §11 before citing any of it as evidence.
@@ -114,3 +136,20 @@ KLayout 0.30.12, extracted from KLayout's own Ubuntu 24.04 package; elsewhere,
 set `NATIVE_KLAYOUT` to a 0.30.12 binary. Nothing is installed host-wide. The
 script fails if the deck hash, either tool revision, the expected category
 count, any negative control, or any verdict moves.
+
+## Reproducing the LVS evidence
+
+```sh
+export IHP_PDK_ROOT=~/share/pdk/ihp-sg13g2   # LVS runset hash fd11fced… (see lvs.sh)
+layout/lvs.sh
+```
+
+`lvs.sh` reuses the pinned KLayout 0.30.12 environment that
+`scripts/native_drc_env.sh` provisions, and provisions the tagged
+`klayout-tools==0.6.0` venv for its klt leg if it is missing. Both live under
+the gitignored `layout/build/`. If `xschem` is on `PATH`, the script also
+cross-checks the derived reference against xschem's own LVS-mode netlist. It
+writes `lvs/` only after every expectation holds: the record `mismatch`, the
+C1/C2 controls, the three negative controls, the supply pairing, and klt's
+refusal. Any drift fails the run and leaves the record untouched. Two
+consecutive runs produce byte-identical files.

@@ -45,8 +45,37 @@ run_case() {
 }
 
 fresh_tree() {
+  # signoff/ plus every file the manifest cites, and the artifact each cited
+  # klt envelope names as its input (`file`): klt signoff re-hashes that
+  # artifact for `input_verified`, so a tree without it would render a
+  # different report and the pristine case could never pass.  Paths are
+  # repo-root-relative, as the manifest contract requires.
   tree="$(mktemp -d)"
   cp -R "$ROOT/signoff" "$tree/signoff"
+  python3 - "$ROOT" "$tree" <<'PY'
+import json, os, shutil, sys
+root, tree = sys.argv[1], sys.argv[2]
+
+def copy(rel):
+    src = os.path.join(root, rel)
+    if not rel or os.path.isabs(rel) or not os.path.isfile(src):
+        return
+    os.makedirs(os.path.dirname(os.path.join(tree, rel)), exist_ok=True)
+    shutil.copyfile(src, os.path.join(tree, rel))
+
+manifest = json.load(open(os.path.join(root, "signoff", "manifest.json")))
+for entry in (manifest.get("evidence") or {}).values():
+    rel = entry if isinstance(entry, str) else (entry or {}).get("file")
+    if not isinstance(rel, str):
+        continue
+    copy(rel)
+    try:
+        env = json.load(open(os.path.join(root, rel)))
+    except (OSError, ValueError):
+        continue
+    if isinstance(env, dict) and isinstance(env.get("file"), str):
+        copy(env["file"])
+PY
   echo "$tree"
 }
 
@@ -57,7 +86,7 @@ run_case "pristine tree passes" 0 "$t"
 # 2. Tampered committed record fails: the verdict-of-record no longer
 #    matches what klt actually renders.
 t="$(fresh_tree)"
-sed -i.bak 's/"t1_met_count": 0/"t1_met_count": 9/' "$t/signoff/t1-report.json"
+sed -i.bak 's/"t1_met_count": [0-9]*/"t1_met_count": 99/' "$t/signoff/t1-report.json"
 rm -f "$t/signoff/t1-report.json.bak"
 run_case "tampered record fails" 1 "$t"
 

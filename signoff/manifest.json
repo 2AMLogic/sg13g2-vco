@@ -1,5 +1,10 @@
 {
   "block": "sg13g2-vco",
   "kind": "analog",
-  "evidence": {}
+  "evidence": {
+    "2": {
+      "file": "layout/drc/vco-drc-ihp.json",
+      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
+    }
+  }
 }

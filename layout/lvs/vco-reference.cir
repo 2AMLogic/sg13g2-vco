@@ -1,0 +1,50 @@
+* LVS reference for sg13g2-vco -- DERIVED, do not edit.
+* source: design/vco.spice @ sha256:f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4
+* by: layout/scripts/lvs_reference.py (transformations T1..T6 in its
+*     header; per-line trace in the JSON sidecar)
+
+.SUBCKT vco 0 VDD OUTP OUTN VCTRL TAIL NBIAS TE RE
+LL1 VDD OUTP sub inductor w=8.22u s=3.74u d=141.975u nr_r=4 m=1
+LL2 VDD OUTN sub inductor w=8.22u s=3.74u d=141.975u nr_r=4 m=1
+CC1 OUTP OUTN cap_cmim w=3.65u l=3.65u m=1
+CCVP1 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP2 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP3 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP4 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP5 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP6 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP7 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP8 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP9 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP10 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP11 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP12 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP13 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP14 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP15 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVP16 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN1 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN2 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN3 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN4 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN5 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN6 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN7 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN8 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN9 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN10 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN11 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN12 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN13 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN14 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN15 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+CCVN16 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74u l=0.3u Nx=1
+QQ1 OUTP OUTN TAIL sub npn13G2v le=1u we=120.0n m=1
+QQ2 OUTN OUTP TAIL sub npn13G2v le=1u we=120.0n m=1
+QQ3 TAIL NBIAS TE sub npn13G2v le=2u we=120.0n m=1
+RTE TE 0 sub rppd w=1u l=7.47u b=0 m=1
+RREF VDD NBIAS sub rppd w=1u l=79.05u b=0 m=1
+QQ4 NBIAS NBIAS RE sub npn13G2v le=1u we=120.0n m=1
+RRE RE 0 sub rppd w=1u l=15.205u b=0 m=1
+Rtap_ring 0 sub ptap1 A=1084p P=1084u
+.ENDS vco

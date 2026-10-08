@@ -11,7 +11,8 @@ open-source xschem + ngspice flow.
 [reproducible layout](layout/README.md) are committed, with native DRC
 evidence and coverage limits documented in
 [layout provenance](layout/PROVENANCE.md). LVS closure and the graded PVT
-simulation grids remain outstanding; the
+simulation grids remain outstanding. A device-aware LVS has run and reports
+`mismatch`, with two isolated differences (#79, #80; provenance §14). The
 [signoff report](signoff/t1-report.json) is the verdict of record.
 
 **Built agent-native.** Every specification, decision record, testbench, and
