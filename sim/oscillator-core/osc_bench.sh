@@ -411,6 +411,48 @@ osc_quant_floor_pct() {
 }
 
 # --------------------------------------------------------------------------
+# osc_trace_validity <datafile> <t_start_s> <t_stop_s>
+# MEASUREMENT validity of one wrdata two-column trace, kept separate from the
+# simulator's exit status (a clean ngspice run can still leave a trace
+# missing, empty, mangled or cut short; osc_metrics() would turn each of
+# those into a plausible 0). Prints "ok" or one reason token:
+#   missing    no such file
+#   empty      no data lines
+#   malformed  a data line has fewer than 2 fields or a non-numeric field
+#   nonfinite  a field is nan/inf (ngspice prints these on a diverged solve)
+#   truncated  the trace starts after t_start, ends before ~t_stop (0.1 %
+#              tolerance), or has fewer than 3 samples in the window
+#   unordered  time is not strictly increasing
+# A reason is a FINDING about the output, never a number to be defaulted.
+# --------------------------------------------------------------------------
+osc_trace_validity() {
+  if [[ ! -f "$1" ]]; then echo missing; return 0; fi
+  awk -v ts="${2:-0}" -v te="${3:-0}" '
+    function isnum(x) { return x ~ /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$/ }
+    function isnf(x)  { return tolower(x) ~ /^[-+]?(nan|inf|infinity)(\([^)]*\))?$/ }
+    /^[ \t]*$/ { next }
+    {
+      lines++
+      if (NF < 2) { bad = 1; next }
+      if (isnf($1) || isnf($2)) { nonfin = 1; next }
+      if (!isnum($1) || !isnum($2)) { bad = 1; next }
+      t = $1 + 0
+      if (lines > 1 && seen && t <= pt) unord = 1
+      if (!seen) { t0 = t }
+      seen = 1; pt = t
+      if (t >= ts && (te <= 0 || t <= te)) nwin++
+    }
+    END {
+      if (lines == 0)  { print "empty"; exit }
+      if (bad)         { print "malformed"; exit }
+      if (nonfin)      { print "nonfinite"; exit }
+      if (unord)       { print "unordered"; exit }
+      if (t0 > ts || (te > 0 && pt < te * 0.999) || nwin < 3) { print "truncated"; exit }
+      print "ok"
+    }' "$1"
+}
+
+# --------------------------------------------------------------------------
 # osc_simulate_point <corner-id> <mos> <cap> <hbt> <temp> <vctrl> <tmax>
 # One simulated (PVT, Vctrl, timestep-ceiling) point of the transient bench:
 # render, freeze the netlist, run, extract, and append one row to
@@ -422,7 +464,14 @@ osc_quant_floor_pct() {
 #   f_osc_hz,cycles,dt_max_s,quant_floor_interp_pct,quant_floor_count_pct,
 #   vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,
 #   f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,
-#   isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w
+#   isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w,
+#   meas_status,meas_reason
+#
+# status is the SIMULATOR/oscillation classification (PASS/NOSC/FAIL, or NODATA
+# when the clean run left no usable differential trace to classify with).
+# meas_status is separate: VALID only when all four required traces passed
+# osc_trace_validity; otherwise INVALID with meas_reason naming each trace and
+# its fault, and every value derived from an invalid trace is nan, never 0.
 # --------------------------------------------------------------------------
 osc_simulate_point() {
   local corner_id="$1" mos="$2" cap="$3" hbt="$4" temp="$5" vctrl="$6" tmax="$7"
@@ -452,26 +501,41 @@ osc_simulate_point() {
 
   local status=FAIL
   local f_osc=0 cycles=0 dtmax=0 vpp_d=0
-  local f_cm=0 vpp_cm=0 f_tail=0 vtail_mean=0 isup_avg=0
+  local f_cm=nan vpp_cm=nan f_tail=nan vtail_mean=nan isup_avg=nan
   local t_settle=nan
   local floor_i=nan floor_c=nan
 
-  if [[ -f "${d_vdiff}" ]]; then
+  # Measurement validity first, per trace, BEFORE any extractor sees the data:
+  # a missing trace must stay unavailable (nan), not become a measured zero.
+  local tstop_s="${OSC_TSTOP_S}"
+  local meas_reason="" v name tv_vdiff tv_vcm tv_vtail tv_isup
+  for name in vdiff vcm vtail isup; do
+    v="$(osc_trace_validity "${WORKDIR}/${prefix}_${name}" "${OSC_TMEAS_START}" "${tstop_s}")"
+    [[ "${v}" != "ok" ]] && meas_reason="${meas_reason:+${meas_reason};}${name}:${v}"
+    case "${name}" in
+      vdiff) tv_vdiff="${v}" ;; vcm) tv_vcm="${v}" ;;
+      vtail) tv_vtail="${v}" ;; isup) tv_isup="${v}" ;;
+    esac
+  done
+  local meas_status=VALID
+  [[ -n "${meas_reason}" ]] && meas_status=INVALID
+
+  if [[ "${tv_vdiff}" == "ok" ]]; then
     read -r f_osc vpp_d cycles _mean_d _tx1 _tx2 dtmax _ns \
       <<<"$(osc_metrics "${d_vdiff}" "${OSC_TMEAS_START}")"
     read -r t_settle _vppf _nextrema \
       <<<"$(osc_settle "${d_vdiff}" "${OSC_SETTLE_FRAC}" "${OSC_SETTLE_REF}")"
     read -r floor_i floor_c <<<"$(osc_quant_floor_pct "${f_osc}" "${cycles}" "${dtmax}")"
   fi
-  if [[ -f "${d_vcm}" ]]; then
+  if [[ "${tv_vcm}" == "ok" ]]; then
     read -r f_cm vpp_cm _c _m _a _b _d _n \
       <<<"$(osc_metrics "${d_vcm}" "${OSC_TMEAS_START}")"
   fi
-  if [[ -f "${d_vtail}" ]]; then
+  if [[ "${tv_vtail}" == "ok" ]]; then
     read -r f_tail _vpp _c vtail_mean _a _b _d _n \
       <<<"$(osc_metrics "${d_vtail}" "${OSC_TMEAS_START}")"
   fi
-  if [[ -f "${d_isup}" ]]; then
+  if [[ "${tv_isup}" == "ok" ]]; then
     read -r _f _vpp _c isup_avg _a _b _d _n \
       <<<"$(osc_metrics "${d_isup}" "${OSC_TMEAS_START}")"
   fi
@@ -485,7 +549,11 @@ osc_simulate_point() {
   # they are different findings and the sweep must not blur them (row 6 in
   # particular is decided by which of the two it is).
   if [[ "${rc}" == "0" && "${model_error}" == "0" ]]; then
-    if awk -v f="${f_osc}" 'BEGIN { exit (f > 1e9) ? 0 : 1 }'; then
+    if [[ "${tv_vdiff}" != "ok" ]]; then
+      # Clean run, but no usable differential trace: neither PASS nor an
+      # honest NOSC (which needs a trace that was measured and was flat).
+      status=NODATA
+    elif awk -v f="${f_osc}" 'BEGIN { exit (f > 1e9) ? 0 : 1 }'; then
       status=PASS
     else
       status=NOSC
@@ -496,10 +564,10 @@ osc_simulate_point() {
   row="$(awk -v vpp_cm="${vpp_cm}" -v vpp_d="${vpp_d}" -v f_cm="${f_cm}" \
              -v f_tail="${f_tail}" -v f_osc="${f_osc}" -v isup_avg="${isup_avg}" \
              -v isup_op="${isup_op:-nan}" -v vdd="${OSC_VDD_NOM}" 'BEGIN {
-    r_cm    = (vpp_d  > 0) ? vpp_cm / vpp_d : "nan"
-    fr_cm   = (f_osc  > 0) ? f_cm   / f_osc : "nan"
-    fr_tail = (f_osc  > 0) ? f_tail / f_osc : "nan"
-    p_ls    = isup_avg * vdd
+    r_cm    = (vpp_d  > 0 && vpp_cm != "nan") ? vpp_cm / vpp_d : "nan"
+    fr_cm   = (f_osc  > 0 && f_cm   != "nan") ? f_cm   / f_osc : "nan"
+    fr_tail = (f_osc  > 0 && f_tail != "nan") ? f_tail / f_osc : "nan"
+    p_ls    = (isup_avg == "nan") ? "nan" : isup_avg * vdd
     # i(vsup) is current INTO the source, i.e. negative for a supply; the
     # transient trace is already sign-flipped, the op print is not.
     iop = (isup_op == "nan" || isup_op == "") ? "nan" : -isup_op
@@ -509,11 +577,11 @@ osc_simulate_point() {
   local r_cm fr_cm fr_tail iop p_op p_ls
   IFS=, read -r r_cm fr_cm fr_tail iop p_op p_ls _ <<<"${row}"
 
-  echo "${corner_id},${mos},${cap},${hbt},${temp},${vctrl},${tmax},${status},${f_osc},${cycles},${dtmax},${floor_i},${floor_c},${vpp_d},${t_settle},${vpp_cm},${r_cm},${f_cm},${fr_cm},${f_tail},${fr_tail},${vtail_op:-nan},${vtail_mean},${iop},${isup_avg},${p_op},${p_ls}" >> "${CSV_OUT}"
+  echo "${corner_id},${mos},${cap},${hbt},${temp},${vctrl},${tmax},${status},${f_osc},${cycles},${dtmax},${floor_i},${floor_c},${vpp_d},${t_settle},${vpp_cm},${r_cm},${f_cm},${fr_cm},${f_tail},${fr_tail},${vtail_op:-nan},${vtail_mean},${iop},${isup_avg},${p_op},${p_ls},${meas_status},${meas_reason:--}" >> "${CSV_OUT}"
 
-  printf "[%s] %s  f=%s Hz  Vpp_d=%s V  t_settle=%s s  P_ls=%s W  (rc=%s model_error=%s)\n" \
+  printf "[%s] %s  f=%s Hz  Vpp_d=%s V  t_settle=%s s  P_ls=%s W  (rc=%s model_error=%s meas=%s%s)\n" \
          "${corner_id}" "${status}" "${f_osc}" "${vpp_d}" "${t_settle}" "${p_ls}" \
-         "${rc}" "${model_error}"
+         "${rc}" "${model_error}" "${meas_status}" "${meas_reason:+ ${meas_reason}}"
 
   # Keep the scratch dir bounded: a full grid writes four traces per point and
   # each is a few hundred kB. The frozen netlist and the raw log are the
@@ -645,7 +713,7 @@ osc_margin_corner() {
 # disagree about what column 14 was.
 # --------------------------------------------------------------------------
 osc_write_csv_headers() {
-  echo "corner_id,mos,cap,hbt,temp_c,vctrl_v,tmax,status,f_osc_hz,cycles,dt_max_s,quant_floor_interp_pct,quant_floor_count_pct,vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w" > "${CSV_OUT}"
+  echo "corner_id,mos,cap,hbt,temp_c,vctrl_v,tmax,status,f_osc_hz,cycles,dt_max_s,quant_floor_interp_pct,quant_floor_count_pct,vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w,meas_status,meas_reason" > "${CSV_OUT}"
   if [[ -n "${TUNING_CSV:-}" ]]; then
     echo "mos,cap,hbt,temp_c,n_points,f_min_hz,f_max_hz,v_at_f_min,v_at_f_max,tuning_ratio,tuning_pct,f_center_geo_hz,kvco_mean_hz_per_v,kvco_peak_hz_per_v,kvco_min_hz_per_v,kvco_linearity_pct,quant_floor_worst_pct,row1_verdict,row2_verdict,row2_stretch_verdict" > "${TUNING_CSV}"
   fi

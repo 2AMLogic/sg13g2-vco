@@ -182,7 +182,7 @@ run_point "pilot_${PILOT_MOS}_${PILOT_CAP}_${PILOT_HBT}_${PILOT_TEMP_NOM}c_${BAN
 
 CONV="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v t="${PILOT_TEMP_NOM}" \
             -v fine="${OSC_TMAX}" -v coarse="${PILOT_TMAX_COARSE}" '
-  NR > 1 && $5 == t && $6 == vc && $8 == "PASS" { f[$7] = $9; v[$7] = $14; p[$7] = $27 }
+  NR > 1 && $5 == t && $6 == vc && $8 == "PASS" { f[$7] = $9; v[$7] = $14; p[$7] = ($28 == "VALID") ? $27 : "nan" }
   END {
     if (!(fine in f) || !(coarse in f)) { print "nan,nan,nan"; exit }
     printf "%.4g,%.4g,%.4g\n", 100*(f[coarse]/f[fine]-1), \
@@ -221,7 +221,9 @@ CM_SUMMARY="$(awk -F, -v tm="${OSC_TMAX}" '
   NR > 1 && $7 == tm && $8 == "PASS" { n++; if (w == "" || $17+0 > w+0) w = $17; if (ft == "" || ($21+0 < ft+0)) ft = $21; if ($21+0 > ftx+0) ftx = $21 }
   END { if (n == 0) { print "no point" } else { printf "worst Vpp(cm)/Vpp(diff) %.3g over %d points; f(TAIL)/f_osc in [%.3f, %.3f]", w, n, ft, ftx } }' "${CSV_OUT}")"
 P_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v tm="${OSC_TMAX}" -v pmax="${OSC_ROW8_P_MAX_W}" '
-  NR > 1 && $6 == vc && $7 == tm && $5 == 27 && $8 == "PASS" {
+  NR > 1 && $6 == vc && $7 == tm && $5 == 27 && $8 == "PASS" && $28 != "VALID" {
+    printf "power measurement INVALID (%s); not graded", $29 }
+  NR > 1 && $6 == vc && $7 == tm && $5 == 27 && $8 == "PASS" && $28 == "VALID" {
     printf "large-signal %.4g mW vs DC-operating-point %.4g mW (bound %g mW)", $27*1e3, $26*1e3, pmax*1e3 }' "${CSV_OUT}")"
 MARGIN_SUMMARY="$(awk -F, 'NR > 1 { printf "bracket [%s, %s] against bound %s -> %s", $9, $10, $12, $11 }' "${MARGIN_SUM_CSV}")"
 

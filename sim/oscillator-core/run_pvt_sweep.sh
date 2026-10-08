@@ -282,9 +282,15 @@ ROW6_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($11 == "MET") met++; else if ($11 ~ /
   END { if (n == 0) { print "no margin corner completed"; exit }
         printf "%d/%d corners MET, %d straddling the bound", met+0, n, strad+0 }' "${MARGIN_SUM_CSV}")"
 ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W}" '
-  NR > 1 && $6 == vc && $5 == 27 && $8 == "PASS" { n++; if ($27 <= pmax) ok++; if (worst == "" || $27 > worst) worst = $27 }
-  END { if (n == 0) { print "no oscillating point at band centre and 27 C" ; exit }
-        printf "%d/%d corners at or below %g W large-signal core power; worst %g W", ok+0, n, pmax, worst }' "${CSV_OUT}")"
+  NR > 1 && $6 == vc && $5 == 27 && $8 == "PASS" {
+    # Only a point whose supply-current trace passed the measurement-validity
+    # checks may enter the power verdict; an invalid one is counted, not graded.
+    if ($28 != "VALID" || $27 == "nan" || $27 == "") { inv++; next }
+    n++; if ($27 <= pmax) ok++; if (worst == "" || $27 > worst) worst = $27 }
+  END { if (n == 0 && inv == 0) { print "no oscillating point at band centre and 27 C" ; exit }
+        if (n == 0) { printf "no valid power measurement; %d oscillating point(s) excluded as INVALID measurements", inv; exit }
+        printf "%d/%d corners at or below %g W large-signal core power; worst %g W", ok+0, n, pmax, worst
+        if (inv > 0) printf "; %d further point(s) excluded as INVALID measurements (not graded)", inv }' "${CSV_OUT}")"
 
 # ------------------------------------------------------------------ record
 {
@@ -386,6 +392,10 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "- **Result**: ${passed}/${total} transient points reached a countable"
   echo "  oscillation. Non-oscillating points: ${#nosc_points[@]}."
   echo "  Simulation failures: ${#failed_points[@]}."
+  echo "  Invalid measurements (a required transient trace missing, empty,"
+  echo "  malformed, non-finite or truncated; values left nan, never 0; kept in"
+  echo "  the CSV as meas_status=INVALID with meas_reason):"
+  echo "  $(awk -F, 'NR > 1 && $28 == "INVALID" { n++ } END { print n+0 }' "${CSV_OUT}")."
   echo "  Margin corners completed: $(( margin_total - ${#margin_failed[@]} ))/${margin_total}."
   if [[ ${#nosc_points[@]} -gt 0 ]]; then
     echo "- **Non-oscillating corners** (kept in the grid, not dropped):"
