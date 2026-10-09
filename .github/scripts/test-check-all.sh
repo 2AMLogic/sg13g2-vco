@@ -311,6 +311,7 @@ mkfix() { # <path> <body-line>
 PASSL='echo "PASS a"; echo "PASS b"'
 mkfix sim/oscillator-core/tests/test_emit_tuning.sh "$PASSL"
 mkfix sim/oscillator-core/tests/test_row3.sh "$PASSL"
+mkfix sim/oscillator-core/tests/test_row3_global.sh "$PASSL"
 mkfix sim/oscillator-core/tests/test_row7.sh "$PASSL"
 mkfix sim/oscillator-core/run_validity_check.sh 'echo "all cases passed"'
 mkfix sim/oscillator-core/tests/test_supply_stage2.sh 'echo "PASS a"; echo "PASS b"; touch sim/scribble'

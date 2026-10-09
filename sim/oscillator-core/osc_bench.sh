@@ -1610,6 +1610,50 @@ osc_emit_row7() {
     }' "${CSV_OUT}" >> "${ROW7_CSV}"
 }
 
+# Row 3 global verdict over the declared grid. Args: <row3 csv> <required keys>
+# where keys are space-separated "mos:cap:hbt:temp" identities derived from the
+# declared axes. Row-3 CSV contract (osc_row3_header): columns 1-4 are the
+# identity (mos,cap,hbt,temp_c), 21/22 are the target/stretch verdicts. The
+# header is validated; every required identity must occur exactly once, with
+# no unexpected key and no INCOMPLETE grade, or the row is NOT GRADED. A line
+# count alone cannot establish coverage (135 copies of one corner).
+osc_row3_summary() {
+  local csv="$1" req="${2:-}"
+  if [[ ! -f "${csv}" ]]; then echo "NOT GRADED: no row-3 CSV"; return 0; fi
+  if [[ "$(head -1 "${csv}")" != "$(osc_row3_header)" ]]; then
+    echo "NOT GRADED: row-3 CSV header does not match osc_row3_header; the column contract (mos,cap,hbt,temp_c key; verdicts in columns 21-22) cannot be trusted"
+    return 0
+  fi
+  awk -F, -v req="${req}" '
+    BEGIN { nr = split(req, rq, " "); for (i = 1; i <= nr; i++) isreq[rq[i]] = 1 }
+    NR == 1 { next }
+    {
+      k = $1 ":" $2 ":" $3 ":" $4; cnt[k]++; tv[k] = $21; sv[k] = $22; ws[k] = $7
+      if (!(k in isreq)) { unx++; if (ux == "") ux = k }
+    }
+    END {
+      if (nr == 0) { print "NOT GRADED: no required row-3 corners declared"; exit }
+      miss = 0; dup = 0; inc = 0; t = 0; s = 0; ns = ""
+      for (i = 1; i <= nr; i++) {
+        k = rq[i]
+        if (cnt[k] == 0) { miss++; if (mk == "") mk = k; continue }
+        if (cnt[k] > 1) { dup++; if (dk == "") dk = k; continue }
+        if (tv[k] != "MET" && tv[k] != "NOT MET") { inc++; continue }
+        if (sv[k] != "MET" && sv[k] != "NOT MET") { inc++; continue }
+        if (tv[k] == "MET") t++
+        if (sv[k] == "MET") s++
+        if (ns == "" || ws[k] + 0 < ns) ns = ws[k] + 0
+      }
+      if (miss + dup + inc + unx > 0) {
+        printf "NOT GRADED (partial): %d/%d required corners graded, %d missing%s, %d duplicated%s, %d INCOMPLETE, %d unexpected%s; per-corner lines are evidence only, no global verdict\n", \
+               nr - miss - dup - inc, nr, miss, (miss ? " (e.g. " mk ")" : ""), dup, (dup ? " (e.g. " dk ")" : ""), inc, unx + 0, (unx ? " (e.g. " ux ")" : "")
+        exit
+      }
+      printf "%s: target MET at %d/%d corners, stretch MET at %d/%d corners (min window samples %d)\n", \
+             (t == nr ? (s == nr ? "MET (target and stretch)" : "MET (target); stretch NOT MET") : "NOT MET"), t, nr, s, nr, ns
+    }' "${csv}"
+}
+
 # --------------------------------------------------------------------------
 # osc_row7_summary <row7-csv> <required corners>
 # One-line global row-7 verdict over a DECLARED set of required corners,

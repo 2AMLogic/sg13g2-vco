@@ -304,15 +304,12 @@ ROW2_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($19 == "MET") met++; else if ($19 ~ /
 # Row 3 global verdict: graded only when EVERY corner of the swept grid has a
 # complete row-3 line (a partial run, e.g. a pilot or an interrupted sweep,
 # grades no global row); any INCOMPLETE corner leaves the row ungraded.
-ROW3_EXPECTED=$(( $(wc -w <<<"${MOS_LABELS}") * $(wc -w <<<"${CAP_SECTIONS}") * $(wc -w <<<"${HBT_SECTIONS}") * $(wc -w <<<"${TEMPS}") ))
-ROW3_SUMMARY="$(awk -F, -v want="${ROW3_EXPECTED}" 'NR > 1 {
-        n++
-        if ($21 == "MET") t++; else if ($21 != "NOT MET") inc++
-        if ($22 == "MET") s++
-        if (ns == "" || $7 < ns) ns = $7 }
-  END { if (n == 0) { print "NOT GRADED: no corner produced a row-3 line"; exit }
-        if (n != want || inc > 0) { printf "NOT GRADED (partial): %d/%d corners present, %d INCOMPLETE; per-corner lines are evidence only, no global verdict", n, want, inc+0; exit }
-        printf "%s: target MET at %d/%d corners, stretch MET at %d/%d corners (min window samples %d)", (t == n ? (s == n ? "MET (target and stretch)" : "MET (target); stretch NOT MET") : "NOT MET"), t+0, n, s+0, n, ns }' "${ROW3_CSV}")"
+ROW3_REQUIRED=""
+for mos in ${MOS_LABELS}; do for cap in ${CAP_SECTIONS}; do for hbt in ${HBT_SECTIONS}; do for temp in ${TEMPS}; do
+  ROW3_REQUIRED="${ROW3_REQUIRED} ${mos}:${cap}:${hbt}:${temp}"
+done; done; done; done
+# Exact identity membership and uniqueness, not a line count (osc_row3_summary).
+ROW3_SUMMARY="$(osc_row3_summary "${ROW3_CSV}" "${ROW3_REQUIRED# }")"
 # Row 7 global verdict over the row-10 BOUND corners -- the same declared set
 # the row-6 margin pass uses (MARGIN_* above; every one is inside the main
 # grid). Every bound corner must carry exactly one complete row-7 line or the

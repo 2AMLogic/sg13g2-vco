@@ -79,6 +79,9 @@ need_pass_lines emit-tuning
 run_fixture row3-grade sim/oscillator-core/tests/test_row3.sh
 need_pass_lines row3-grade
 
+run_fixture row3-global sim/oscillator-core/tests/test_row3_global.sh
+need_pass_lines row3-global
+
 run_fixture row7-grade sim/oscillator-core/tests/test_row7.sh
 need_pass_lines row7-grade
 
