@@ -28,6 +28,12 @@ jobs:
       - name: Gate-runner self-test
         run: .github/scripts/check-all.sh runner-selftest
 
+      - name: Grader/spec agreement self-test
+        run: .github/scripts/check-all.sh grader-spec-selftest
+
+      - name: Grader constants agree with the ratified spec
+        run: .github/scripts/check-all.sh grader-spec
+
       - name: Simulator-free grading fixtures
         run: .github/scripts/check-all.sh grading-fixtures
 
