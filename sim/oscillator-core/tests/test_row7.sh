@@ -185,8 +185,9 @@ osc_emit_row7 m c1 h 27 "${OSC_TMAX}" 2>/dev/null && check list-required bad || 
 #    a tail ripple whose minimum differs from its mean, a constant 3.63 V
 #    rail, and a truncated trace.
 # ======================================================================
-# shellcheck disable=SC2034  # EXPERIMENT_DIR is read by the sourced osc_simulate_point
-WORKDIR="${W}/work"; NETLIST_DIR="${W}/net"; LOG_DIR="${W}/log"; EXPERIMENT_DIR="${W}"
+WORKDIR="${W}/work"; NETLIST_DIR="${W}/net"; LOG_DIR="${W}/log"
+# shellcheck disable=SC2034  # read by the sourced osc_simulate_point
+EXPERIMENT_DIR="${W}"
 mkdir -p "${WORKDIR}" "${NETLIST_DIR}" "${LOG_DIR}"
 # shellcheck disable=SC2034  # read by osc_render's sed (stubbed here)
 RECORD_ID="fixture"
