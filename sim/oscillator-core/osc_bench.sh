@@ -149,6 +149,15 @@ OSC_ROW1_F_MIN_HZ="4.5e9"
 OSC_ROW1_F_MAX_HZ="5.5e9"
 OSC_ROW2_RATIO="1.15"
 OSC_ROW2_RATIO_STRETCH="1.20"
+# Row 3 (RATIFIED per DR-004): graded over the window W = [V_LO, V_HI].
+OSC_ROW3_V_LO="1.65"
+OSC_ROW3_V_HI="3.30"
+OSC_ROW3_V_FULL_LO="0.0"
+OSC_ROW3_COVERAGE_MIN="0.90"
+OSC_ROW3_KVCO_MEAN_MIN_HZ_PER_V="381e6"
+OSC_ROW3_CHORD_INL_PCT="30"
+OSC_ROW3_CHORD_INL_PCT_STRETCH="20"
+OSC_ROW3_MIN_SAMPLES="5"
 OSC_ROW6_MARGIN="3.0"
 # shellcheck disable=SC2034  # read by the run_*.sh that source this file
 OSC_ROW8_P_MAX_W="10e-3"
@@ -777,6 +786,9 @@ osc_write_csv_headers() {
   if [[ -n "${KVCO_CSV:-}" ]]; then
     echo "mos,cap,hbt,temp_c,v_lo,v_hi,v_mid,f_lo_hz,f_hi_hz,kvco_hz_per_v${rc}" > "${KVCO_CSV}"
   fi
+  if [[ -n "${ROW3_CSV:-}" ]]; then
+    osc_row3_header > "${ROW3_CSV}"
+  fi
   if [[ -n "${MARGIN_CSV:-}" ]]; then
     echo "corner,mos,cap,hbt,temp_c,rung,rref_ohm,itail_a,v_te_mean_v,v_tail_mean_v,vpp_diff_late_v,f_late_hz,osc_criterion_v,oscillates${rc}" > "${MARGIN_CSV}"
   fi
@@ -924,4 +936,126 @@ osc_emit_tuning() {
              mos, cap, hbt, temp, n, fmin, fmax, vmin, vmax, ratio, pct, fgeo, \
              kmean, kpk, kmn, lin, worstfloor, row1, row2, row2s, rs
     }' "${CSV_OUT}" >> "${TUNING_CSV}"
+}
+
+# --------------------------------------------------------------------------
+# osc_row3_header / osc_emit_row3 <mos> <cap> <hbt> <temp> <tmax> <vlist>
+# The RATIFIED row-3 grade (spec/target-spec.md row 3, DR-004 Row 3) for one
+# PVT point, appended to ${ROW3_CSV} (no-op when unset). Over the window
+# W = [OSC_ROW3_V_LO, OSC_ROW3_V_HI]:
+#   (1) Kvco single-signed at every window segment (zero slope is not signed);
+#   (2) f(V_LO)-f(V_HI) >= 90 % of the SAME corner's f(0.0)-f(V_HI);
+#   (3) |Kvco|_mean = (f(V_LO)-f(V_HI))/(V_HI-V_LO) >= 381 MHz/V;
+#   (4) chord (integral) nonlinearity, 100*max|f-chord|/|f(V_HI)-f(V_LO)|,
+#       chord joining the window endpoints, <= 30 % target / 20 % stretch,
+#       graded on >= 5 window samples including both endpoints.
+# There is no stretch bound on (1)-(3); the stretch verdict is the target
+# verdict AND the 20 % chord bound. The older kvco_linearity_pct (segment
+# spread) in the tuning CSV is an ungraded descriptor and is not used here.
+#
+# Verdict values: MET, NOT MET, or INCOMPLETE. INCOMPLETE (never a pass) when
+# the window/full-domain data cannot be graded: an expected Vctrl missing,
+# duplicated, non-PASS or with an INVALID measurement (meas_status), an
+# unexpected voltage, a list lacking the window endpoints or 0.0 V, fewer than
+# 5 window samples, or a zero/negative full-domain span. Only rows at the
+# given tmax count (as in osc_emit_tuning).
+# --------------------------------------------------------------------------
+osc_row3_header() {
+  echo "mos,cap,hbt,temp_c,v_lo,v_hi,n_window_samples,f_full_lo_v_hz,f_lo_hz,f_hi_hz,full_span_hz,window_span_hz,coverage_pct,kvco_mean_hz_per_v,chord_inl_pct,req1_single_signed,req2_coverage,req3_mean_slope,req4_chord_target,req4_chord_stretch,row3_target_verdict,row3_stretch_verdict,reason"
+}
+osc_emit_row3() {
+  [[ -n "${ROW3_CSV:-}" ]] || return 0
+  local mos="$1" cap="$2" hbt="$3" temp="$4" tmax="${5:-${OSC_TMAX}}"
+  local vlist="${6:-}"
+  if [[ -z "${vlist// /}" ]]; then
+    echo "osc_emit_row3: expected Vctrl list (6th argument) is required" >&2
+    return 2
+  fi
+  awk -F, -v vlist="${vlist}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
+      -v tmax="${tmax}" -v vlo="${OSC_ROW3_V_LO}" -v vhi="${OSC_ROW3_V_HI}" -v vfull="${OSC_ROW3_V_FULL_LO}" \
+      -v covmin="${OSC_ROW3_COVERAGE_MIN}" -v kmin="${OSC_ROW3_KVCO_MEAN_MIN_HZ_PER_V}" \
+      -v inl="${OSC_ROW3_CHORD_INL_PCT}" -v inls="${OSC_ROW3_CHORD_INL_PCT_STRETCH}" \
+      -v minn="${OSC_ROW3_MIN_SAMPLES}" '
+    function abs(x) { return x < 0 ? -x : x }
+    function near(a, b) { return abs(a - b) < 1e-9 }
+    BEGIN { ne = split(vlist, ev, " ") }
+    NR == 1 { next }
+    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax {
+      x = $6 + 0; ix = 0
+      for (e = 1; e <= ne; e++) if (near(x, ev[e] + 0)) { ix = e; break }
+      if (ix == 0) { unexpected = 1; next }
+      rows[ix]++
+      ok = ($8 == "PASS" && $9 ~ /^[-+]?[0-9.]+([eE][-+]?[0-9]+)?$/ && ($9 + 0) > 0)
+      if (NF >= 28 && $28 != "VALID") ok = 0
+      if (ok) { good[ix] = 1; fv[ix] = $9 + 0 } else bad[ix] = 1
+    }
+    function emit(reason, n, f0, flo, fhi, fs, ws, cov, km, ci, r1, r2, r3, r4, r4s, vt, vs) {
+      printf "%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", \
+             mos, cap, hbt, temp, vlo, vhi, n, f0, flo, fhi, fs, ws, cov, km, ci, r1, r2, r3, r4, r4s, vt, vs, reason
+    }
+    END {
+      # window members: expected voltages inside [vlo, vhi], ascending
+      nw = 0; ilo = 0; ihi = 0; ifull = 0
+      for (e = 1; e <= ne; e++) {
+        x = ev[e] + 0
+        if (near(x, vlo + 0)) ilo = e
+        if (near(x, vhi + 0)) ihi = e
+        if (near(x, vfull + 0)) ifull = e
+        if (x > vlo - 1e-9 && x < vhi + 1e-9) { nw++; wi[nw] = e }
+      }
+      for (i = 1; i <= nw; i++) for (j = i + 1; j <= nw; j++)
+        if (ev[wi[j]] + 0 < ev[wi[i]] + 0) { t = wi[i]; wi[i] = wi[j]; wi[j] = t }
+      INC = "INCOMPLETE"
+      reason = ""
+      if (!ilo || !ihi) reason = "window endpoint not in the expected Vctrl list"
+      else if (!ifull) reason = "full-domain 0.0 V not in the expected Vctrl list"
+      else if (nw < minn) reason = "fewer than " minn " window samples (" nw ")"
+      else if (unexpected) reason = "row at an unexpected Vctrl"
+      else {
+        for (e = 1; e <= ne; e++) if (rows[e] > 1) { reason = "duplicate rows at Vctrl " ev[e]; break }
+        if (reason == "") for (i = 1; i <= nw; i++) if (!good[wi[i]]) { reason = "window point " ev[wi[i]] " V missing, not PASS or INVALID measurement"; break }
+        if (reason == "" && !good[ifull]) reason = "full-domain point " ev[ifull] " V missing, not PASS or INVALID measurement"
+      }
+      if (reason != "") {
+        emit(reason, nw, "nan","nan","nan","nan","nan","nan","nan","nan", INC,INC,INC,INC,INC, INC, INC)
+        exit
+      }
+      flo = fv[ilo]; fhi = fv[ihi]; f0 = fv[ifull]
+      fs = f0 - fhi; ws = flo - fhi
+      if (fs <= 0) {
+        emit("zero or negative full-domain span", nw, f0, flo, fhi, fs, ws, "nan","nan","nan", INC,INC,INC,INC,INC, INC, INC)
+        exit
+      }
+      dvw = (vhi + 0) - (vlo + 0)
+      # (1) single-signed segment slopes
+      npos = 0; nneg = 0; nzero = 0
+      for (i = 1; i < nw; i++) {
+        k = (fv[wi[i+1]] - fv[wi[i]]) / ((ev[wi[i+1]] + 0) - (ev[wi[i]] + 0))
+        if (k > 0) npos++; else if (k < 0) nneg++; else nzero++
+      }
+      r1 = (nzero == 0 && (npos == 0 || nneg == 0)) ? "MET" : "NOT MET"
+      # (2) coverage, (3) mean slope
+      cov = 100.0 * ws / fs
+      r2 = (ws >= covmin * fs) ? "MET" : "NOT MET"
+      km = ws / dvw
+      r3 = (km >= kmin + 0) ? "MET" : "NOT MET"
+      # (4) chord nonlinearity
+      if (ws == 0) { ci = "nan"; r4 = "NOT MET"; r4s = "NOT MET" }
+      else {
+        mx = 0
+        for (i = 1; i <= nw; i++) {
+          x = ev[wi[i]] + 0
+          ch = flo + (fhi - flo) * (x - (vlo + 0)) / dvw
+          d = abs(fv[wi[i]] - ch); if (d > mx) mx = d
+        }
+        ci = 100.0 * mx / abs(fhi - flo)
+        r4 = (ci <= inl + 0) ? "MET" : "NOT MET"
+        r4s = (ci <= inls + 0) ? "MET" : "NOT MET"
+      }
+      vt = (r1 == "MET" && r2 == "MET" && r3 == "MET" && r4 == "MET") ? "MET" : "NOT MET"
+      vs = (vt == "MET" && r4s == "MET") ? "MET" : "NOT MET"
+      printf "%s,%s,%s,%s,%s,%s,%d,%.6e,%.6e,%.6e,%.6e,%.6e,%.4f,%.6e,%s,%s,%s,%s,%s,%s,%s,%s,-\n", \
+             mos, cap, hbt, temp, vlo, vhi, nw, f0, flo, fhi, fs, ws, cov, km, \
+             (ci == "nan" ? "nan" : sprintf("%.4f", ci)), r1, r2, r3, r4, r4s, vt, vs
+    }' "${CSV_OUT}" >> "${ROW3_CSV}"
 }

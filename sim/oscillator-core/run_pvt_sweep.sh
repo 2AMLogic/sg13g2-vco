@@ -18,10 +18,13 @@
 #   row 1  f_osc at the band-centre control voltage, per corner
 #   row 2  the fractional tuning ratio f_max/f_min over the full 0.0-3.3 V
 #          Vctrl domain, per corner, with its quantization floor
-#   row 3  Kvco(Vctrl) and its linearity, as first differences of the measured
-#          f_osc(Vctrl) curve -- EVIDENCE for row 3, which is OPEN; measuring
-#          a row is not ratifying it, and ratification is a
-#          spec/decision-records/ PR, not this script
+#   row 3  RATIFIED (DR-004): graded over the window W = [1.65, 3.30] V per
+#          corner -- single-signed Kvco, >= 90 % coverage of the corner's own
+#          full-domain span, |Kvco|_mean >= 381 MHz/V, chord nonlinearity
+#          <= 30 % (20 % stretch) on >= 5 window points. Per-corner grade in
+#          records/<id>-row3.csv; the global verdict needs EVERY corner of the
+#          grid graded. The Kvco(Vctrl) first differences and the
+#          segment-spread linearity column remain ungraded descriptors.
 #   row 6  the startup margin, as the tail-current-scaling threshold proxy,
 #          at the bound corners of the row-10 set (see
 #          testbench/tb_vco_core_margin.spice.tmpl for what the proxy is, why
@@ -87,8 +90,9 @@
 #   netlist-snapshots/<record-id>/<corner-id>.spice   exact netlist simulated
 #   corners/<record-id>/<corner-id>.log               raw ngspice batch output
 #   records/<record-id>.csv                           one row per simulated point
-#   records/<record-id>-tuning.csv                    row 1/2/3 summary per corner
-#   records/<record-id>-kvco.csv                      the Kvco curve, per segment
+#   records/<record-id>-tuning.csv                    row 1/2 summary per corner
+#   records/<record-id>-kvco.csv                      the Kvco curve, per segment (descriptor)
+#   records/<record-id>-row3.csv                      ratified row-3 grade per corner
 #   records/<record-id>-margin.csv                    the row-6 ladder, per rung
 #   records/<record-id>-margin-summary.csv            the bracketed row-6 margin
 #   records/<record-id>.md                            the narrative record
@@ -114,6 +118,8 @@ CSV_OUT="${EXPERIMENT_DIR}/records/${RECORD_ID}.csv"
 TUNING_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-tuning.csv"
 # shellcheck disable=SC2034  # read by osc_bench.sh's osc_emit_tuning
 KVCO_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-kvco.csv"
+# shellcheck disable=SC2034  # read by osc_bench.sh's osc_emit_row3
+ROW3_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-row3.csv"
 # shellcheck disable=SC2034  # read by osc_bench.sh's osc_margin_corner
 MARGIN_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-margin.csv"
 MARGIN_SUM_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-margin-summary.csv"
@@ -245,6 +251,7 @@ for mos in ${MOS_LABELS}; do
           fi
         done
         osc_emit_tuning "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${VCTRL_LIST}"
+        osc_emit_row3 "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${VCTRL_LIST}"
       done
     done
   done
@@ -279,6 +286,18 @@ ROW1_AT_CENTRE="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v lo="${OSC_ROW1_F_MIN_H
 ROW2_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($19 == "MET") met++; else if ($19 ~ /QUANTIZATION/) floor++; else if ($19 == "INCOMPLETE") inc++ }
   END { if (n == 0) { print "no corner produced a tuning ratio"; exit }
         printf "%d/%d corners MET, %d within the quantization floor of the bound, %d ungraded (incomplete Vctrl coverage)", met+0, n, floor+0, inc+0 }' "${TUNING_CSV}")"
+# Row 3 global verdict: graded only when EVERY corner of the swept grid has a
+# complete row-3 line (a partial run, e.g. a pilot or an interrupted sweep,
+# grades no global row); any INCOMPLETE corner leaves the row ungraded.
+ROW3_EXPECTED=$(( $(wc -w <<<"${MOS_LABELS}") * $(wc -w <<<"${CAP_SECTIONS}") * $(wc -w <<<"${HBT_SECTIONS}") * $(wc -w <<<"${TEMPS}") ))
+ROW3_SUMMARY="$(awk -F, -v want="${ROW3_EXPECTED}" 'NR > 1 {
+        n++
+        if ($21 == "MET") t++; else if ($21 != "NOT MET") inc++
+        if ($22 == "MET") s++
+        if (ns == "" || $7 < ns) ns = $7 }
+  END { if (n == 0) { print "NOT GRADED: no corner produced a row-3 line"; exit }
+        if (n != want || inc > 0) { printf "NOT GRADED (partial): %d/%d corners present, %d INCOMPLETE; per-corner lines are evidence only, no global verdict", n, want, inc+0; exit }
+        printf "%s: target MET at %d/%d corners, stretch MET at %d/%d corners (min window samples %d)", (t == n ? (s == n ? "MET (target and stretch)" : "MET (target); stretch NOT MET") : "NOT MET"), t+0, n, s+0, n, ns }' "${ROW3_CSV}")"
 ROW6_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($11 == "MET") met++; else if ($11 ~ /STRADDLES/) strad++ }
   END { if (n == 0) { print "no margin corner completed"; exit }
         printf "%d/%d corners MET, %d straddling the bound", met+0, n, strad+0 }' "${MARGIN_SUM_CSV}")"
@@ -303,9 +322,9 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "  large-signal supply current of \`design/vco.sch\`, over the"
   echo "  \`spec/target-spec.md\` row-10/11 PVT grid; plus the row-6 startup"
   echo "  margin at the bound corners of that grid via a declared proxy."
-  echo "  **Measuring a row is not ratifying it.** Row 3 is OPEN and this"
-  echo "  record supplies its evidence without ratifying it; ratification is a"
-  echo "  \`spec/decision-records/\` PR. Phase noise (row 4) is not measured"
+  echo "  **Measuring a row is not ratifying it.** Row 3 is RATIFIED (DR-004)"
+  echo "  and graded here by its stated window/chord definition; this script"
+  echo "  does not alter any target. Phase noise (row 4) is not measured"
   echo "  here."
   echo "- **Netlist under test**: \`design/vco.spice\`, verified current with"
   echo "  \`design/vco.sch\` by \`design/netlist.sh --check\` before this run"
@@ -351,7 +370,8 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "    consecutive \`Vctrl\` points -- the same finite-difference"
   echo "    derivation \`sim/varactor-characterization\` applies to C(V), on"
   echo "    the same abscissa. Linearity is the peak-to-peak spread of the"
-  echo "    per-segment slopes as a percentage of their mean."
+  echo "    per-segment slopes as a percentage of their mean. This is an UNGRADED descriptor;"
+  echo "    row 3 is graded by chord nonlinearity over W = [1.65, 3.30] V."
   echo "  - supply current is recorded TWICE and the two are never conflated:"
   echo "    \`isup_dc_op_a\`/\`p_core_dc_op_w\` from the DC operating point,"
   echo "    and \`isup_ls_avg_a\`/\`p_core_ls_w\`, the LARGE-SIGNAL"
@@ -417,10 +437,12 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "    ${ROW6_SUMMARY}"
   echo "  - row 8 (core power <= ${OSC_ROW8_P_MAX_W} W, large-signal, band"
   echo "    centre, 27 C): ${ROW8_SUMMARY}"
-  echo "  - row 3 (Kvco and its linearity): measured, see"
-  echo "    \`records/${RECORD_ID}-kvco.csv\` and the \`kvco_*\` columns of"
-  echo "    \`records/${RECORD_ID}-tuning.csv\`. **Row 3 is OPEN; this record"
-  echo "    does not ratify it.**"
+  echo "  - row 3 (RATIFIED; window W = [${OSC_ROW3_V_LO}, ${OSC_ROW3_V_HI}] V,"
+  echo "    |Kvco|_mean >= 381 MHz/V, chord nonlinearity <= ${OSC_ROW3_CHORD_INL_PCT} %,"
+  echo "    stretch ${OSC_ROW3_CHORD_INL_PCT_STRETCH} %): ${ROW3_SUMMARY}"
+  echo "    Per-corner requirement verdicts: \`records/${RECORD_ID}-row3.csv\`;"
+  echo "    the Kvco curve and the \`kvco_*\` columns of"
+  echo "    \`records/${RECORD_ID}-tuning.csv\` are ungraded descriptors."
   echo "- **Links**:"
   echo "  - Templates: \`testbench/tb_vco_core_tran.spice.tmpl\`,"
   echo "    \`testbench/tb_vco_core_margin.spice.tmpl\`"
@@ -429,6 +451,7 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "  - Per-point scalars: \`records/${RECORD_ID}.csv\`"
   echo "  - Tuning / Kvco summary: \`records/${RECORD_ID}-tuning.csv\`"
   echo "  - Kvco curve: \`records/${RECORD_ID}-kvco.csv\`"
+  echo "  - Row-3 grade per corner: \`records/${RECORD_ID}-row3.csv\`"
   echo "  - Row-6 ladder and bracket: \`records/${RECORD_ID}-margin.csv\`,"
   echo "    \`records/${RECORD_ID}-margin-summary.csv\`"
   echo "- **Reproduce**: \`sim/oscillator-core/run_pvt_sweep.sh\` (no"
