@@ -182,6 +182,44 @@ class TestRolePolicy(Base):
         err = self.assertRejected(f, "no 'inductor-model' entry")
         self.assertIn("no 'simulator-init' entry", err)
 
+    def test_missing_pdk_entry_rejected(self):
+        err = self.assertRejected(lambda d: d["inputs"].pop(0),
+                                  "no valid 'pdk-model' entry")
+        self.assertNotIn("'osdi-binary'", err)
+
+    def test_missing_osdi_entry_rejected(self):
+        err = self.assertRejected(lambda d: d["inputs"].pop(1),
+                                  "no valid 'osdi-binary' entry")
+        self.assertNotIn("'pdk-model'", err)
+
+    def test_missing_both_external_entries_rejected(self):
+        def f(d):
+            del d["inputs"][:2]
+        err = self.assertRejected(f, "no valid 'pdk-model' entry")
+        self.assertIn("no valid 'osdi-binary' entry", err)
+
+    def test_malformed_external_entry_does_not_count_as_present(self):
+        def f(d):
+            d["inputs"][0]["sha256"] = "zz"
+        err = self.assertRejected(f, "sha256 'zz' is not 64")
+        self.assertIn("no valid 'pdk-model' entry", err)
+
+    def test_external_with_snapshot_does_not_count_as_present(self):
+        def f(d):
+            d["inputs"][1]["retained_snapshot"] = NS + "osdi/mosvar.osdi"
+        err = self.assertRejected(f, "must be null")
+        self.assertIn("no valid 'osdi-binary' entry", err)
+
+    def test_multiple_pdk_entries_valid(self):
+        def f(d):
+            d["inputs"].insert(1, {
+                "role": "pdk-model", "bundle_path": "models/diodes.lib",
+                "sha256": "c" * 64, "original_path": "/opt/pdk/diodes.lib",
+                "retained_snapshot": None})
+        rc, out, err = self.mutate(f)
+        self.assertEqual((rc, err), (0, ""))
+        self.assertIn("3 external role(s)", out)
+
     def test_no_records_at_all(self):
         os.makedirs(os.path.join(self.root, "sim"))
         rc, out, _ = self.run_gate()
