@@ -148,8 +148,17 @@ done
 
 SI_TANK_SQRT="$(pn_inoise_from_log "${LOG_DIR}/pnoise_tank.log")"
 SI_TAIL_SQRT="$(pn_inoise_from_log "${LOG_DIR}/pnoise_tail.log")"
-SI_TANK="$(awk -v s="${SI_TANK_SQRT}" 'BEGIN{ if (s=="nan") print "nan"; else printf "%.8e", s*s }')"
-SI_TAIL="$(awk -v s="${SI_TAIL_SQRT}" 'BEGIN{ if (s=="nan") print "nan"; else printf "%.8e", s*s }')"
+# A port-noise spectrum that is missing, malformed or non-finite is a broken
+# measurement (issue #137): stop before spending the transients on it.
+for _p in tank tail; do
+  _v="SI_TANK_SQRT"; [[ "${_p}" == "tail" ]] && _v="SI_TAIL_SQRT"
+  if ! pn_is_finite "${!_v}" || ! awk -v s="${!_v}" 'BEGIN{ exit (s + 0 > 0) ? 0 : 1 }'; then
+    echo "error: the ${_p}-port noise spectrum is missing or non-finite (median = '${!_v}'); see ${LOG_DIR}/pnoise_${_p}.log" >&2
+    exit 1
+  fi
+done
+SI_TANK="$(awk -v s="${SI_TANK_SQRT}" 'BEGIN{ printf "%.8e", s*s }')"
+SI_TAIL="$(awk -v s="${SI_TAIL_SQRT}" 'BEGIN{ printf "%.8e", s*s }')"
 # Flatness of the referral over the swept band: a referral that was ill
 # conditioned somewhere shows up here rather than hiding inside the median.
 NOISE_FLAT_TANK="$(awk -F, '$1=="tank" && NR>1 { n++; if (lo==""||$3+0<lo) lo=$3+0; if ($3+0>hi) hi=$3+0 }
@@ -215,9 +224,12 @@ run_realization() {
   while read -r tag k t_imp phi tb ta dtau dphi ripple n_pl; do
     [[ "${tag}" == "IMP" ]] || continue
     : "${tb}" "${ta}" "${dtau}"
-    gq="$(awk -v d="${dphi}" -v q="${dq}" 'BEGIN{ if (d == "nan") print "nan"; else printf "%.8e", d/q }')"
+    gq="$(awk -v d="${dphi}" -v q="${dq}" "${PN_AWK_FINITE}"' BEGIN{ if (!pn_fin(d) || !pn_fin(q) || q + 0 == 0) print "nan"; else printf "%.8e", d/q }')"
     echo "${port},${idx},${dq},${k},${t_imp},${phi},${dphi},${gq},${ripple},${n_pl}" >> "${ISF_CSV}"
-    [[ "${phi}" != "nan" ]] && echo "${phi} ${gq}" >> "${WORKDIR}/${run_id}.gamma"
+    # An impulse with no finite phase/ISF is NOT silently dropped from the
+    # ensemble: it lowers n_phases, which pn_reduce_ensemble requires to equal
+    # the number of impulses (issue #137).
+    if pn_is_finite "${phi}" && pn_is_finite "${gq}"; then echo "${phi} ${gq}" >> "${WORKDIR}/${run_id}.gamma"; fi
   done <<<"${steps}"
 
   local rms_t rms_s c0 c1 c2 c3 maxgap ngam
@@ -251,19 +263,17 @@ T_WALL_TOTAL=$(( $(date +%s) - T_WALL_START ))
 # Mean and SAMPLE standard deviation over the tank-port realisations. This is
 # the estimate's variance as this experiment defines it -- see README.md,
 # "What the variance here is, and what it is not".
-read -r GQ_MEAN GQ_SD GQ_N L1_MEAN L1_SD L1_MIN L1_MAX L10_MEAN L10_SD \
-  <<<"$(awk -F, 'NR>1 && $1=="tank" {
-      n++; g+=$6; g2+=$6*$6; a+=$16; a2+=$16*$16; b+=$17; b2+=$17*$17
-      if (lo=="" || $16+0<lo) lo=$16+0; if (hi=="" || $16+0>hi) hi=$16+0
-    }
-    END {
-      if (n == 0) { print "nan nan 0 nan nan nan nan nan nan"; exit }
-      gm=g/n; am=a/n; bm=b/n
-      gs=(n>1)?sqrt((g2-n*gm*gm)/(n-1)):0
-      as=(n>1)?sqrt((a2-n*am*am)/(n-1)):0
-      bs=(n>1)?sqrt((b2-n*bm*bm)/(n-1)):0
-      printf "%.6e %.6e %d %.4f %.4f %.4f %.4f %.4f %.4f\n", gm, gs, n, am, as, lo, hi, bm, bs
-    }' "${REAL_CSV}")"
+# Validate required coverage and finiteness BEFORE any statistic is formed
+# (issue #137). A bad realization stays in ${REAL_CSV} and the logs as
+# diagnostics, is named on stderr, and the run exits non-zero without
+# publishing a summary.
+if ! REDUCED="$(pn_reduce_ensemble "${REAL_CSV}" \
+      "$(echo "${PN_TANK_DQ_LIST}" | wc -w | tr -d ' ')" \
+      "$(echo "${PN_TAIL_DQ_LIST}" | wc -w | tr -d ' ')" "${PN_N_IMP}")"; then
+  echo "error: the realization ensemble is incomplete or contains non-finite values; no summary published (diagnostics: ${REAL_CSV}, ${ISF_CSV}, ${LOG_DIR})." >&2
+  exit 1
+fi
+read -r GQ_MEAN GQ_SD GQ_N L1_MEAN L1_SD L1_MIN L1_MAX L10_MEAN L10_SD <<<"${REDUCED}"
 
 GQ_TAIL="$(awk -F, 'NR>1 && $1=="tail" { print $6; exit }' "${REAL_CSV}")"
 L1_TAIL="$(awk -F, 'NR>1 && $1=="tail" { print $16; exit }' "${REAL_CSV}")"

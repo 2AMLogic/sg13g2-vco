@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Simulator-free grading-fixture dispatcher (issue #132). The single list of
 # the repo's PDK-free, ngspice-free grading/known-answer fixtures: the emit-
-# tuning, row-3, row-7, waveform-validity (stubbed simulator) and DR-004
-# stage-2 supply fixtures. Shared by `check-all.sh grading-fixtures` (in the
+# tuning, row-3, row-7, waveform-validity (stubbed simulator), DR-004
+# stage-2 supply and phase-noise validity (#137) fixtures. Shared by `check-all.sh grading-fixtures` (in the
 # `test` / `ci` aggregates) and run-method-checks.sh, so the two cannot drift.
 #
 #   .github/scripts/run-grading-fixtures.sh [log-dir]
@@ -98,6 +98,15 @@ run_fixture supply-stage2 sim/oscillator-core/tests/test_supply_stage2.sh
 s2_pass="$(grep -c '^PASS ' "${LOGS}/supply-stage2.log" || true)"
 if [[ "${s2_pass}" -lt "${MIN_S2}" ]] || grep -q '^FAIL ' "${LOGS}/supply-stage2.log"; then
   fail "supply-stage2: ${s2_pass} PASS lines (minimum ${MIN_S2}) or a FAIL line in ${LOGS}/supply-stage2.log"
+fi
+
+# Phase-noise measurement validity (issue #137): pn_verdict, the gamma/noise
+# reducers and the ensemble reduction on synthetic NaN/inf/malformed/missing
+# inputs, plus the known-answer reduction of the committed pilot record.
+run_fixture pn-validity sim/phase-noise/tests/test_validity.sh
+need_pass_lines pn-validity
+if ! grep -q '^all cases passed$' "${LOGS}/pn-validity.log"; then
+  fail "pn-validity: no 'all cases passed' line in ${LOGS}/pn-validity.log"
 fi
 
 if [[ ${FAILS} -gt 0 ]]; then

@@ -854,6 +854,22 @@ pn_isf_steps() {
     }' "${ref}" "${pert}"
 }
 
+# PN_AWK_FINITE: awk function source, prepended to phase-noise awk programs.
+# pn_fin(s) is 1 only for a well-formed decimal number whose value is finite.
+# It rejects nan/NaN/inf/-inf in any case, empty and malformed strings, and
+# literals that overflow to infinity -- awk's own "+ 0" conversion accepts or
+# silently zeroes several of those (issue #137).
+PN_AWK_FINITE='function pn_fin(s,   v) {
+  if (s !~ /^[-+]?([0-9]+[.]?[0-9]*|[.][0-9]+)([eE][-+]?[0-9]+)?$/) return 0
+  v = s + 0
+  return (v <= 1.7976931348623157e308 && v >= -1.7976931348623157e308)
+}'
+
+# pn_is_finite <string>: exit 0 iff the argument is a finite decimal number.
+pn_is_finite() {
+  awk -v s="${1-}" "${PN_AWK_FINITE}"' BEGIN { exit pn_fin(s) ? 0 : 1 }'
+}
+
 # pn_gamma_stats <phi_gamma_file>
 # Reduce a measured ISF -- a file of "<phi_rad> <Gq_rad_per_coulomb>" lines,
 # sampled at M phases over one period -- to the scalars the phase-noise kernel
@@ -877,11 +893,15 @@ pn_isf_steps() {
 # noise into close-in phase noise, and because a c3 comparable to c1 is the
 # signature that M samples per period is too few (see max_phase_gap_rad).
 pn_gamma_stats() {
-  awk '
+  awk "${PN_AWK_FINITE}"'
     BEGIN { PI = 4*atan2(1,1) }
-    NF >= 2 && $1 != "nan" && $2 != "nan" { n++; p[n] = $1 + 0; g[n] = $2 + 0 }
+    NF == 0 { next }
+    # Any line that is not exactly two finite numbers is a broken measurement:
+    # reject the whole file rather than reduce the survivors (issue #137).
+    NF != 2 || !pn_fin($1) || !pn_fin($2) { bad++; next }
+    { n++; p[n] = $1 + 0; g[n] = $2 + 0 }
     END {
-      if (n < 4) { print "nan nan nan nan nan nan nan " n+0; exit }
+      if (bad > 0 || n < 4) { print "nan nan nan nan nan nan nan " n+0; exit }
       for (i = 1; i <= n; i++) for (j = i+1; j <= n; j++) if (p[j] < p[i]) {
         tp = p[i]; p[i] = p[j]; p[j] = tp; tg = g[i]; g[i] = g[j]; g[j] = tg
       }
@@ -1003,11 +1023,62 @@ pn_inoise_table() {
 # conditioned at one frequency shows up as a spread across the band, which the
 # caller records, rather than as a silently wrong scalar.
 pn_inoise_from_log() {
-  pn_inoise_table "$1" | awk '
-    { n++; v[n] = $2 + 0 }
+  pn_inoise_table "$1" | awk "${PN_AWK_FINITE}"'
+    # a malformed/non-finite/non-positive row poisons the whole median
+    { if (!pn_fin($1) || !pn_fin($2) || $2 + 0 <= 0 || $1 + 0 <= 0) bad++; n++; v[n] = $2 + 0 }
     END {
-      if (n == 0) { print "nan"; exit }
+      if (n == 0 || bad > 0) { print "nan"; exit }
       for (i = 1; i <= n; i++) for (j = i+1; j <= n; j++) if (v[j] < v[i]) { t=v[i]; v[i]=v[j]; v[j]=t }
       printf "%.8e\n", (n % 2) ? v[(n+1)/2] : 0.5*(v[n/2] + v[n/2+1])
     }'
+}
+
+# pn_reduce_ensemble <realizations.csv> <n_tank> <n_tail> <n_phases>
+# Validate the pilot's realization CSV, THEN reduce the tank-port rows. Prints
+# the same nine fields the driver reads:
+#   gq_mean gq_sd n l1_mean l1_sd l1_min l1_max l10_mean l10_sd
+# Required coverage: tank realizations 1..n_tank and tail 1..n_tail each
+# present exactly once, every mandatory scalar a finite number, the ISF
+# sampled at exactly n_phases phases. On any violation nothing is printed to
+# stdout, one "pn_reduce_ensemble: <port> r<idx>: <reason>" line per problem
+# goes to stderr, and the status is 1. A finite value that misses a target is
+# NOT a violation. (issue #137)
+pn_reduce_ensemble() {
+  awk -F, -v ntank="$2" -v ntail="$3" -v nph="$4" "${PN_AWK_FINITE}"'
+    function bad(port, idx, why) { printf "pn_reduce_ensemble: %s r%s: %s\n", port, idx, why > "/dev/stderr"; nbad++ }
+    NR == 1 { next }
+    {
+      port = $1; idx = $2
+      key = port SUBSEP idx
+      if (port != "tank" && port != "tail") { bad(port, idx, "unknown port"); next }
+      if (!(idx ~ /^[0-9]+$/)) { bad(port, idx, "malformed realization index"); next }
+      if (key in seen) { bad(port, idx, "duplicate realization"); next }
+      seen[key] = 1
+      if (NF < 17) { bad(port, idx, "incomplete row (" NF " fields, need 17)"); next }
+      split("dq_c f0_hz vpp_diff_v gq_rms_trapz gq_rms_sample c0 c1 c2 c3 max_phase_gap_rad", nm, " ")
+      ok = 1
+      for (f = 3; f <= 12; f++) if (!pn_fin($f)) { bad(port, idx, "non-finite or malformed " nm[f-2] " = \"" $f "\""); ok = 0 }
+      if (!pn_fin($16)) { bad(port, idx, "non-finite or malformed l_1mhz_dbc = \"" $16 "\""); ok = 0 }
+      if (!pn_fin($17)) { bad(port, idx, "non-finite or malformed l_10mhz_dbc = \"" $17 "\""); ok = 0 }
+      if ($13 != nph) { bad(port, idx, "ISF sampled at " $13 " phases, need " nph); ok = 0 }
+      if (ok && $6 + 0 <= 0) { bad(port, idx, "non-positive gq_rms_trapz = " $6); ok = 0 }
+      if (!ok) next
+      if (port == "tank") {
+        n++; g += $6; g2 += $6*$6; a += $16; a2 += $16*$16; b += $17; b2 += $17*$17
+        if (n == 1 || $16 + 0 < lo) lo = $16 + 0
+        if (n == 1 || $16 + 0 > hi) hi = $16 + 0
+      }
+    }
+    END {
+      for (i = 1; i <= ntank; i++) if (!(("tank" SUBSEP i) in seen)) bad("tank", i, "missing realization")
+      for (i = 1; i <= ntail; i++) if (!(("tail" SUBSEP i) in seen)) bad("tail", i, "missing realization")
+      for (k in seen) { split(k, kk, SUBSEP); if (kk[2] + 0 > (kk[1] == "tank" ? ntank : ntail)) bad(kk[1], kk[2], "unexpected realization outside the declared ensemble") }
+      if (nbad > 0) exit 1
+      if (n == 0) { print "pn_reduce_ensemble: no tank realization" > "/dev/stderr"; exit 1 }
+      gm = g/n; am = a/n; bm = b/n
+      gs = (n > 1) ? sqrt((g2 - n*gm*gm)/(n-1)) : 0
+      as = (n > 1) ? sqrt((a2 - n*am*am)/(n-1)) : 0
+      bs = (n > 1) ? sqrt((b2 - n*bm*bm)/(n-1)) : 0
+      printf "%.6e %.6e %d %.4f %.4f %.4f %.4f %.4f %.4f\n", gm, gs, n, am, as, lo, hi, bm, bs
+    }' "$1"
 }
