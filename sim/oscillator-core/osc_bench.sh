@@ -174,7 +174,10 @@ OSC_ROW8_P_MAX_W="10e-3"
 # Resolve and validate everything a PDK-dependent run needs, in the order
 # that produces the clearest message when one is missing. Sets the globals
 # OSC_IND_MODEL, OSC_OSDI_MOSVAR, OSC_NGSPICE_VERSION, OSC_VCO_BODY,
-# OSC_RREF_NOM_OHM, OSC_RTE_OHM. Requires EXPERIMENT_DIR / SIM_DIR /
+# OSC_RREF_NOM_OHM, OSC_RTE_OHM, and -- last -- captures the model-input
+# bundle (OSC_BUNDLE_*; osc_capture_model_bundle). OSC_IND_MODEL /
+# OSC_OSDI_MOSVAR / SG13G2_NGSPICE_MODELS stay the ORIGINAL locations, kept
+# as context; decks never read them directly. Requires EXPERIMENT_DIR / SIM_DIR /
 # REPO_ROOT and a sourced sim/env.sh + sim/lib.sh.
 # --------------------------------------------------------------------------
 osc_preflight() {
@@ -224,6 +227,228 @@ osc_preflight() {
   OSC_NGSPICE_VERSION="$(detect_ngspice_version)"
 
   osc_derive_body || return 1
+
+  # LAST, after the OSDI build and before any simulation (issue #133): every
+  # deck this run renders reads its models from this private copy.
+  osc_capture_model_bundle || return 1
+}
+
+# --------------------------------------------------------------------------
+# Model-input bundle (issue #133)
+#
+# osc_derive_body captures design/vco.spice once (issue #122); this does the
+# same for everything else a deck reads by path. osc_capture_model_bundle
+# copies, into ${WORKDIR}/model-bundle/:
+#   models/    the PDK model libraries in OSC_MODEL_LIB_ROOTS plus the
+#              TRANSITIVE closure of their .include/.lib references (every
+#              section, so every corner this run can select is covered);
+#   inductor/  the non-PDK inductor model (and anything it includes);
+#   osdi/      the mosvar.osdi binary osc_preflight just built;
+#   init/      this experiment's .spiceinit, which is then also what ngspice
+#              reads from ${WORKDIR} (make_scratch_workdir's copy is replaced
+#              by the captured bytes).
+# MANIFEST.tsv records each copy's sha256 (sim/lib.sh capture_input_closure).
+# osc_render points every deck at the bundle, osc_provenance_md and the
+# runners' narratives read digests from the manifest -- never from the live
+# files -- and osc_publish_summary re-verifies the bundle before a summary
+# is written. A live file edited mid-run therefore reaches neither a later
+# point nor a recorded digest, and a bundle edited mid-run fails the run
+# instead of publishing a clean-looking summary.
+# --------------------------------------------------------------------------
+
+# The model libraries the testbenches load (the corner libraries) plus the two
+# osc_provenance_md names explicitly. Their nested references are followed.
+OSC_MODEL_LIB_ROOTS="cornerHBT.lib cornerMOShv.lib cornerCAP.lib sg13g2_svaricaphv_mod.lib sg13g2_hbt_mod.lib"
+
+# osc_record_reserved -- exit 0 when this run owns a reserved record id (the
+# same condition osc_write_source_provenance writes under). Fixtures and unit
+# tests that source this file without one write nothing under records/.
+osc_record_reserved() {
+  [[ -n "${RECORD_ID:-}" && -n "${EXPERIMENT_DIR:-}" \
+     && -d "${EXPERIMENT_DIR}/corners/${RECORD_ID}" ]]
+}
+
+# osc_require_bundle -- fail unless osc_capture_model_bundle has run.
+osc_require_bundle() {
+  if [[ -z "${OSC_BUNDLE_DIR:-}" || ! -f "${OSC_BUNDLE_MANIFEST:-}" ]]; then
+    echo "error: no captured model bundle -- osc_capture_model_bundle (osc_preflight) must run before any deck is rendered or any digest is recorded." >&2
+    return 1
+  fi
+}
+
+# osc_bundle_sha <bundle-relative path> -- the CAPTURED digest of one input.
+osc_bundle_sha() {
+  osc_require_bundle || return 1
+  input_bundle_sha "${OSC_BUNDLE_MANIFEST}" "$1"
+}
+
+# osc_ind_model_sha -- the captured digest of the non-PDK inductor model.
+osc_ind_model_sha() { osc_bundle_sha "inductor/$(basename "${OSC_IND_MODEL}")"; }
+
+# osc_model_inputs_rel -- repo-relative path of the retained manifest.
+osc_model_inputs_rel() {
+  echo "${EXPERIMENT_DIR#"${REPO_ROOT}"/}/records/${RECORD_ID}-model-inputs.json"
+}
+
+# osc_retained_rel <bundle-relative path> -- repo-relative path under which a
+# repo-owned input (inductor model, .spiceinit) is retained for a reserved
+# record. PDK libraries and the OSDI binary are external and not retained.
+osc_retained_rel() {
+  echo "${EXPERIMENT_DIR#"${REPO_ROOT}"/}/netlist-snapshots/${RECORD_ID}/model-inputs/$1"
+}
+
+# osc_capture_model_bundle
+# Requires SG13G2_NGSPICE_MODELS, OSC_IND_MODEL, OSC_OSDI_MOSVAR (osc_preflight),
+# EXPERIMENT_DIR (its .spiceinit) and WORKDIR. Sets OSC_BUNDLE_DIR,
+# OSC_BUNDLE_MANIFEST, OSC_BUNDLE_MANIFEST_SHA. Fails -- before any
+# simulation -- on a missing root or nested dependency, a reference that
+# cannot be served from the bundle, or an init file that loads anything.
+osc_capture_model_bundle() {
+  local b="${WORKDIR}/model-bundle" m
+  if [[ -e "${b}" ]]; then
+    echo "error: ${b} already exists; a run captures its model inputs exactly once." >&2
+    return 1
+  fi
+  mkdir -p "${b}" || return 1
+  m="${b}/MANIFEST.tsv"; : > "${m}"
+
+  # shellcheck disable=SC2086  # OSC_MODEL_LIB_ROOTS is a word list
+  capture_input_closure "${SG13G2_NGSPICE_MODELS}" "${b}" models "${m}" pdk-model ${OSC_MODEL_LIB_ROOTS} || {
+    echo "error: could not capture the SG13G2 model libraries and their nested references; no simulation was run." >&2
+    return 1
+  }
+  capture_input_closure "$(dirname "${OSC_IND_MODEL}")" "${b}" inductor "${m}" inductor-model "$(basename "${OSC_IND_MODEL}")" || {
+    echo "error: could not capture ${OSC_IND_MODEL} and its references; no simulation was run." >&2
+    return 1
+  }
+  capture_input_file "${OSC_OSDI_MOSVAR}" "${b}" "osdi/$(basename "${OSC_OSDI_MOSVAR}")" "${m}" osdi-binary || return 1
+  capture_input_file "${EXPERIMENT_DIR}/.spiceinit" "${b}" "init/.spiceinit" "${m}" simulator-init || return 1
+
+  # The init file must not pull in anything this capture did not follow.
+  if grep -qiE '^[[:space:]]*(source|osdi|pre_osdi|codemodel|pre_codemodel)[[:space:]]' "${b}/init/.spiceinit"; then
+    echo "error: ${EXPERIMENT_DIR}/.spiceinit loads a file (source/osdi/codemodel), which the model bundle does not capture." >&2
+    return 1
+  fi
+  # ngspice reads .spiceinit from its working directory: serve the captured bytes.
+  cp "${b}/init/.spiceinit" "${WORKDIR}/.spiceinit" && cmp -s "${b}/init/.spiceinit" "${WORKDIR}/.spiceinit" || return 1
+
+  OSC_BUNDLE_DIR="${b}"
+  OSC_BUNDLE_MANIFEST="${m}"
+  osc_model_inputs_json > "${b}/model-inputs.json" || return 1
+  # Read-only copies: an accidental write fails instead of landing silently.
+  # (Files only -- the directories stay writable so WORKDIR cleanup works.)
+  find "${b}" -type f -exec chmod a-w {} + || return 1
+  OSC_BUNDLE_MANIFEST_SHA="$(sha256_of "${m}")"
+  osc_retain_model_inputs || return 1
+  echo "oscillator-core: captured $(wc -l < "${m}" | tr -d ' ') model inputs into a private bundle" \
+       "(manifest sha256 ${OSC_BUNDLE_MANIFEST_SHA})"
+}
+
+# osc_model_inputs_json -- the machine-readable manifest (schema
+# sg13g2-vco/model-inputs/1, documented in sim/README.md), from MANIFEST.tsv.
+osc_model_inputs_json() {
+  local retain=0 rid="${RECORD_ID:-}" snap_prefix=""
+  if osc_record_reserved; then
+    retain=1
+    snap_prefix="$(osc_retained_rel "")"
+  fi
+  awk -F'\t' -v rid="${rid}" -v root="${REPO_ROOT:-}/" -v retain="${retain}" -v sp="${snap_prefix}" '
+    function js(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); return "\"" s "\"" }
+    {
+      orig = $4
+      if (root != "/" && index(orig, root) == 1) orig = substr(orig, length(root) + 1)
+      kept = (retain && ($1 == "inductor-model" || $1 == "simulator-init")) ? js(sp $2) : "null"
+      line[++n] = sprintf("    {\"role\": %s, \"bundle_path\": %s, \"sha256\": %s, \"original_path\": %s, \"retained_snapshot\": %s}", \
+                          js($1), js($2), js($3), js(orig), kept)
+    }
+    END {
+      if (n == 0) exit 1
+      print "{"
+      print "  \"schema\": \"sg13g2-vco/model-inputs/1\","
+      print "  \"record_id\": " js(rid) ","
+      print "  \"note\": \"sha256 of the private copies every deck of this run was rendered against; retained_snapshot null = external input (PDK library or built OSDI binary), identified by digest only\","
+      print "  \"inputs\": ["
+      for (i = 1; i <= n; i++) print line[i] (i < n ? "," : "")
+      print "  ]"
+      print "}"
+    }' "${OSC_BUNDLE_MANIFEST}"
+}
+
+# osc_put_append_only <src> <dest> -- copy <src> to <dest> unless <dest>
+# already exists; an existing <dest> must be byte-identical (append-only).
+osc_put_append_only() {
+  if [[ -e "$2" ]]; then
+    cmp -s "$1" "$2" && return 0
+    echo "error: $2 already exists with different content (append-only)" >&2
+    return 1
+  fi
+  mkdir -p "$(dirname "$2")" && cp "$1" "$2" && cmp -s "$1" "$2"
+}
+
+# osc_retain_model_inputs -- for a reserved record: the JSON manifest under
+# records/, and copies of the repo-owned inputs under netlist-snapshots/.
+# Append-only: an existing file with different content is refused.
+osc_retain_model_inputs() {
+  osc_record_reserved || return 0
+  local json role rel sha dest
+  json="${REPO_ROOT}/$(osc_model_inputs_rel)"
+  while IFS='	' read -r role rel sha _; do
+    case "${role}" in
+      inductor-model|simulator-init)
+        dest="${REPO_ROOT}/$(osc_retained_rel "${rel}")"
+        osc_put_append_only "${OSC_BUNDLE_DIR}/${rel}" "${dest}" || return 1 ;;
+    esac
+  done < "${OSC_BUNDLE_MANIFEST}"
+  osc_put_append_only "${OSC_BUNDLE_DIR}/model-inputs.json" "${json}"
+}
+
+# osc_verify_model_bundle
+# Integrity check of everything the run's decks read and its records cite:
+# every bundle file against its captured digest, the manifest itself, the
+# .spiceinit ngspice reads from WORKDIR, and (for a reserved record) the
+# retained manifest and snapshots. Fails, naming each discrepancy, if any
+# changed after capture.
+osc_verify_model_bundle() {
+  osc_require_bundle || return 1
+  local bad=0 role rel sha
+  verify_input_bundle "${OSC_BUNDLE_DIR}" "${OSC_BUNDLE_MANIFEST}" || bad=1
+  if [[ "$(sha256_of "${OSC_BUNDLE_MANIFEST}")" != "${OSC_BUNDLE_MANIFEST_SHA:-}" ]]; then
+    echo "error: the bundle manifest changed after capture." >&2; bad=1
+  fi
+  if [[ "$(sha256_of "${WORKDIR}/.spiceinit")" != "$(osc_bundle_sha init/.spiceinit)" ]]; then
+    echo "error: ${WORKDIR}/.spiceinit no longer matches the captured init file." >&2; bad=1
+  fi
+  if osc_record_reserved; then
+    cmp -s "${OSC_BUNDLE_DIR}/model-inputs.json" "${REPO_ROOT}/$(osc_model_inputs_rel)" || {
+      echo "error: retained $(osc_model_inputs_rel) is missing or differs from the captured manifest." >&2; bad=1
+    }
+    while IFS='	' read -r role rel sha _; do
+      case "${role}" in
+        inductor-model|simulator-init)
+          [[ "$(sha256_of "${REPO_ROOT}/$(osc_retained_rel "${rel}")")" == "${sha}" ]] || {
+            echo "error: retained snapshot $(osc_retained_rel "${rel}") does not match its captured digest." >&2; bad=1
+          } ;;
+      esac
+    done < "${OSC_BUNDLE_MANIFEST}"
+  fi
+  [[ ${bad} -eq 0 ]]
+}
+
+# osc_publish_summary <draft> <dest>
+# Publish a runner's narrative summary: verify the model bundle FIRST, then
+# copy the draft (written into WORKDIR) to <dest>. On a failed verification
+# nothing is written to <dest> and the call fails. Refuses to overwrite.
+osc_publish_summary() {
+  local draft="$1" dest="$2"
+  if ! osc_verify_model_bundle; then
+    echo "error: model-input bundle failed integrity verification; summary NOT published to ${dest}." >&2
+    return 1
+  fi
+  if [[ -e "${dest}" ]]; then
+    echo "error: ${dest} already exists (append-only); summary NOT published." >&2
+    return 1
+  fi
+  cp "${draft}" "${dest}" && cmp -s "${draft}" "${dest}"
 }
 
 # --------------------------------------------------------------------------
@@ -231,7 +456,9 @@ osc_preflight() {
 # Print the PDK + loaded-library provenance bullets that every record written
 # by a runner sourcing this file must carry: the pinned PDK, then the sha256
 # digest of each model library the decks load and of the OSDI binary this run
-# built. Emits exactly eight markdown lines on stdout -- no `## Provenance`
+# built, then the captured-bundle statement (issue #133). Every digest is
+# read from the model bundle's manifest -- the bytes the decks consumed --
+# never by re-hashing the live files. Emits markdown lines on stdout -- no `## Provenance`
 # heading (only run_isf_pilot.sh wants one, and it prints its own) and no
 # trailing blank line -- so a caller drops it inside its own record block
 # without reflowing anything around it.
@@ -244,21 +471,31 @@ osc_preflight() {
 # provenance list, nothing fails, and the records cannot be corrected
 # afterwards. One definition means the list cannot drift between runners.
 #
-# REQUIRES osc_preflight to have run: it reads SG13G2_NGSPICE_MODELS and
-# OSC_OSDI_MOSVAR, which osc_preflight resolves and validates (a missing
-# library or OSDI binary is that function's error, not a digest of
-# "unavailable" here), plus PDK / PDK_ROOT from sim/env.sh. `sha256_of` must
-# be in scope from sim/lib.sh, which every runner sources before this file.
+# REQUIRES osc_preflight to have run: it reads the bundle osc_preflight
+# captured (osc_capture_model_bundle; without one this fails rather than
+# hashing live paths), plus PDK / PDK_ROOT from sim/env.sh. The line format
+# of the six digest bullets is parsed by report_supply_stage2.sh -- keep it.
 # --------------------------------------------------------------------------
 osc_provenance_md() {
+  osc_require_bundle || return 1
+  local n_inputs where
+  n_inputs="$(wc -l < "${OSC_BUNDLE_MANIFEST}" | tr -d ' ')"
+  if osc_record_reserved; then where="retained as \`$(osc_model_inputs_rel)\`"
+  else where="not retained (no reserved record id)"; fi
   echo "- **PDK**: \`${PDK}\` at \`${PDK_ROOT}\` -- pinned release in"
   echo "  \`sim/pdk.json\`. Loaded libraries and the OSDI binary by digest:"
-  echo "  - \`cornerHBT.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerHBT.lib")\`"
-  echo "  - \`cornerMOShv.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerMOShv.lib")\`"
-  echo "  - \`cornerCAP.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib")\`"
-  echo "  - \`sg13g2_svaricaphv_mod.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_svaricaphv_mod.lib")\`"
-  echo "  - \`sg13g2_hbt_mod.lib\` sha256 \`$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_hbt_mod.lib")\`"
-  echo "  - \`mosvar.osdi\` (this run's build) sha256 \`$(sha256_of "${OSC_OSDI_MOSVAR}")\`"
+  echo "  - \`cornerHBT.lib\` sha256 \`$(osc_bundle_sha models/cornerHBT.lib)\`"
+  echo "  - \`cornerMOShv.lib\` sha256 \`$(osc_bundle_sha models/cornerMOShv.lib)\`"
+  echo "  - \`cornerCAP.lib\` sha256 \`$(osc_bundle_sha models/cornerCAP.lib)\`"
+  echo "  - \`sg13g2_svaricaphv_mod.lib\` sha256 \`$(osc_bundle_sha models/sg13g2_svaricaphv_mod.lib)\`"
+  echo "  - \`sg13g2_hbt_mod.lib\` sha256 \`$(osc_bundle_sha models/sg13g2_hbt_mod.lib)\`"
+  echo "  - \`mosvar.osdi\` (this run's build) sha256 \`$(osc_bundle_sha "osdi/$(basename "${OSC_OSDI_MOSVAR}")")\`"
+  echo "  - **Captured model inputs** (issue #133): these digests are of private"
+  echo "    copies taken after preflight/build and before the first simulation;"
+  echo "    every deck was rendered against them. ${n_inputs} files (the transitive"
+  echo "    \`.include\`/\`.lib\` closure, inductor model, OSDI binary, \`.spiceinit\`),"
+  echo "    manifest sha256 \`${OSC_BUNDLE_MANIFEST_SHA}\`, ${where};"
+  echo "    re-verified intact before this summary was published."
 }
 
 # osc_write_source_provenance <sha256> <captured-copy>
@@ -393,16 +630,26 @@ osc_render() {
   local tmpl="$1" out="$2" corner_id="$3"
   shift 3
 
-  local rail ic_outp ic_outn
+  local rail ic_outp ic_outn ref missing=0
   rail="$(osc_rail)"
   read -r ic_outp ic_outn <<<"$(osc_rail_ic)"
+
+  # Model paths come from the captured bundle only (issue #133), never from
+  # the live install; a library the template names that the bundle does not
+  # hold is a failure here, before the deck exists, not an "unknown subckt"
+  # in a simulator log later.
+  osc_require_bundle || return 1
+  for ref in $(grep -oE '@@MODELS_DIR@@/[^[:space:]]+' "${tmpl}" | sed 's|^@@MODELS_DIR@@/||' | sort -u); do
+    input_bundle_sha "${OSC_BUNDLE_MANIFEST}" "models/${ref}" >/dev/null || missing=1
+  done
+  [[ ${missing} -eq 0 ]] || { echo "error: ${tmpl} loads a model library the captured bundle does not hold." >&2; return 1; }
 
   sed \
     -e "s|@@RECORD_ID@@|${RECORD_ID}|g" \
     -e "s|@@CORNER_ID@@|${corner_id}|g" \
-    -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
-    -e "s|@@IND_MODEL@@|${OSC_IND_MODEL}|g" \
-    -e "s|@@OSDI_MOSVAR@@|${OSC_OSDI_MOSVAR}|g" \
+    -e "s|@@MODELS_DIR@@|${OSC_BUNDLE_DIR}/models|g" \
+    -e "s|@@IND_MODEL@@|${OSC_BUNDLE_DIR}/inductor/$(basename "${OSC_IND_MODEL}")|g" \
+    -e "s|@@OSDI_MOSVAR@@|${OSC_BUNDLE_DIR}/osdi/$(basename "${OSC_OSDI_MOSVAR}")|g" \
     -e "s|@@VDD_NOM@@|${rail}|g" \
     -e "s|@@IC_OUTP@@|${ic_outp}|g" \
     -e "s|@@IC_OUTN@@|${ic_outn}|g" \

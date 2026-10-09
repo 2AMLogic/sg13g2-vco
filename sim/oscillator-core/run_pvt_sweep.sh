@@ -104,7 +104,10 @@
 #   records/<record-id>-row7.csv                      ratified row-7 grade per corner
 #   records/<record-id>-margin.csv                    the row-6 ladder, per rung
 #   records/<record-id>-margin-summary.csv            the bracketed row-6 margin
-#   records/<record-id>.md                            the narrative record
+#   records/<record-id>.md                            the narrative record (published
+#                                                     only after the model bundle re-verifies)
+#   records/<record-id>-model-inputs.json             captured model-input manifest (#133)
+#   netlist-snapshots/<record-id>/model-inputs/       captured inductor model + .spiceinit
 set -euo pipefail
 
 EXPERIMENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -443,7 +446,7 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "    closed form, with tolerances DERIVED from the estimator's own"
   echo "    discretization bounds. Its record is the companion to this one."
   echo "- **Non-PDK model**: \`sim/inductor-model/sg13g2_inductor_em.spice\`"
-  echo "  sha256 \`$(sha256_of "${OSC_IND_MODEL}")\`. **The PDK ships no"
+  echo "  sha256 \`$(osc_ind_model_sha)\`. **The PDK ships no"
   echo "  spiral-inductor ngspice model** (\`sim/pdk.json\`"
   echo "  \`known_model_gaps.spiral_inductor\`), so every frequency in this"
   echo "  record inherits that model's stated error bars and is NOT a PDK"
@@ -504,7 +507,9 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "- **Reproduce**: \`sim/oscillator-core/run_pvt_sweep.sh\` (no"
   echo "  arguments) against the pinned PDK."
   echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-} > "${MD_OUT}"
+} > "${WORKDIR}/summary.md"
+# Publish only after the captured model inputs re-verify intact (issue #133).
+osc_publish_summary "${WORKDIR}/summary.md" "${MD_OUT}"
 
 echo
 echo "---------------------------------------------------------------"

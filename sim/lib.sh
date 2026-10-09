@@ -63,6 +63,160 @@ assert_source_unchanged() {
   fi
 }
 
+# ---------------------------------------------------------------------------
+# Input bundles: stable copies of model inputs (issue #133)
+# ---------------------------------------------------------------------------
+#
+# snapshot_source protects the ONE design file a run derives its devices
+# from. A long run also consumes model libraries (with their nested
+# .include/.lib references), a non-PDK model file, a compiled OSDI binary and
+# a simulator init file -- all by PATH, every time a deck is simulated. The
+# helpers below extend the same idiom to that whole set: copy every input,
+# including the transitive closure of its SPICE references, into a private
+# bundle ONCE, record the sha256 of each COPY in a tab-separated manifest,
+# and let callers render decks against the bundle. A live file edited after
+# capture then cannot reach a later point, and every recorded digest names
+# bytes the run actually consumed. They are generic (no PDK, no oscillator
+# knowledge); sim/oscillator-core/osc_bench.sh decides WHAT to capture.
+#
+# Manifest format, one line per captured file (tab-separated):
+#   <role> <bundle-relative path> <sha256 of the copy> <original path>
+# Bash-3.2 clean like the rest of this file.
+
+# input_refs <spice-file>
+# Print the file argument of every .include / .inc / .lib REFERENCE in a
+# SPICE file, one per line, quotes stripped. A `.lib <name>` line with a single
+# argument is a section HEADER (closed by .endl), not a reference, and is
+# skipped; `.lib <file> <section>` is a reference. Comment lines and inline
+# `$`/`;` comments are ignored. Every section is scanned, selected or not, so
+# the closure is a superset of what any one corner loads.
+input_refs() {
+  awk '
+    { line = $0; sub(/\r$/, "", line) }
+    line ~ /^[ \t]*\*/ { next }
+    {
+      sub(/[ \t]+[$;].*$/, "", line)
+      n = split(line, a, /[ \t]+/)
+      i = 1; while (i <= n && a[i] == "") i++
+      if (i > n) next
+      kw = tolower(a[i])
+      if (kw != ".include" && kw != ".inc" && kw != ".lib") next
+      args = 0
+      for (j = i + 1; j <= n; j++) if (a[j] != "") { args++; if (args == 1) f = a[j] }
+      if (args == 0) next
+      if (kw == ".lib" && args < 2) next
+      gsub(/^["\047]|["\047]$/, "", f)
+      print f
+    }' "$1"
+}
+
+# resolve_input_ref <including-dir-rel> <ref>
+# Resolve a reference found in a file at <including-dir-rel> (relative to the
+# capture root, "." for the root itself) the way ngspice does -- relative to
+# the INCLUDING file's directory -- and print the normalized root-relative
+# path. Fails (status 1, message on stderr) for an absolute path, a ~ path, or
+# one that climbs out of the capture root: such a reference cannot be served
+# from a private copy without rewriting bytes, so it is refused rather than
+# silently left pointing at the live file.
+resolve_input_ref() {
+  local dir="$1" ref="$2"
+  case "${ref}" in
+    /*|"~"*) echo "resolve_input_ref: '${ref}' is an absolute or home-relative path; it cannot be captured without rewriting the file that names it" >&2; return 1 ;;
+  esac
+  awk -v p="${dir}/${ref}" 'BEGIN {
+    n = split(p, s, "/"); m = 0
+    for (i = 1; i <= n; i++) {
+      if (s[i] == "" || s[i] == ".") continue
+      if (s[i] == "..") { if (m == 0) { bad = 1; break } m--; continue }
+      o[++m] = s[i]
+    }
+    if (bad || m == 0) exit 1
+    out = o[1]; for (i = 2; i <= m; i++) out = out "/" o[i]
+    print out
+  }' || { echo "resolve_input_ref: '${ref}' (from '${dir}') leaves the capture root" >&2; return 1; }
+}
+
+# capture_input_file <src> <bundle> <bundle_rel> <manifest> <role>
+# Snapshot ONE file into <bundle>/<bundle_rel> (snapshot_source: the digest is
+# of the copy) and append its manifest line. For inputs with no SPICE
+# references of their own (a compiled OSDI binary, an init file).
+capture_input_file() {
+  local src="$1" bundle="$2" rel="$3" manifest="$4" role="$5" h
+  [ -f "${src}" ] || { echo "capture_input_file: ${src} does not exist" >&2; return 1; }
+  h="$(snapshot_source "${src}" "${bundle}/${rel}")" || return 1
+  printf '%s\t%s\t%s\t%s\n' "${role}" "${rel}" "${h}" "${src}" >> "${manifest}"
+}
+
+# capture_input_closure <src_root> <bundle> <subdir> <manifest> <role> <root_rel>...
+# Snapshot each <root_rel> (relative to <src_root>) and, transitively, every
+# file its .include/.lib references name, into <bundle>/<subdir>/ with the
+# directory layout preserved -- so relative references inside the copies
+# resolve to other copies, never back to <src_root>. References are parsed
+# out of the CAPTURED bytes, so the closure is the closure of what the run
+# will read. A missing root or nested dependency, or a reference that leaves
+# <src_root>, fails the capture (status 1) naming the file that referenced it;
+# callers capture before the first simulation, so that is a pre-simulation
+# failure, never a mid-grid "unknown subckt".
+capture_input_closure() {
+  local src_root="$1" bundle="$2" sub="$3" manifest="$4" role="$5"
+  shift 5
+  local queue="${bundle}/.${sub}.queue" seen="${bundle}/.${sub}.seen"
+  local i=0 line rel from ref dep
+  mkdir -p "${bundle}/${sub}" || return 1
+  : > "${seen}"; : > "${queue}"
+  for rel in "$@"; do printf '%s\t%s\n' "${rel}" "(capture root)" >> "${queue}"; done
+  while :; do
+    i=$((i + 1))
+    line="$(sed -n "${i}p" "${queue}")"
+    [ -n "${line}" ] || break
+    rel="${line%%	*}"; from="${line#*	}"
+    grep -Fxq -- "${rel}" "${seen}" && continue
+    printf '%s\n' "${rel}" >> "${seen}"
+    if [ ! -f "${src_root}/${rel}" ]; then
+      echo "capture_input_closure: missing dependency ${src_root}/${rel} (referenced from ${from})" >&2
+      return 1
+    fi
+    capture_input_file "${src_root}/${rel}" "${bundle}" "${sub}/${rel}" "${manifest}" "${role}" || return 1
+    while IFS= read -r ref; do
+      dep="$(resolve_input_ref "$(dirname "${rel}")" "${ref}")" || {
+        echo "capture_input_closure: unusable reference '${ref}' in ${src_root}/${rel}" >&2
+        return 1
+      }
+      printf '%s\t%s\n' "${dep}" "${src_root}/${rel}" >> "${queue}"
+    done < <(input_refs "${bundle}/${sub}/${rel}")
+  done
+  rm -f "${queue}" "${seen}"
+}
+
+# input_bundle_sha <manifest> <bundle_rel>
+# Print the captured sha256 of one bundle entry; fail if it was never captured.
+input_bundle_sha() {
+  awk -F'\t' -v r="$2" '$2 == r { print $3; found = 1; exit } END { exit found ? 0 : 1 }' "$1" || {
+    echo "input_bundle_sha: ${2} is not in the captured bundle (${1})" >&2
+    return 1
+  }
+}
+
+# verify_input_bundle <bundle> <manifest>
+# Re-hash every manifest entry inside <bundle>. Prints one line per entry
+# that is missing or no longer matches its captured digest, and fails if
+# there is any (or if the manifest is empty).
+verify_input_bundle() {
+  local bundle="$1" manifest="$2" role rel sha now bad=0 n=0
+  [ -s "${manifest}" ] || { echo "verify_input_bundle: manifest ${manifest} missing or empty" >&2; return 1; }
+  while IFS='	' read -r role rel sha _; do
+    n=$((n + 1))
+    if [ ! -f "${bundle}/${rel}" ]; then
+      echo "verify_input_bundle: ${rel} (${role}) is missing from the bundle" >&2; bad=1; continue
+    fi
+    now="$(sha256_of "${bundle}/${rel}")"
+    if [ "${now}" != "${sha}" ]; then
+      echo "verify_input_bundle: ${rel} (${role}) changed after capture (captured ${sha}, now ${now})" >&2; bad=1
+    fi
+  done < "${manifest}"
+  [ "${n}" -gt 0 ] && [ "${bad}" -eq 0 ]
+}
+
 # write_source_provenance <sidecar> <record_id> <src_repo_rel> <sha256> <snapshot_repo_rel>
 # Write the source-provenance sidecar (schema sg13g2-vco/source-provenance/1,
 # documented in sim/README.md "Record currency"). Refuses to overwrite an

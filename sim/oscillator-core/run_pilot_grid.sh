@@ -315,7 +315,7 @@ MARGIN_SUMMARY="$(awk -F, 'NR > 1 { printf "bracket [%s, %s] against bound %s ->
   echo "    CIRCUIT solution's discretization error, which the extractor check"
   echo "    cannot see."
   echo "- **Non-PDK model**: \`sim/inductor-model/sg13g2_inductor_em.spice\`"
-  echo "  sha256 \`$(sha256_of "${OSC_IND_MODEL}")\`. **The PDK ships no"
+  echo "  sha256 \`$(osc_ind_model_sha)\`. **The PDK ships no"
   echo "  spiral-inductor ngspice model** (\`sim/pdk.json\`"
   echo "  \`known_model_gaps.spiral_inductor\`), so every frequency in this"
   echo "  record inherits that model's stated error bars and is NOT a PDK model"
@@ -350,7 +350,9 @@ MARGIN_SUMMARY="$(awk -F, 'NR > 1 { printf "bracket [%s, %s] against bound %s ->
   echo "- **Reproduce**: \`sim/oscillator-core/run_pilot_grid.sh\` (no"
   echo "  arguments) against the pinned PDK."
   echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-} > "${MD_OUT}"
+} > "${WORKDIR}/summary.md"
+# Publish only after the captured model inputs re-verify intact (issue #133).
+osc_publish_summary "${WORKDIR}/summary.md" "${MD_OUT}"
 
 echo
 echo "---------------------------------------------------------------"
