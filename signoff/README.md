@@ -191,6 +191,20 @@ report is a correct verdict, not a CI failure. The payload gates on its
 own fields (`block`, `kind`, `schema_version`, 11 rendered items, no
 error envelope), not the exit code alone.
 
+### Layout-evidence digest gate
+
+`.github/scripts/check-layout-evidence.sh` (self-tested by
+`test-check-layout-evidence.sh`; separate `layout-evidence` CI job, no klt,
+no PDK) hashes `layout/vco.gds` and requires every layout record that
+vouches for it to carry the same digest, keyed on an explicit field path
+(`layout/vco_manifest.json` `artifact.digest`, the `layout/drc/` and
+`layout/lvs/` records' input `content_hash`). The per-device `gds_digest`
+entries in the manifest describe sub-streams and are out of scope. It fails
+closed on a missing record or digest field, and on failure names the stale
+record and says to regenerate via `layout/generate.sh`, `layout/drc.sh`,
+`layout/lvs.sh`. A new record that cites the GDS must be added to the
+checker's table.
+
 The self-test grades throwaway copies of the tree. Since the first citation
 outside `signoff/` (#62), each copy also carries every file the manifest
 cites, plus the artifact each cited envelope names as its input.
