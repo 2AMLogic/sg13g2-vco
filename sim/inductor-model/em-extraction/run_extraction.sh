@@ -34,6 +34,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INDDIR="$(cd "${HERE}/.." && pwd)"
+# shellcheck disable=SC2034 # kept for parity with sibling run_*.sh preambles; not consumed in this script
 REPO_ROOT="$(cd "${INDDIR}/../.." && pwd)"
 
 EM_STAGES="${EM_STAGES:-geometry em convergence post fit compare}"
