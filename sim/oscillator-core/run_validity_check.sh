@@ -27,6 +27,7 @@ T="$(mktemp -d)"
 trap 'rm -rf "${T}"' EXIT
 WORKDIR="${T}/work"; NETLIST_DIR="${T}/net"; LOG_DIR="${T}/log"; CSV_OUT="${T}/out.csv"
 mkdir -p "${WORKDIR}" "${NETLIST_DIR}" "${LOG_DIR}"
+# shellcheck disable=SC2034 # fixture record id; reserved for sourced helpers, behavior-neutral
 RECORD_ID="fixture"
 
 # ---- stubs: no netlist, no simulator --------------------------------------
