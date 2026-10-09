@@ -768,7 +768,9 @@ osc_quant_floor_pct() {
 #   missing    no such file
 #   empty      no data lines
 #   malformed  a data line has fewer than 2 fields or a non-numeric field
-#   nonfinite  a field is nan/inf (ngspice prints these on a diverged solve)
+#   nonfinite  a field is nan/inf, or a decimal literal that overflows
+#              to infinity such as 1e999 (ngspice prints nan/inf on a
+#              diverged solve)
 #   truncated  the trace starts after t_start, ends before ~t_stop (0.1 %
 #              tolerance), or has fewer than 3 samples in the window
 #   unordered  time is not strictly increasing
@@ -779,12 +781,16 @@ osc_trace_validity() {
   awk -v ts="${2:-0}" -v te="${3:-0}" '
     function isnum(x) { return x ~ /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$/ }
     function isnf(x)  { return tolower(x) ~ /^[-+]?(nan|inf|infinity)(\([^)]*\))?$/ }
+    # Same finite semantics as pn_fin() in sim/lib.sh (PN_AWK_FINITE): a
+    # well-spelled decimal whose value overflows to +-inf (1e999) is nonfinite.
+    function ovf(x,   v) { v = x + 0; return !(v <= 1.7976931348623157e308 && v >= -1.7976931348623157e308) }
     /^[ \t]*$/ { next }
     {
       lines++
       if (NF < 2) { bad = 1; next }
       if (isnf($1) || isnf($2)) { nonfin = 1; next }
       if (!isnum($1) || !isnum($2)) { bad = 1; next }
+      if (ovf($1) || ovf($2)) { nonfin = 1; next }
       t = $1 + 0
       if (lines > 1 && seen && t <= pt) unord = 1
       if (!seen) { t0 = t }
