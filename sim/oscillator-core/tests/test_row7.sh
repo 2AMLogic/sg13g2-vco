@@ -267,4 +267,53 @@ out="$(osc_row7_summary "${S}" "")"
 out="$(osc_row7_summary "${W}/absent.csv" "${REQ}")"
 [[ "${out}" == "NOT GRADED"* ]] && check summary-no-csv ok || check summary-no-csv "${out}"
 
+# ======================================================================
+# 6. Rail identity (issue #119, DR-004 stage 2). A rail-tagged points CSV
+#    holds both supply rails for the SAME process/temperature/Vctrl identity;
+#    the grader must take the rail, grade only that rail's rows, and tag the
+#    grade line with it. Nominal (rail-less) callers are unchanged.
+# ======================================================================
+H37="$(OSC_CSV_RAIL=0 osc_row7_header)"
+[[ "${H37}" != *vsup_v* && "$(OSC_CSV_RAIL=1 osc_row7_header)" == "${H37},vsup_v" ]] \
+  && check header-rail-column-only-when-tagged ok || check header-rail-column-only-when-tagged "$(OSC_CSV_RAIL=1 osc_row7_header)"
+# ROW7_CSV header follows OSC_CSV_RAIL through osc_write_csv_headers
+( OSC_CSV_RAIL=1; CSV_OUT="${W}/hr.csv"; ROW7_CSV="${W}/hr7.csv"; osc_write_csv_headers; tail -c 8 "${W}/hr7.csv" | grep -q 'vsup_v$' ) \
+  && check write-headers-row7-rail ok || check write-headers-row7-rail bad
+# rail A = 2.970 V: vpp 0.80, tail min 2.0 -> VCE 2.97 + 0.2 - 2.0 = 1.17
+# rail B = 3.630 V: vpp 0.30 (swing NOT MET), tail min 1.2 -> VCE 2.505 (NOT MET)
+rgrid() { grid "$1" "$2" "$3" | sed "s/\$/,$3/"; }
+# OSC_CSV_RAIL is read by osc_write_csv_headers inside the command substitution.
+# shellcheck disable=SC2034
+{ echo "$(OSC_CSV_RAIL=1; CSV_OUT="${W}/hh.csv"; unset ROW7_CSV; osc_write_csv_headers; cat "${W}/hh.csv")"
+  rgrid 0.8 2.0 2.970; rgrid 0.3 1.2 3.630; } > "${W}/two.csv"
+two() { CSV_OUT="${W}/two.csv"; : > "${ROW7_CSV}"; osc_emit_row7 m c1 h 27 "${OSC_TMAX}" "${FULL}" "$@"; }
+two 2>/dev/null; rc=$?
+[[ ${rc} == 2 && ! -s "${ROW7_CSV}" ]] && check rail-required-for-tagged-csv ok || check rail-required-for-tagged-csv "rc=${rc}"
+two 2.970
+[[ "$(verd)" == "${ALLMET}" && "$(col 25)" == 2.970 && "$(col 9)" == 0.8 && "$(col 7),$(col 8)" == "10,5" ]] \
+  && check rail-A-isolated ok || check rail-A-isolated "$(verd) rail=$(col 25) vpp=$(col 9) n=$(col 7),$(col 8)"
+near "$(col 11)" 1.17 1e-9 && check rail-A-vce ok || check rail-A-vce "$(col 11)"
+two 3.630
+[[ "$(verd)" == "NOT MET,NOT MET,NOT MET,NOT MET,NOT MET" && "$(col 25)" == 3.630 && "$(col 9)" == 0.3 ]] \
+  && check rail-B-isolated ok || check rail-B-isolated "$(verd) rail=$(col 25) vpp=$(col 9)"
+two 3.3
+[[ "$(col 22)" == INCOMPLETE && "$(col 24)" == *missing* ]] && check rail-absent-incomplete ok || check rail-absent-incomplete "$(verd) $(col 24)"
+# a rail-tagged legacy layout (29 point columns + vsup_v) is never graded
+{ echo "c,m,c1,h,temp,vctrl,tmax,st,f,cy,dt,qi,qc,vpp,ts,a,b,c2,d,e,f2,g,h2,i,j,k,l,ms,mr,vsup_v"
+  grid 0.8 2.0 2.970 | cut -d, -f1-29 | sed 's/$/,2.970/'; } > "${W}/legacy-rail.csv"
+CSV_OUT="${W}/legacy-rail.csv"; : > "${ROW7_CSV}"; osc_emit_row7 m c1 h 27 "${OSC_TMAX}" "${FULL}" 2.970
+[[ "$(verd)" == "${INC}" ]] && check rail-tagged-legacy-incomplete ok || check rail-tagged-legacy-incomplete "$(verd)"
+# a rail-less (nominal) CSV must not be handed a rail; without one it is unchanged
+grid 0.8 2.5 3.3 | run
+nominal_line="$(cat "${ROW7_CSV}")"
+: > "${ROW7_CSV}"; osc_emit_row7 m c1 h 27 "${OSC_TMAX}" "${FULL}" 3.3 2>/dev/null; rc=$?
+[[ ${rc} == 2 && ! -s "${ROW7_CSV}" ]] && check nominal-csv-refuses-rail ok || check nominal-csv-refuses-rail "rc=${rc}"
+[[ "$(awk -F, '{print NF}' <<<"${nominal_line}")" == 24 && "${nominal_line}" == m,c1,h,27,* ]] \
+  && check nominal-line-unchanged-width ok || check nominal-line-unchanged-width "${nominal_line}"
+# the stage-1 summary refuses a rail-tagged CSV (two rails share a corner key)
+{ OSC_CSV_RAIL=1 osc_row7_header; line ss cap_bcs MET MET MET | sed 's/$/,2.970/'; } > "${S}"
+out="$(osc_row7_summary "${S}" "${REQ}")"
+[[ "${out}" == "NOT GRADED: rail-tagged"* ]] && check summary-refuses-rail-tagged ok || check summary-refuses-rail-tagged "${out}"
+CSV_OUT="${W}/o.csv"
+
 exit "${FAIL}"

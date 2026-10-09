@@ -23,10 +23,9 @@
 #                        baseline point is missing/invalid/incomplete, the
 #                        stage-2 point was not run or is invalid, or the two
 #                        records' design/model provenance differ
-#   MISSING              row 7 -- see below
 #
 # and an OVERALL status: ESCALATION_REQUIRED if any (row, point) says so;
-# otherwise INSUFFICIENT_EVIDENCE if any is INSUFFICIENT or MISSING; otherwise
+# otherwise INSUFFICIENT_EVIDENCE if any is INSUFFICIENT; otherwise
 # NO_ESCALATION. "No escalation" is therefore only ever printed when every
 # required (row, point) was actually compared.
 #
@@ -48,11 +47,23 @@
 #          proxy is a BRACKET; the conservative lower end is used on BOTH sides
 #          of the comparison, and a bracket straddling the bound reads as a
 #          negative margin.
-#   row 7  MISSING. The row-7 waveform-compliance grader (issue #112: Vpp >=
-#          0.40 V over the row-3 window and the BVCEO inequality) is not part
-#          of this tree; implementing it here too would duplicate it. The
-#          report says so, per point, instead of guessing. The recorded
-#          vpp_diff_v is NOT a row-7 grade and is not used as one.
+#   row 7  TWO separate comparisons per point (issue #119), both read from
+#          the <record>-row7.csv that osc_bench.sh's osc_emit_row7 (the
+#          issue-#112 grader, used unchanged by stage 1 and stage 2) wrote;
+#          nothing here re-derives a swing or a VCE:
+#            swing       min complete-window Vpp_diff - 0.40 V (V). A window
+#                        point that did not oscillate (NOSC) is a measured
+#                        swing failure; its sustained swing is counted as 0 V.
+#            compliance  2.2 V - the CONSERVATIVE (sampling-bound upper)
+#                        VCE_max over the full Vctrl domain (V).
+#          INCOMPLETE grades (missing/duplicate/unexpected Vctrl, INVALID
+#          waveform, legacy 29-column point rows) and WITHIN SAMPLING BOUND
+#          compliance (the measured value is under 2.2 V, its bound is not)
+#          are INSUFFICIENT with the grader's reason, never a margin. A
+#          row-7 CSV whose header is not osc_row7_header's (legacy/foreign
+#          layout), a missing one, or a grade line whose verdict contradicts
+#          its value is unavailable as well. Target and stretch verdicts
+#          travel in the value column; the escalation rule uses the margins.
 #   row 8  10 mW - large-signal core power at the band-centre Vctrl, VALID
 #          measurements only (the rail multiplies the same average current).
 #
@@ -208,6 +219,60 @@ get_row4_from() { # prefix  -> margin<TAB>value<TAB>reason<TAB>sd1<TAB>sd10
   }'
 }
 
+# Row 7. One lookup, two getters (swing / compliance) over the grade lines the
+# shared grader wrote. Columns are those of osc_row7_header (osc_bench.sh); the
+# header is checked verbatim so a legacy or foreign layout is never misread.
+R7_HEADER="$(OSC_CSV_RAIL=0 osc_row7_header)"
+r7_line() { # kind(swing|compliance) prefix mos cap hbt temp rail
+  local kind="$1" f="$2-row7.csv" h hasrail=0
+  [[ -f "${f}" ]] || { res nan - "no row-7 CSV ${f##*/} (record predates stage-2 row-7 grading)"; return; }
+  h="$(head -1 "${f}")"
+  if [[ "${h}" == "${R7_HEADER},vsup_v" ]]; then hasrail=1
+  elif [[ "${h}" != "${R7_HEADER}" ]]; then res nan - "row-7 CSV ${f##*/} has an unrecognised (legacy or foreign) header"; return
+  fi
+  awk -F, -v kind="${kind}" -v mos="$3" -v cap="$4" -v hbt="$5" -v temp="$6" -v rail="$7" \
+      -v hasrail="${hasrail}" -v nom="${S2_NOMINAL_RAIL}" \
+      -v vt="${OSC_ROW7_VPP_MIN_V}" -v bv="${OSC_ROW7_BVCEO_MIN_V}" "${OSC_ROW7_AWK_LIB}"'
+    function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
+    NR == 1 { next }
+    $1 == mos && $2 == cap && $3 == hbt && ($4 + 0) == (temp + 0) {
+      if (hasrail) { if (NF != 25 || !near($25, rail)) next }
+      else if (!near(rail, nom)) next
+      n++; vmin = $9; vmat = $10; vce = $11; vup = $12; vupat = $13
+      sw = $19; ss = $20; cp = $21; why = $24
+    }
+    END {
+      if (n == 0) { printf "nan\t-\tno matching row-7 grade\n"; exit }
+      if (n > 1)  { printf "nan\t-\t%d matching row-7 grades (ambiguous)\n", n; exit }
+      if (kind == "swing") {
+        if (sw == "INCOMPLETE" || ss == "INCOMPLETE") { printf "nan\t-\trow-7 INCOMPLETE (%s)\n", why; exit }
+        if (sw != "MET" && sw != "NOT MET") { printf "nan\t-\tunrecognised swing verdict %s\n", sw; exit }
+        if (!r7_num(vmin)) { printf "nan\t-\tno numeric window swing\n"; exit }
+        m = vmin - vt; note = "-"
+        if (why ~ /did not oscillate/) { m = -vt; note = why "; sustained swing counted as 0 V" }
+        if ((sw == "MET") != (m >= 0)) { printf "nan\t-\tswing verdict %s contradicts min Vpp %s V (invalid grade line)\n", sw, vmin; exit }
+        printf "%.6e\tvpp_min_window=%s@%s;swing_target=%s;swing_stretch=%s\t%s\n", m, vmin, vmat, sw, ss, note
+        exit
+      }
+      if (cp == "INCOMPLETE") { printf "nan\t-\trow-7 INCOMPLETE (%s)\n", why; exit }
+      if (cp ~ /SAMPLING/) {
+        printf "nan\t-\tcompliance WITHIN SAMPLING BOUND: measured VCE_max %s V <= %s V but its sampling-bound upper value %s V is not; not a pass and not a margin\n", vce, bv, vup; exit }
+      if (cp != "MET" && cp != "NOT MET") { printf "nan\t-\tunrecognised compliance verdict %s\n", cp; exit }
+      if (!r7_num(vce)) { printf "nan\t-\tcompliance %s without a numeric VCE_max\n", cp; exit }
+      if (cp == "MET" && !r7_num(vup)) { printf "nan\t-\tcompliance MET without a sampling-bound upper VCE_max (invalid grade line)\n"; exit }
+      # conservative worst value: the larger of the upper bound and the
+      # measured maximum (a NOT MET point may carry no sampling bound)
+      w = vce + 0; note = "-"
+      if (r7_num(vup)) { if (vup + 0 > w) w = vup + 0 }
+      else note = "a NOT MET point has no sampling bound; its measured VCE_max is used, so the true margin can be lower still"
+      m = bv - w
+      if ((cp == "MET") != (m >= 0)) { printf "nan\t-\tcompliance verdict %s contradicts VCE_max %s V / upper %s V (invalid grade line)\n", cp, vce, vup; exit }
+      printf "%.6e\tvce_max=%s;vce_max_upper=%s@%s;compliance=%s\t%s\n", m, vce, vup, vupat, cp, note
+    }' "${f}"
+}
+get_row7_swing()      { r7_line swing "$@"; }
+get_row7_compliance() { r7_line compliance "$@"; }
+
 # ------------------------------------------------------------- provenance
 # prov_digests <record.md> -- "key=hex" lines for the digests that define which
 # design and models produced a record's numbers. The record text wraps lines,
@@ -291,8 +356,8 @@ NPN=0
 while read -r proc rail temp mos cap hbt; do
   compare_family 1 "${proc}" "${rail}" "${temp}" "f_band_margin" "Hz" get_row1 "${S2_OSC}" "${BASE_OSC}" "${mos}" "${cap}" "${hbt}"
   compare_family 8 "${proc}" "${rail}" "${temp}" "power_margin_at_band_centre" "W" get_row8 "${S2_OSC}" "${BASE_OSC}" "${mos}" "${cap}" "${hbt}"
-  emit 7 "${proc}" "${rail}" "${temp}" "row7_waveform_compliance" "-" "-" "-" "nan" "nan" MISSING \
-       "row-7 grader (issue #112) is not in this tree; vpp_diff_v is recorded but is not a row-7 grade"
+  compare_family 7 "${proc}" "${rail}" "${temp}" "row7_swing_margin_min_window_vpp" "V" get_row7_swing "${S2_OSC}" "${BASE_OSC}" "${mos}" "${cap}" "${hbt}"
+  compare_family 7 "${proc}" "${rail}" "${temp}" "row7_compliance_margin_vce_upper" "V" get_row7_compliance "${S2_OSC}" "${BASE_OSC}" "${mos}" "${cap}" "${hbt}"
 
   # row 4 -- one phase-noise record per point
   p2="$(pn_find "${rail}" "${mos}" "${cap}" "${hbt}" "${temp}" ${S2_PN[@]+"${S2_PN[@]}"})"
@@ -330,7 +395,12 @@ done < <(s2_enumerate_margin)
 # --------------------------------------------------------------- aggregate
 tally() { awk -F, -v r="$1" -v s="$2" 'NR > 1 && $1 == r && $13 == s { n++ } END { print n + 0 }' "${CSV}"; }
 N_ESC="$(awk -F, 'NR > 1 && $13 == "ESCALATION_REQUIRED" { n++ } END { print n + 0 }' "${CSV}")"
-N_INS="$(awk -F, 'NR > 1 && ($13 == "INSUFFICIENT" || $13 == "MISSING") { n++ } END { print n + 0 }' "${CSV}")"
+N_INS="$(awk -F, 'NR > 1 && $13 == "INSUFFICIENT" { n++ } END { print n + 0 }' "${CSV}")"
+# Row-7 target/stretch/compliance verdicts over the 18 stage-2 points
+# (descriptive; the escalation status is the margins' comparison, not these).
+r7_count() { # metric key value
+  awk -F, -v m="$1" -v k="$2" -v v="$3" 'NR > 1 && $1 == 7 && $5 == m { n2 = split($7, kv, ";"); for (i = 1; i <= n2; i++) if (kv[i] == k "=" v) n++ } END { print n + 0 }' "${CSV}"
+}
 if [[ "${N_ESC}" -gt 0 ]]; then OVERALL=ESCALATION_REQUIRED
 elif [[ "${N_INS}" -gt 0 ]]; then OVERALL=INSUFFICIENT_EVIDENCE
 else OVERALL=NO_ESCALATION; fi
@@ -342,20 +412,26 @@ else OVERALL=NO_ESCALATION; fi
   echo "- **Baseline (stage-1, nominal ${S2_NOMINAL_RAIL} V) oscillator-core record**: ${BASE_OSC:+\`$(basename "${BASE_OSC}")\`}${BASE_OSC:-none supplied}"
   echo "- **Phase-noise records**: stage 2 ${#S2_PN[@]}, baseline ${#BASE_PN[@]}"
   echo "- **Design/model provenance (osc family)**: ${OSC_PROV}"
-  echo "- **OVERALL: ${OVERALL}** (${N_ESC} escalating (row, point) result(s); ${N_INS} insufficient-evidence or missing)"
+  echo "- **OVERALL: ${OVERALL}** (${N_ESC} escalating (row, metric, point) result(s); ${N_INS} insufficient-evidence)"
   echo
   echo "## Status by row"
   echo
-  echo "| Row | Points | ESCALATION_REQUIRED | NO_ESCALATION | INSUFFICIENT | MISSING |"
-  echo "|---|---|---|---|---|---|"
+  echo "| Row | Results | ESCALATION_REQUIRED | NO_ESCALATION | INSUFFICIENT |"
+  echo "|---|---|---|---|---|"
   for r in 1 4 6 7 8; do
-    echo "| ${r} | $(awk -F, -v r="${r}" 'NR > 1 && $1 == r { n++ } END { print n + 0 }' "${CSV}") | $(tally "${r}" ESCALATION_REQUIRED) | $(tally "${r}" NO_ESCALATION) | $(tally "${r}" INSUFFICIENT) | $(tally "${r}" MISSING) |"
+    echo "| ${r} | $(awk -F, -v r="${r}" 'NR > 1 && $1 == r { n++ } END { print n + 0 }' "${CSV}") | $(tally "${r}" ESCALATION_REQUIRED) | $(tally "${r}" NO_ESCALATION) | $(tally "${r}" INSUFFICIENT) |"
   done
+  echo
+  echo "Row 7 has two results per point (swing, compliance). Stage-2 row-7"
+  echo "verdicts as graded (descriptive, not the escalation status): swing"
+  echo "target MET at $(r7_count row7_swing_margin_min_window_vpp swing_target MET)/${S2_N_POINTS}, stretch MET at $(r7_count row7_swing_margin_min_window_vpp swing_stretch MET)/${S2_N_POINTS};"
+  echo "compliance MET at $(r7_count row7_compliance_margin_vce_upper compliance MET)/${S2_N_POINTS},"
+  echo "WITHIN SAMPLING BOUND (not a pass) at $(grep -c 'compliance WITHIN SAMPLING BOUND' "${CSV}")/${S2_N_POINTS}."
   echo
   if [[ "${N_ESC}" -gt 0 ]]; then
     echo "## Escalating results"
     echo
-    awk -F, 'NR > 1 && $13 == "ESCALATION_REQUIRED" { printf "- row %s, %s, %s V, %s C: stage-2 margin %s vs stage-1 margin %s %s\n", $1, $2, $3, $4, $9, $10, $6 }' "${CSV}"
+    awk -F, 'NR > 1 && $13 == "ESCALATION_REQUIRED" { printf "- row %s `%s`, %s, %s V, %s C: stage-2 margin %s vs stage-1 margin %s %s\n", $1, $5, $2, $3, $4, $9, $10, $6 }' "${CSV}"
     echo
     echo "Under DR-004 stage 3 this makes the full 3-way cross (405 model-grid"
     echo "points) required, **and routes to a superseding decision record**. This"
@@ -375,8 +451,22 @@ else OVERALL=NO_ESCALATION; fi
   echo "  (no baseline, missing/invalid/incomplete point, or design/model"
   echo "  provenance that differs). The OVERALL status can read NO_ESCALATION only"
   echo "  when every required (row, point) was compared."
-  echo "- **Row 7 is MISSING** until the issue-#112 waveform-compliance grader"
-  echo "  is integrated; it is reported per point, not defaulted to a pass."
+  echo "- **Row 7 is two comparisons per point** (issue #119), both from the"
+  echo "  shared issue-#112 grader \`osc_emit_row7\` run per rail, against the"
+  echo "  matching nominal (${S2_NOMINAL_RAIL} V) process/temperature grade:"
+  echo "  \`row7_swing_margin_min_window_vpp\` = min Vpp_diff over the complete"
+  echo "  window [${OSC_ROW3_V_LO}, ${OSC_ROW3_V_HI}] V - ${OSC_ROW7_VPP_MIN_V} V (a NOSC window point counts"
+  echo "  as 0 V), and \`row7_compliance_margin_vce_upper\` = ${OSC_ROW7_BVCEO_MIN_V} V - the"
+  echo "  sampling-bound UPPER value of (VDD + Vpp_diff/4) - V(TAIL)_min over the"
+  echo "  full Vctrl domain. The target (${OSC_ROW7_VPP_MIN_V} V) and stretch (${OSC_ROW7_VPP_MIN_STRETCH_V} V) swing"
+  echo "  verdicts and the compliance verdict are in the value columns."
+  echo "- **Row 7 sampling assumptions.** Both extremes are samples of an"
+  echo "  adaptive-timestep trace; the bound assumes a locally sinusoidal"
+  echo "  waveform (\`A(1 - cos(pi f dt_max))\`), so a sharper cusp can hide more."
+  echo "  A compliance value inside its sampling bound of the limit is WITHIN"
+  echo "  SAMPLING BOUND and reads INSUFFICIENT, never a margin. Incomplete Vctrl"
+  echo "  coverage, INVALID waveforms, duplicate or legacy evidence and a missing"
+  echo "  baseline row-7 grade are INSUFFICIENT with the grader's reason."
   echo "- **Row 4 carries its method and limits** (\`sim/phase-noise/README.md\`)."
   echo "  ngspice has no PSS/pnoise; \`L(df)\` is an ISF (Hajimiri-Lee) derivation"
   echo "  at one operating point (\`Vctrl\` = ${PN_VCTRL} V), the spread is the"

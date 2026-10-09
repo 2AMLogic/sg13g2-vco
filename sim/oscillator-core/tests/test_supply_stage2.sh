@@ -11,7 +11,13 @@
 #   * nominal defaults byte-for-byte unchanged (no rail rewrite)
 #   * rail determines power; CSV identity column; no mixed-rail aggregation
 #   * escalation / no escalation / unavailable baseline / provenance mismatch
-#     on synthetic fixtures, and row 7 reported MISSING, never defaulted
+#     on synthetic fixtures
+#   * row 7 (issue #119): per-rail grades from the shared osc_emit_row7, two
+#     separate comparisons (swing, conservative compliance) per point, both
+#     rails isolated, swing-only and compliance-only escalation, the DR-004
+#     equality threshold, sampling-bound ambiguity, incomplete coverage,
+#     invalid waveforms, missing/duplicate/legacy/rail-less evidence; complete
+#     evidence can read NO_ESCALATION, a missing row-7 grade cannot
 # Usage: tests/test_supply_stage2.sh
 # shellcheck disable=SC2034  # globals read by the sourced bench functions
 set -u
@@ -260,14 +266,46 @@ fixture_points() { # kind -> "<proc> <rail> <temp> <mos> <cap> <hbt>" lines
     echo "${proc} ${RAILN} ${temp} ${mos} ${cap} ${hbt}"
   done; done
 }
+# Row-7 point values (issue #119). Defaults:
+#   baseline (3.3 V): Vpp 0.80 V everywhere, V(TAIL)_min 2.0 V, sampling
+#     errors tail 1e-3 / vpp 4e-3 -> swing margin 0.40 V; VCE upper
+#     3.3 + 0.804/4 - 1.999 = 1.502 V -> compliance margin 0.698 V
+#   stage 2: VDD = rail, Vpp 0.78 V at 2.970 V and 0.82 V at 3.630 V (the two
+#     rails deliberately differ), same tail -> swing margins 0.38 / 0.42 V,
+#     compliance margins 1.033 / 0.363 V: all inside the DR-004 rule.
+# r7_vals kind scen proc rail temp v -> sets st vpp vtm ms mr (the caller's
+# locals; no subshell per point) and skip=1 when the point is not written
+r7_vals() {
+  local kind="$1" scen="$2" proc="$3" rail="$4" temp="$5" v="$6"
+  st=PASS vpp=0.80 vtm=2.0 ms=VALID mr=- skip=0
+  if [[ "${kind}" == s2 ]]; then
+    vpp=0.78; [[ "${rail}" == 3.630 ]] && vpp=0.82
+    case "${scen}" in
+      r7swing)  # swing-only escalation; and the equality threshold elsewhere
+        [[ "${proc}/${rail}/${temp}/${v}" == TYP/2.970/27/2.4 ]] && vpp=0.35
+        [[ "${proc}/${rail}/${temp}/${v}" == FAST/3.630/-40/1.8 ]] && vpp=0.40 ;;
+      r7comp)   # compliance-only escalation, outside the swing window
+        [[ "${proc}/${rail}/${temp}/${v}" == SLOW/3.630/-40/0.0 ]] && vtm=1.60 ;;
+      r7bad)
+        # measured VCE 2.1995 V <= 2.2 V, upper 2.2015 V: WITHIN SAMPLING BOUND
+        [[ "${proc}/${rail}/${temp}/${v}" == FAST/2.970/125/0.0 ]] && vtm=0.9655
+        # incomplete voltage coverage
+        [[ "${proc}/${rail}/${temp}/${v}" == TYP/3.630/125/3.0 ]] && skip=1
+        # invalid waveform (#83's validity gate)
+        [[ "${proc}/${rail}/${temp}/${v}" == SLOW/2.970/27/2.4 ]] && { ms=INVALID; mr="vtail:truncated"; } ;;
+    esac
+  fi
+  return 0
+}
 mk_osc() { # dir id kind(base|s2) scen
-  local dir="$1" id="$2" kind="$3" scen="$4" p="$1/$2" hp="" suf
+  local dir="$1" id="$2" kind="$3" scen="$4" p="$1/$2" hp="" suf tag=0
   mkdir -p "${dir}"
-  [[ "${kind}" == s2 && "${scen}" != norailcol ]] && hp=",vsup_v"
-  echo "corner_id,mos,cap,hbt,temp_c,vctrl_v,tmax,status,f_osc_hz,cycles,dt_max_s,qi,qc,vpp,ts,vcm,r,fcm,fcr,ft,ftr,vto,vtm,iop,ils,pop,pls,meas_status,meas_reason${hp}" > "${p}.csv"
+  [[ "${kind}" == s2 && "${scen}" != norailcol ]] && { hp=",vsup_v"; tag=1; }
+  ( OSC_CSV_RAIL="${tag}"; CSV_OUT="${p}.csv"; unset TUNING_CSV KVCO_CSV ROW3_CSV ROW7_CSV MARGIN_CSV MARGIN_SUM_CSV; osc_write_csv_headers )
   echo "mos,cap,hbt,temp_c,n_points,f_min_hz,f_max_hz,vmin,vmax,ratio,pct,fgeo,km,kp,kn,lin,floor,row1_verdict,row2_verdict,row2_stretch_verdict${hp}" > "${p}-tuning.csv"
   echo "corner,mos,cap,hbt,temp_c,itail_nominal_a,itail_last_osc_a,itail_first_fail_a,margin_lower_bound,margin_upper_bound,row6_verdict,row6_bound,ngspice_rc,model_error${hp}" > "${p}-margin-summary.csv"
-  local proc rail temp mos cap hbt fmin fmax pw lo
+  [[ "${scen}" != legacyr7 ]] && OSC_CSV_RAIL="${tag}" osc_row7_header > "${p}-row7.csv"
+  local proc rail temp mos cap hbt fmin fmax pw lo v st vpp vtm ms mr vdd skip
   while read -r proc rail temp mos cap hbt; do
     fmin=4.70e9; fmax=5.30e9; pw=5.0e-3; lo=4.0
     if [[ "${kind}" == s2 ]]; then fmin=4.68e9; fmax=5.33e9; pw=5.5e-3; lo=3.8; fi
@@ -280,9 +318,28 @@ mk_osc() { # dir id kind(base|s2) scen
     if [[ "${scen}" == basegap && "${kind}" == base && "${proc}" == FAST && "${temp}" == 125 ]]; then continue; fi
     suf=""; [[ -n "${hp}" ]] && suf=",${rail}"
     echo "${mos},${cap},${hbt},${temp},10,${fmin},${fmax},0,3.3,1.1,10,5e9,0,0,0,0,0.1,BOTH ENDPOINTS INSIDE,MET,NOT MET${suf}" >> "${p}-tuning.csv"
-    echo "c,${mos},${cap},${hbt},${temp},1.65,${OSC_TMAX},PASS,5e9,20,1e-12,0.1,0.1,1,1e-9,0,0,0,0,0,0,0,0,0,1e-3,0,${pw},VALID,-${suf}" >> "${p}.csv"
+    # full 37-column point rows over the whole Vctrl axis (+ vsup_v); row 8
+    # reads the band-centre row, row 7 is graded from all of them
+    vdd="${rail}"
+    for v in ${S2_VCTRL_LIST}; do
+      r7_vals "${kind}" "${scen}" "${proc}" "${rail}" "${temp}" "${v}"
+      [[ "${skip}" == 1 ]] && continue
+      echo "c,${mos},${cap},${hbt},${temp},${v},${OSC_TMAX},${st},5e9,20,1e-12,0.1,0.1,${vpp},1e-9,0,0,0,0,1e10,2,2.5,2.7,0,1e-3,0,${pw},${ms},${mr},${vtm},3e-9,0.1,1e-3,4e-3,${vdd},0,0${suf}" >> "${p}.csv"
+    done
     if [[ "${proc}" != TYP && "${temp}" != 27 ]]; then
       echo "m,${mos},${cap},${hbt},${temp},2e-4,1e-4,5e-5,${lo},${lo},MET,3.0,rc=0,model_error=0${suf}" >> "${p}-margin-summary.csv"
+    fi
+    # row 7: the shared grader, per rail. A rail-less stage-2 CSV cannot be
+    # given one, so it is graded once both rails' rows exist: they meet in one
+    # corner and the grade is INCOMPLETE (duplicates), as it must be.
+    if [[ "${scen}" != legacyr7 ]]; then
+      if [[ "${tag}" == 1 ]]; then
+        CSV_OUT="${p}.csv" ROW7_CSV="${p}-row7.csv" osc_emit_row7 "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${S2_VCTRL_LIST}" "${rail}"
+      elif [[ "${kind}" == base ]]; then
+        CSV_OUT="${p}.csv" ROW7_CSV="${p}-row7.csv" osc_emit_row7 "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${S2_VCTRL_LIST}"
+      elif [[ "${rail}" == "${S2_RAILS##* }" ]]; then
+        CSV_OUT="${p}.csv" ROW7_CSV="${p}-row7.csv" osc_emit_row7 "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${S2_VCTRL_LIST}"
+      fi
     fi
   done < <(fixture_points "${kind}")
   if [[ "${scen}" == badprov && "${kind}" == base ]]; then
@@ -326,21 +383,58 @@ FX="${W}/fx-ok"; mk_osc "${FX}" base1 base ok; mk_osc "${FX}" s2a s2 ok
 mk_pn_set "${FX}" pnbase base -110.0 -130.0; mk_pn_set "${FX}" pns2 s2 -108.0 -128.0
 ARR=(); mapfile_lines < <(pn_args "${FX}" pnbase --baseline-pn; pn_args "${FX}" pns2 --stage2-pn)
 run_report "${FX}" ok "${FX}/s2a" --baseline-osc "${FX}/base1" "${ARR[@]}"
-eq report-ok-rows "$(($(wc -l < "${C}") - 1))" 80
+# rows 1/4/8: 18 each; row 6: 8; row 7: 18 x 2 (swing, compliance) = 98
+eq report-ok-rows "$(($(wc -l < "${C}") - 1))" 98
 for r in 1 4 8; do eq "no-escalation-row-${r}-18-compared" "$(cnt "${C}" ${r} NO_ESCALATION)" 18; done
 eq no-escalation-row-6-8-compared "$(cnt "${C}" 6 NO_ESCALATION)" 8
-eq no-escalation-zero-escalations "$(cnt "${C}" 1 ESCALATION_REQUIRED)$(cnt "${C}" 4 ESCALATION_REQUIRED)$(cnt "${C}" 6 ESCALATION_REQUIRED)$(cnt "${C}" 8 ESCALATION_REQUIRED)" 0000
-eq row7-missing-18 "$(cnt "${C}" 7 MISSING)" 18
-eq row7-never-graded "$(awk -F, 'NR>1 && $1==7 && $13!="MISSING"' "${C}" | wc -l | tr -d ' ')" 0
-eq overall-with-row7-missing "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
-grep -q 'Row 7 is MISSING' "${FX}/ok-supply-stage2.md" && check md-states-row7-missing ok || check md-states-row7-missing bad
-grep -q 'OVERALL: INSUFFICIENT_EVIDENCE' "${FX}/ok-supply-stage2.md" && check md-overall ok || check md-overall bad
+eq no-escalation-row-7-36-compared "$(cnt "${C}" 7 NO_ESCALATION)" 36
+eq no-escalation-zero-escalations "$(awk -F, 'NR>1 && $13!="NO_ESCALATION"' "${C}" | wc -l | tr -d ' ')" 0
+eq row7-metrics-separate "$(awk -F, 'NR>1 && $1==7 {print $5}' "${C}" | sort | uniq -c | awk '{print $2"="$1}' | tr '\n' ' ')" \
+   "row7_compliance_margin_vce_upper=18 row7_swing_margin_min_window_vpp=18 "
+eq row7-no-missing-status "$(grep -c ',MISSING,' "${C}")" 0
+# complete evidence for every required (row, point) -> NO_ESCALATION
+eq overall-complete-evidence "$(overall "${OUTTXT}")" "OVERALL: NO_ESCALATION"
+grep -q 'OVERALL: NO_ESCALATION' "${FX}/ok-supply-stage2.md" && check md-overall ok || check md-overall bad
+# both rails for the same process/temperature identity carry their own values
+eq row7-rail-2.970-own-swing "$(awk -F, 'NR>1 && $1==7 && $2=="TYP" && $3=="2.970" && $4==27 && $5 ~ /swing/ {print $7"|"$9}' "${C}")" \
+   "vpp_min_window=0.78@1.65;swing_target=MET;swing_stretch=MET|3.800000e-01"
+eq row7-rail-3.630-own-swing "$(awk -F, 'NR>1 && $1==7 && $2=="TYP" && $3=="3.630" && $4==27 && $5 ~ /swing/ {print $7"|"$9}' "${C}")" \
+   "vpp_min_window=0.82@1.65;swing_target=MET;swing_stretch=MET|4.200000e-01"
+# compliance margin = 2.2 - conservative (sampling-bound upper) VCE_max
+eq row7-compliance-margin-3.630 "$(awk -F, 'NR>1 && $1==7 && $2=="TYP" && $3=="3.630" && $4==27 && $5 ~ /compliance/ {print $9"|"$10}' "${C}")" \
+   "3.630000e-01|6.980000e-01"
+eq row7-compliance-margin-2.970 "$(awk -F, 'NR>1 && $1==7 && $2=="TYP" && $3=="2.970" && $4==27 && $5 ~ /compliance/ {print $9}' "${C}")" "1.033000e+00"
+eq row7-baseline-is-nominal "$(awk -F, 'NR>1 && $1==7 && $5 ~ /swing/ {print $8}' "${C}" | sort -u)" \
+   "vpp_min_window=0.8@1.65;swing_target=MET;swing_stretch=MET"
+grep -q 'Row 7 is two comparisons per point' "${FX}/ok-supply-stage2.md" && grep -q 'Row 7 sampling assumptions' "${FX}/ok-supply-stage2.md" \
+  && grep -q 'swing$' "${FX}/ok-supply-stage2.md" && grep -q 'target MET at 18/18, stretch MET at 18/18' "${FX}/ok-supply-stage2.md" \
+  && check md-row7-method-and-stretch ok || check md-row7-method-and-stretch bad
+grep -q 'Row 7 is MISSING' "${FX}/ok-supply-stage2.md" && check md-no-stale-row7-text bad || check md-no-stale-row7-text ok
+# a missing row-7 measurement can never read NO_ESCALATION
+grep -v '^tt,cap_typ,hbt_typ,125,.*,3.630$' "${FX}/s2a-row7.csv" > "${FX}/s2miss-row7.csv"
+for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FX}/s2a${f}" "${FX}/s2miss${f}"; done
+run_report "${FX}" miss "${FX}/s2miss" --baseline-osc "${FX}/base1" "${ARR[@]}"
+eq row7-missing-grade-insufficient "$(awk -F, 'NR>1 && $1==7 && $13=="INSUFFICIENT" {print $2","$3","$4}' "${C}" | sort -u)" "TYP,3.630,125"
+eq row7-missing-grade-two-metrics "$(cnt "${C}" 7 INSUFFICIENT)" 2
+grep -q 'no matching row-7 grade' "${C}" && check row7-missing-grade-reason ok || check row7-missing-grade-reason bad
+eq overall-row7-missing-not-no-escalation "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
+# a duplicated grade line is ambiguous, never picked
+{ cat "${FX}/s2a-row7.csv"; grep '^ff,cap_bcs,hbt_bcs,-40,.*,2.970$' "${FX}/s2a-row7.csv"; } > "${FX}/s2dup-row7.csv"
+for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FX}/s2a${f}" "${FX}/s2dup${f}"; done
+run_report "${FX}" dup "${FX}/s2dup" --baseline-osc "${FX}/base1"
+eq row7-duplicate-insufficient "$(awk -F, 'NR>1 && $1==7 && $13=="INSUFFICIENT" {print $2","$3","$4}' "${C}" | sort -u)" "FAST,2.970,-40"
+grep -q '2 matching row-7 grades (ambiguous)' "${C}" && check row7-duplicate-reason ok || check row7-duplicate-reason bad
+# a stage-2 row-7 CSV without its rail column is never compared
+cut -d, -f1-24 "${FX}/s2a-row7.csv" > "${FX}/s2nr-row7.csv"
+for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FX}/s2a${f}" "${FX}/s2nr${f}"; done
+run_report "${FX}" nr "${FX}/s2nr" --baseline-osc "${FX}/base1"
+eq row7-railless-stage2-insufficient "$(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 7 NO_ESCALATION)" "36 0"
 # every point of every row carries the rail and nothing is aggregated across rails
 eq csv-rails "$(awk -F, 'NR>1{print $3}' "${C}" | sort -u | tr '\n' ' ')" "2.970 3.630 "
 # append-only: re-running onto an existing report id is refused
 "${REPORT}" --stage2-osc "${FX}/s2a" --baseline-osc "${FX}/base1" --out "${FX}/ok" >/dev/null 2>&1; eq report-refuses-overwrite $? 2
 # row-4 reason carries the estimator-spread caveat
-grep -q 'combined realisation spread' "${C}" && check row4-carries-method-spread ok || check row4-carries-method-spread bad
+grep -q 'combined realisation spread' "${FX}/ok-supply-stage2.csv" && check row4-carries-method-spread ok || check row4-carries-method-spread bad
 
 # --- 7b. escalation ----------------------------------------------------
 FE="${W}/fx-esc"; mk_osc "${FE}" base1 base escalate; mk_osc "${FE}" s2a s2 escalate
@@ -355,11 +449,61 @@ done
 eq escalation-row-4-none "$(cnt "${C}" 4 ESCALATION_REQUIRED)" 0
 grep -q 'superseding decision record' "${FE}/esc-supply-stage2.md" && check md-routes-to-superseding-record ok || check md-routes-to-superseding-record bad
 
+eq escalation-row-7-none "$(cnt "${C}" 7 ESCALATION_REQUIRED)" 0
+
+# --- 7b'. row-7 swing-only escalation, and the equality threshold -------
+FS="${W}/fx-r7swing"; mk_osc "${FS}" base1 base ok; mk_osc "${FS}" s2a s2 r7swing
+run_report "${FS}" sw "${FS}/s2a" --baseline-osc "${FS}/base1"
+eq r7swing-overall "$(overall "${OUTTXT}")" "OVERALL: ESCALATION_REQUIRED"
+eq r7swing-only-swing-at-TYP-2.970-27 "$(awk -F, 'NR>1 && $13=="ESCALATION_REQUIRED" {print $1","$5","$2","$3","$4}' "${C}")" \
+   "7,row7_swing_margin_min_window_vpp,TYP,2.970,27"
+eq r7swing-compliance-same-point-not-escalated "$(awk -F, 'NR>1 && $1==7 && $2=="TYP" && $3=="2.970" && $4==27 && $5 ~ /compliance/ {print $13}' "${C}")" NO_ESCALATION
+eq r7swing-margin-and-verdict "$(awk -F, 'NR>1 && $13=="ESCALATION_REQUIRED" {print $7"|"$9}' "${C}")" \
+   "vpp_min_window=0.35@2.4;swing_target=NOT MET;swing_stretch=NOT MET|-5.000000e-02"
+# Vpp exactly 0.40 V: target MET, stretch NOT MET, margin 0 vs 0.40 left ->
+# movement equals the margin stage 1 left -> NO_ESCALATION (equality is not a trigger)
+eq r7swing-equality-threshold "$(awk -F, 'NR>1 && $1==7 && $2=="FAST" && $3=="3.630" && $4==-40 && $5 ~ /swing/ {print $7"|"$9"|"$12"|"$13}' "${C}")" \
+   "vpp_min_window=0.4@1.8;swing_target=MET;swing_stretch=NOT MET|0.000000e+00|4.000000e-01|NO_ESCALATION"
+grep -q 'row 7 `row7_swing_margin_min_window_vpp`, TYP, 2.970 V, 27 C' "${FS}/sw-supply-stage2.md" && grep -q 'superseding decision record' "${FS}/sw-supply-stage2.md" \
+  && check r7swing-md-names-metric-and-routes ok || check r7swing-md-names-metric-and-routes bad
+grep -q 'stretch MET at 16/18' "${FS}/sw-supply-stage2.md" && check r7swing-md-stretch-count ok || check r7swing-md-stretch-count bad
+
+# --- 7b''. row-7 compliance-only escalation (outside the swing window) --
+FC="${W}/fx-r7comp"; mk_osc "${FC}" base1 base ok; mk_osc "${FC}" s2a s2 r7comp
+run_report "${FC}" cp "${FC}/s2a" --baseline-osc "${FC}/base1"
+eq r7comp-overall "$(overall "${OUTTXT}")" "OVERALL: ESCALATION_REQUIRED"
+eq r7comp-only-compliance-at-SLOW-3.630--40 "$(awk -F, 'NR>1 && $13=="ESCALATION_REQUIRED" {print $1","$5","$2","$3","$4}' "${C}")" \
+   "7,row7_compliance_margin_vce_upper,SLOW,3.630,-40"
+# upper = 3.63 + 0.824/4 - 1.599 = 2.237 -> margin -0.037 V
+eq r7comp-conservative-margin "$(awk -F, 'NR>1 && $13=="ESCALATION_REQUIRED" {print $7"|"$9}' "${C}")" \
+   "vce_max=2.235;vce_max_upper=2.237@0.0;compliance=NOT MET|-3.700000e-02"
+eq r7comp-swing-same-point-not-escalated "$(awk -F, 'NR>1 && $1==7 && $2=="SLOW" && $3=="3.630" && $4==-40 && $5 ~ /swing/ {print $13}' "${C}")" NO_ESCALATION
+
+# --- 7b'''. sampling-bound ambiguity, incomplete coverage, invalid waveform
+FB="${W}/fx-r7bad"; mk_osc "${FB}" base1 base ok; mk_osc "${FB}" s2a s2 r7bad
+run_report "${FB}" bad "${FB}/s2a" --baseline-osc "${FB}/base1"
+eq r7bad-overall "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
+eq r7bad-no-escalation-claimed-where-insufficient "$(cnt "${C}" 7 ESCALATION_REQUIRED) $(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 7 NO_ESCALATION)" "0 5 31"
+r7st() { awk -F, -v p="$1" -v r="$2" -v t="$3" -v m="$4" 'NR>1 && $1==7 && $2==p && $3==r && $4==t && index($5, m) {print $13"|"$14}' "${C}"; }
+# WITHIN SAMPLING BOUND: compliance insufficient (not a margin) though the
+# measured 2.1995 V is under 2.2 V; the swing at that point is still compared
+v="$(r7st FAST 2.970 125 compliance)"
+[[ "${v}" == "INSUFFICIENT|"*"WITHIN SAMPLING BOUND"*"2.1995"*"2.2015"* ]] && check r7bad-sampling-bound-insufficient ok || check r7bad-sampling-bound-insufficient "${v}"
+eq r7bad-sampling-bound-swing-compared "$(r7st FAST 2.970 125 swing | cut -d'|' -f1)" NO_ESCALATION
+grep -q 'WITHIN SAMPLING BOUND (not a pass) at 1/18' "${FB}/bad-supply-stage2.md" && check r7bad-md-sampling-count ok || check r7bad-md-sampling-count bad
+# incomplete voltage coverage: both metrics insufficient, with the grader's reason
+for m in swing compliance; do
+  v="$(r7st TYP 3.630 125 "${m}")"
+  [[ "${v}" == "INSUFFICIENT|"*"INCOMPLETE (Vctrl 3.0 V: missing)"* ]] && check "r7bad-incomplete-coverage-${m}" ok || check "r7bad-incomplete-coverage-${m}" bad "${v}"
+  v="$(r7st SLOW 2.970 27 "${m}")"
+  [[ "${v}" == "INSUFFICIENT|"*"INVALID measurement (vtail:truncated)"* ]] && check "r7bad-invalid-waveform-${m}" ok || check "r7bad-invalid-waveform-${m}" bad "${v}"
+done
+
 # --- 7c. unavailable baseline -----------------------------------------
 FU="${W}/fx-unavail"; mk_osc "${FU}" s2a s2 ok
 run_report "${FU}" nobase "${FU}/s2a"
 eq nobase-no-escalation-claimed "$(cnt "${C}" 1 NO_ESCALATION)$(cnt "${C}" 6 NO_ESCALATION)$(cnt "${C}" 8 NO_ESCALATION)$(cnt "${C}" 4 NO_ESCALATION)" 0000
-eq nobase-rows-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 4 INSUFFICIENT) $(cnt "${C}" 6 INSUFFICIENT) $(cnt "${C}" 8 INSUFFICIENT)" "18 18 8 18"
+eq nobase-rows-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 4 INSUFFICIENT) $(cnt "${C}" 6 INSUFFICIENT) $(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 8 INSUFFICIENT)" "18 18 8 36 18"
 eq nobase-overall "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
 grep -q 'no baseline supplied' "${C}" && check nobase-reason ok || check nobase-reason bad
 
@@ -367,15 +511,35 @@ mk_osc "${FU}" base_gap base basegap; mk_osc "${FU}" base_full base ok
 run_report "${FU}" gap "${FU}/s2a" --baseline-osc "${FU}/base_gap"
 eq gap-only-missing-point-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 1 NO_ESCALATION)" "2 16"
 eq gap-row8 "$(cnt "${C}" 8 INSUFFICIENT) $(cnt "${C}" 8 NO_ESCALATION)" "2 16"
+eq gap-row7 "$(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 7 NO_ESCALATION)" "4 32"
+
+# legacy baseline: no row-7 CSV (pre-#112/#119 record) -> insufficient, never upgraded
+mk_osc "${FU}" base_legacy base legacyr7
+run_report "${FU}" legacy "${FU}/s2a" --baseline-osc "${FU}/base_legacy"
+eq legacy-baseline-row7-insufficient "$(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 1 NO_ESCALATION)" "36 18"
+grep -q 'no row-7 CSV base_legacy-row7.csv' "${C}" && check legacy-baseline-reason ok || check legacy-baseline-reason bad
+eq legacy-baseline-overall "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
+# legacy/foreign row-7 header (a column missing) -> never misread
+for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FU}/base_full${f}" "${FU}/base_oldhdr${f}"; done
+{ head -1 "${FU}/base_full-row7.csv" | sed 's/,vce_max_upper_v//'; tail -n +2 "${FU}/base_full-row7.csv"; } > "${FU}/base_oldhdr-row7.csv"
+run_report "${FU}" oldhdr "${FU}/s2a" --baseline-osc "${FU}/base_oldhdr"
+eq legacy-header-row7-insufficient "$(cnt "${C}" 7 INSUFFICIENT)" 36
+grep -q 'unrecognised (legacy or foreign) header' "${C}" && check legacy-header-reason ok || check legacy-header-reason bad
+# a baseline grade whose verdict contradicts its value is an invalid grade line
+for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FU}/base_full${f}" "${FU}/base_contra${f}"; done
+sed '2s/,MET,MET,MET,MET,MET,-$/,MET,MET,NOT MET,NOT MET,NOT MET,-/' "${FU}/base_full-row7.csv" > "${FU}/base_contra-row7.csv"
+run_report "${FU}" contra "${FU}/s2a" --baseline-osc "${FU}/base_contra"
+eq contradictory-grade-insufficient "$(cnt "${C}" 7 INSUFFICIENT)" 2
+grep -q 'contradicts' "${C}" && check contradictory-grade-reason ok || check contradictory-grade-reason bad
 
 mk_osc "${FU}" base_prov base badprov
 run_report "${FU}" prov "${FU}/s2a" --baseline-osc "${FU}/base_prov"
-eq provenance-mismatch-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 6 INSUFFICIENT) $(cnt "${C}" 8 INSUFFICIENT)" "18 8 18"
+eq provenance-mismatch-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 6 INSUFFICIENT) $(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 8 INSUFFICIENT)" "18 8 36 18"
 grep -q 'provenance mismatch: cornerCAP(differs)' "${C}" && check provenance-mismatch-names-key ok || check provenance-mismatch-names-key bad
 
 mk_osc "${FU}" s2_norail s2 norailcol
 run_report "${FU}" norail "${FU}/s2_norail" --baseline-osc "${FU}/base_full"
-eq stage2-without-rail-column-never-compared "$(cnt "${C}" 1 NO_ESCALATION)$(cnt "${C}" 8 NO_ESCALATION)$(cnt "${C}" 6 NO_ESCALATION)" 000
+eq stage2-without-rail-column-never-compared "$(cnt "${C}" 1 NO_ESCALATION)$(cnt "${C}" 8 NO_ESCALATION)$(cnt "${C}" 6 NO_ESCALATION)$(cnt "${C}" 7 NO_ESCALATION)" 0000
 
 # phase-noise records without identity rows (older pilots) are unidentifiable
 mk_pn_set "${FU}" pnold base -110.0 -130.0 noid; mk_pn_set "${FU}" pnnew s2 -108.0 -128.0

@@ -35,7 +35,7 @@ graded grid is a fleet job" below, and #50.
 | 2 — tuning range `f_max/f_min ≥ 1.15` (stretch 1.20) over the full 0.0–3.3 V `Vctrl` domain | the fractional ratio per corner, with its quantization floor stated alongside the verdict | a ratio landing inside the floor of the bound is recorded as `WITHIN QUANTIZATION FLOOR OF BOUND`, never as a bare pass |
 | 3 — `Kvco` slope **and its linearity** | `Kvco(Vctrl)` as first differences of the measured `f_osc(Vctrl)` curve, plus a linearity number | **row 3 is OPEN.** This is the evidence it waits on. *Measuring a row is not ratifying it* — ratification is a `spec/decision-records/` PR and is out of scope here |
 | 6 — startup / negative-g<sub>m</sub> margin `≥ 3.0`, at every bound corner of the row-10 set | the **tail-current-scaling threshold proxy**, bracketed | see "Row 6: what is actually measured" — "it oscillated" is *not* reported as a row-6 pass |
-| 7 — output swing `Vpp_diff ≥ 0.40 V` (stretch 0.65 V) in `W`, no buffer, plus the HBT compliance `(VDD + Vpp_diff/4) − V(TAIL)_min ≤ 2.2 V` (RATIFIED, DR-004) | `vpp_diff_v` at the tank nodes per window point; per point, the **sampled cycle minimum** of `V(TAIL)`, the actual rail and `VCE_max` with its sampling bound | see "Row 7: swing and cycle-minimum compliance" — a compliance value inside its sampling bound of the limit is `WITHIN SAMPLING BOUND`, never a pass; the global verdict is stage-1 (nominal rail) only until the DR-004 supply sub-corners run |
+| 7 — output swing `Vpp_diff ≥ 0.40 V` (stretch 0.65 V) in `W`, no buffer, plus the HBT compliance `(VDD + Vpp_diff/4) − V(TAIL)_min ≤ 2.2 V` (RATIFIED, DR-004) | `vpp_diff_v` at the tank nodes per window point; per point, the **sampled cycle minimum** of `V(TAIL)`, the actual rail and `VCE_max` with its sampling bound | see "Row 7: swing and cycle-minimum compliance" — a compliance value inside its sampling bound of the limit is `WITHIN SAMPLING BOUND`, never a pass; the global verdict is stage-1 (nominal rail); the DR-004 supply sub-corners are graded per rail by the same grader and compared by `report_supply_stage2.sh` |
 | 8 — core power `≤ 10 mW` at nominal rail, band centre, nominal temperature | the **large-signal** average supply current over the settled window, reported separately from the DC operating point's current | both are recorded, in distinct columns, and never conflated |
 | 10 / 11 — PVT corner set and −40 … +125 °C | the grid `run_pvt_sweep.sh` declares and that every graded number must span | **not yet run** — see below |
 
@@ -245,7 +245,16 @@ Row 7 is ratified by DR-004 (d)/(e) and graded by `osc_emit_row7` /
   incomplete bound corner leaves row 7 `NOT GRADED`, and non-bound grid
   corners are reported as descriptors that never stand in for a missing one.
   Even a complete pass reads **`STAGE-1 MET`**: DR-004's stage-2 ±10 % supply
-  sub-corners are part of row 7's coverage and no bench runs them yet.
+  sub-corners are part of row 7's coverage. `run_supply_stage2.sh` grades them
+  per rail through the same `osc_emit_row7` and `report_supply_stage2.sh`
+  compares them with the matching nominal corner (issue #119); this summary
+  refuses a rail-tagged CSV rather than merging the two rails.
+- **Rail identity** (issue #119): `osc_emit_row7` takes an optional rail (7th
+  argument), exactly like `osc_emit_tuning`. A points CSV with a `vsup_v`
+  column requires it and only that rail's rows are graded; a rail-less CSV
+  refuses one. The grade line then carries a trailing `vsup_v` column
+  (declared by `osc_row7_header` when `OSC_CSV_RAIL=1`). Nominal callers are
+  unchanged byte for byte.
 - **Records**: per point, columns 30–37 of `records/<id>.csv`
   (`v_tail_min_v, t_tail_min_s, v_tail_pp_v, v_tail_min_err_v,
   vpp_diff_err_v, vdd_v, vce_max_v, vce_max_upper_v`, appended so columns
@@ -600,7 +609,7 @@ vertices *aggregate* (SLOW = `ss`/`hbt_wcs`/`cap_wcs`, TYP =
 | `supply_stage2.sh` | PDK-free definition: the 18 points, mappings, the margin-pass subset, and the escalation rule `s2_status` |
 | `run_supply_stage2.sh` | rows 1/6/7/8 driver (`--list`/`--check` need no PDK; a real run is a ~27 CPU-hour fleet job -- **not for a shared dispatch host**) |
 | `../phase-noise/run_supply_stage2.sh` | row 4: the existing ISF pilot per sub-corner via `PILOT_*` overrides (~14 CPU-hours) |
-| `report_supply_stage2.sh` | PDK-free report: per-point row results, comparison with the matching stage-1 margin, `ESCALATION_REQUIRED` / `NO_ESCALATION` / `INSUFFICIENT`, row 7 `MISSING` |
+| `report_supply_stage2.sh` | PDK-free report: per-point row results, comparison with the matching stage-1 margin, `ESCALATION_REQUIRED` / `NO_ESCALATION` / `INSUFFICIENT`; row 7 as two separate comparisons (swing, compliance) |
 | `tests/test_supply_stage2.sh` | CI check (`method-check.yml`): enumeration, rails in decks, nominal reproducibility, rail identity, fixtures |
 
 **Rail parameterization.** `osc_bench.sh`'s `OSC_VSUP_V` (empty = nominal
@@ -609,8 +618,8 @@ section's single `VSUP` line, the `Bvcm` common-mode offset and the startup
 `.ic` (centred on the rail, same 10 mV perturbation); core power is current x
 that rail. At the nominal rail decks are byte-identical to before. Stage-2 CSVs
 gain a trailing `vsup_v` column (`OSC_CSV_RAIL=1`), point ids contain the rail,
-and `osc_emit_tuning` *requires* the rail for a rail-tagged CSV, so a curve can
-never be aggregated across rails.
+and `osc_emit_tuning` and `osc_emit_row7` *require* the rail for a rail-tagged
+CSV, so a curve or a row-7 grade can never be aggregated across rails.
 
 **Escalation rule** (DR-004 stage 3). Margins are positive inside a bound.
 Escalate when `|m2 - m1| > m1` (DR-004's "moves ... by more than the margin
@@ -621,9 +630,29 @@ The overall status is `NO_ESCALATION` only when every required (row, point) was
 compared, so a missing baseline, an invalid/incomplete point or differing
 design/model provenance reads `INSUFFICIENT_EVIDENCE`, never a pass.
 
-**Row 7** is reported `MISSING` per point: the waveform-compliance grader of
-issue #112 is not in this tree and is not duplicated here. Until it is
-integrated the overall status can not read `NO_ESCALATION`.
+**Row 7** (issue #119). `run_supply_stage2.sh` writes `records/<id>-row7.csv`:
+one grade line per (sub-corner, rail) from `osc_emit_row7`, the issue-#112
+grader stage 1 uses, unchanged. The report reads it (and the stage-1 record's
+`-row7.csv`) and makes **two separate comparisons per point**, each with the
+`s2_status` rule against the matching nominal process/temperature grade:
+
+| Metric | Margin (V, positive = inside) |
+|---|---|
+| `row7_swing_margin_min_window_vpp` | min `Vpp_diff` over the complete window `[1.65, 3.30]` V − 0.40 V (a `NOSC` window point counts as 0 V of sustained swing) |
+| `row7_compliance_margin_vce_upper` | 2.2 V − the conservative `VCE_max` over the full `Vctrl` domain (its sampling-bound upper value) |
+
+Target (0.40 V) and stretch (0.65 V) swing verdicts and the compliance verdict
+travel in the value columns and are counted in the markdown; the escalation
+status uses the margins. **Insufficient, never a margin**: a grade that is
+`INCOMPLETE` (missing/duplicated/unexpected `Vctrl`, `INVALID` waveform, legacy
+29-column point rows), compliance `WITHIN SAMPLING BOUND` (the measured value
+is under 2.2 V, its sampling bound is not), a missing or duplicated grade line,
+a record without a `-row7.csv` (legacy baselines are not upgraded by
+assumption), an unrecognised row-7 header, a stage-2 grade without its rail,
+a grade whose verdict contradicts its value, or differing provenance. The
+sampling bound assumes a locally sinusoidal waveform; a sharper cusp can hide
+more (stated in the report). The overall status can read `NO_ESCALATION` only
+when every row, including both row-7 metrics at all 18 points, was compared.
 
 ```
 sim/oscillator-core/run_supply_stage2.sh --list     # the 18 points, no PDK

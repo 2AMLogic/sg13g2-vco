@@ -1177,7 +1177,7 @@ osc_row7_point() {
 }
 
 # --------------------------------------------------------------------------
-# osc_row7_header / osc_emit_row7 <mos> <cap> <hbt> <temp> <tmax> <vlist>
+# osc_row7_header / osc_emit_row7 <mos> <cap> <hbt> <temp> <tmax> <vlist> [rail]
 # The row-7 grade for one PVT point, appended to ${ROW7_CSV} (no-op when
 # unset, so pilots grade nothing). Reads the rows already in ${CSV_OUT}.
 #   swing      Vpp_diff >= 0.40 V target / 0.65 V stretch at EVERY expected
@@ -1198,19 +1198,42 @@ osc_row7_point() {
 # when it did not oscillate) leaves compliance INCOMPLETE unless another point
 # is already NOT MET. target = swing target AND compliance; stretch = swing
 # stretch AND compliance. Only rows at the given tmax count.
+#
+# RAIL IDENTITY (issue #119, DR-004 stage 2). The optional 7th argument is the
+# rail in volts, exactly as for osc_emit_tuning: a points CSV that carries a
+# vsup_v column (stage 2, OSC_CSV_RAIL=1) holds rows of BOTH supply rails for
+# the same process/temperature/Vctrl identity, so the rail is then REQUIRED and
+# only that rail's rows are graded (otherwise every expected Vctrl would be
+# counted twice); a CSV without the column is single-rail by construction and
+# must not be given one. The rail is appended to the grade line as a trailing
+# vsup_v column, which osc_row7_header declares when OSC_CSV_RAIL=1. Nominal
+# callers (run_pvt_sweep.sh) pass no rail and produce byte-identical output.
 # --------------------------------------------------------------------------
 osc_row7_header() {
-  echo "mos,cap,hbt,temp_c,v_lo,v_hi,n_domain_points,n_window_samples,vpp_diff_min_window_v,vctrl_at_vpp_min_v,vce_max_v,vce_max_upper_v,vctrl_at_vce_max_upper_v,vdd_at_vce_max_v,vpp_diff_at_vce_max_v,v_tail_min_at_vce_max_v,v_tail_mean_at_vce_max_v,v_tail_dc_op_at_vce_max_v,swing_target,swing_stretch,compliance,row7_target_verdict,row7_stretch_verdict,reason"
+  local rc=""
+  [[ "${OSC_CSV_RAIL:-0}" == "1" ]] && rc=",vsup_v"
+  echo "mos,cap,hbt,temp_c,v_lo,v_hi,n_domain_points,n_window_samples,vpp_diff_min_window_v,vctrl_at_vpp_min_v,vce_max_v,vce_max_upper_v,vctrl_at_vce_max_upper_v,vdd_at_vce_max_v,vpp_diff_at_vce_max_v,v_tail_min_at_vce_max_v,v_tail_mean_at_vce_max_v,v_tail_dc_op_at_vce_max_v,swing_target,swing_stretch,compliance,row7_target_verdict,row7_stretch_verdict,reason${rc}"
 }
 osc_emit_row7() {
   [[ -n "${ROW7_CSV:-}" ]] || return 0
   local mos="$1" cap="$2" hbt="$3" temp="$4" tmax="${5:-${OSC_TMAX}}"
-  local vlist="${6:-}"
+  local vlist="${6:-}" rail="${7:-}"
   if [[ -z "${vlist// /}" ]]; then
     echo "osc_emit_row7: expected Vctrl list (6th argument) is required" >&2
     return 2
   fi
-  awk -F, -v vlist="${vlist}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
+  local rail_col
+  rail_col="$(head -1 "${CSV_OUT}" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "vsup_v") { print i; exit } print 0 }')"
+  if [[ "${rail_col:-0}" -gt 0 && -z "${rail}" ]]; then
+    echo "osc_emit_row7: ${CSV_OUT} has a vsup_v column; the rail (7th argument) is required to prevent mixed-rail aggregation" >&2
+    return 2
+  fi
+  if [[ "${rail_col:-0}" -eq 0 && -n "${rail}" ]]; then
+    echo "osc_emit_row7: a rail was given but ${CSV_OUT} has no vsup_v column" >&2
+    return 2
+  fi
+  awk -F, -v vlist="${vlist}" -v rail="${rail}" -v rc="${rail_col:-0}" \
+      -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
       -v tmax="${tmax}" -v vlo="${OSC_ROW3_V_LO}" -v vhi="${OSC_ROW3_V_HI}" \
       -v vt="${OSC_ROW7_VPP_MIN_V}" -v vs="${OSC_ROW7_VPP_MIN_STRETCH_V}" \
       -v bv="${OSC_ROW7_BVCEO_MIN_V}" -v minn="${OSC_ROW7_MIN_WINDOW_SAMPLES}" \
@@ -1224,18 +1247,19 @@ osc_emit_row7() {
       return b
     }
     function emit(reason, nd, nw, a, b, c, d, e, f, g, h, i, j, s1, s2, cp, tg, sg) {
-      printf "%s,%s,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", \
-             mos, cap, hbt, temp, vlo, vhi, nd, nw, a, b, c, d, e, f, g, h, i, j, s1, s2, cp, tg, sg, reason
+      printf "%s,%s,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s%s\n", \
+             mos, cap, hbt, temp, vlo, vhi, nd, nw, a, b, c, d, e, f, g, h, i, j, s1, s2, cp, tg, sg, reason, rs
     }
     function g6(x) { return r7_num(x) ? sprintf("%.6g", x) : "nan" }
-    BEGIN { ne = split(vlist, ev, " ") }
+    BEGIN { ne = split(vlist, ev, " "); rc += 0; rs = (rail == "") ? "" : "," rail }
     NR == 1 { next }
-    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax {
+    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax && (rc == 0 || near($rc, rail)) {
       x = $6 + 0; ix = 0
       for (e = 1; e <= ne; e++) if (near(x, ev[e] + 0)) { ix = e; break }
       if (ix == 0) { unexpected = 1; next }
       rows[ix]++
-      if (NF < 37) { why[ix] = "row predates the row-7 columns (" NF " columns)"; next }
+      # 37 point columns, plus the trailing rail column when there is one
+      if (NF < 37 + (rc > 0) || (rc > 0 && rc < 38)) { why[ix] = "row predates the row-7 columns (" NF " columns)"; next }
       if ($28 != "VALID") { why[ix] = "INVALID measurement (" $29 ")"; next }
       if ($8 != "PASS" && $8 != "NOSC") { why[ix] = "status " $8; next }
       if (!r7_num($14) || !r7_num($30) || !r7_num($35)) { why[ix] = "swing, tail minimum or VDD is not a number"; next }
@@ -1309,12 +1333,19 @@ osc_emit_row7() {
 #
 # Even a complete pass is reported as "STAGE-1 MET", never a bare MET: the
 # DR-004 stage-2 supply sub-corners ({2.970, 3.630} V x SLOW/TYP/FAST x T) are
-# part of row 7's coverage and no bench here runs them yet, so row 7 is not
-# fully covered until they are graded through this same function.
+# part of row 7's coverage. They are graded per rail by this file's
+# osc_emit_row7 (run_supply_stage2.sh) and compared with the matching nominal
+# corner by report_supply_stage2.sh (issue #119), not by this nominal-rail
+# summary, so row 7 is not fully covered by a stage-1 pass alone. A rail-tagged
+# (stage-2) row-7 CSV is refused here: its two rails share a corner key.
 # --------------------------------------------------------------------------
 osc_row7_summary() {
   local csv="$1" req="${2:-}"
   if [[ ! -f "${csv}" ]]; then echo "NOT GRADED: no row-7 CSV"; return 0; fi
+  if head -1 "${csv}" | tr ',' '\n' | grep -qx vsup_v; then
+    echo "NOT GRADED: rail-tagged (stage-2) row-7 CSV; per-rail results are compared by report_supply_stage2.sh"
+    return 0
+  fi
   awk -F, -v req="${req}" '
     BEGIN { nr = split(req, rq, " "); for (i = 1; i <= nr; i++) isreq[rq[i]] = 1 }
     NR == 1 { next }
@@ -1324,7 +1355,7 @@ osc_row7_summary() {
       if (!(k in isreq)) { nx++; if ($22 != "MET") nxbad++ }
     }
     END {
-      tail = "; stage-2 +/-10 % supply sub-corners NOT graded -- row 7 is not fully covered until they are"
+      tail = "; stage-2 +/-10 % supply sub-corners NOT graded here -- row 7 is not fully covered until report_supply_stage2.sh compares them"
       if (nr == 0) { print "NOT GRADED: no required bound corners declared" tail; exit }
       miss = 0; dup = 0; inc = 0; t = 0; s = 0; cm = 0; cw = 0; worst = ""; vmin = ""
       for (i = 1; i <= nr; i++) {
