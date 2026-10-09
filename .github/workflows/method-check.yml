@@ -1,0 +1,40 @@
+name: method-check
+
+# PDK-free known-answer checks of the measurement estimators in sim/lib.sh
+# (issue #103). Runs from a disposable copy of the tracked tree; CI never
+# commits evidence. Artifacts are method diagnostics, not device signoff.
+# Local invocation: .github/scripts/run-method-checks.sh (see sim/README.md).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  known-answer:
+    runs-on: ubuntu-24.04   # apt ngspice is 42.x (pinned by runner image)
+    timeout-minutes: 10     # measured ~10 s of checks; generous for apt install
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install ngspice 42
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ngspice
+          ngspice --version | grep -m1 'ngspice-'
+          ngspice --version | grep -q 'ngspice-42' || { echo "expected ngspice-42" >&2; exit 1; }
+
+      - name: Run known-answer checks
+        run: .github/scripts/run-method-checks.sh "${RUNNER_TEMP}/method-check-artifacts"
+
+      - name: Upload logs and records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: method-check-evidence
+          path: ${{ runner.temp }}/method-check-artifacts
+          if-no-files-found: warn

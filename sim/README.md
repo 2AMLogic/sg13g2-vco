@@ -29,6 +29,36 @@ record by adding a new record that supersedes it. Working output such as
 | [`oscillator-core/`](oscillator-core/) | the first experiment here that contains an **oscillator**: start-up from the differential initial condition, `f_osc` over the full 0.0–3.3 V `Vctrl` domain (hence the row-2 tuning ratio and the row-3 `Kvco` curve), the large-signal supply current, the differential-mode check, and the row-6 startup margin — all against the committed `design/vco.spice`, over the row-10/11 PVT grid | Bench and method shipped and exercised against the real netlist; **the graded PVT grid has not run, so no row is graded.** Extractor known-answer check: 56/56 quantities within tolerances *derived* from the estimator's own discretization bounds. Measured **pilot subset** (typical process corner, three row-11 temperatures, 13 transients + a 9-rung margin ladder): the oscillator starts at every point from the 10 mV `.ic` (settling 0.49–1.26 ns), is cleanly differential (`f(TAIL)/f_osc` = 2.000, common-mode amplitude ≤ 1.1 % of differential), tunes 4.61–5.45 GHz with a geometric band centre of 4.96–5.02 GHz, and draws 0.99–1.05 mW large-signal. **`Kvco` is strongly non-linear** — at 27 °C the per-segment slope runs from ~0 to −640 MHz/V, all of the tuning sitting above `Vctrl` ≈ 1.2 V. The remaining 134 PVT points (~180 CPU-hours) are blocked on `klt sim`, which cannot express this deck (no OSDI device loading, no `ngbehavior` selection, no `ihp-sg13g2` off-host image) — reproduced in [`oscillator-core/klt-sim/`](oscillator-core/klt-sim/), filed as [klayout-tools#2511](https://github.com/2AMLogic/klayout-tools/issues/2511), tracked as #50. No phase-noise (row 4) claim is made (#49). Ratifies no `spec/target-spec.md` row. |
 | [`bn-substrate-tank/`](bn-substrate-tank/) | what correcting the varactor `bn` pin from the tank node to the p-substrate (#79, DR-005) does to the passive tank's f0, Q and tuning ratio | Small-signal AC A/B, 108 rows on the batch fleet over MIM 3 x T 3 x (MOS tt x Vctrl 3 + ss/ff at band centre): **f0 -17 .. -23 %, tank Q -17 .. -28 %, tuning ratio 1.18 -> 1.11**. A lumped surrogate stands in for the OSDI MOS core, so the delta is native and the absolute f0 is not. With `bn` on the substrate the PDK's `dsubw` card is NaN above ~52 C -- the +125 C rows are errors. Phase noise **not measured** (OSDI blocked). Grades no row. |
 
+## Measurement-method CI (PDK-free)
+
+`.github/workflows/method-check.yml` runs the known-answer checks of the
+estimators in `lib.sh` on every push to `main` and every pull request:
+`oscillator-core/run_method_check.sh`, `phase-noise/run_method_check.sh`,
+`inductor-model/run_model_check.sh` (self-contained, loads no PDK model) and
+`oscillator-core/tests/test_emit_tuning.sh`. The same command runs locally:
+
+    .github/scripts/run-method-checks.sh [artifact-dir]
+
+- **Simulator**: ngspice 42 (CI installs the `ubuntu-24.04` apt package and
+  asserts the version; local development host: ngspice-42), plus bash, awk and
+  git. No `PDK_ROOT`, OSDI, xschem, KLayout or credentials; the runner scrubs
+  those variables from the checks' environment.
+- **Disposable copy**: only git-tracked files are copied to a temp directory
+  and run there, so the committed append-only evidence is never modified and CI
+  never commits anything. Fresh records, snapshots, corner logs and the
+  per-script logs are uploaded as the `method-check-evidence` artifact
+  (`if: always()`); they are method diagnostics, not device signoff evidence.
+- **Pass criteria**: every script exits 0 *and* its newest `*-method-check.csv`
+  has no non-PASS row and at least the pinned minimum PASS rows (56 / 42 / 324),
+  so a script that measures nothing fails. Tolerances are the scripts' own
+  derived ones; the runner adds none.
+- **Measured runtime** (8-vCPU shared host, ngspice-42): oscillator-core ~1 s,
+  phase-noise ~3-4 s, inductor-model ~5-8 s, tuning fixture <1 s; ~14 s total.
+  The job timeout is 10 min, dominated by the apt install.
+- **Falsification**: mutating `osc_metrics()`'s period divisor `(nx - 1)` to
+  `nx` fails oscillator-core (16/56 rows), and dropping the factor 2 in
+  `pn_l_dbc()` fails phase-noise (1/42 rows); both make the runner exit 1.
+
 ## PDK pin
 
 Every record in this tree is generated against the PDK revision pinned in
