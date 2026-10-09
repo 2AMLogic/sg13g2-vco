@@ -65,7 +65,7 @@ summary at the end counts the passed, failed and skipped gates.
 
 | Command | Gates run | Requires |
 |---|---|---|
-| `npm test` | self-tests for shell lint, signoff drift, sim append-only, spec-DR and record-id reservation, plus the runner's own self-test, then the Python gates (their self-test with a deliberately failing fixture, `py_compile` of every tracked `*.py`, and the stdlib known-answer tests in `tests/stdlib`) | bash, git, `shellcheck`, `python3`, `klt` at the version in [`.github/klt-version`](.github/klt-version) |
+| `npm test` | self-tests for shell lint, signoff drift, sim append-only, spec-DR and record-id reservation, plus the runner's own self-test, the record-currency gates, the simulator-free grading fixtures (emit-tuning, row 3, row 7, waveform-validity, stage-2 supply; run from a disposable copy of the tracked tree, roughly 80 s), then the Python gates (their self-test with a deliberately failing fixture, `py_compile` of every tracked `*.py`, and the stdlib known-answer tests in `tests/stdlib`) | bash, git, `shellcheck`, `python3`, `klt` at the version in [`.github/klt-version`](.github/klt-version) |
 | `npm run check:ci` | `lint` (shellcheck at warning+), then everything in `npm test` | same as `npm test` |
 | `npm run check:all` | `check:ci`, then the real signoff drift gate, then the klayout-dependent Python tests (`tests/klayout`; skipped if the `klayout` wheel is not importable), then the PR diff gates (only when `--base` is given), then the method known-answer checks | same, plus the `klayout` wheel at the version in [`.github/klayout-pip-version`](.github/klayout-pip-version) and ngspice 42 for the method checks |
 | `npm run check:pr -- --base REF [--head REF]` | sim append-only and spec-change-has-DR, comparing REF with the checked-out HEAD | git, plus REF fetched locally |
@@ -73,7 +73,7 @@ summary at the end counts the passed, failed and skipped gates.
 `check:ci` is the lightweight lint-plus-self-test contract. Passing it does
 not prove that every workflow will pass: the real signoff gate, the PR diff
 gates and the method checks are only in `check:all`, or you can run them as
-single targets (`check-all.sh signoff`, `check-all.sh pr-diff --base
+single targets (`check-all.sh grading-fixtures` runs just the grading fixtures; `check-all.sh signoff`, `check-all.sh pr-diff --base
 origin/main`, `check-all.sh method [artifact-dir]`).
 
 In `check:all`, two kinds of gate are optional. If ngspice 42 is not on
@@ -84,7 +84,8 @@ The summary counts these as skipped, never as passed. Add `--strict`
 the run. Run as a single target, `method` always requires ngspice 42. It
 forwards the artifact directory to
 [`run-method-checks.sh`](.github/scripts/run-method-checks.sh), so the logs
-stay there even when a check fails.
+stay there even when a check fails. `method` runs the same grading fixtures through the shared
+[`run-grading-fixtures.sh`](.github/scripts/run-grading-fixtures.sh), so the two cannot drift.
 
 To run the diff gates locally, fetch the base first (`git fetch origin
 main`) and pass `--base origin/main`. If you name a ref with `--base` or
