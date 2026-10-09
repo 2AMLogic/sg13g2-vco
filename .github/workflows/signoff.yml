@@ -42,3 +42,20 @@ jobs:
 
       - name: T1 verdict of record is current
         run: .github/scripts/check-signoff.sh
+
+  # Append-only sim/ evidence gate (issue #88). Pure bash + git: no klt, no
+  # PDK. Needs full history so the PR merge-base is resolvable.
+  sim-append-only:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Append-only checker self-test
+        run: .github/scripts/test-check-sim-append-only.sh
+
+      - name: sim/ evidence is append-only
+        if: github.event_name == 'pull_request'
+        run: .github/scripts/check-sim-append-only.sh
