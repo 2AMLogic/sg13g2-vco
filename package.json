@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "worktree:return": "./.loom/scripts/worktree-return.sh",
-    "check:ci": "echo 'No CI checks configured. Customize this script for your project.' && exit 0",
-    "check:all": "echo 'No checks configured. Customize this script for your project.' && exit 0",
-    "test": "echo 'No tests configured. Customize this script for your project.' && exit 0",
+    "check:ci": ".github/scripts/check-all.sh ci",
+    "check:all": ".github/scripts/check-all.sh all",
+    "check:pr": ".github/scripts/check-all.sh pr-diff",
+    "test": ".github/scripts/check-all.sh test",
     "lint": ".github/scripts/lint-shell.sh"
   }
 }

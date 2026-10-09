@@ -52,6 +52,60 @@ range, phase noise, supply/power, and output swing. Ratification sets the
 requirements; it does not establish that measurements meet them. The graded
 corner grids and remaining validation evidence are still outstanding.
 
+## Local checks
+
+The repository's PDK-free gates run through one runner,
+[`.github/scripts/check-all.sh`](.github/scripts/check-all.sh). The CI
+workflows call its named targets step by step, and the npm scripts call its
+aggregates, so local runs and CI use the same list of gates. The runner
+installs nothing and fetches nothing. A missing required tool or a failing
+gate makes the run exit nonzero. Every gate in an aggregate runs, and a
+summary at the end counts the passed, failed and skipped gates.
+
+| Command | Gates run | Requires |
+|---|---|---|
+| `npm test` | self-tests for shell lint, signoff drift, sim append-only, spec-DR and record-id reservation, plus the runner's own self-test | bash, git, `shellcheck`, `python3`, `klt` at the version in [`.github/klt-version`](.github/klt-version) |
+| `npm run check:ci` | `lint` (shellcheck at warning+), then everything in `npm test` | same as `npm test` |
+| `npm run check:all` | `check:ci`, then the real signoff drift gate, then the PR diff gates (only when `--base` is given), then the method known-answer checks | same, plus ngspice 42 for the method checks |
+| `npm run check:pr -- --base REF [--head REF]` | sim append-only and spec-change-has-DR, comparing REF with the checked-out HEAD | git, plus REF fetched locally |
+
+`check:ci` is the lightweight lint-plus-self-test contract. Passing it does
+not prove that every workflow will pass: the real signoff gate, the PR diff
+gates and the method checks are only in `check:all`, or you can run them as
+single targets (`check-all.sh signoff`, `check-all.sh pr-diff --base
+origin/main`, `check-all.sh method [artifact-dir]`).
+
+In `check:all`, two kinds of gate are optional. If ngspice 42 is not on
+PATH, or a different version is, the runner prints `SKIPPED: method: ngspice
+42 not found (...)`. If no `--base` is given, it prints `SKIPPED: pr-diff`.
+The summary counts these as skipped, never as passed. Add `--strict`
+(`npm run check:all -- --strict --base origin/main`) to make any skip fail
+the run. Run as a single target, `method` always requires ngspice 42. It
+forwards the artifact directory to
+[`run-method-checks.sh`](.github/scripts/run-method-checks.sh), so the logs
+stay there even when a check fails.
+
+To run the diff gates locally, fetch the base first (`git fetch origin
+main`) and pass `--base origin/main`. If you name a ref with `--base` or
+`--head` and it does not resolve to a commit, the run fails; it is not
+skipped. The append-only checker always compares against the checked-out
+HEAD, so `pr-diff` rejects a `--head` that points anywhere else.
+
+To get the pinned `klt` without changing tools installed for the whole host,
+install it into a throwaway virtual environment and put that on PATH. For
+example:
+
+```sh
+python3 -m venv /tmp/klt-venv
+/tmp/klt-venv/bin/pip install "klayout-tools==$(cat .github/klt-version)"
+PATH="/tmp/klt-venv/bin:$PATH" npm test
+```
+
+If `python3 -m venv` is not available, `uv venv` followed by
+`uv pip install --python /tmp/klt-venv/bin/python ...` works the same way.
+The `shellcheck-py` package provides a `shellcheck` binary for the same
+environment if your system does not have shellcheck.
+
 ## License
 
 Apache-2.0.
