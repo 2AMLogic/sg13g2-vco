@@ -59,3 +59,22 @@ jobs:
       - name: sim/ evidence is append-only
         if: github.event_name == 'pull_request'
         run: .github/scripts/check-sim-append-only.sh
+
+  spec-change-has-dr:
+    # Presence check: an edit to spec/target-spec.md needs a
+    # spec/decision-records/DR-NNN-slug.md in the same PR (issue #89).
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Spec-DR checker self-test
+        run: .github/scripts/test-check-spec-change-has-dr.sh
+
+      - name: Spec edit carries a decision record
+        run: |
+          .github/scripts/check-spec-change-has-dr.sh \
+            --base "origin/${{ github.base_ref }}" --head "${{ github.event.pull_request.head.sha }}"
