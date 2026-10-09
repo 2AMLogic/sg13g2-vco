@@ -25,8 +25,8 @@
 #      labels show the layout itself is wired as the schematic says
 #      (prerequisite issue #80).
 # Neither is reconciled in the reference of record.  `klt lvs` (the repo's
-# pinned 0.6.0) cannot run this compare at all; its refusal is recorded
-# (2AMLogic/klayout-tools#2849).
+# pinned 0.6.0, and the newest release 0.7.0 -- section 14.5) cannot run this
+# compare at all; both refusals are recorded (2AMLogic/klayout-tools#2849).
 #
 # WHAT IT WRITES (all committed, repo-root-relative inside, no host paths):
 #   layout/lvs/vco-reference.cir    LVS reference DERIVED from design/vco.spice
@@ -202,6 +202,42 @@ xrc=0
   -o "${SCRATCH}/klt/extract.spice" > "${SCRATCH}/klt/extract.json" 2> "${SCRATCH}/klt/extract.err" || xrc=$?
 echo "   klt lvs exit ${klt_rc}; klt extract exit ${xrc}"
 
+# The newest tagged release, so the record says whether the gap still holds
+# beyond the CI pin (PROVENANCE.md section 14.5).  Same request, plus the one
+# other documented klt route: a pre-extracted layout netlist (the runset's
+# own extraction of this stream) against the derived reference.  Throwaway
+# venv (KLT_LATEST_ENV), never the host's klt.
+KLT_LATEST_VER="0.7.0"
+KLT_LAT="${KLT_LATEST_ENV:-${HERE}/build/klt-${KLT_LATEST_VER}}"
+if [[ ! -x "${KLT_LAT}/bin/klt" ]]; then
+  need uv
+  uv venv -q "${KLT_LAT}"
+  VIRTUAL_ENV="${KLT_LAT}" uv pip install -q "klayout-tools==${KLT_LATEST_VER}"
+fi
+[[ "$("${KLT_LAT}/bin/klt" --version 2>&1 | head -1)" == "klt ${KLT_LATEST_VER}"* ]] || {
+  echo "error: ${KLT_LAT} does not hold the tagged klayout-tools ${KLT_LATEST_VER}" >&2; exit 1; }
+LAT="${SCRATCH}/klt-latest"
+mkdir -p "${LAT}"
+cp "${SCRATCH}/klt/ref-subckt.spice" "${LAT}/ref-subckt.spice"
+cp "${SCRATCH}/klt/request.json" "${LAT}/request.json"
+cp "${SCRATCH}/run-record/vco_extracted.cir" "${LAT}/runset-extracted.cir"
+cp "${SCRATCH}/ref/vco-reference.cir" "${LAT}/reference.cir"
+cat > "${LAT}/request-netlist.json" <<JSON
+{"layout": {"netlist": "runset-extracted.cir", "top": "vco"},
+ "reference": {"netlist": "reference.cir", "top": "vco"}}
+JSON
+lat_rc=0
+"${KLT_LAT}/bin/klt" lvs "${LAT}/request.json" --format json \
+  > "${LAT}/lvs.json" 2> "${LAT}/lvs.err" || lat_rc=$?
+latn_rc=0
+"${KLT_LAT}/bin/klt" lvs "${LAT}/request-netlist.json" --format json \
+  > "${LAT}/lvs-netlist.json" 2> "${LAT}/lvs-netlist.err" || latn_rc=$?
+latx_rc=0
+"${KLT_LAT}/bin/klt" extract "${GDS}" --deck sg13g2 --top vco --format json \
+  -o "${LAT}/extract.spice" > "${LAT}/extract.json" 2> "${LAT}/extract.err" || latx_rc=$?
+echo "   klt ${KLT_LATEST_VER}: lvs exit ${lat_rc}; lvs (pre-extracted) exit ${latn_rc}; extract exit ${latx_rc}"
+export LAT_RC="${lat_rc}" LATN_RC="${latn_rc}" LATX_RC="${latx_rc}" KLT_LATEST_VER
+
 # ------------------------------------------------------- gate + record --
 python3 -I - "${SCRATCH}" "${OUT}" "${REPO_ROOT}" "${XCHECK}" "${klt_rc}" "${xrc}" \
   "${deck_sha}" "${nkl_ver}" "${npy_kl}" <<'PY'
@@ -348,6 +384,34 @@ if xrc != 0 or kx.get("device_counts") != {"cap_cmim": 1}:
     fail.append("klt 0.6.0 extract census changed: exit %d, %r -- re-evaluate "
                 "the klt leg" % (xrc, kx.get("device_counts")))
 
+# -- klt leg, newest release (section 14.5) -------------------------------
+lat_dir = os.path.join(scratch, "klt-latest")
+lat_ver = os.environ["KLT_LATEST_VER"]
+lat_rc, latn_rc, latx_rc = (int(os.environ[k]) for k in ("LAT_RC", "LATN_RC", "LATX_RC"))
+def scrub_lat(o):
+    return json.loads(json.dumps(o).replace(lat_dir + "/", "<scratch>/").replace(
+        root + "/", ""))
+def envelope(stem):
+    for f in (stem + ".json", stem + ".err"):
+        try:
+            return json.load(open(os.path.join(lat_dir, f)))
+        except Exception:
+            continue
+    return {"unparsable": "neither stdout nor stderr held JSON"}
+lat_lvs, lat_net = envelope("lvs"), envelope("lvs-netlist")
+lmsg = (lat_lvs.get("error") or {}).get("message", "")
+nmsg = (lat_net.get("error") or {}).get("message", "")
+if not (lat_rc == 1 and "'inductor' is not a known device" in lmsg):
+    fail.append("klt %s lvs no longer refuses this reference (exit %d) -- the "
+                "klt gap may be closed: re-evaluate, update section 14.5" % (lat_ver, lat_rc))
+if not (latn_rc == 1 and "could not parse layout netlist" in nmsg):
+    fail.append("klt %s lvs now reads the runset's extracted netlist (exit %d) -- "
+                "re-evaluate the pre-extracted route, update section 14.5" % (lat_ver, latn_rc))
+lkx = json.load(open(os.path.join(lat_dir, "extract.json")))
+if latx_rc != 0 or lkx.get("device_counts") != {"cap_cmim": 1}:
+    fail.append("klt %s extract census changed: exit %d, %r -- re-evaluate "
+                "the klt leg" % (lat_ver, latx_rc, lkx.get("device_counts")))
+
 if fail:
     print("\n== LVS RECORD DRIFTED -- layout/lvs/ record files left as they were")
     for f in fail:
@@ -468,6 +532,25 @@ record = {
                    "extraction recognizes 1 of 42 devices, so no klt lvs report "
                    "of this block can exist at this pin (PROVENANCE.md section "
                    "14; 2AMLogic/klayout-tools#2849)"},
+    "klt_leg_latest_release": {
+        "klt": "klayout-tools==%s (tagged wheel, throwaway venv; not the CI pin)" % lat_ver,
+        "lvs_inline_extraction": {"request": "same as klt_leg.lvs.request",
+                                  "exit": lat_rc, "response": scrub_lat(lat_lvs)},
+        "lvs_pre_extracted": {
+            "request": {"layout": {"netlist": "<the runset's own extraction of "
+                                              "layout/vco.gds (the record run)>",
+                                   "top": "vco"},
+                        "reference": {"netlist": "layout/lvs/vco-reference.cir",
+                                      "top": "vco"}},
+            "exit": latn_rc, "response": scrub_lat(lat_net)},
+        "extract": {"exit": latx_rc, "device_counts": lkx.get("device_counts"),
+                    "net_count": lkx.get("net_count"), "devices_in_design": 42},
+        "reading": "the newest release behaves as the pin does: it refuses the "
+                   "reference, recognizes 1 of 42 devices on inline extraction, "
+                   "and cannot read the runset's device-aware extraction as a "
+                   "pre-extracted layout netlist -- the gap tracked by "
+                   "2AMLogic/klayout-tools#2849 is open in %s too "
+                   "(PROVENANCE.md section 14.5)" % lat_ver},
     "limits": [
         "the verdict is IHP's runset's; klt lvs could not run it, so no "
         "klt-native LVS envelope (and no klt power_connectivity block) exists",

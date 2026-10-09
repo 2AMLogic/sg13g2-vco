@@ -43,7 +43,9 @@ The citations, and the ones deliberately left out:
 - **Item 4 (LVS): not cited.** The device-aware LVS (`layout/lvs.sh`, IHP's
   own runset) reports **`mismatch`**, with one remaining isolated difference
   (#80; `layout/PROVENANCE.md` §14; the second, #79, is corrected). `klt lvs` at the `0.6.0` pin cannot
-  produce a report for this block at all (klayout-tools#2849). So there is
+  produce a report for this block at all, and neither can the newest
+  release, `0.7.0` (re-checked 2026-10-09, `layout/PROVENANCE.md` §14.5;
+  klayout-tools#2849). So there is
   neither a passing nor a `klt`-format envelope to cite.
 
 Earlier records rendered all 11 items `unmet` because no evidence envelope

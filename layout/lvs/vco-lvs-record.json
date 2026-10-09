@@ -113,14 +113,10 @@
   ],
   "invocation_notes": "run_lvs.py defaults: flat mode, simplify on, strict top-port mode (flag_missing_ports); run_lvs.py exits 0 on a mismatch, so the verdict is read from the .lvsdb",
   "reference_crosscheck_xschem": {
-    "status": "skipped: XSCHEM V3.4.4 does not apply lvs_format (needs >= 3.4.7)",
-    "last_rerun_agreement": {
-      "status": "agree",
-      "devices_compared": 39,
-      "differences": [],
-      "scope": "every Q/L/C card (T3 device-form mapping): nodes, model, parameters; xschem keeps ideal resistors and writes substrate as 0, so R cards and T4/T5 are outside it"
-    },
-    "note": "not re-run in this regeneration; the carried block is the agreement recorded against the pre-#79 netlist (xschem 3.4.7). The #79 change only re-points the 4th terminal of the 32 varactor cards (OUTP/OUTN -> 0); re-run with xschem >= 3.4.7 to refresh"
+    "status": "agree",
+    "devices_compared": 39,
+    "differences": [],
+    "scope": "every Q/L/C card (T3 device-form mapping): nodes, model, parameters; xschem keeps ideal resistors and writes substrate as 0, so R cards and T4/T5 are outside it"
   },
   "single_variable_controls": [
     {
@@ -218,6 +214,49 @@
       "devices_in_design": 42
     },
     "reading": "klt 0.6.0 refuses the reference (no inductor / 4-terminal varactor / HBT device class for sg13g2) and its curated extraction recognizes 1 of 42 devices, so no klt lvs report of this block can exist at this pin (PROVENANCE.md section 14; 2AMLogic/klayout-tools#2849)"
+  },
+  "klt_leg_latest_release": {
+    "klt": "klayout-tools==0.7.0 (tagged wheel, throwaway venv; not the CI pin)",
+    "lvs_inline_extraction": {
+      "request": "same as klt_leg.lvs.request",
+      "exit": 1,
+      "response": {
+        "schema_version": 1,
+        "error": {
+          "command": "lvs",
+          "message": "could not convert subckt-call reference netlist '<scratch>/ref-subckt.spice' to plain-element form: subcircuit 'inductor' is not a known device for the requested deck (known: cap_cmim, cap_rfcmim, rhigh, rppd, rsil, sg13_hv_nmos, sg13_hv_pmos, sg13_lv_nmos, sg13_lv_pmos); if it is a real device, pass reference.device_map to map it explicitly"
+        }
+      }
+    },
+    "lvs_pre_extracted": {
+      "request": {
+        "layout": {
+          "netlist": "<the runset's own extraction of layout/vco.gds (the record run)>",
+          "top": "vco"
+        },
+        "reference": {
+          "netlist": "layout/lvs/vco-reference.cir",
+          "top": "vco"
+        }
+      },
+      "exit": 1,
+      "response": {
+        "schema_version": 1,
+        "error": {
+          "command": "lvs",
+          "message": "could not parse layout netlist '<scratch>/runset-extracted.cir': Can't find a value for a R, C or L device in <scratch>/runset-extracted.cir, line 8 in Netlist.read"
+        }
+      }
+    },
+    "extract": {
+      "exit": 0,
+      "device_counts": {
+        "cap_cmim": 1
+      },
+      "net_count": 7,
+      "devices_in_design": 42
+    },
+    "reading": "the newest release behaves as the pin does: it refuses the reference, recognizes 1 of 42 devices on inline extraction, and cannot read the runset's device-aware extraction as a pre-extracted layout netlist -- the gap tracked by 2AMLogic/klayout-tools#2849 is open in 0.7.0 too (PROVENANCE.md section 14.5)"
   },
   "limits": [
     "the verdict is IHP's runset's; klt lvs could not run it, so no klt-native LVS envelope (and no klt power_connectivity block) exists",
