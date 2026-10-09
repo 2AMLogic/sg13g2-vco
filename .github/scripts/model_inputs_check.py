@@ -20,8 +20,10 @@ issue #133) this verifies the *committed* bytes:
     inductor-model, simulator-init) must carry a non-null retained_snapshot,
     external roles (EXTERNAL_ROLES: pdk-model, osdi-binary -- identified by
     digest only) must carry null, any other role is rejected, and at least
-    one entry of every retained role is present (the writer always captures
-    the inductor model and .spiceinit).
+    one entry of every role -- retained and external -- is present (the writer
+    always captures the inductor model, .spiceinit, PDK libraries and OSDI
+    binary). Roles are counted only from entries that pass the structural
+    checks above; external bytes stay unretained, only their digests count.
 
 Only the manifest and the retained snapshot files are ever read. Live model
 files (the inductor model, PDK, `original_path`) are never opened, so editing
@@ -195,6 +197,7 @@ def check_manifest(root, rel, rdir, rid):
             ok_types = False
         if miss or not ok_types:
             continue
+        n_err0 = len(errs)
         role, bp, sha = ent["role"], ent["bundle_path"], ent["sha256"]
         snap = ent["retained_snapshot"]
         if not HEX64.match(sha):
@@ -216,6 +219,8 @@ def check_manifest(root, rel, rdir, rid):
                     % (w, role, snap))
                 continue
             external += 1
+            if len(errs) == n_err0:  # structurally valid entry only
+                seen_roles.add(role)
             continue
         if role not in RETAINED_ROLES:
             err("%s unknown role %r; expected one of %s (retained) or %s "
@@ -269,6 +274,11 @@ def check_manifest(root, rel, rdir, rid):
             err("no %r entry; the writer always captures and retains it, so "
                 "this capture is incomplete -- regenerate the manifest with "
                 "osc_bench.sh" % role)
+    for role in EXTERNAL_ROLES:
+        if role not in seen_roles:
+            err("no valid %r entry; the writer always records its digest "
+                "(the bytes are not retained), so this capture is incomplete "
+                "-- regenerate the manifest with osc_bench.sh" % role)
     return errs, verified, external
 
 
