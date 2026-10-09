@@ -29,6 +29,11 @@
 #   pr-diff --base REF [--head REF] = append-only + spec-dr
 # Runner options may also follow an aggregate name (the npm form:
 # `npm run check:all -- --strict --base origin/main`).
+# Before a single target, --base/--head are forwarded to the diff gates
+# (spec-dr: both; append-only: --base only) and verified like trailing ones;
+# --artifacts is accepted only by method. Any other leading
+# --base/--head/--artifacts on a single target is a usage error (exit 2),
+# never silently ignored.
 #
 # Within `all`, method is optional: without ngspice 42 on PATH it prints
 # "SKIPPED: ngspice 42 not found" and is counted as skipped; pr-diff without
@@ -192,6 +197,18 @@ gate() {
   return 0
 }
 
+# reject_opts <target> <VAR>...: a leading runner option the single target
+# does not use is a usage error rather than being silently dropped.
+reject_opts() {
+  local t="$1" v opt; shift
+  for v in "$@"; do
+    [ -n "${!v}" ] || continue
+    case "$v" in BASE) opt=--base ;; HEAD_REF) opt=--head ;; *) opt=--artifacts ;; esac
+    echo "check-all: $opt is not accepted by target '$t'" >&2
+    usage
+  done
+}
+
 agg_test() {
   gate lint-selftest
   gate signoff-selftest
@@ -219,7 +236,7 @@ agg_pr_diff() {
   else
     gate append-only --base "$BASE"
   fi
-  gate spec-dr --base "$BASE" "${hd[@]}"
+  gate spec-dr --base "$BASE" ${hd[@]+"${hd[@]}"}
 }
 
 case "$TARGET" in
@@ -246,9 +263,19 @@ case "$TARGET" in
     fi
     agg_pr_diff ;;
   method)
+    reject_opts "$TARGET" BASE HEAD_REF
     if [ $# -eq 0 ] && [ -n "$ARTIFACTS" ]; then set -- "$ARTIFACTS"; fi
     gate method "$@" ;;
-  *) gate "$TARGET" "$@" ;;
+  spec-dr)
+    reject_opts "$TARGET" ARTIFACTS
+    gate spec-dr ${BASE:+--base "$BASE"} ${HEAD_REF:+--head "$HEAD_REF"} "$@" ;;
+  append-only)
+    # check-sim-append-only.sh has no --head (it diffs the checked-out HEAD).
+    reject_opts "$TARGET" HEAD_REF ARTIFACTS
+    gate append-only ${BASE:+--base "$BASE"} "$@" ;;
+  *)
+    reject_opts "$TARGET" BASE HEAD_REF ARTIFACTS
+    gate "$TARGET" "$@" ;;
 esac
 
 np=${#PASSED[@]}; nf=${#FAILED[@]}; ns=${#SKIPPED[@]}

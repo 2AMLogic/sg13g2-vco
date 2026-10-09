@@ -8,8 +8,8 @@
 # Cases: aggregate order and success, child-failure propagation, absent
 # mandatory tool, missing / wrong-version ngspice (counted skip in `all`,
 # failure for `method`), --strict skip failure, argument forwarding, method
-# artifact-dir forwarding and failure, unavailable explicit refs, usage
-# errors.
+# artifact-dir forwarding and failure, unavailable explicit refs, leading
+# runner options on single targets (forwarded or rejected), usage errors.
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 RUNNER_SRC="$HERE/check-all.sh"
@@ -179,6 +179,36 @@ reset; run_case "$BIN" --base HEAD --head "$FIRST" pr-diff
 if [ "$RC" -eq 1 ] && grep -q 'not the checked-out HEAD' "$OUT" \
    && [ "$(calls)" = "check-spec-change-has-dr.sh --base HEAD --head $FIRST|" ]; then
   ok "pr-diff --head other than checked-out HEAD fails append-only"; else bad "head mismatch: rc=$RC $(calls)"; fi
+
+# 9b. leading runner options on single targets are forwarded or rejected,
+#     never silently dropped
+reset; run_case "$BIN" --base no-such-ref spec-dr
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF: 'no-such-ref'" "$OUT" && [ ! -s "$CALLS" ]; then
+  ok "leading unavailable --base on spec-dr -> exit 1, gate not run"; else bad "leading bad ref spec-dr: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" --base "$FIRST" --head HEAD spec-dr
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-spec-change-has-dr.sh --base $FIRST --head HEAD|" ]; then
+  ok "leading --base/--head forwarded to spec-dr"; else bad "leading fwd spec-dr: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" --base "$FIRST" append-only
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-sim-append-only.sh --base $FIRST|" ]; then
+  ok "leading --base forwarded to append-only"; else bad "leading fwd append-only: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" --base no-such-ref append-only
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF" "$OUT" && [ ! -s "$CALLS" ]; then
+  ok "leading unavailable --base on append-only -> exit 1"; else bad "leading bad ref append-only: rc=$RC"; fi
+reset; run_case "$BIN" --head HEAD append-only
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --head on append-only -> exit 2"; else bad "leading head append-only: rc=$RC"; fi
+reset; run_case "$BIN" --base HEAD lint
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --base on a non-diff target -> exit 2"; else bad "leading base lint: rc=$RC"; fi
+reset; run_case "$BIN" --base HEAD method
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --base on method -> exit 2"; else bad "leading base method: rc=$RC"; fi
+reset; run_case "$BIN" --artifacts "$T/art" spec-dr
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --artifacts on spec-dr -> exit 2"; else bad "leading artifacts spec-dr: rc=$RC"; fi
+reset; run_case "$BIN" --artifacts "$T/art" method
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-method-checks.sh $T/art|" ]; then
+  ok "leading --artifacts forwarded to method"; else bad "leading artifacts method: rc=$RC $(calls)"; fi
 
 # 10. usage errors
 reset; run_case "$BIN" pr-diff
