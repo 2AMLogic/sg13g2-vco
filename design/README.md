@@ -459,6 +459,43 @@ and 0.339 mW the `RREF`/Q4/`RRE` bias branch. That clears the ≤ 10 mW target a
 the ≤ 5 mW stretch by a wide margin at nominal rail and 27 °C. It is a
 single-corner number from a startup transient, not a graded row-8 result.
 
+## Re-tune against the corrected netlist (#93): no defensible candidate
+
+**Outcome: no schematic change.** `design/vco.sch` and `design/vco.spice` are
+unchanged (16 cells/side, `cap_cmim` 3.65 x 3.65 um, `p11`, every varactor
+`bn` = 0). Nothing here relaxes a ratified bound; rows 1 and 2 stand as written.
+Records: `sim/bn-substrate-tank/records/20261009-2100-2eb3659-candidate-screen/`
+(screen, extended envelope, bench comparison, exact commands) and the two
+candidate bench records beside it. Method, limits and the surrogate caveats are
+in `sim/bn-substrate-tank/README.md` ("Candidate re-tune (#93)").
+
+- Screen (`sim/tank-screen`, lumped LC, **not evidence**): 374 candidates
+  (`p11`/`p13`/`p1`, 8-48 cells, MIM 1.14-8 um): **0 pass rows 1 and 2.** Best
+  row-1-passing ratio is 1.122.
+- Structural reason: the bn=substrate cell C swings only x1.350 (14.07 -> 18.99
+  fF effective), so even with zero fixed C the constant-L ratio ceiling is
+  1.162, and row 2 (>= 1.15) needs fixed C <= ~8.5 % of the Vctrl=0 varactor C.
+  The EM L(f) dispersion lowers the realised ratio further. Reaching 1.15 with
+  `p11` needs >= 64 cells/side, which puts the centre at ~2.3 GHz; with `p1`
+  it needs ~600 cells for 5.2 GHz. No characterized inductor reaches the band
+  at the ratio. Cell scaling is assumed, not proven for arbitrary geometries.
+- Bench check (passive tank, bn=0, tt MOS, 3 MIM corners x {-40, 27} C; the
+  +125 C rows are error rows, #95): the two best row-1 candidates
+  (`p11`, MIM 1.14 um; 14 and 12 cells) measure ratio 1.122 / 1.117 at 27 C
+  (baseline 1.113) and centres 4.51 / 4.77 GHz, phase-bandwidth Q 9.63 / 9.69
+  (baseline 10.00). **Neither meets row 2**; the gain is ~0.01.
+- **Decision needed** (separate decision record; not made here): one of
+  (a) accept the row-2 shortfall by superseding row 2 for the substrate-bn
+  varactor (spec change, DR required); (b) characterize an inductor geometry
+  between `p1` and `p11` *and* a varactor cell with larger Cmax/Cmin at
+  bn=substrate, (c) change topology (e.g. a larger-ratio varactor, band
+  switching) which DR-001 excluded for v1. Until then the 4.3 GHz centre of
+  the current netlist stays outside row 1.
+- Stale and owed to #94: all full-oscillator, PVT, phase-noise and layout/signoff
+  evidence predates the `bn` fix and is not refreshed by this work; no row
+  of #94 is claimed. Layout (#59/#62) is unaffected because the schematic is
+  unchanged.
+
 ## What `run_elaborate.sh` checks, and how to read it
 
 ```bash

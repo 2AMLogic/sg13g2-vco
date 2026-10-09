@@ -1,0 +1,12 @@
+{
+  "variant": "cand-n14-m1p14",
+  "mos": "ss",
+  "vctrl": 1.5,
+  "c_cell_f": 5.60314e-15,
+  "q5": 84.3939,
+  "r_cell_ohm": 67.3143406996475,
+  "dsubw_tnom": null,
+  "cells_per_side": 14,
+  "mim_side_um": 1.14,
+  "source": "sim/varactor-characterization/records/20260927-081226-f88eb89.csv mos small 27C"
+}

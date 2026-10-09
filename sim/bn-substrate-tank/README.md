@@ -150,3 +150,33 @@ python3 -I sim/bn-substrate-tank/analyze.py sim/bn-substrate-tank/records/<stamp
 `make_requests.py` documents the circuit in its docstring; the frozen decks and
 requests of each unit are under `records/<stamp>/decks/`, the klt reports
 (job ids, ngspice 46 runner) under `reports/`.
+
+## Candidate re-tune (#93)
+
+`make_requests.py --cells N --mim-um S --candidate NAME` emits one bn=0 variant
+at an explicit sizing (defaults reproduce the #79 decks; decks identical, only
+`cell.json` gains the sizing keys). `run_tank_ab.sh` takes `TANK_AB_ARGS` and
+`TANK_AB_LABEL`. New records (append-only, the #79 record is untouched):
+
+- `records/20261009-2100-2eb3659-candidate-screen/` -- tank_screen output
+  (374 candidates), `envelope.py` output to 600 cells, the known-answer
+  self-check, `bench-comparison.csv`, and `COMMANDS.txt`.
+- `records/20261009-205236-2eb3659-cand-n14-m1p14/`,
+  `records/20261009-205834-2eb3659-cand-n12-m1p14/` -- frozen decks, reports
+  (job ids) and `tank-ab*.csv`. Same surrogate and limits as above: lumped
+  MOS-core R-C per cell (cell scaling assumed), no HBT loading, small-signal,
+  tt MOS corner at the Vctrl endpoints only, fleet ngspice. 15 of 45 rows in
+  each are +125 C error rows (the `dsubw` NaN problem, #95); they are errors,
+  not passes, and the ratios below use only -40/27 C.
+
+| | cells | MIM | ratio (27 C, typ) | f0 centre | Q (tt, 1.5 V) | row 2 |
+|---|---|---|---|---|---|---|
+| baseline | 16 | 3.65 um | 1.113 | 4.05 GHz (endpoints 4.275/3.842) | 10.00 | fail |
+| cand-n14-m1p14 | 14 | 1.14 um | 1.122 | 4.50 GHz | 9.63 | fail |
+| cand-n12-m1p14 | 12 | 1.14 um | 1.117 | 4.77 GHz | 9.69 | fail |
+
+Conclusion: the explored envelope yields no candidate meeting row 2; see
+`design/README.md` ("Re-tune against the corrected netlist (#93)") for the
+structural argument and the decision needed. Q is the loaded-tank value without
+the HBT pair; startup, power and large-signal junction modulation are
+unassessed. #94 owns full oscillator/PVT/phase-noise regeneration.

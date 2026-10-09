@@ -71,4 +71,4 @@ for (v, mim, t, vc), f in sorted(by.items()):
     tun.append(dict(variant=v, mim=mim, temp_c=t, f0_vctrl0_ghz=fmax, f0_vctrl3p3_ghz=fmin,
                     fmax_over_fmin=round(fmax / fmin, 4)))
 with open(os.path.join(rec, "tank-ab-tuning.csv"), "w", newline="") as f:
-    w = csv.DictWriter(f, list(tun[0])); w.writeheader(); w.writerows(tun)
+    w = csv.DictWriter(f, list(tun[0]) if tun else ["variant", "mim", "temp_c", "f0_vctrl0_ghz", "f0_vctrl3p3_ghz", "fmax_over_fmin"]); w.writeheader(); w.writerows(tun)
