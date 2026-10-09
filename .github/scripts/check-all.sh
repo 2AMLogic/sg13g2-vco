@@ -19,6 +19,13 @@
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
 #   spec-dr-selftest      .github/scripts/test-check-spec-change-has-dr.sh
 #   runner-selftest       .github/scripts/test-check-all.sh
+#   grader-spec-selftest  .github/scripts/test-check-grader-spec-agreement.sh
+#                         python3 (mutation fixtures on a temp copy of the
+#                         spec, DR-004 and the graders; no ngspice/PDK)
+#   grader-spec           .github/scripts/check-grader-spec-agreement.sh
+#                         python3 (grader OSC_ROW*/PN_ROW4_*/S2_* constants ==
+#                         spec/target-spec.md + DR-004 stage-2 condition;
+#                         agreement only, never authorises a change)
 #   currency-selftest     .github/scripts/test-record-currency.sh   python3
 #   currency              .github/scripts/check-record-currency.sh  python3
 #                         (sim/record-currency.json == fresh classification)
@@ -39,8 +46,8 @@
 # Aggregates:
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest spec-dr-selftest runner-selftest
-#           currency-selftest currency grading-fixtures py-selftest
-#           py-compile py-tests
+#           grader-spec-selftest grader-spec currency-selftest currency
+#           grading-fixtures py-selftest py-compile py-tests
 #   ci    = lint + test
 #   all   = ci + signoff + py-klayout (only with the pinned klayout wheel)
 #           + pr-diff (only with --base) + method
@@ -209,6 +216,10 @@ gate() {
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-spec-change-has-dr.sh" "$@" ;;
     runner-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-all.sh" "$@" ;;
+    grader-spec-selftest)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-check-grader-spec-agreement.sh" "$@" ;;
+    grader-spec)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-grader-spec-agreement.sh" "$@" ;;
     currency-selftest)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-record-currency.sh" "$@" ;;
     currency)
@@ -261,6 +272,8 @@ agg_test() {
   gate record-id-selftest
   gate spec-dr-selftest
   gate runner-selftest
+  gate grader-spec-selftest
+  gate grader-spec
   gate currency-selftest
   gate currency
   gate grading-fixtures
