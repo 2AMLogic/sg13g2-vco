@@ -76,6 +76,15 @@ jobs:
       - name: Committed model-input manifests match retained snapshots
         run: .github/scripts/check-all.sh model-inputs
 
+      # Friction ledger (issue #146): every cited klayout-tools issue has an
+      # entry in .github/klt-friction-ledger.json, workaround paths exist and
+      # entries are verified against .github/klt-version. Offline.
+      - name: Friction-ledger gate self-test
+        run: .github/scripts/check-all.sh friction-selftest
+
+      - name: Friction ledger covers every citation and matches the klt pin
+        run: .github/scripts/check-all.sh friction
+
   # Append-only sim/ evidence gate (issue #88). Pure bash + git: no klt, no
   # PDK. Needs full history so the PR merge-base is resolvable.
   sim-append-only:

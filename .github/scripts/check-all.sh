@@ -39,6 +39,11 @@
 #                         (issue #139: committed model-input manifests ==
 #                         their retained snapshots; separate from currency,
 #                         never reads live model files)
+#   friction-selftest     .github/scripts/test-check-klt-friction.sh python3
+#   friction              .github/scripts/check-klt-friction.sh     python3
+#                         (issue #146: every cited upstream tool-tracker issue
+#                         has a ledger entry, workaround paths exist, entries
+#                         verified against .github/klt-version; offline)
 #   py-selftest           .github/scripts/test-check-python.sh      python3
 #   py-compile            check-python.sh compile (py_compile, all tracked *.py)
 #   py-tests              check-python.sh tests (stdlib unittest, tests/stdlib)
@@ -52,7 +57,7 @@
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest spec-dr-selftest runner-selftest
 #           grader-spec-selftest grader-spec currency-selftest currency
-#           model-inputs-selftest model-inputs
+#           model-inputs-selftest model-inputs friction-selftest friction
 #           grading-fixtures py-selftest py-compile py-tests
 #   ci    = lint + test
 #   all   = ci + signoff + py-klayout (only with the pinned klayout wheel)
@@ -234,6 +239,10 @@ gate() {
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-model-inputs.sh" "$@" ;;
     model-inputs)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-model-inputs.sh" "$@" ;;
+    friction-selftest)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-check-klt-friction.sh" "$@" ;;
+    friction)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-klt-friction.sh" "$@" ;;
     grading-fixtures)
       need_tools "$g" git awk grep && run_gate "$g" "$SCRIPTS/run-grading-fixtures.sh" "$@" ;;
     py-selftest)
@@ -288,6 +297,8 @@ agg_test() {
   gate currency
   gate model-inputs-selftest
   gate model-inputs
+  gate friction-selftest
+  gate friction
   gate grading-fixtures
   gate py-selftest
   gate py-compile
