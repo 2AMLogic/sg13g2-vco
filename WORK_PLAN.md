@@ -28,7 +28,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3)
+_None._
 
 ## PRs Awaiting Review
 
@@ -40,7 +40,7 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-_None._
+- **#108**: ci: gate layout records' GDS digests against committed vco.gds
 
 ## Proposed
 
@@ -49,11 +49,12 @@ Issues carrying `loom:curated`.
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
+- **#106**: ci: gate layout records' GDS digests against the committed layout/vco.gds (PDK-free) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#88**: ci: enforce append-only sim/ evidence (records, netlist-snapshots, corners) at PR time *(architect)*
-- **#89**: ci: require a decision record in the same PR as any spec/target-spec.md edit *(architect)*
+- **#122**: ci: compute which sim records are current vs superseded against design/vco.spice *(architect)*
+- **#126**: ci: add job timeouts, PR concurrency cancellation and SHA-pinned actions to the workflows *(architect)*
 
 ## Epics
 
@@ -66,10 +67,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 0 |
-| Curated | 3 |
+| Approved PRs awaiting merge | 1 |
+| Curated | 4 |
 | Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
