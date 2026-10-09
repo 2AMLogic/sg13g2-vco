@@ -262,7 +262,11 @@ differential tank; method and limits are in that README and are important):
 
 **What this means for the spec rows (nothing is relaxed; these are findings).**
 The tank alone, without the HBT pair's own parasitics, now sits near
-**4.27 GHz at band centre**, below row 1's 4.5 GHz lower band edge, with a
+**4.27 GHz at band centre** (this is f at the band-centre *bias*, Vctrl =
+1.5 V: 4.268 GHz, nearly equal to f(Vctrl = 0) = 4.275 GHz. Row 1's centre,
+as used by the #93 screen, is the endpoint mean (4.275 + 3.842)/2 = 4.05 GHz;
+see "Re-tune against the corrected netlist (#93)"), below row 1's
+4.5 GHz lower band edge, with a
 tuning ratio of **1.11-1.12** against row 2's >= 1.15. Row 5 (tank Q) and
 row 4 (phase noise) move the same way. `design/vco.sch` has not been
 re-sized in this change: retuning the tank to put the band back at 5.0 GHz
@@ -470,27 +474,69 @@ candidate bench records beside it. Method, limits and the surrogate caveats are
 in `sim/bn-substrate-tank/README.md` ("Candidate re-tune (#93)").
 
 - Screen (`sim/tank-screen`, lumped LC, **not evidence**): 374 candidates
-  (`p11`/`p13`/`p1`, 8-48 cells, MIM 1.14-8 um): **0 pass rows 1 and 2.** Best
-  row-1-passing ratio is 1.122.
+  (`p11`/`p13`/`p1`, 8-48 cells, MIM 1.14-8 um): **0 pass rows 1 and 2 on
+  that 374-point grid.** Best row-1-passing ratio is 1.122. The extended
+  envelope (below) has exactly one screen pass outside this grid.
 - Structural reason: the bn=substrate cell C swings only x1.350 (14.07 -> 18.99
   fF effective), so even with zero fixed C the constant-L ratio ceiling is
   1.162, and row 2 (>= 1.15) needs fixed C <= ~8.5 % of the Vctrl=0 varactor C.
-  The EM L(f) dispersion lowers the realised ratio further. Reaching 1.15 with
-  `p11` needs >= 64 cells/side, which puts the centre at ~2.3 GHz; with `p1`
-  it needs ~600 cells for 5.2 GHz. No characterized inductor reaches the band
-  at the ratio. Cell scaling is assumed, not proven for arbitrary geometries.
+  For `p11`/`p13` the EM L(f) dispersion lowers the realised ratio further
+  (for `p1`, whose L falls slowly with f, it lifts it slightly above 1.162).
+  Reaching 1.15 with `p11` needs >= 64 cells/side, which puts the centre at
+  ~2.3 GHz; `p13` is similar. Cell scaling is assumed, not proven for arbitrary
+  geometries.
+- **The one screen-passing point, and why it is rejected.** The extended
+  envelope (`envelope-p11-p13-p1-mim1p14.csv`, screening arithmetic to 600
+  cells/side) contains `p1, 600 cells/side, MIM 1.14 um`: centre 5.22 GHz,
+  ratio 1.166. It passes rows 1 and 2 under the screen's arithmetic, and the
+  screen's SRF guard does not reject it (the `p1` usable ceiling is 25.5 GHz).
+  It is **not** taken forward as a candidate. The reasons below are an
+  *assessed limitation* worked out from committed records. They are not a
+  measured result: this point was not benched.
+  1. *Calibration is out of range.* 600 cells/side is about 37x the 16-cell
+     baseline. The screen's cell model is calibrated on the `p11` 16-cell bench
+     and matches the 12- and 14-cell benches to about 0.001 in ratio. It has
+     never been checked against `p1`, or at more than 16 cells. The row-2
+     margin (1.166 against 1.15) is smaller than the effects this model leaves
+     out, and part of it comes from extrapolating `p1`'s L(f).
+  2. *The fixed-C budget is not credible.* Row 2 requires
+     F <= 0.0848 x (300 x 14.07 fF), about 360 fF differential. That has to
+     cover the MIM, the HBT pair's parasitics, and the routing of a 1200-cell
+     bank, which leaves about 0.3 fF per cell. None of these is modelled in the
+     screen.
+  3. *It fails row 5 on its own inductor.* The EM record
+     (`sim/inductor-model/em-extraction/records/20260910-052657-3896421-em-vs-analytic.csv`)
+     gives `p1` a fitted Q of 6.46 at 5.2 GHz (6.32 at 5 GHz), against 10.28
+     for `p11`. Combine that with the varactor bank (Q 44.8) using DR-003's
+     1/Q ~ sum(share/Q) rule and the loaded Q is about 5.6, before any routing
+     loss. Row 5 requires >= 6. This is arithmetic, not a bench Q.
+  4. *Tank impedance and power.* With L ~ 95 pH, Rp ~ Q x wL ~ 20 ohm. The
+     baseline peak is 2.27 kohm, about 100x higher. Startup gm and the
+     swing-per-current would scale with that factor, which conflicts with the
+     power row. The layout area and interconnect of a 1200-cell bank are not
+     assessed.
+  Benching this point (one `klt sim` request with the existing candidate path)
+  could only address item 1. Items 2-4 would still apply. So no fleet run was
+  spent on it.
 - Bench check (passive tank, bn=0, tt MOS, 3 MIM corners x {-40, 27} C; the
   +125 C rows are error rows, #95): the two best row-1 candidates
   (`p11`, MIM 1.14 um; 14 and 12 cells) measure ratio 1.122 / 1.117 at 27 C
   (baseline 1.113) and centres 4.51 / 4.77 GHz, phase-bandwidth Q 9.63 / 9.69
   (baseline 10.00). **Neither meets row 2**; the gain is ~0.01.
-- **Decision needed** (separate decision record; not made here): one of
+- **Decision needed** (separate decision record; not made here). Key input:
+  row 2's achievability arithmetic (DR-003 §Decision 2, "F <= 0.92 V" for
+  >= 15 %) assumes the DR-001 `Cmax/Cmin` of 1.88-2.08x. The bn=substrate cell
+  measures only **1.35x** (this record's calibration). With 1.35x, the same
+  arithmetic gives **F <= 0.085 V**, roughly an 11x tighter fixed-C budget.
+  That premise of row 2 no longer holds for the device the netlist now uses.
+  The options are
   (a) accept the row-2 shortfall by superseding row 2 for the substrate-bn
   varactor (spec change, DR required); (b) characterize an inductor geometry
   between `p1` and `p11` *and* a varactor cell with larger Cmax/Cmin at
   bn=substrate, (c) change topology (e.g. a larger-ratio varactor, band
-  switching) which DR-001 excluded for v1. Until then the 4.3 GHz centre of
-  the current netlist stays outside row 1.
+  switching) which DR-001 excluded for v1. Until one is chosen, the current
+  netlist's tank centre stays outside row 1. That centre is 4.05 GHz as an
+  endpoint mean (the row-1 definition), or 4.27 GHz as f at Vctrl = 1.5 V.
 - Stale and owed to #94: all full-oscillator, PVT, phase-noise and layout/signoff
   evidence predates the `bn` fix and is not refreshed by this work; no row
   of #94 is claimed. Layout (#59/#62) is unaffected because the schematic is

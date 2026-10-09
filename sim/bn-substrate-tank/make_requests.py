@@ -28,7 +28,8 @@ WHAT THE CIRCUIT IS.  design/vco.spice's passive tank, small-signal:
 import argparse, json, os, shutil, sys
 
 # Defaults are the design/vco.spice sizing (16 cells/side, 3.65 um MIM) and
-# reproduce the original #79 decks byte-for-byte.  --cells/--mim-um/--candidate
+# reproduce the original #79 decks byte-for-byte (cell.json gains the two
+# sizing keys; the decks themselves are identical).  --cells/--mim-um/--candidate
 # (issue #93) emit ONE bn=substrate variant named NAME at the given sizing and
 # skip the bn-tank and tnom supplements.  The cell R-C is the same mos_small
 # record value per cell, so cell scaling is an ASSUMPTION (see README).

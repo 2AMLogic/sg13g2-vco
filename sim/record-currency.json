@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 18
+    "unknown": 21
   },
   "records": [
     {
@@ -24,6 +24,58 @@
       "path": "sim/bn-substrate-tank/records/20261009-002323-383f22e",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
       "record_id": "20261009-002323-383f22e",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "deck_integrity": {
+        "checked": 5,
+        "matched": 5,
+        "mismatched": [],
+        "unpaired": 0
+      },
+      "design_netlist_sha256": null,
+      "family": "sim/bn-substrate-tank",
+      "file_count": 28,
+      "filename_commit": {
+        "id": "2eb3659",
+        "resolution": "resolved",
+        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+      },
+      "path": "sim/bn-substrate-tank/records/20261009-205236-2eb3659-cand-n14-m1p14/decks/cand-n14-m1p14__ff_v1.5.cell.json",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20261009-205236-2eb3659",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "deck_integrity": {
+        "checked": 5,
+        "matched": 5,
+        "mismatched": [],
+        "unpaired": 0
+      },
+      "design_netlist_sha256": null,
+      "family": "sim/bn-substrate-tank",
+      "file_count": 28,
+      "filename_commit": {
+        "id": "2eb3659",
+        "resolution": "resolved",
+        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+      },
+      "path": "sim/bn-substrate-tank/records/20261009-205834-2eb3659-cand-n12-m1p14/decks/cand-n12-m1p14__ff_v1.5.cell.json",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20261009-205834-2eb3659",
+      "state": "unknown"
+    },
+    {
+      "basis": "none",
+      "design_netlist_sha256": null,
+      "family": "sim/bn-substrate-tank",
+      "file_count": 6,
+      "path": "sim/bn-substrate-tank/records/20261009-2100-2eb3659-candidate-screen",
+      "reason": "entry name carries no record id (YYYYMMDD-HHMMSS-<commit>); cannot group or date it",
+      "record_id": null,
       "state": "unknown"
     },
     {
