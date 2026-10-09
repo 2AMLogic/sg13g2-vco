@@ -5,8 +5,8 @@
   report rendered by `klt signoff --manifest` — never a hand-maintained
   checkbox list in an issue body.
 - **Date**: 2026-09-21, issue #34.
-- **Consumes**: `klt signoff` (klayout-tools, pinned release `0.6.0` from
-  PyPI) and the vendored checklist below.
+- **Consumes**: `klt signoff` (klayout-tools, pinned release from
+  PyPI, version in `.github/klt-version`) and the vendored checklist below.
 - **Does not**: grade anything itself. Every row's verdict comes from the
   tool's own mechanical parse-and-grade; this directory only declares what
   the block is (`block`, `kind`) and where each item's evidence lives.
@@ -149,7 +149,7 @@ by the pin bump.
 | License | Apache-2.0 (klayout-tools is Apache-2.0; this copy is verbatim, unmodified) |
 
 This copy is byte-identical to the checklist bundled inside the pinned
-`klayout-tools==0.6.0` wheel (`klayout_tools/data/design-evidence-tiers.md`,
+`klayout-tools` wheel pinned at the time as `0.6.0` (`klayout_tools/data/design-evidence-tiers.md`,
 same SHA-256), so the vendored doc and the pinned build agree by
 construction — verified against a clean `pip install klayout-tools==0.6.0`,
 not inferred from the tag.
@@ -175,11 +175,17 @@ It is refreshed deliberately, in the same commit as whatever change
 re-grades the block:
 
 ```bash
-python3 -m pip install klayout-tools==0.6.0   # the pinned release
+python3 -m pip install "klayout-tools==$(cat .github/klt-version)"   # the pinned release
 klt signoff --manifest signoff/manifest.json \
   --tiers-doc signoff/design-evidence-tiers.md --format json \
   > signoff/t1-report.json
 ```
+
+The pin is stated once, in `.github/klt-version` (see
+`.github/klt-version.md`); CI and the checker both read it, and the
+checker refuses to grade under a different `klt --version`. To render or
+check with the pinned release without a host-wide install:
+`uvx --from "klayout-tools==$(cat .github/klt-version)" klt signoff ...`.
 
 `.github/scripts/check-signoff.sh` (self-tested by
 `test-check-signoff.sh`, both run in CI — a checker that cannot fail is
@@ -226,9 +232,9 @@ does not identify the release: a git build of klayout-tools can report
 different bundled checklist (it self-reports the difference as
 `version: "0.6.0+g<sha>"`, `git_tag: null`, `is_release: false`, and a
 different `grading_ruleset_id`). Such a build satisfies a
-`klayout-tools==0.6.0` requirement in an already-provisioned environment
+pinned-version requirement in an already-provisioned environment
 but renders a record that byte-drifts against CI. Render from a clean
-`python3 -m pip install klayout-tools==0.6.0` (a throwaway venv is
+`python3 -m pip install "klayout-tools==$(cat .github/klt-version)"` (a throwaway venv is
 enough) and, before committing, check that the record says
 `"git_tag": "v0.6.0"` and `"is_release": true`.
 

@@ -22,8 +22,8 @@
 # fresh render must parse, carry the expected block/kind, and contain no
 # top-level error block.
 #
-# Requirements: klt on PATH (see signoff/README.md for the pinned
-# install). Headless — needs no PDK, no KLayout project, no network
+# Requirements: klt on PATH at exactly the version in .github/klt-version
+# (see signoff/README.md for the pinned install). Headless — needs no PDK, no KLayout project, no network
 # beyond the pip install that put klt there.
 
 set -u
@@ -45,8 +45,21 @@ fail() {
   exit 1
 }
 
+# The pin lives in exactly one place: .github/klt-version, next to this
+# script's repo (not --root, which may be a throwaway tree).
+VERSION_FILE="$(cd "$(dirname "$0")/.." && pwd)/klt-version"
+[ -f "$VERSION_FILE" ] || fail "missing pin file $VERSION_FILE"
+PIN="$(tr -d '[:space:]' < "$VERSION_FILE")"
+[ -n "$PIN" ] || fail "pin file $VERSION_FILE is empty"
+
 command -v klt >/dev/null 2>&1 || \
-  fail "klt not on PATH — install the pinned release (see signoff/README.md): python3 -m pip install klayout-tools==0.6.0"
+  fail "klt not on PATH — install the pinned release (see signoff/README.md): python3 -m pip install klayout-tools==$PIN"
+
+# A mismatched host klt must not silently grade the record.
+KLT_ACTUAL="$(klt --version 2>/dev/null | awk '{print $NF; exit}')"
+if [ "$KLT_ACTUAL" != "$PIN" ]; then
+  fail "klt version mismatch: PATH has '${KLT_ACTUAL:-unknown}', pin (.github/klt-version) is '$PIN' — use: uvx --from \"klayout-tools==$PIN\" bash .github/scripts/check-signoff.sh"
+fi
 
 cd "$ROOT" || fail "cannot cd to $ROOT"
 [ -f "$MANIFEST" ] || fail "missing $MANIFEST"
