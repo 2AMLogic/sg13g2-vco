@@ -56,6 +56,9 @@ jobs:
       - name: Append-only checker self-test
         run: .github/scripts/test-check-sim-append-only.sh
 
+      - name: Record-reservation self-test (no PDK, no simulator)
+        run: sim/tests/test-reserve-record-id.sh
+
       - name: sim/ evidence is append-only
         if: github.event_name == 'pull_request'
         run: .github/scripts/check-sim-append-only.sh

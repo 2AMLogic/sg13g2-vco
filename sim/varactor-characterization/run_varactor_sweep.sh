@@ -89,7 +89,8 @@ DIODES_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/diodes.lib")"
 MOSVAR_VA_SHA="$(sha256_of "${PDK_ROOT}/${PDK}/libs.tech/verilog-a/mosvar/mosvar.va")"
 MOSVAR_OSDI_SHA="$(sha256_of "${OSDI_MOSVAR}")"
 
-RECORD_ID="$(mint_record_id "${REPO_ROOT}")"
+# Reserve the id (atomic mkdir) before any output path is created or opened.
+RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 
 NETLIST_DIR="${EXPERIMENT_DIR}/netlist-snapshots/${RECORD_ID}"
 LOG_DIR="${EXPERIMENT_DIR}/corners/${RECORD_ID}"

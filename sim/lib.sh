@@ -109,15 +109,51 @@ ngspice_model_error_lines() {
 }
 
 # mint_record_id <repo_root>
-# Print a fresh RECORD_ID of the form <UTC timestamp>-<short git SHA>
-# (<git SHA> is "nogit" outside a git checkout). Every sim/*/run_*.sh script
-# mints exactly one of these per run and uses it to key its append-only
-# evidence directories -- see each script's own header comment.
+# Print a candidate RECORD_ID: <UTC timestamp>-<short git SHA>-<suffix>
+# (<git SHA> is "nogit" outside a git checkout; <suffix> is 8 random hex
+# digits). This only PROPOSES an id -- it reserves nothing, so two callers can
+# get the same one. Runners must use reserve_record_id below.
+# Test hooks (frozen values): SIM_RECORD_TS, SIM_RECORD_SHA, and
+# SIM_RECORD_SUFFIX (honoured by reserve_record_id's first attempt only).
 mint_record_id() {
   local repo_root="$1"
-  local git_sha
-  git_sha="$(git -C "${repo_root}" rev-parse --short HEAD 2>/dev/null || echo nogit)"
-  echo "$(date -u +%Y%m%d-%H%M%S)-${git_sha}"
+  local git_sha ts suffix
+  git_sha="${SIM_RECORD_SHA:-$(git -C "${repo_root}" rev-parse --short HEAD 2>/dev/null || echo nogit)}"
+  ts="${SIM_RECORD_TS:-$(date -u +%Y%m%d-%H%M%S)}"
+  suffix="${_RECORD_SUFFIX_OVERRIDE:-$(printf '%04x%04x' "${RANDOM}" "${RANDOM}")}"
+  echo "${ts}-${git_sha}-${suffix}"
+}
+
+# reserve_record_id <repo_root> <experiment_dir>
+# Mint a RECORD_ID and atomically reserve it: exclusive (non-`-p`) mkdir of
+# <experiment_dir>/corners/<id>, which every runner uses as its raw-log
+# namespace. mkdir either creates the directory or fails, so exactly one
+# caller owns an id. An id is also rejected (never reused) if any historical
+# flat record (records/<id>*) or snapshot dir (netlist-snapshots/<id>) already
+# exists. On a collision a fresh id is minted and retried (up to 50 times),
+# then the call fails with a message on stderr and status 1. Prints the
+# reserved id on stdout. Nothing is ever deleted: a rejected reservation dir
+# we created stays behind (empty) rather than being recycled. Callers must
+# open no output before this returns success.
+reserve_record_id() {
+  local repo_root="$1" exp_dir="$2"
+  local attempt=0 id
+  _RECORD_SUFFIX_OVERRIDE="${SIM_RECORD_SUFFIX:-}"
+  mkdir -p "${exp_dir}/corners" || { echo "reserve_record_id: cannot create ${exp_dir}/corners" >&2; return 1; }
+  while [ "${attempt}" -lt 50 ]; do
+    attempt=$((attempt + 1))
+    id="$(mint_record_id "${repo_root}")"
+    _RECORD_SUFFIX_OVERRIDE=""
+    if mkdir "${exp_dir}/corners/${id}" 2>/dev/null; then
+      if [ -e "${exp_dir}/netlist-snapshots/${id}" ] || compgen -G "${exp_dir}/records/${id}*" >/dev/null; then
+        continue   # historical evidence already uses this id; keep it, try again
+      fi
+      echo "${id}"
+      return 0
+    fi
+  done
+  echo "reserve_record_id: could not reserve a unique record id under ${exp_dir} after 50 attempts" >&2
+  return 1
 }
 
 # make_scratch_workdir <mktemp-prefix>

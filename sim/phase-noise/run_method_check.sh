@@ -100,7 +100,8 @@ for tool in ngspice awk; do
 done
 
 NGSPICE_VERSION="$(detect_ngspice_version)"
-RECORD_ID="$(mint_record_id "${REPO_ROOT}")"
+# Reserve the id (atomic mkdir) before any output path is created or opened.
+RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 
 NETLIST_DIR="${EXPERIMENT_DIR}/netlist-snapshots/${RECORD_ID}"
 LOG_DIR="${EXPERIMENT_DIR}/corners/${RECORD_ID}"

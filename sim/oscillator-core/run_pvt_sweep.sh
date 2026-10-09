@@ -103,7 +103,8 @@ source "${SIM_DIR}/env.sh"
 # shellcheck source=../lib.sh
 source "${SIM_DIR}/lib.sh"
 
-RECORD_ID="$(mint_record_id "${REPO_ROOT}")"
+# Reserve the id (atomic mkdir) before any output path is created or opened.
+RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 # The record paths osc_bench.sh's helpers write to. shellcheck cannot follow a
 # `source` of a file whose functions dereference them, so the two this script
 # never names itself get an explicit disable rather than a silent warning.
