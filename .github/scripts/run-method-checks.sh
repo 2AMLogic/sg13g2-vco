@@ -83,37 +83,13 @@ check_summary phase-noise phase-noise "${MIN_PN}"
 run_check inductor-model sim/inductor-model/run_model_check.sh
 check_summary inductor-model inductor-model "${MIN_IND}"
 
-run_check emit-tuning sim/oscillator-core/tests/test_emit_tuning.sh
-if ! grep -q '^PASS ' "${ART}/logs/emit-tuning.log" || grep -q '^FAIL ' "${ART}/logs/emit-tuning.log"; then
-  fail "emit-tuning: no PASS lines or a FAIL line in logs/emit-tuning.log"
-fi
-
-run_check row3-grade sim/oscillator-core/tests/test_row3.sh
-if ! grep -q '^PASS ' "${ART}/logs/row3-grade.log" || grep -q '^FAIL ' "${ART}/logs/row3-grade.log"; then
-  fail "row3-grade: no PASS lines or a FAIL line in logs/row3-grade.log"
-fi
-
-run_check row7-grade sim/oscillator-core/tests/test_row7.sh
-if ! grep -q '^PASS ' "${ART}/logs/row7-grade.log" || grep -q '^FAIL ' "${ART}/logs/row7-grade.log"; then
-  fail "row7-grade: no PASS lines or a FAIL line in logs/row7-grade.log"
-fi
-
-# Waveform-validity fault injection (#83), extended with the row-7 columns
-# (#112): the real osc_simulate_point over stubbed traces, no simulator.
-run_check waveform-validity sim/oscillator-core/run_validity_check.sh
-if ! grep -q '^all cases passed$' "${ART}/logs/waveform-validity.log" || grep -q '^FAIL ' "${ART}/logs/waveform-validity.log"; then
-  fail "waveform-validity: no 'all cases passed' line or a FAIL line in logs/waveform-validity.log"
-fi
-
-# DR-004 stage-2 supply sub-corners (issue #113): enumeration, rails in
-# generated decks, nominal reproducibility, rail identity and the escalation
-# report on synthetic fixtures. Renders decks and runs no PDK simulation.
-MIN_S2="${METHOD_CHECK_MIN_S2:-122}"
-run_check supply-stage2 sim/oscillator-core/tests/test_supply_stage2.sh
-s2_pass="$(grep -c '^PASS ' "${ART}/logs/supply-stage2.log" || true)"
-if [[ "${s2_pass}" -lt "${MIN_S2}" ]] || grep -q '^FAIL ' "${ART}/logs/supply-stage2.log"; then
-  fail "supply-stage2: ${s2_pass} PASS lines (minimum ${MIN_S2}) or a FAIL line in logs/supply-stage2.log"
-fi
+# Simulator-free grading fixtures (emit-tuning, row 3, row 7, waveform
+# validity, stage-2 supply): one shared dispatcher (#132) that also backs
+# `check-all.sh grading-fixtures`. It runs in place in this disposable copy and
+# enforces the per-fixture PASS-line / 'all cases passed' checks and the
+# MIN_S2 floor (METHOD_CHECK_MIN_S2).
+run_check grading-fixtures env GRADING_TREE="${WORK}" \
+  "${WORK}/.github/scripts/run-grading-fixtures.sh" "${ART}/logs"
 
 # Ship the freshly generated evidence (disposable copy only) for diagnosis.
 comm -13 "${ART}/files.before" <(find sim -type f | sort) > "${ART}/files.new"

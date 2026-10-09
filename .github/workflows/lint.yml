@@ -28,5 +28,8 @@ jobs:
       - name: Gate-runner self-test
         run: .github/scripts/check-all.sh runner-selftest
 
+      - name: Simulator-free grading fixtures
+        run: .github/scripts/check-all.sh grading-fixtures
+
       - name: shellcheck (warning+)
         run: .github/scripts/check-all.sh lint

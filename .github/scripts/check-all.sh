@@ -22,6 +22,11 @@
 #   currency-selftest     .github/scripts/test-record-currency.sh   python3
 #   currency              .github/scripts/check-record-currency.sh  python3
 #                         (sim/record-currency.json == fresh classification)
+#   grading-fixtures      .github/scripts/run-grading-fixtures.sh   git awk
+#                         (emit-tuning, row3, row7, waveform-validity and
+#                         stage-2 supply fixtures from a disposable copy of the
+#                         tracked tree; no ngspice/PDK; source-capture stays
+#                         in currency-selftest)
 #   py-selftest           .github/scripts/test-check-python.sh      python3
 #   py-compile            check-python.sh compile (py_compile, all tracked *.py)
 #   py-tests              check-python.sh tests (stdlib unittest, tests/stdlib)
@@ -34,7 +39,8 @@
 # Aggregates:
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest spec-dr-selftest runner-selftest
-#           currency-selftest currency py-selftest py-compile py-tests
+#           currency-selftest currency grading-fixtures py-selftest
+#           py-compile py-tests
 #   ci    = lint + test
 #   all   = ci + signoff + py-klayout (only with the pinned klayout wheel)
 #           + pr-diff (only with --base) + method
@@ -207,6 +213,8 @@ gate() {
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-record-currency.sh" "$@" ;;
     currency)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-record-currency.sh" "$@" ;;
+    grading-fixtures)
+      need_tools "$g" git awk grep && run_gate "$g" "$SCRIPTS/run-grading-fixtures.sh" "$@" ;;
     py-selftest)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-check-python.sh" "$@" ;;
     py-compile)
@@ -255,6 +263,7 @@ agg_test() {
   gate runner-selftest
   gate currency-selftest
   gate currency
+  gate grading-fixtures
   gate py-selftest
   gate py-compile
   gate py-tests

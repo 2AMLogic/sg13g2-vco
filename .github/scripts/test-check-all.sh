@@ -33,6 +33,7 @@ for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/test-check-spec-change-has-dr.sh \
          .github/scripts/check-spec-change-has-dr.sh \
          .github/scripts/test-check-all.sh .github/scripts/run-method-checks.sh \
+         .github/scripts/run-grading-fixtures.sh \
          .github/scripts/test-check-python.sh .github/scripts/check-python.sh \
          .github/scripts/test-record-currency.sh \
          .github/scripts/check-record-currency.sh \
@@ -55,7 +56,7 @@ FIRST="$(git -C "$F" rev-parse HEAD~1)"
 
 # --- stub PATH ---------------------------------------------------------------
 BIN="$T/bin"; mkdir -p "$BIN"
-for t in bash git awk grep sed dirname basename cat rm mkdir mktemp env tr; do
+for t in bash git awk grep sed dirname basename cat rm mkdir mktemp env tr xargs cp touch; do
   p="$(command -v "$t")" || { echo "FAIL: host lacks $t" >&2; exit 1; }
   ln -s "$p" "$BIN/$t"
 done
@@ -93,11 +94,11 @@ for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; d
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-record-currency.sh|check-record-currency.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-record-currency.sh|check-record-currency.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
-# 1. test aggregate: eleven gates in workflow order, exit 0
+# 1. test aggregate: twelve gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '11 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '12 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -107,7 +108,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '10 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '11 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -128,8 +129,17 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-record-currency.sh|" ]; then
 reset; touch "$FAILDIR/check-record-currency.sh"; run_case "$BIN" currency
 if [ "$RC" -eq 1 ]; then ok "currency failure -> exit 1"; else bad "currency failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-record-currency.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q '10 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
+if [ "$RC" -eq 1 ] && grep -q '11 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
   ok "currency self-test failure fails test, later gates still run"; else bad "currency selftest fail: rc=$RC"; fi
+
+# 4c. grading-fixtures target: dispatch, failure propagation, no ngspice needed
+reset; run_case "$NONG" grading-fixtures
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-grading-fixtures.sh|" ]; then
+  ok "grading-fixtures target dispatches without ngspice"; else bad "grading-fixtures: rc=$RC $(calls)"; fi
+reset; touch "$FAILDIR/run-grading-fixtures.sh"; run_case "$NONG" test
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '11 passed, 1 failed' "$OUT" \
+   && grep -q '^check-python.sh tests$' "$CALLS"; then
+  ok "grading-fixtures failure fails test, later gates still run"; else bad "grading-fixtures fail: rc=$RC"; fi
 
 # 5. all without ngspice: counted skip, exit 0; --strict -> 1
 reset; run_case "$NONG" all
@@ -255,6 +265,51 @@ reset; run_case "$BIN" no-such-target
 if [ "$RC" -eq 2 ]; then ok "unknown target -> exit 2"; else bad "unknown target: rc=$RC"; fi
 reset; run_case "$BIN"
 if [ "$RC" -eq 2 ]; then ok "no target -> exit 2"; else bad "no target: rc=$RC"; fi
+
+# 11. the REAL dispatcher (run-grading-fixtures.sh) over a scratch tracked tree
+#     of stub fixtures: success, injected failure (nonzero + fixture name),
+#     missing PASS lines, the stage-2 floor, and an untouched source tree.
+G="$T/gsrc"
+mkdir -p "$G/sim/oscillator-core/tests" "$G/.github/scripts"
+mkfix() { # <path> <body-line>
+  printf '#!/usr/bin/env bash\n%s\n' "$2" > "$G/$1"; chmod +x "$G/$1"
+}
+PASSL='echo "PASS a"; echo "PASS b"'
+mkfix sim/oscillator-core/tests/test_emit_tuning.sh "$PASSL"
+mkfix sim/oscillator-core/tests/test_row3.sh "$PASSL"
+mkfix sim/oscillator-core/tests/test_row7.sh "$PASSL"
+mkfix sim/oscillator-core/run_validity_check.sh 'echo "all cases passed"'
+mkfix sim/oscillator-core/tests/test_supply_stage2.sh 'echo "PASS a"; echo "PASS b"; touch sim/scribble'
+cp "$HERE/run-grading-fixtures.sh" "$G/.github/scripts/"
+git -C "$G" init -q -b main
+git -C "$G" config user.email t@t; git -C "$G" config user.name t
+git -C "$G" add -A; git -C "$G" commit -q -m base
+GR="$G/.github/scripts/run-grading-fixtures.sh"
+grun() { PATH="$NONG" GRADING_SRC="$G" METHOD_CHECK_MIN_S2=2 "$GR" > "$OUT" 2>&1; RC=$?; }
+grun
+if [ "$RC" -eq 0 ] && grep -q 'all fixtures passed' "$OUT" && [ -z "$(git -C "$G" status --porcelain)" ]; then
+  ok "dispatcher passes without ngspice and leaves the source tree clean"; else bad "dispatcher ok: rc=$RC"; cat "$OUT"; fi
+mkfix sim/oscillator-core/tests/test_row7.sh 'echo "PASS a"; exit 1'
+grun
+if [ "$RC" -eq 1 ] && grep -q 'row7-grade exited 1' "$OUT"; then
+  ok "dispatcher: failing fixture -> exit 1 naming the fixture"; else bad "dispatcher fail: rc=$RC"; fi
+mkfix sim/oscillator-core/tests/test_row7.sh 'echo "no markers"'
+grun
+if [ "$RC" -eq 1 ] && grep -q 'row7-grade: no PASS lines' "$OUT"; then
+  ok "dispatcher: fixture with no PASS lines -> exit 1"; else bad "dispatcher nopass: rc=$RC"; fi
+mkfix sim/oscillator-core/tests/test_row7.sh "$PASSL"
+mkfix sim/oscillator-core/run_validity_check.sh 'echo "something else"'
+grun
+if [ "$RC" -eq 1 ] && grep -q 'waveform-validity: no' "$OUT"; then
+  ok "dispatcher: missing 'all cases passed' -> exit 1"; else bad "dispatcher validity: rc=$RC"; fi
+mkfix sim/oscillator-core/run_validity_check.sh 'echo "all cases passed"'
+PATH="$NONG" GRADING_SRC="$G" METHOD_CHECK_MIN_S2=3 "$GR" > "$OUT" 2>&1; RC=$?
+if [ "$RC" -eq 1 ] && grep -q 'supply-stage2: 2 PASS lines (minimum 3)' "$OUT"; then
+  ok "dispatcher: stage-2 PASS floor enforced"; else bad "dispatcher floor: rc=$RC"; fi
+sed -i 's/PASS b"; touch/PASS b"; echo "FAIL x"; touch/' "$G/sim/oscillator-core/tests/test_supply_stage2.sh"
+grun
+if [ "$RC" -eq 1 ] && grep -q 'supply-stage2: 2 PASS lines (minimum 2) or a FAIL line' "$OUT"; then
+  ok "dispatcher: FAIL line in stage-2 -> exit 1"; else bad "dispatcher s2 fail: rc=$RC"; fi
 
 echo "check-all self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
