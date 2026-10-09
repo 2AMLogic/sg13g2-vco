@@ -25,17 +25,10 @@
     },
     "explained_differences": [
       {
-        "id": "bn",
-        "devices": 32,
-        "kind": "schematic/layout disagreement",
-        "detail": "sg13_hv_svaricap SUB (bn) pin: design/vco.spice ties it to OUTP/OUTN, the layout to the p-substrate (PROVENANCE.md section 6). Isolated by control C1.",
-        "resolution": "prerequisite schematic correction: issue #79"
-      },
-      {
         "id": "L1-terminal-order",
         "devices": 1,
         "kind": "extractor artefact",
-        "detail": "IHP's GeneralNTerminalExtractor sorts inductor ports by x position; L1 is placed mirrored (m90), so its LA (on VDD) sorts second, while the inductor class declares its two winding terminals non-equivalent. The LA/LB labels in the stream put LA on VDD for both spirals, as the schematic says. Isolated by control C2.",
+        "detail": "IHP's GeneralNTerminalExtractor sorts inductor ports by x position; L1 is placed mirrored (m90), so its LA (on VDD) sorts second, while the inductor class declares its two winding terminals non-equivalent. The LA/LB labels in the stream put LA on VDD for both spirals, as the schematic says. Isolated by control C1.",
         "resolution": "upstream runset fix or a reviewed accommodation: issue #80"
       }
     ],
@@ -60,7 +53,7 @@
           }
         ]
       },
-      "control_C2": {
+      "control_C1": {
         "paired": [
           {
             "layout": "$1",
@@ -77,7 +70,7 @@
         ],
         "not_paired": []
       },
-      "reading": "in the record compare the supply nets do not pair cleanly because the L1 terminal-order artefact and the bn ties perturb VDD/OUTP/OUTN and the substrate; with both differences isolated (C2), VDD, 0 and the substrate each pair 1:1 with the reference"
+      "reading": "in the record compare the supply nets do not pair cleanly because the L1 terminal-order artefact perturbs VDD/OUTP; with it isolated (C1), VDD, 0 and the substrate each pair 1:1 with the reference"
     },
     "power_connectivity": {
       "status": "not_produced",
@@ -103,11 +96,11 @@
     },
     "schematic_netlist": {
       "file": "design/vco.spice",
-      "sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      "sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
     },
     "reference": {
       "file": "layout/lvs/vco-reference.cir",
-      "content_hash": "sha256:d3ea33309ebeb164ceaf7956f853dcc197e29887d6da4ca81a0c687e4828d446"
+      "content_hash": "sha256:f047a24bc800b7d17adc20e5558c01f1ee33edb001f41ba5e157281d69a396ea"
     }
   },
   "invocation": [
@@ -120,67 +113,31 @@
   ],
   "invocation_notes": "run_lvs.py defaults: flat mode, simplify on, strict top-port mode (flag_missing_ports); run_lvs.py exits 0 on a mismatch, so the verdict is read from the .lvsdb",
   "reference_crosscheck_xschem": {
-    "status": "agree",
-    "devices_compared": 39,
-    "differences": [],
-    "scope": "every Q/L/C card (T3 device-form mapping): nodes, model, parameters; xschem keeps ideal resistors and writes substrate as 0, so R cards and T4/T5 are outside it"
+    "status": "skipped: XSCHEM V3.4.4 does not apply lvs_format (needs >= 3.4.7)",
+    "last_rerun_agreement": {
+      "status": "agree",
+      "devices_compared": 39,
+      "differences": [],
+      "scope": "every Q/L/C card (T3 device-form mapping): nodes, model, parameters; xschem keeps ideal resistors and writes substrate as 0, so R cards and T4/T5 are outside it"
+    },
+    "note": "not re-run in this regeneration; the carried block is the agreement recorded against the pre-#79 netlist (xschem 3.4.7). The #79 change only re-points the 4th terminal of the 32 varactor cards (OUTP/OUTN -> 0); re-run with xschem >= 3.4.7 to refresh"
   },
   "single_variable_controls": [
     {
       "control": "C1",
-      "reference_change": "varactor bn -> substrate (T5a applied to bn)",
-      "verdict": "mismatch",
-      "remaining_device_differences": [
-        {
-          "status": "mismatch",
-          "layout": {
-            "name": "$41",
-            "class": "inductor",
-            "terminals": {
-              "inductor_1": "LB,OUTP",
-              "inductor_2": "LA,VDD",
-              "inductor_sub": "$1"
-            },
-            "parameters": {
-              "w": 8.215,
-              "s": 3.734,
-              "d": 142.106,
-              "nr_r": 4.0
-            }
-          },
-          "reference": {
-            "name": "L1",
-            "class": "INDUCTOR",
-            "terminals": {
-              "INDUCTOR_1": "VDD",
-              "INDUCTOR_2": "OUTP",
-              "INDUCTOR_sub": "SUB"
-            },
-            "parameters": {
-              "w": 8.22,
-              "s": 3.74,
-              "d": 141.975,
-              "nr_r": 4.0
-            }
-          }
-        }
-      ]
-    },
-    {
-      "control": "C2",
-      "reference_change": "C1 + L1 winding terminals swapped",
+      "reference_change": "L1 winding terminals swapped",
       "verdict": "match",
       "device_pairs_matched": 43,
       "nets_matched": 10,
       "pins_matched": 9
     }
   ],
-  "control_scope": "C1/C2 references are scratch diagnostics produced by lvs_reference.py's --bn-to-substrate/--swap-inductor switches; they are never committed and are not references of record. They establish that bn and L1's terminal order are the ONLY differences, not that the layout matches.",
+  "control_scope": "C1 reference is a scratch diagnostic produced by lvs_reference.py's --swap-inductor switch; it is never committed and is not a reference of record. It establishes that L1's terminal order is the ONLY difference, not that the layout matches.",
   "negative_controls": [
     {
       "control": "n1-supply",
       "change": "VS_VDD_REF via ladder removed: RREF's VDD end detached from the VDD strap (supply connection)",
-      "reference": "C2 diagnostic (matches the intact stream)",
+      "reference": "C1 diagnostic (matches the intact stream)",
       "verdict": "mismatch",
       "rejected": true,
       "nets_not_matched": 3,
@@ -197,7 +154,7 @@
     {
       "control": "n2-signal",
       "change": "VS_Q1B via ladder removed: Q1's base detached from OUTN (cross-coupling signal connection)",
-      "reference": "C2 diagnostic (matches the intact stream)",
+      "reference": "C1 diagnostic (matches the intact stream)",
       "verdict": "mismatch",
       "rejected": true,
       "nets_not_matched": 5,
@@ -214,7 +171,7 @@
     {
       "control": "n3-device",
       "change": "C1 MIM instance removed (a missing device)",
-      "reference": "C2 diagnostic (matches the intact stream)",
+      "reference": "C1 diagnostic (matches the intact stream)",
       "verdict": "mismatch",
       "rejected": true,
       "nets_not_matched": 2,

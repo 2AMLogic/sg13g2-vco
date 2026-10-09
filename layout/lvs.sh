@@ -15,12 +15,12 @@
 # THE VERDICT OF RECORD IS `mismatch`.  READ PROVENANCE.md SECTION 14 FIRST.
 # The device-aware compare runs IHP's own KLayout LVS runset (the only
 # extractor available that recognizes all 42 of this block's devices) and
-# finds exactly two classes of difference, each isolated below by a
+# finds exactly one class of difference, isolated below by a
 # single-variable control:
-#   1. the 32 varactors' `bn` (substrate) pin: design/vco.spice ties it to the
-#      tank node, the layout to the p-substrate (PROVENANCE.md section 6) --
-#      a schematic question, tracked as prerequisite issue #79;
-#   2. spiral L1's two winding terminals: IHP's extractor orders inductor
+#   (The 32 varactors' `bn` (substrate) pin used to be a third class: the
+#   schematic tied it to the tank node.  Issue #79 corrected design/vco.sch to
+#   tie it to `0`; that difference is gone -- PROVENANCE.md section 14.)
+#   1. spiral L1's two winding terminals: IHP's extractor orders inductor
 #      terminals by x position, and L1 is the mirrored instance -- the LA/LB
 #      labels show the layout itself is wired as the schematic says
 #      (prerequisite issue #80).
@@ -119,10 +119,8 @@ echo "== reference: derive the LVS reference (published to layout/lvs/ only if t
 python3 -I "${HERE}/scripts/lvs_reference.py" "${SRC}" \
   "${SCRATCH}/ref/vco-reference.cir" "${SCRATCH}/ref/vco-reference.json"
 python3 -I "${HERE}/scripts/lvs_reference.py" "${SRC}" \
-  "${SCRATCH}/ref/diag-bn.cir" "${SCRATCH}/ref/diag-bn.json" --bn-to-substrate
-python3 -I "${HERE}/scripts/lvs_reference.py" "${SRC}" \
-  "${SCRATCH}/ref/diag-bn-l1.cir" "${SCRATCH}/ref/diag-bn-l1.json" \
-  --bn-to-substrate --swap-inductor=L1
+  "${SCRATCH}/ref/diag-l1.cir" "${SCRATCH}/ref/diag-l1.json" \
+  --swap-inductor=L1
 
 # Independent cross-check of transformation T3: xschem's own LVS-mode
 # netlist of design/vco.sch applies each PDK symbol's lvs_format itself.
@@ -132,7 +130,13 @@ if command -v xschem >/dev/null 2>&1 && [[ -f "${PDK}/libs.tech/xschem/xschemrc"
   if xschem -n -q -r --rcfile "${PDK}/libs.tech/xschem/xschemrc" \
        --tcl 'set lvs_netlist 1' -o "${SCRATCH}/ref/xschem" design/vco.sch \
        > "${SCRATCH}/ref/xschem/xschem.log" 2>&1; then
-    XCHECK="${SCRATCH}/ref/xschem/vco.spice"
+    # xschem < 3.4.7 ignores `set lvs_netlist 1` and the symbols' lvs_format:
+    # it writes the simulation X-cards, which is no cross-check of T3.
+    if grep -q '^XQ1 ' "${SCRATCH}/ref/xschem/vco.spice"; then
+      XCHECK="skipped: $(xschem --version 2>&1 | head -1) does not apply lvs_format (needs >= 3.4.7)"
+    else
+      XCHECK="${SCRATCH}/ref/xschem/vco.spice"
+    fi
   else
     XCHECK="skipped: xschem LVS netlisting failed (see scratch log)"
   fi
@@ -158,17 +162,16 @@ run() {
 
 echo "== ihp runset: record + single-variable controls + negative controls"
 run record "${REPO_ROOT}/${GDS}" "${SCRATCH}/ref/vco-reference.cir"
-run c1-bn "${REPO_ROOT}/${GDS}" "${SCRATCH}/ref/diag-bn.cir"
-run c2-bn-l1 "${REPO_ROOT}/${GDS}" "${SCRATCH}/ref/diag-bn-l1.cir"
+run c1-l1 "${REPO_ROOT}/${GDS}" "${SCRATCH}/ref/diag-l1.cir"
 # Negative controls: scratch copies of the stream with ONE connection removed
-# each, compared against the reference that matches the intact stream (c2),
+# each, compared against the reference that matches the intact stream (c1),
 # so a `match` here would mean the compare cannot see a broken layout.
 "${NPY}" -I "${HERE}/scripts/lvs_break.py" "${GDS}" "${SCRATCH}/ctl/n1-supply.gds" VS_VDD_REF__
 "${NPY}" -I "${HERE}/scripts/lvs_break.py" "${GDS}" "${SCRATCH}/ctl/n2-signal.gds" VS_Q1B__
 "${NPY}" -I "${HERE}/scripts/lvs_break.py" "${GDS}" "${SCRATCH}/ctl/n3-device.gds" C1__
-run n1-supply "${SCRATCH}/ctl/n1-supply.gds" "${SCRATCH}/ref/diag-bn-l1.cir"
-run n2-signal "${SCRATCH}/ctl/n2-signal.gds" "${SCRATCH}/ref/diag-bn-l1.cir"
-run n3-device "${SCRATCH}/ctl/n3-device.gds" "${SCRATCH}/ref/diag-bn-l1.cir"
+run n1-supply "${SCRATCH}/ctl/n1-supply.gds" "${SCRATCH}/ref/diag-l1.cir"
+run n2-signal "${SCRATCH}/ctl/n2-signal.gds" "${SCRATCH}/ref/diag-l1.cir"
+run n3-device "${SCRATCH}/ctl/n3-device.gds" "${SCRATCH}/ref/diag-l1.cir"
 
 # --------------------------------------------------------------- klt leg --
 # The repo's pinned klt, on its own documented path: inline extraction with
@@ -231,25 +234,22 @@ for side in ("layout", "reference"):
     if census(rc, side) != EXPECT_CENSUS:
         fail.append("%s device census %r != %r" % (side, census(rc, side), EXPECT_CENSUS))
 
-# -- C1: bn moved -> the only remaining device difference is L1's order --
-c1 = cmp("c1-bn")
-nm = c1["device_pairs"]["not_matched"]
-c1_ok = (S("c1-bn")["verdict"] == "mismatch" and len(nm) == 1
-         and nm[0]["layout"] and nm[0]["layout"]["class"] == "inductor"
-         and nm[0]["reference"] and nm[0]["reference"]["name"] == "L1")
-if c1_ok:
+# -- C1: L1 swapped -> match (L1's terminal order is the ONLY difference)
+c1 = S("c1-l1")
+c1_ok = c1["verdict"] == "match" and cmp("c1-l1")["device_pairs"]["not_matched"] == []
+if not c1_ok:
+    fail.append("control C1 (L1 order) is %r, not 'match'" % c1["verdict"])
+# -- the record must differ from C1 in exactly the one L1 device pair ----
+nm = rc["device_pairs"]["not_matched"]
+rec_ok = (len(nm) == 1 and nm[0]["layout"] and nm[0]["layout"]["class"] == "inductor"
+          and nm[0]["reference"] and nm[0]["reference"]["name"] == "L1")
+if rec_ok:
     lt = list(nm[0]["layout"]["terminals"].values())[:2]
     rt = list(nm[0]["reference"]["terminals"].values())[:2]
-    c1_ok = (rt == ["VDD", "OUTP"] and "OUTP" in lt[0] and "VDD" in lt[1])
-if not c1_ok:
-    fail.append("control C1 (bn to substrate) no longer leaves exactly the L1 "
-                "terminal-order difference: %s" % json.dumps(nm)[:600])
-
-# -- C2: bn moved + L1 swapped -> match (the two are the ONLY differences)
-c2 = S("c2-bn-l1")
-c2_ok = c2["verdict"] == "match" and cmp("c2-bn-l1")["device_pairs"]["not_matched"] == []
-if not c2_ok:
-    fail.append("control C2 (bn + L1 order) is %r, not 'match'" % c2["verdict"])
+    rec_ok = (rt == ["VDD", "OUTP"] and "OUTP" in lt[0] and "VDD" in lt[1])
+if not rec_ok:
+    fail.append("the record no longer differs only in the L1 terminal-order "
+                "pair (bn must be gone): %s" % json.dumps(nm)[:600])
 
 # -- negative controls: each must be rejected -----------------------------
 neg = []
@@ -263,7 +263,7 @@ for stem, what in (("n1-supply", "VS_VDD_REF via ladder removed: RREF's VDD end 
     if not ok:
         fail.append("negative control %s compared %r against the matching "
                     "reference -- the compare cannot see this break" % (stem, s["verdict"]))
-    neg.append({"control": stem, "change": what, "reference": "C2 diagnostic "
+    neg.append({"control": stem, "change": what, "reference": "C1 diagnostic "
                 "(matches the intact stream)", "verdict": s["verdict"],
                 "rejected": ok,
                 "nets_not_matched": len(c["nets"]["not_matched"]),
@@ -309,6 +309,21 @@ if os.path.isfile(xcheck):
                     "netlist on %s" % diffs)
 else:
     xc = {"status": xcheck}
+    # Carry the last real cross-check forward, labelled as NOT re-run.
+    try:
+        prev = json.load(open(os.path.join(out, "vco-lvs-record.json")))["reference_crosscheck_xschem"]
+        if prev.get("status") == "agree":
+            xc["last_rerun_agreement"] = prev
+            xc["note"] = ("not re-run in this regeneration; the carried block is the "
+                          "agreement recorded against the pre-#79 netlist (xschem "
+                          "3.4.7). The #79 change only re-points the 4th terminal "
+                          "of the 32 varactor cards (OUTP/OUTN -> 0); re-run with "
+                          "xschem >= 3.4.7 to refresh")
+        elif "last_rerun_agreement" in prev:
+            xc["last_rerun_agreement"] = prev["last_rerun_agreement"]
+            xc["note"] = prev.get("note")
+    except Exception:
+        pass
 
 # -- klt leg -------------------------------------------------------------
 def scrub(o):
@@ -346,8 +361,8 @@ def supply(stem):
            if (n["reference"] or "").upper() in want]
     return {"paired": got, "not_paired": bad}
 
-if supply("c2-bn-l1")["not_paired"] or len(supply("c2-bn-l1")["paired"]) != 3:
-    print("[FAIL] C2 does not pair VDD/0/substrate 1:1"); sys.exit(1)
+if supply("c1-l1")["not_paired"] or len(supply("c1-l1")["paired"]) != 3:
+    print("[FAIL] C1 does not pair VDD/0/substrate 1:1"); sys.exit(1)
 
 # -- write the committed record ------------------------------------------
 import shutil
@@ -389,26 +404,20 @@ record = {
                           "devices_in_design": 42,
                           "extra": "ptap1 = the guard-ring substrate tie (T5b)"},
         "explained_differences": [
-            {"id": "bn", "devices": 32, "kind": "schematic/layout disagreement",
-             "detail": "sg13_hv_svaricap SUB (bn) pin: design/vco.spice ties it "
-                       "to OUTP/OUTN, the layout to the p-substrate "
-                       "(PROVENANCE.md section 6). Isolated by control C1.",
-             "resolution": "prerequisite schematic correction: issue #79"},
             {"id": "L1-terminal-order", "devices": 1, "kind": "extractor artefact",
              "detail": "IHP's GeneralNTerminalExtractor sorts inductor ports by x "
                        "position; L1 is placed mirrored (m90), so its LA (on VDD) "
                        "sorts second, while the inductor class declares its two "
                        "winding terminals non-equivalent. The LA/LB labels in the "
                        "stream put LA on VDD for both spirals, as the schematic "
-                       "says. Isolated by control C2.",
+                       "says. Isolated by control C1.",
              "resolution": "upstream runset fix or a reviewed accommodation: "
                            "issue #80"}],
         "supply_pairing": {
-            "record": supply("record"), "control_C2": supply("c2-bn-l1"),
+            "record": supply("record"), "control_C1": supply("c1-l1"),
             "reading": "in the record compare the supply nets do not pair "
-                       "cleanly because the L1 terminal-order artefact and the "
-                       "bn ties perturb VDD/OUTP/OUTN and the substrate; with "
-                       "both differences isolated (C2), VDD, 0 and the "
+                       "cleanly because the L1 terminal-order artefact "
+                       "perturbs VDD/OUTP; with it isolated (C1), VDD, 0 and the "
                        "substrate each pair 1:1 with the reference"},
         "power_connectivity": {
             "status": "not_produced",
@@ -435,19 +444,16 @@ record = {
                         "on a mismatch, so the verdict is read from the .lvsdb",
     "reference_crosscheck_xschem": xc,
     "single_variable_controls": [
-        {"control": "C1", "reference_change": "varactor bn -> substrate (T5a applied to bn)",
-         "verdict": S("c1-bn")["verdict"],
-         "remaining_device_differences": cmp("c1-bn")["device_pairs"]["not_matched"]},
-        {"control": "C2", "reference_change": "C1 + L1 winding terminals swapped",
-         "verdict": c2["verdict"],
-         "device_pairs_matched": cmp("c2-bn-l1")["device_pairs"]["matched"],
-         "nets_matched": cmp("c2-bn-l1")["nets"]["matched"],
-         "pins_matched": cmp("c2-bn-l1")["pins"]["matched"]}],
-    "control_scope": "C1/C2 references are scratch diagnostics produced by "
-                     "lvs_reference.py's --bn-to-substrate/--swap-inductor "
-                     "switches; they are never committed and are not references "
-                     "of record. They establish that bn and L1's terminal order "
-                     "are the ONLY differences, not that the layout matches.",
+        {"control": "C1", "reference_change": "L1 winding terminals swapped",
+         "verdict": c1["verdict"],
+         "device_pairs_matched": cmp("c1-l1")["device_pairs"]["matched"],
+         "nets_matched": cmp("c1-l1")["nets"]["matched"],
+         "pins_matched": cmp("c1-l1")["pins"]["matched"]}],
+    "control_scope": "C1 reference is a scratch diagnostic produced by "
+                     "lvs_reference.py's --swap-inductor switch; it is never "
+                     "committed and is not a reference of record. It "
+                     "establishes that L1's terminal order is the ONLY "
+                     "difference, not that the layout matches.",
     "negative_controls": neg,
     "klt_leg": {
         "lvs": {"request": {"layout": {"file": "layout/vco.gds", "deck": "sg13g2", "top": "vco"},
@@ -475,7 +481,7 @@ record = {
         "geometric check"]}
 json.dump(record, open(os.path.join(out, "vco-lvs-record.json"), "w"), indent=2)
 open(os.path.join(out, "vco-lvs-record.json"), "a").write("\n")
-print("\n== LVS record written: status mismatch (bn x32, L1 terminal order) -- "
-      "C1/C2 controls confirm these are the only differences; negative controls "
+print("\n== LVS record written: status mismatch (L1 terminal order only; varactor bn resolved by #79) -- "
+      "control C1 confirms it is the only difference; negative controls "
       "rejected; klt 0.6.0 refuses (recorded)")
 PY

@@ -1,0 +1,10 @@
+{
+  "variant": "bn-tank",
+  "mos": "tt",
+  "vctrl": 3.3,
+  "c_cell_f": 1.04522e-14,
+  "q5": 44.7882,
+  "r_cell_ohm": 67.99528636977605,
+  "dsubw_tnom": null,
+  "source": "sim/varactor-characterization/records/20260927-081226-f88eb89.csv mos small 27C"
+}

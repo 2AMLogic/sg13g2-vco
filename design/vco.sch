@@ -42,7 +42,7 @@ lab=VCTRL}
 N -300 -1030 -300 -1050 {
 lab=OUTP}
 N -300 -970 -300 -950 {
-lab=OUTP}
+lab=0}
 N -510 -1000 -530 -1000 {
 lab=VCTRL}
 N -430 -1000 -410 -1000 {
@@ -50,7 +50,7 @@ lab=VCTRL}
 N -470 -1030 -470 -1050 {
 lab=OUTP}
 N -470 -970 -470 -950 {
-lab=OUTP}
+lab=0}
 N -680 -1000 -700 -1000 {
 lab=VCTRL}
 N -600 -1000 -580 -1000 {
@@ -58,7 +58,7 @@ lab=VCTRL}
 N -640 -1030 -640 -1050 {
 lab=OUTP}
 N -640 -970 -640 -950 {
-lab=OUTP}
+lab=0}
 N -850 -1000 -870 -1000 {
 lab=VCTRL}
 N -770 -1000 -750 -1000 {
@@ -66,7 +66,7 @@ lab=VCTRL}
 N -810 -1030 -810 -1050 {
 lab=OUTP}
 N -810 -970 -810 -950 {
-lab=OUTP}
+lab=0}
 N -1020 -1000 -1040 -1000 {
 lab=VCTRL}
 N -940 -1000 -920 -1000 {
@@ -74,7 +74,7 @@ lab=VCTRL}
 N -980 -1030 -980 -1050 {
 lab=OUTP}
 N -980 -970 -980 -950 {
-lab=OUTP}
+lab=0}
 N -1190 -1000 -1210 -1000 {
 lab=VCTRL}
 N -1110 -1000 -1090 -1000 {
@@ -82,7 +82,7 @@ lab=VCTRL}
 N -1150 -1030 -1150 -1050 {
 lab=OUTP}
 N -1150 -970 -1150 -950 {
-lab=OUTP}
+lab=0}
 N -1360 -1000 -1380 -1000 {
 lab=VCTRL}
 N -1280 -1000 -1260 -1000 {
@@ -90,7 +90,7 @@ lab=VCTRL}
 N -1320 -1030 -1320 -1050 {
 lab=OUTP}
 N -1320 -970 -1320 -950 {
-lab=OUTP}
+lab=0}
 N -1530 -1000 -1550 -1000 {
 lab=VCTRL}
 N -1450 -1000 -1430 -1000 {
@@ -98,7 +98,7 @@ lab=VCTRL}
 N -1490 -1030 -1490 -1050 {
 lab=OUTP}
 N -1490 -970 -1490 -950 {
-lab=OUTP}
+lab=0}
 N -340 -800 -360 -800 {
 lab=VCTRL}
 N -260 -800 -240 -800 {
@@ -106,7 +106,7 @@ lab=VCTRL}
 N -300 -830 -300 -850 {
 lab=OUTP}
 N -300 -770 -300 -750 {
-lab=OUTP}
+lab=0}
 N -510 -800 -530 -800 {
 lab=VCTRL}
 N -430 -800 -410 -800 {
@@ -114,7 +114,7 @@ lab=VCTRL}
 N -470 -830 -470 -850 {
 lab=OUTP}
 N -470 -770 -470 -750 {
-lab=OUTP}
+lab=0}
 N -680 -800 -700 -800 {
 lab=VCTRL}
 N -600 -800 -580 -800 {
@@ -122,7 +122,7 @@ lab=VCTRL}
 N -640 -830 -640 -850 {
 lab=OUTP}
 N -640 -770 -640 -750 {
-lab=OUTP}
+lab=0}
 N -850 -800 -870 -800 {
 lab=VCTRL}
 N -770 -800 -750 -800 {
@@ -130,7 +130,7 @@ lab=VCTRL}
 N -810 -830 -810 -850 {
 lab=OUTP}
 N -810 -770 -810 -750 {
-lab=OUTP}
+lab=0}
 N -1020 -800 -1040 -800 {
 lab=VCTRL}
 N -940 -800 -920 -800 {
@@ -138,7 +138,7 @@ lab=VCTRL}
 N -980 -830 -980 -850 {
 lab=OUTP}
 N -980 -770 -980 -750 {
-lab=OUTP}
+lab=0}
 N -1190 -800 -1210 -800 {
 lab=VCTRL}
 N -1110 -800 -1090 -800 {
@@ -146,7 +146,7 @@ lab=VCTRL}
 N -1150 -830 -1150 -850 {
 lab=OUTP}
 N -1150 -770 -1150 -750 {
-lab=OUTP}
+lab=0}
 N -1360 -800 -1380 -800 {
 lab=VCTRL}
 N -1280 -800 -1260 -800 {
@@ -154,7 +154,7 @@ lab=VCTRL}
 N -1320 -830 -1320 -850 {
 lab=OUTP}
 N -1320 -770 -1320 -750 {
-lab=OUTP}
+lab=0}
 N -1530 -800 -1550 -800 {
 lab=VCTRL}
 N -1450 -800 -1430 -800 {
@@ -162,7 +162,7 @@ lab=VCTRL}
 N -1490 -830 -1490 -850 {
 lab=OUTP}
 N -1490 -770 -1490 -750 {
-lab=OUTP}
+lab=0}
 N 260 -1000 240 -1000 {
 lab=VCTRL}
 N 340 -1000 360 -1000 {
@@ -170,7 +170,7 @@ lab=VCTRL}
 N 300 -1030 300 -1050 {
 lab=OUTN}
 N 300 -970 300 -950 {
-lab=OUTN}
+lab=0}
 N 430 -1000 410 -1000 {
 lab=VCTRL}
 N 510 -1000 530 -1000 {
@@ -178,7 +178,7 @@ lab=VCTRL}
 N 470 -1030 470 -1050 {
 lab=OUTN}
 N 470 -970 470 -950 {
-lab=OUTN}
+lab=0}
 N 600 -1000 580 -1000 {
 lab=VCTRL}
 N 680 -1000 700 -1000 {
@@ -186,7 +186,7 @@ lab=VCTRL}
 N 640 -1030 640 -1050 {
 lab=OUTN}
 N 640 -970 640 -950 {
-lab=OUTN}
+lab=0}
 N 770 -1000 750 -1000 {
 lab=VCTRL}
 N 850 -1000 870 -1000 {
@@ -194,7 +194,7 @@ lab=VCTRL}
 N 810 -1030 810 -1050 {
 lab=OUTN}
 N 810 -970 810 -950 {
-lab=OUTN}
+lab=0}
 N 940 -1000 920 -1000 {
 lab=VCTRL}
 N 1020 -1000 1040 -1000 {
@@ -202,7 +202,7 @@ lab=VCTRL}
 N 980 -1030 980 -1050 {
 lab=OUTN}
 N 980 -970 980 -950 {
-lab=OUTN}
+lab=0}
 N 1110 -1000 1090 -1000 {
 lab=VCTRL}
 N 1190 -1000 1210 -1000 {
@@ -210,7 +210,7 @@ lab=VCTRL}
 N 1150 -1030 1150 -1050 {
 lab=OUTN}
 N 1150 -970 1150 -950 {
-lab=OUTN}
+lab=0}
 N 1280 -1000 1260 -1000 {
 lab=VCTRL}
 N 1360 -1000 1380 -1000 {
@@ -218,7 +218,7 @@ lab=VCTRL}
 N 1320 -1030 1320 -1050 {
 lab=OUTN}
 N 1320 -970 1320 -950 {
-lab=OUTN}
+lab=0}
 N 1450 -1000 1430 -1000 {
 lab=VCTRL}
 N 1530 -1000 1550 -1000 {
@@ -226,7 +226,7 @@ lab=VCTRL}
 N 1490 -1030 1490 -1050 {
 lab=OUTN}
 N 1490 -970 1490 -950 {
-lab=OUTN}
+lab=0}
 N 260 -800 240 -800 {
 lab=VCTRL}
 N 340 -800 360 -800 {
@@ -234,7 +234,7 @@ lab=VCTRL}
 N 300 -830 300 -850 {
 lab=OUTN}
 N 300 -770 300 -750 {
-lab=OUTN}
+lab=0}
 N 430 -800 410 -800 {
 lab=VCTRL}
 N 510 -800 530 -800 {
@@ -242,7 +242,7 @@ lab=VCTRL}
 N 470 -830 470 -850 {
 lab=OUTN}
 N 470 -770 470 -750 {
-lab=OUTN}
+lab=0}
 N 600 -800 580 -800 {
 lab=VCTRL}
 N 680 -800 700 -800 {
@@ -250,7 +250,7 @@ lab=VCTRL}
 N 640 -830 640 -850 {
 lab=OUTN}
 N 640 -770 640 -750 {
-lab=OUTN}
+lab=0}
 N 770 -800 750 -800 {
 lab=VCTRL}
 N 850 -800 870 -800 {
@@ -258,7 +258,7 @@ lab=VCTRL}
 N 810 -830 810 -850 {
 lab=OUTN}
 N 810 -770 810 -750 {
-lab=OUTN}
+lab=0}
 N 940 -800 920 -800 {
 lab=VCTRL}
 N 1020 -800 1040 -800 {
@@ -266,7 +266,7 @@ lab=VCTRL}
 N 980 -830 980 -850 {
 lab=OUTN}
 N 980 -770 980 -750 {
-lab=OUTN}
+lab=0}
 N 1110 -800 1090 -800 {
 lab=VCTRL}
 N 1190 -800 1210 -800 {
@@ -274,7 +274,7 @@ lab=VCTRL}
 N 1150 -830 1150 -850 {
 lab=OUTN}
 N 1150 -770 1150 -750 {
-lab=OUTN}
+lab=0}
 N 1280 -800 1260 -800 {
 lab=VCTRL}
 N 1360 -800 1380 -800 {
@@ -282,7 +282,7 @@ lab=VCTRL}
 N 1320 -830 1320 -850 {
 lab=OUTN}
 N 1320 -770 1320 -750 {
-lab=OUTN}
+lab=0}
 N 1450 -800 1430 -800 {
 lab=VCTRL}
 N 1530 -800 1550 -800 {
@@ -290,7 +290,7 @@ lab=VCTRL}
 N 1490 -830 1490 -850 {
 lab=OUTN}
 N 1490 -770 1490 -750 {
-lab=OUTN}
+lab=0}
 N -280 -530 -280 -550 {
 lab=OUTP}
 N -320 -500 -340 -500 {
@@ -613,131 +613,131 @@ C {devices/lab_pin.sym} 0 -1250 0 0 {name=p8 lab=OUTN}
 C {devices/lab_pin.sym} -360 -1000 0 0 {name=p10 lab=VCTRL}
 C {devices/lab_pin.sym} -240 -1000 0 0 {name=p11 lab=VCTRL}
 C {devices/lab_pin.sym} -300 -1050 0 0 {name=p12 lab=OUTP}
-C {devices/lab_pin.sym} -300 -950 0 0 {name=p13 lab=OUTP}
+C {devices/lab_pin.sym} -300 -950 0 0 {name=p13 lab=0}
 C {devices/lab_pin.sym} -530 -1000 0 0 {name=p14 lab=VCTRL}
 C {devices/lab_pin.sym} -410 -1000 0 0 {name=p15 lab=VCTRL}
 C {devices/lab_pin.sym} -470 -1050 0 0 {name=p16 lab=OUTP}
-C {devices/lab_pin.sym} -470 -950 0 0 {name=p17 lab=OUTP}
+C {devices/lab_pin.sym} -470 -950 0 0 {name=p17 lab=0}
 C {devices/lab_pin.sym} -700 -1000 0 0 {name=p18 lab=VCTRL}
 C {devices/lab_pin.sym} -580 -1000 0 0 {name=p19 lab=VCTRL}
 C {devices/lab_pin.sym} -640 -1050 0 0 {name=p20 lab=OUTP}
-C {devices/lab_pin.sym} -640 -950 0 0 {name=p21 lab=OUTP}
+C {devices/lab_pin.sym} -640 -950 0 0 {name=p21 lab=0}
 C {devices/lab_pin.sym} -870 -1000 0 0 {name=p22 lab=VCTRL}
 C {devices/lab_pin.sym} -750 -1000 0 0 {name=p23 lab=VCTRL}
 C {devices/lab_pin.sym} -810 -1050 0 0 {name=p24 lab=OUTP}
-C {devices/lab_pin.sym} -810 -950 0 0 {name=p25 lab=OUTP}
+C {devices/lab_pin.sym} -810 -950 0 0 {name=p25 lab=0}
 C {devices/lab_pin.sym} -1040 -1000 0 0 {name=p26 lab=VCTRL}
 C {devices/lab_pin.sym} -920 -1000 0 0 {name=p27 lab=VCTRL}
 C {devices/lab_pin.sym} -980 -1050 0 0 {name=p28 lab=OUTP}
-C {devices/lab_pin.sym} -980 -950 0 0 {name=p29 lab=OUTP}
+C {devices/lab_pin.sym} -980 -950 0 0 {name=p29 lab=0}
 C {devices/lab_pin.sym} -1210 -1000 0 0 {name=p30 lab=VCTRL}
 C {devices/lab_pin.sym} -1090 -1000 0 0 {name=p31 lab=VCTRL}
 C {devices/lab_pin.sym} -1150 -1050 0 0 {name=p32 lab=OUTP}
-C {devices/lab_pin.sym} -1150 -950 0 0 {name=p33 lab=OUTP}
+C {devices/lab_pin.sym} -1150 -950 0 0 {name=p33 lab=0}
 C {devices/lab_pin.sym} -1380 -1000 0 0 {name=p34 lab=VCTRL}
 C {devices/lab_pin.sym} -1260 -1000 0 0 {name=p35 lab=VCTRL}
 C {devices/lab_pin.sym} -1320 -1050 0 0 {name=p36 lab=OUTP}
-C {devices/lab_pin.sym} -1320 -950 0 0 {name=p37 lab=OUTP}
+C {devices/lab_pin.sym} -1320 -950 0 0 {name=p37 lab=0}
 C {devices/lab_pin.sym} -1550 -1000 0 0 {name=p38 lab=VCTRL}
 C {devices/lab_pin.sym} -1430 -1000 0 0 {name=p39 lab=VCTRL}
 C {devices/lab_pin.sym} -1490 -1050 0 0 {name=p40 lab=OUTP}
-C {devices/lab_pin.sym} -1490 -950 0 0 {name=p41 lab=OUTP}
+C {devices/lab_pin.sym} -1490 -950 0 0 {name=p41 lab=0}
 C {devices/lab_pin.sym} -360 -800 0 0 {name=p42 lab=VCTRL}
 C {devices/lab_pin.sym} -240 -800 0 0 {name=p43 lab=VCTRL}
 C {devices/lab_pin.sym} -300 -850 0 0 {name=p44 lab=OUTP}
-C {devices/lab_pin.sym} -300 -750 0 0 {name=p45 lab=OUTP}
+C {devices/lab_pin.sym} -300 -750 0 0 {name=p45 lab=0}
 C {devices/lab_pin.sym} -530 -800 0 0 {name=p46 lab=VCTRL}
 C {devices/lab_pin.sym} -410 -800 0 0 {name=p47 lab=VCTRL}
 C {devices/lab_pin.sym} -470 -850 0 0 {name=p48 lab=OUTP}
-C {devices/lab_pin.sym} -470 -750 0 0 {name=p49 lab=OUTP}
+C {devices/lab_pin.sym} -470 -750 0 0 {name=p49 lab=0}
 C {devices/lab_pin.sym} -700 -800 0 0 {name=p50 lab=VCTRL}
 C {devices/lab_pin.sym} -580 -800 0 0 {name=p51 lab=VCTRL}
 C {devices/lab_pin.sym} -640 -850 0 0 {name=p52 lab=OUTP}
-C {devices/lab_pin.sym} -640 -750 0 0 {name=p53 lab=OUTP}
+C {devices/lab_pin.sym} -640 -750 0 0 {name=p53 lab=0}
 C {devices/lab_pin.sym} -870 -800 0 0 {name=p54 lab=VCTRL}
 C {devices/lab_pin.sym} -750 -800 0 0 {name=p55 lab=VCTRL}
 C {devices/lab_pin.sym} -810 -850 0 0 {name=p56 lab=OUTP}
-C {devices/lab_pin.sym} -810 -750 0 0 {name=p57 lab=OUTP}
+C {devices/lab_pin.sym} -810 -750 0 0 {name=p57 lab=0}
 C {devices/lab_pin.sym} -1040 -800 0 0 {name=p58 lab=VCTRL}
 C {devices/lab_pin.sym} -920 -800 0 0 {name=p59 lab=VCTRL}
 C {devices/lab_pin.sym} -980 -850 0 0 {name=p60 lab=OUTP}
-C {devices/lab_pin.sym} -980 -750 0 0 {name=p61 lab=OUTP}
+C {devices/lab_pin.sym} -980 -750 0 0 {name=p61 lab=0}
 C {devices/lab_pin.sym} -1210 -800 0 0 {name=p62 lab=VCTRL}
 C {devices/lab_pin.sym} -1090 -800 0 0 {name=p63 lab=VCTRL}
 C {devices/lab_pin.sym} -1150 -850 0 0 {name=p64 lab=OUTP}
-C {devices/lab_pin.sym} -1150 -750 0 0 {name=p65 lab=OUTP}
+C {devices/lab_pin.sym} -1150 -750 0 0 {name=p65 lab=0}
 C {devices/lab_pin.sym} -1380 -800 0 0 {name=p66 lab=VCTRL}
 C {devices/lab_pin.sym} -1260 -800 0 0 {name=p67 lab=VCTRL}
 C {devices/lab_pin.sym} -1320 -850 0 0 {name=p68 lab=OUTP}
-C {devices/lab_pin.sym} -1320 -750 0 0 {name=p69 lab=OUTP}
+C {devices/lab_pin.sym} -1320 -750 0 0 {name=p69 lab=0}
 C {devices/lab_pin.sym} -1550 -800 0 0 {name=p70 lab=VCTRL}
 C {devices/lab_pin.sym} -1430 -800 0 0 {name=p71 lab=VCTRL}
 C {devices/lab_pin.sym} -1490 -850 0 0 {name=p72 lab=OUTP}
-C {devices/lab_pin.sym} -1490 -750 0 0 {name=p73 lab=OUTP}
+C {devices/lab_pin.sym} -1490 -750 0 0 {name=p73 lab=0}
 C {devices/lab_pin.sym} 240 -1000 0 0 {name=p74 lab=VCTRL}
 C {devices/lab_pin.sym} 360 -1000 0 0 {name=p75 lab=VCTRL}
 C {devices/lab_pin.sym} 300 -1050 0 0 {name=p76 lab=OUTN}
-C {devices/lab_pin.sym} 300 -950 0 0 {name=p77 lab=OUTN}
+C {devices/lab_pin.sym} 300 -950 0 0 {name=p77 lab=0}
 C {devices/lab_pin.sym} 410 -1000 0 0 {name=p78 lab=VCTRL}
 C {devices/lab_pin.sym} 530 -1000 0 0 {name=p79 lab=VCTRL}
 C {devices/lab_pin.sym} 470 -1050 0 0 {name=p80 lab=OUTN}
-C {devices/lab_pin.sym} 470 -950 0 0 {name=p81 lab=OUTN}
+C {devices/lab_pin.sym} 470 -950 0 0 {name=p81 lab=0}
 C {devices/lab_pin.sym} 580 -1000 0 0 {name=p82 lab=VCTRL}
 C {devices/lab_pin.sym} 700 -1000 0 0 {name=p83 lab=VCTRL}
 C {devices/lab_pin.sym} 640 -1050 0 0 {name=p84 lab=OUTN}
-C {devices/lab_pin.sym} 640 -950 0 0 {name=p85 lab=OUTN}
+C {devices/lab_pin.sym} 640 -950 0 0 {name=p85 lab=0}
 C {devices/lab_pin.sym} 750 -1000 0 0 {name=p86 lab=VCTRL}
 C {devices/lab_pin.sym} 870 -1000 0 0 {name=p87 lab=VCTRL}
 C {devices/lab_pin.sym} 810 -1050 0 0 {name=p88 lab=OUTN}
-C {devices/lab_pin.sym} 810 -950 0 0 {name=p89 lab=OUTN}
+C {devices/lab_pin.sym} 810 -950 0 0 {name=p89 lab=0}
 C {devices/lab_pin.sym} 920 -1000 0 0 {name=p90 lab=VCTRL}
 C {devices/lab_pin.sym} 1040 -1000 0 0 {name=p91 lab=VCTRL}
 C {devices/lab_pin.sym} 980 -1050 0 0 {name=p92 lab=OUTN}
-C {devices/lab_pin.sym} 980 -950 0 0 {name=p93 lab=OUTN}
+C {devices/lab_pin.sym} 980 -950 0 0 {name=p93 lab=0}
 C {devices/lab_pin.sym} 1090 -1000 0 0 {name=p94 lab=VCTRL}
 C {devices/lab_pin.sym} 1210 -1000 0 0 {name=p95 lab=VCTRL}
 C {devices/lab_pin.sym} 1150 -1050 0 0 {name=p96 lab=OUTN}
-C {devices/lab_pin.sym} 1150 -950 0 0 {name=p97 lab=OUTN}
+C {devices/lab_pin.sym} 1150 -950 0 0 {name=p97 lab=0}
 C {devices/lab_pin.sym} 1260 -1000 0 0 {name=p98 lab=VCTRL}
 C {devices/lab_pin.sym} 1380 -1000 0 0 {name=p99 lab=VCTRL}
 C {devices/lab_pin.sym} 1320 -1050 0 0 {name=p100 lab=OUTN}
-C {devices/lab_pin.sym} 1320 -950 0 0 {name=p101 lab=OUTN}
+C {devices/lab_pin.sym} 1320 -950 0 0 {name=p101 lab=0}
 C {devices/lab_pin.sym} 1430 -1000 0 0 {name=p102 lab=VCTRL}
 C {devices/lab_pin.sym} 1550 -1000 0 0 {name=p103 lab=VCTRL}
 C {devices/lab_pin.sym} 1490 -1050 0 0 {name=p104 lab=OUTN}
-C {devices/lab_pin.sym} 1490 -950 0 0 {name=p105 lab=OUTN}
+C {devices/lab_pin.sym} 1490 -950 0 0 {name=p105 lab=0}
 C {devices/lab_pin.sym} 240 -800 0 0 {name=p106 lab=VCTRL}
 C {devices/lab_pin.sym} 360 -800 0 0 {name=p107 lab=VCTRL}
 C {devices/lab_pin.sym} 300 -850 0 0 {name=p108 lab=OUTN}
-C {devices/lab_pin.sym} 300 -750 0 0 {name=p109 lab=OUTN}
+C {devices/lab_pin.sym} 300 -750 0 0 {name=p109 lab=0}
 C {devices/lab_pin.sym} 410 -800 0 0 {name=p110 lab=VCTRL}
 C {devices/lab_pin.sym} 530 -800 0 0 {name=p111 lab=VCTRL}
 C {devices/lab_pin.sym} 470 -850 0 0 {name=p112 lab=OUTN}
-C {devices/lab_pin.sym} 470 -750 0 0 {name=p113 lab=OUTN}
+C {devices/lab_pin.sym} 470 -750 0 0 {name=p113 lab=0}
 C {devices/lab_pin.sym} 580 -800 0 0 {name=p114 lab=VCTRL}
 C {devices/lab_pin.sym} 700 -800 0 0 {name=p115 lab=VCTRL}
 C {devices/lab_pin.sym} 640 -850 0 0 {name=p116 lab=OUTN}
-C {devices/lab_pin.sym} 640 -750 0 0 {name=p117 lab=OUTN}
+C {devices/lab_pin.sym} 640 -750 0 0 {name=p117 lab=0}
 C {devices/lab_pin.sym} 750 -800 0 0 {name=p118 lab=VCTRL}
 C {devices/lab_pin.sym} 870 -800 0 0 {name=p119 lab=VCTRL}
 C {devices/lab_pin.sym} 810 -850 0 0 {name=p120 lab=OUTN}
-C {devices/lab_pin.sym} 810 -750 0 0 {name=p121 lab=OUTN}
+C {devices/lab_pin.sym} 810 -750 0 0 {name=p121 lab=0}
 C {devices/lab_pin.sym} 920 -800 0 0 {name=p122 lab=VCTRL}
 C {devices/lab_pin.sym} 1040 -800 0 0 {name=p123 lab=VCTRL}
 C {devices/lab_pin.sym} 980 -850 0 0 {name=p124 lab=OUTN}
-C {devices/lab_pin.sym} 980 -750 0 0 {name=p125 lab=OUTN}
+C {devices/lab_pin.sym} 980 -750 0 0 {name=p125 lab=0}
 C {devices/lab_pin.sym} 1090 -800 0 0 {name=p126 lab=VCTRL}
 C {devices/lab_pin.sym} 1210 -800 0 0 {name=p127 lab=VCTRL}
 C {devices/lab_pin.sym} 1150 -850 0 0 {name=p128 lab=OUTN}
-C {devices/lab_pin.sym} 1150 -750 0 0 {name=p129 lab=OUTN}
+C {devices/lab_pin.sym} 1150 -750 0 0 {name=p129 lab=0}
 C {devices/lab_pin.sym} 1260 -800 0 0 {name=p130 lab=VCTRL}
 C {devices/lab_pin.sym} 1380 -800 0 0 {name=p131 lab=VCTRL}
 C {devices/lab_pin.sym} 1320 -850 0 0 {name=p132 lab=OUTN}
-C {devices/lab_pin.sym} 1320 -750 0 0 {name=p133 lab=OUTN}
+C {devices/lab_pin.sym} 1320 -750 0 0 {name=p133 lab=0}
 C {devices/lab_pin.sym} 1430 -800 0 0 {name=p134 lab=VCTRL}
 C {devices/lab_pin.sym} 1550 -800 0 0 {name=p135 lab=VCTRL}
 C {devices/lab_pin.sym} 1490 -850 0 0 {name=p136 lab=OUTN}
-C {devices/lab_pin.sym} 1490 -750 0 0 {name=p137 lab=OUTN}
+C {devices/lab_pin.sym} 1490 -750 0 0 {name=p137 lab=0}
 C {devices/lab_pin.sym} -280 -550 0 0 {name=p138 lab=OUTP}
 C {devices/lab_pin.sym} -340 -500 0 0 {name=p139 lab=OUTN}
 C {devices/lab_pin.sym} -280 -450 0 0 {name=p140 lab=TAIL}

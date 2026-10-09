@@ -12,7 +12,8 @@ open-source xschem + ngspice flow.
 evidence and coverage limits documented in
 [layout provenance](layout/PROVENANCE.md). LVS closure and the graded PVT
 simulation grids remain outstanding. A device-aware LVS has run and reports
-`mismatch`, with two isolated differences (#79, #80; provenance §14). The
+`mismatch`, with one remaining isolated difference (#80; provenance §14) now
+that #79 corrected the varactor `bn` tie. The
 [signoff report](signoff/t1-report.json) is the verdict of record.
 
 **Built agent-native.** Every specification, decision record, testbench, and

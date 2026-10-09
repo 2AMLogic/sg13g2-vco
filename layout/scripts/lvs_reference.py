@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """lvs_reference.py -- derive the LVS reference netlist from design/vco.spice.
 
-    lvs_reference.py <design/vco.spice> <out.cir> <out.json> [--bn-to-substrate]
+    lvs_reference.py <design/vco.spice> <out.cir> <out.json> [--swap-inductor=<name>]
 
 design/vco.spice is the netlist of record (xschem's simulation netlist of
 design/vco.sch).  It is a *simulation* deck: subcircuit-call device cards,
@@ -40,23 +40,21 @@ line can be traced back to a design/vco.spice line (and its sha256).
       simulation models ignore that tie, so the schematic writes the
       substrate as `0`.  This script therefore (a) moves every *substrate*
       terminal the schematic ties to `0` -- HBT 4th terminal, inductor 3rd,
-      the rppd body added by T4 -- onto a net `sub`, and (b) adds the one
+      the varactor 4th (`bn`, tied to `0` since issue #79), the rppd body
+      added by T4 -- onto a net `sub`, and (b) adds the one
       ptap1 tie the layout draws: the guard ring.  Its A/P come from the
       generator's ring specification (floorplan.py RING, RING_W: four
       abutting ptap1 bars that merge into one annulus), not from extraction.
   T6  substrate terminals the schematic ties to anything OTHER than `0` are
-      left exactly as written.  This is the varactor `bn` pin: design/vco.spice
-      ties it to the tank node (OUTP/OUTN); the layout cannot (PROVENANCE.md
-      section 6).  The difference stays visible in the reference so the
-      compare reports it -- it is NOT reconciled here.
+      left exactly as written (none remain: the varactor `bn` pins were tied
+      to the tank node until issue #79 corrected design/vco.sch; that
+      difference used to be kept visible here and is now gone).
 
-`--bn-to-substrate` and `--swap-inductor=<name>` are DIAGNOSTIC ONLY switches
-used by layout/lvs.sh for its single-variable controls.  The first applies
-T5(a) to the varactor `bn` terminal too (is anything other than `bn`
-different?).  The second swaps the two winding terminals of one inductor
-card, to test whether that spiral's remaining difference is exactly a
-terminal-order one (layout/PROVENANCE.md section 14).  Their output is
-written to scratch, is never committed, and is never a reference of record.
+`--swap-inductor=<name>` is a DIAGNOSTIC ONLY switch used by layout/lvs.sh
+for its single-variable control.  It swaps the two winding terminals of one
+inductor card, to test whether that spiral's remaining difference is exactly a
+terminal-order one (layout/PROVENANCE.md section 14).  Its output is written
+to scratch, is never committed, and is never a reference of record.
 """
 
 from __future__ import annotations
@@ -109,7 +107,7 @@ def sub_of(net: str) -> tuple[str, bool]:
     return (SUB, True) if net == "0" else (net, False)
 
 
-def derive(src_text: str, bn_to_substrate: bool, swap_inductors=()):
+def derive(src_text: str, swap_inductors=()):
     out, trace = [], []
     in_control = False
     for lineno, raw in enumerate(src_text.splitlines(), 1):
@@ -158,12 +156,8 @@ def derive(src_text: str, bn_to_substrate: bool, swap_inductors=()):
                         f"l={um(si(p['l']))} m={p['m']}")
             elif model == "sg13_hv_svaricap":
                 g1, w, g2, bn = nodes
-                tr += ["T3"]
-                if bn_to_substrate:
-                    bn, _ = (SUB, True)
-                    tr += ["DIAGNOSTIC-bn-to-substrate"]
-                else:
-                    tr += ["T6"]
+                bn, moved = sub_of(bn)
+                tr += ["T3"] + (["T5a"] if moved else ["T6"])
                 card = (f"C{inst} {g1} {w} {g2} {bn} sg13_hv_svaricap "
                         f"w={um(si(p['w']))} l={um(si(p['l']))} Nx={p['Nx']}")
             else:
@@ -198,7 +192,6 @@ def derive(src_text: str, bn_to_substrate: bool, swap_inductors=()):
 
 def main(argv):
     args = [a for a in argv[1:] if not a.startswith("--")]
-    bn_diag = "--bn-to-substrate" in argv
     swaps = tuple(a.split("=", 1)[1] for a in argv[1:]
                   if a.startswith("--swap-inductor="))
     if len(args) != 3:
@@ -207,8 +200,8 @@ def main(argv):
     src, out_cir, out_json = args
     with open(src, "rb") as f:
         raw = f.read()
-    cards, trace = derive(raw.decode(), bn_diag, swaps)
-    diag = bn_diag or bool(swaps)
+    cards, trace = derive(raw.decode(), swaps)
+    diag = bool(swaps)
     src_rel = os.path.relpath(os.path.abspath(src),
                               os.path.dirname(os.path.dirname(
                                   os.path.dirname(os.path.abspath(__file__)))))
@@ -220,17 +213,15 @@ def main(argv):
         "*     header; per-line trace in the JSON sidecar)",
     ]
     if diag:
-        head.append("* DIAGNOSTIC CONTROL ONLY (bn_to_substrate=%s, "
-                    "swap_inductor=%s). NOT a reference of record."
-                    % (bn_diag, ",".join(swaps) or "none"))
+        head.append("* DIAGNOSTIC CONTROL ONLY (swap_inductor=%s). "
+                    "NOT a reference of record." % (",".join(swaps) or "none"))
     text = "\n".join(head + ["", ".SUBCKT vco " + " ".join(PORTS)]
                      + cards + [".ENDS vco", ""])
     with open(out_cir, "w") as f:
         f.write(text)
     with open(out_json, "w") as f:
         json.dump({"source": {"file": src_rel, "sha256": digest},
-                   "diagnostic": {"bn_to_substrate": bn_diag,
-                                  "swap_inductor": list(swaps)},
+                   "diagnostic": {"swap_inductor": list(swaps)},
                    "ports": PORTS,
                    "constants": {
                        "grid_um": GRID_UM, "hbt_we": HBT_WE,

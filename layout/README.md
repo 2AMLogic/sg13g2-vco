@@ -103,15 +103,16 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     `scripts/lvs_reference.py`. Its six transformations are listed and traced
     per line. The PDK symbols' own `lvs_format` mapping is cross-checked
     against xschem's LVS netlist and agrees on all 39 cards it covers.
-  - *Exactly two differences*, each isolated by a single-variable control:
-    the 32 varactors' `bn` pin (schematic: tank node; layout: substrate),
-    which is schematic correction **#79**; and spiral L1's terminal order, an
-    artefact of the runset's x-sorted inductor ports on a mirrored instance
-    (the labels show L1 wired as the schematic says), tracked in **#80**. With
-    both applied in a scratch reference, the compare reports `match`, with
-    `VDD`, `0` and the substrate each pairing 1:1. Three negative controls
-    (a supply break, a signal break, a missing device) are all rejected.
-    Neither difference is reconciled in the reference of record.
+  - *Exactly one difference*, isolated by a single-variable control: spiral
+    L1's terminal order, an artefact of the runset's x-sorted inductor ports
+    on a mirrored instance (the labels show L1 wired as the schematic says),
+    tracked in **#80**. (The 32 varactors' `bn` pin was a second difference
+    until **#79** corrected the schematic to tie it to the substrate, as the
+    layout always did; DR-005.) With L1's order swapped in a scratch
+    reference, the compare reports `match`, with `VDD`, `0` and the substrate
+    each pairing 1:1. Three negative controls (a supply break, a signal
+    break, a missing device) are all rejected. The L1 difference is not
+    reconciled in the reference of record.
 
 No electrical, EM or phase-noise claim is made or implied by this layout.
 Read `PROVENANCE.md` §11 before citing any of it as evidence.

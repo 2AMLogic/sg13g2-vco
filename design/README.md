@@ -75,7 +75,7 @@ deliberately left to schematic time:
   OUTP --+---------------[ C1 ]----------------+-- OUTN   cap_cmim 3.65x3.65
          |                                     |
   16x sg13_hv_svaricap                  16x sg13_hv_svaricap
-    W,bn -> tank node                     W,bn -> tank node
+    W -> tank node, bn -> 0               W -> tank node, bn -> 0
     G1,G2 -> VCTRL                        G1,G2 -> VCTRL
          |                                     |
        Q1 c                                  c Q2         npn13G2v, El=1.0
@@ -185,7 +185,8 @@ carries `Vctrl`: *"Which node is the tank's own AC node is a schematic-level
 decision for the … oscillator design, not a fact this device-level sweep
 determines on its own."* This schematic makes that decision:
 
-> **Gates `G1`/`G2` → `VCTRL`; well + buried-n `W`/`bn` → the tank node.**
+> **Gates `G1`/`G2` → `VCTRL`; n-well `W` → the tank node; substrate `bn` → `0`
+> (corrected by #79 -- see "Correction (#79)" below).**
 
 This is the **opposite** of `sim/varactor-characterization`'s own testbench
 convention, and it is forced by the tank's DC bias. The inductors are a DC
@@ -212,14 +213,71 @@ Therefore:
   (10.4522 fF at `V_GB = 0`) and saturating. It would deliver nearly **no**
   tuning.
 
-`W` and `bn` are tied together, as in the characterization testbench — which
-shorts out the internal `dsubw` well-to-substrate junction rather than hanging
-it on the tank node — so the two-terminal impedance, and hence its Q, is the
-same either way; only the sign of `dC/dV` and the reachable `V_GB` branch
-differ. **Consequence, stated rather than buried:** frequency is now *maximum*
+`W` is the n-well and goes to the tank node; `bn` is the **p-substrate** and goes
+to `0`. (This paragraph originally said `W` and `bn` were tied together, "as in
+the characterization testbench", on the claim that this "shorts out the internal
+`dsubw` well-to-substrate junction ... so the two-terminal impedance, and hence
+its Q, is the same either way". The first half was true of the testbench and of
+the old netlist, and the second half was false of the layout: see "Correction
+(#79)".) The sign of `dC/dV` and the reachable `V_GB` branch are set by the
+gate/well assignment as described above, and the well-to-substrate junction
+now loads the tank node as well. differ. **Consequence, stated rather than buried:** frequency is now *maximum*
 at `Vctrl = 0` and *minimum* at `Vctrl = 3.3`, inverted with respect to the
 record's `vctrl_v` axis, and Kvco is strongly non-linear — see "Reportable
 findings" below.
+
+### Correction (#79): varactor `bn` is the substrate, not the tank node
+
+**What was wrong.** Through #78 this schematic tied every varactor's 4th pin
+`bn` to the tank node (`XCVP1 VCTRL OUTP VCTRL OUTP ...`). The PDK's
+`.subckt sg13_hv_svaricap G1 W G2 bn` annotates that pin *Substrate*; IHP's
+LVS runset extracts it as the device's `SUB` terminal on the p-substrate net;
+and the layout cannot tie a substrate terminal to a tank node without an
+isolated p-well that neither the schematic nor the layout has
+(`layout/PROVENANCE.md` §6). The drawn layout's `bn` is the shared substrate,
+tied to `0` by the guard ring. The device-aware LVS (#62) measured the
+disagreement (`layout/PROVENANCE.md` §14).
+
+**What it changes.** Every `sg13_hv_svaricap` carries a native `dsubw`
+diode and a series `rsubw` from its well `W` to `bn`. Tied to `W` (old) the
+branch is dead. Tied to `0` (new) it is a series R-C from each tank node to
+ground: 16 cells x ~8.4 fF of reverse-biased (3.3 V) junction capacitance, in
+series with 281 ohm / 16 = 17.6 ohm, on each side. That is the same order as
+the whole varactor bank (16 x 5.6 .. 10.4 fF).
+
+**Decision.** `bn` -> `0` for all 32 devices (`design/vco.sch`, regenerated
+`design/vco.spice`). DR-005 records the reasoning. No spec bound is changed.
+
+**Measured effect** (`sim/bn-substrate-tank/`, small-signal AC of the passive
+differential tank; method and limits are in that README and are important):
+
+| tank-level quantity | before (`bn` = tank) | after (`bn` = 0) | change |
+|---|---|---|---|
+| f0 at Vctrl = 1.5 V, tt/typ, 27 C | 5.532 GHz | 4.268 GHz | **-22.9 %** |
+| f0 over the corner set tested (MIM 3 x T -40/27 x MOS tt/ss/ff, Vctrl 0/1.5/3.3) | | | **-17.3 % ... -23.3 %** |
+| phase-bandwidth tank Q, band centre, 27 C | 13.8 | 10.0 | **-27 %** |
+| Q, band centre, -40 C | 15.7 | 11.4 | -27 % |
+| tuning ratio f(Vctrl 0)/f(Vctrl 3.3), tt/typ, 27 C | 1.182 | 1.113 | **-0.07** |
+| parallel-resonance impedance peak, band centre | 4.0 kohm | 2.3 kohm | x0.56 |
+
+**What this means for the spec rows (nothing is relaxed; these are findings).**
+The tank alone, without the HBT pair's own parasitics, now sits near
+**4.27 GHz at band centre**, below row 1's 4.5 GHz lower band edge, with a
+tuning ratio of **1.11-1.12** against row 2's >= 1.15. Row 5 (tank Q) and
+row 4 (phase noise) move the same way. `design/vco.sch` has not been
+re-sized in this change: retuning the tank to put the band back at 5.0 GHz
+with the junction in place is a design task of its own, and it has to be done
+against the corrected netlist, not around it. Until then the pilot numbers
+below (and every `sim/oscillator-core`, `sim/phase-noise` number) describe the
+*pre-#79* netlist and must not be read as describing this one.
+
+**What was not re-measured, and why.** The full-oscillator evidence
+(`design/run_elaborate.sh`, `sim/oscillator-core`, `sim/phase-noise`) needs
+the OSDI MOS-varactor core, and could not be regenerated for #79: this host's
+ngspice-42 cannot load the OSDI v0.4 library the pinned compiler emits, and
+the batch fleet's runner (klt 0.5.0) cannot take an `osdi_preload` request. See
+`sim/bn-substrate-tank/README.md` and DR-005 "Not regenerated". The tank-level
+result above is the bound that could be measured; phase noise has not been.
 
 ### Row 2 — tuning range ≥ 15 % (F ≤ 0.92·V)
 

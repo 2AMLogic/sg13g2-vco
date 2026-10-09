@@ -1,5 +1,15 @@
 # `phase-noise/` — `L(Δf)` for `design/vco.sch` by a measured ISF, with its variance and its limits
 
+> **Note (#79, 2026-10-09): the numbers in this directory describe the PRE-#79
+> netlist.** `design/vco.sch` tied each varactor's `bn` (the p-substrate) to the
+> tank node; it now ties it to `0`. That adds a well-to-substrate junction to
+> both tank nodes and, measured on the passive tank (`../bn-substrate-tank/`),
+> lowers f0 by 17-23 % and tank Q by 17-28 %. These records are append-only and
+> are not edited; they could not be regenerated for #79 (this host cannot load
+> the OSDI varactor; the batch runner cannot take an `osdi_preload` request).
+> Do not read any frequency, tuning ratio or `Kvco` below as describing the
+> current `design/vco.spice`.
+
 The second half of the oscillator bench. [`oscillator-core/`](../oscillator-core/)
 measures what the circuit *does* — start-up, `f_osc`, tuning, power, the row-6
 margin — and deliberately leaves `spec/target-spec.md` **row 4** ungraded.
