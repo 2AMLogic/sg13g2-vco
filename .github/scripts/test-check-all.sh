@@ -285,7 +285,7 @@ git -C "$G" init -q -b main
 git -C "$G" config user.email t@t; git -C "$G" config user.name t
 git -C "$G" add -A; git -C "$G" commit -q -m base
 GR="$G/.github/scripts/run-grading-fixtures.sh"
-grun() { PATH="$NONG" GRADING_SRC="$G" METHOD_CHECK_MIN_S2=2 "$GR" "$@" > "$OUT" 2>&1; RC=$?; }
+grun() { PATH="$NONG" GRADING_SRC="$G" METHOD_CHECK_MIN_S2=2 "$GR" > "$OUT" 2>&1; RC=$?; }
 grun
 if [ "$RC" -eq 0 ] && grep -q 'all fixtures passed' "$OUT" && [ -z "$(git -C "$G" status --porcelain)" ]; then
   ok "dispatcher passes without ngspice and leaves the source tree clean"; else bad "dispatcher ok: rc=$RC"; cat "$OUT"; fi
