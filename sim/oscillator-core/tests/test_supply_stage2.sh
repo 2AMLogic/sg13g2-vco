@@ -91,6 +91,11 @@ for f in cornerHBT cornerMOShv cornerCAP sg13g2_svaricaphv_mod sg13g2_hbt_mod; d
 OSC_IND_MODEL="${W}/ind.spice"; echo "* ind" > "${OSC_IND_MODEL}"
 OSC_OSDI_MOSVAR="${W}/mosvar.osdi"; echo "osdi" > "${OSC_OSDI_MOSVAR}"
 PDK=ihp-sg13g2; PDK_ROOT="${W}/pdk"
+# decks render against the captured model bundle only (issue #133)
+osc_capture_model_bundle >/dev/null && check capture-model-bundle ok || check capture-model-bundle bad
+# recapture_bundle -- discard and re-take the bundle (fixture helper: the
+# provenance-mismatch scenario needs a record whose captured cornerCAP differs)
+recapture_bundle() { chmod -R u+w "${OSC_BUNDLE_DIR}" && rm -rf "${OSC_BUNDLE_DIR}" && osc_capture_model_bundle >/dev/null; }
 osc_derive_body >/dev/null || check derive-body bad
 NETLIST_DIR="${W}/nl"; LOG_DIR="${W}/log"; mkdir -p "${NETLIST_DIR}" "${LOG_DIR}"
 
@@ -343,7 +348,8 @@ mk_osc() { # dir id kind(base|s2) scen
     fi
   done < <(fixture_points "${kind}")
   if [[ "${scen}" == badprov && "${kind}" == base ]]; then
-    echo "* different" > "${W}/models/cornerCAP.lib"; write_md "${p}.md"; echo "* cornerCAP" > "${W}/models/cornerCAP.lib"
+    echo "* different" > "${W}/models/cornerCAP.lib"; recapture_bundle; write_md "${p}.md"
+    echo "* cornerCAP" > "${W}/models/cornerCAP.lib"; recapture_bundle
   else
     write_md "${p}.md"
   fi

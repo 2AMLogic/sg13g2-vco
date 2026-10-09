@@ -99,6 +99,58 @@ record's JSON files; the helpers are `snapshot_source`,
 `assert_source_unchanged` and `write_source_provenance` in `sim/lib.sh`.
 Existing records are untouched and so remain `unknown`.
 
+**Captured model inputs** (issue #133; schema `sg13g2-vco/model-inputs/1`).
+The same capture idiom covers everything else those runs read by path. After
+`osc_preflight` has resolved the PDK and built `mosvar.osdi`, and before the
+first simulation, `osc_capture_model_bundle` (`oscillator-core/osc_bench.sh`)
+copies into a private, read-only bundle in the run's scratch directory:
+
+- the PDK model libraries the testbenches load (`cornerHBT.lib`,
+  `cornerMOShv.lib`, `cornerCAP.lib`, plus `sg13g2_svaricaphv_mod.lib` and
+  `sg13g2_hbt_mod.lib`) **and the transitive closure of their
+  `.include`/`.lib` references**, every section included, parsed out of the
+  captured bytes and laid out as in the PDK so relative references resolve
+  to other copies;
+- the non-PDK inductor model (`inductor-model/sg13g2_inductor_em.spice`) and
+  anything it includes;
+- the `mosvar.osdi` binary this run built;
+- the experiment's `.spiceinit`, which also replaces the copy ngspice reads
+  from the scratch directory.
+
+Every deck is rendered against the bundle (`osc_render`); the PDK, inductor and
+OSDI digests in the narrative (`osc_provenance_md`, the runners' inductor
+line) come from the bundle's manifest, never from re-hashing live files; and
+`osc_publish_summary` re-verifies every copy, the manifest, the served
+`.spiceinit` and the retained files before the summary `.md` is written. Editing a
+live library, model, OSDI binary or init file mid-run therefore reaches no later
+point and no recorded digest. An edit to the bundle fails the run, and no summary
+is written. A missing root or nested dependency, a reference that leaves the model
+directory or is absolute (it could not be served from a copy without rewriting
+bytes), an init file that loads anything (`source`/`osdi`/`codemodel`), or a
+template that names an uncaptured library fails before any deck exists. The
+generic helpers are `capture_input_closure`, `capture_input_file`,
+`input_bundle_sha` and `verify_input_bundle` in `sim/lib.sh`; the PDK-free
+fixture test is `sim/tests/test-model-bundle.sh` (run by
+`check-all.sh currency-selftest`).
+
+What a reserved record **retains** (all append-only):
+
+| Retained | Where |
+|---|---|
+| machine-readable manifest: role, bundle path, sha256 of the copy, original location (context only) | `<experiment>/records/<id>-model-inputs.json` |
+| repo-owned inputs as captured: inductor model, `.spiceinit` | `<experiment>/netlist-snapshots/<id>/model-inputs/{inductor,init}/` |
+
+What remains **external** to committed evidence, identified by digest only
+(`retained_snapshot: null` in the manifest): the PDK model libraries (pinned by
+`sim/pdk.json`) and the built `mosvar.osdi` binary. Also outside the capture:
+the ngspice executable and its system-wide `spinit` (identified by the
+recorded `ngspice` version only), and `design/vco.spice`, which has its own
+capture above. The manifest carries no `design_netlist_sha256`, so the
+classifier ignores it. **Record currency still concerns `design/vco.spice`
+only.** Records written before #133 are unchanged and carry no model manifest;
+their model digests were computed from live files when the narrative was
+written.
+
 **Refresh** after any `design/vco.spice` change or new record:
 `python3 .github/scripts/record_currency.py write`, commit the index. CI gates:
 `check-all.sh currency` (index equals fresh classification; in a shallow clone
@@ -187,6 +239,8 @@ sim/
     netlist-snapshots/
       <record-id>/
         <corner-id>.spice    the exact generated netlist for that PVT point
+        model-inputs/        captured repo-owned model inputs (osc_bench.sh
+                             runs, issue #133; see "Captured model inputs")
     corners/
       <record-id>/
         <corner-id>.log      raw ngspice batch output for that PVT point
@@ -195,6 +249,8 @@ sim/
       <record-id>.csv        parsed scalar summary, one row per corner × device
       <record-id>-curves/    per-corner curve data vs. frequency, where the
                              curve rather than a scalar is the product
+      <record-id>-model-inputs.json  captured model-input manifest
+                             (osc_bench.sh runs, issue #133)
 ```
 
 `<record-id>` is `<UTC yyyymmdd-HHMMSS>-<git short sha of the tree that ran>`.

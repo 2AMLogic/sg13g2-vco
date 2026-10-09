@@ -447,7 +447,7 @@ GRID_HOURS="$(awk -v t="${T_WALL_TOTAL}" -v n="${N_RUNS}" 'BEGIN{ printf "%.0f",
   echo "  here is, and what it is not\"."
   echo "- **Non-PDK inductor model, propagated** (\`sim/README.md\` rule 6):"
   echo "  \`sim/inductor-model/sg13g2_inductor_em.spice\` sha256"
-  echo "  \`$(sha256_of "${OSC_IND_MODEL}")\`. The PDK ships NO spiral-inductor"
+  echo "  \`$(osc_ind_model_sha)\`. The PDK ships NO spiral-inductor"
   echo "  ngspice model (\`sim/pdk.json\` \`known_model_gaps.spiral_inductor\`),"
   echo "  so this number is not a PDK-model result. \`design/vco.sch\`"
   echo "  instantiates the \`p11\` geometry, one of the three the EM extraction"
@@ -528,7 +528,9 @@ GRID_HOURS="$(awk -v t="${T_WALL_TOTAL}" -v n="${N_RUNS}" 'BEGIN{ printf "%.0f",
   echo "- **Reproduce**: \`sim/phase-noise/run_isf_pilot.sh\` (no arguments)"
   echo "  against the pinned PDK."
   echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-} > "${MD_OUT}"
+} > "${WORKDIR}/summary.md"
+# Publish only after the captured model inputs re-verify intact (issue #133).
+osc_publish_summary "${WORKDIR}/summary.md" "${MD_OUT}"
 
 echo
 echo "---------------------------------------------------------------"
