@@ -1267,3 +1267,76 @@ record fails the C1 gate. Both left the committed record untouched.
   `klt extract` without `-o` writes its netlist next to the input stream, so
   a read-only census run leaves an untracked `<block>.spice` in `layout/`. It
   happened here once, was removed, and `lvs.sh` now passes `-o` into scratch.
+
+### 14.5 Re-run after #79, with the newest klt release (2026-10-09, issue #62)
+
+*Appended. The text above stands; this records a fresh run and a status
+check of the blockers to `match`. Nothing in the layout, the schematic, the
+runset or the derived reference changed.*
+
+**Fresh run.** `layout/lvs.sh` was re-run from a clean worktree of `main`
+@ `bec98b4` on a Linux (Ubuntu 24.04) host, twice. Both runs exited 0, and
+the second wrote byte-identical files.
+
+- Inputs: `layout/vco.gds` @ `sha256:937e5b16…` and `design/vco.spice` @
+  `sha256:090983d6…`, the same as above. The runset hash is the same
+  (`fd11fced…`).
+- Re-derived reference `layout/lvs/vco-reference.cir` (`sha256:f047a24b…`),
+  compare of record `vco-lvs-ihp.json` and extraction `vco-extracted.cir`:
+  **byte-identical** to the committed files.
+- Verdict: **`mismatch`**, unchanged. 42/42 devices recognized, with the
+  same census on both sides. The only unpaired device pair is L1's terminal
+  order (#80). Control C1 gives `match`. N1, N2 and N3 are all rejected.
+- `design/netlist.sh --check` (xschem **3.4.7**): `design/vco.spice is
+  current with design/vco.sch`.
+
+**T3 cross-check re-run against the post-#79 netlist.** This host has
+xschem 3.4.7, so the cross-check that the #79 run had to skip (above, "Item
+1/2 sources") is now **re-run**, not carried forward. xschem's own LVS-mode
+netlist of `design/vco.sch` **agrees with the derived reference on all 39
+Q/L/C cards** (nodes, model, parameters), and that includes the re-pointed
+varactor `bn`. `vco-lvs-record.json` → `reference_crosscheck_xschem` now
+holds the live result in place of the `skipped` + `last_rerun_agreement`
+block.
+
+**The klt gap at the newest release.** `klayout-tools` 0.7.0 shipped after
+§14 was written. `lvs.sh` now runs a second klt leg against the tagged 0.7.0
+wheel, in a throwaway venv (`layout/build/klt-0.7.0`). It does not use the
+host's klt, and it does not move the CI pin. That leg fails the run if 0.7.0
+stops refusing. Measured:
+
+| klt 0.7.0 route | Result |
+|---|---|
+| `klt lvs`, inline curated extraction, `reference.form: "subckt-call"` (the §14 request) | exit 1: `subcircuit 'inductor' is not a known device for the requested deck` |
+| `klt lvs`, `layout.netlist` = the runset's own device-aware extraction of this stream, reference = `vco-reference.cir` | exit 1: `could not parse layout netlist …: Can't find a value for a R, C or L device` (the first 3-node `rppd` card) |
+| `klt extract --deck sg13g2` | `{"cap_cmim": 1}`, 7 nets (1 of 42 devices) |
+
+So 2AMLogic/klayout-tools#2849 is still open in 0.7.0. No `klt lvs` report,
+and therefore no `power_connectivity` block, can exist for this block on any
+released klt. The upstream operator ruling of 2026-10-08 on #2849 chose a
+native-runset engine as the path for this case. The checklist and grader
+change that would make such a report count for T1 is
+2AMLogic/klayout-tools#2870, which depends on #2849.
+
+**State of the two blockers to the #62 match criterion (2026-10-09):**
+
+1. **Spiral L1 terminal order (#80): open, and it needs a decision.** The
+   runset on IHP-Open-PDK's `dev` branch still orders inductor ports by x
+   (`custom_extractor.lvs`, `define_and_sort_terminals` → `sort_polygons`,
+   checked through the GitHub API on 2026-10-09). An upstream fix is not
+   available to pin. The in-repo options are listed in #80. This increment
+   does not choose one, and the reference of record stays unreconciled. The
+   other option is a post-extraction re-ordering by the `LA`/`LB` labels. It
+   is a change to the comparison flow that #80 asks to have reviewed first,
+   so this increment does not ship it as the record.
+2. **No `klt lvs` envelope (klayout-tools#2849): open** at both 0.6.0 and
+   0.7.0 (above).
+
+**Not done here, and why.** The derived reference was not edited to swap
+L1. That would fit the reference to the layout. It is only a scratch control
+(C1), never the record. The signoff manifest gains no citation from this
+run. Item 4 has neither a passing compare nor a `klt`-format envelope.
+Item 1 still has no `klt`-native envelope pinned to `design/vco.spice`
+(klayout-tools#2887 tracks the missing evidence form). Item 2's citation is
+unchanged, because the stream did not change. DRC was not re-run, because
+the stream did not change (§13 still applies to `sha256:937e5b16…`).
