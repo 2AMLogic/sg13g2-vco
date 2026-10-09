@@ -5,6 +5,8 @@
 # local runs cannot drift. Gate logic stays in the existing checkers; this
 # script only orders them, checks their tools and counts results.
 #
+# PYTHON overrides the interpreter of the py-* targets (default python3).
+#
 # Usage: check-all.sh [--strict] [--base REF] [--head REF] [--artifacts DIR]
 #                     <target> [target-args...]
 #
@@ -17,6 +19,11 @@
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
 #   spec-dr-selftest      .github/scripts/test-check-spec-change-has-dr.sh
 #   runner-selftest       .github/scripts/test-check-all.sh
+#   py-selftest           .github/scripts/test-check-python.sh      python3
+#   py-compile            check-python.sh compile (py_compile, all tracked *.py)
+#   py-tests              check-python.sh tests (stdlib unittest, tests/stdlib)
+#   py-klayout            check-python.sh klayout (tests/klayout; needs the
+#                         klayout pip wheel at .github/klayout-pip-version)
 #   append-only [--base REF]               PR diff gate (git, base ref)
 #   spec-dr [--base REF] [--head REF]      PR diff gate (git, base/head refs)
 #   method [artifact-dir]  ngspice-42 check, then run-method-checks.sh
@@ -24,8 +31,10 @@
 # Aggregates:
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest spec-dr-selftest runner-selftest
+#           py-selftest py-compile py-tests
 #   ci    = lint + test
-#   all   = ci + signoff + pr-diff (only with --base) + method
+#   all   = ci + signoff + py-klayout (only with the pinned klayout wheel)
+#           + pr-diff (only with --base) + method
 #   pr-diff --base REF [--head REF] = append-only + spec-dr
 # Runner options may also follow an aggregate name (the npm form:
 # `npm run check:all -- --strict --base origin/main`).
@@ -37,7 +46,9 @@
 #
 # Within `all`, method is optional: without ngspice 42 on PATH it prints
 # "SKIPPED: ngspice 42 not found" and is counted as skipped; pr-diff without
-# --base is likewise counted as skipped. A skip never reads as a pass: the
+# --base is likewise counted as skipped, and py-klayout without the klayout
+# wheel importable is counted as skipped. As a single target py-klayout
+# requires the pinned wheel (missing or other version -> failure). A skip never reads as a pass: the
 # summary counts it, and --strict turns any skip into a nonzero exit. As a
 # single target, `method` requires ngspice 42 (missing -> failure).
 #
@@ -138,6 +149,17 @@ ngspice_42() {
   esac
 }
 
+# klayout_wheel: 0 if the klayout pip wheel is importable; prints the reason
+# otherwise. (The py-klayout gate itself also verifies the pinned version.)
+klayout_wheel() {
+  local py="${PYTHON:-python3}"
+  if ! command -v "$py" >/dev/null 2>&1 ||
+     ! "$py" -I -c 'import klayout.db' >/dev/null 2>&1; then
+    echo "klayout pip wheel not importable (pip install klayout==$(cat "$ROOT/.github/klayout-pip-version" 2>/dev/null))"
+    return 1
+  fi
+}
+
 # run_gate <gate> <cmd...>: run a child, record pass/fail by exit status.
 run_gate() {
   local gate="$1" rc; shift
@@ -178,6 +200,14 @@ gate() {
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-spec-change-has-dr.sh" "$@" ;;
     runner-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-all.sh" "$@" ;;
+    py-selftest)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-check-python.sh" "$@" ;;
+    py-compile)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-python.sh" compile "$@" ;;
+    py-tests)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-python.sh" tests "$@" ;;
+    py-klayout)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-python.sh" klayout "$@" ;;
     append-only)
       need_tools "$g" git && check_forwarded_refs "$g" "$@" &&
         run_gate "$g" "$SCRIPTS/check-sim-append-only.sh" "$@" ;;
@@ -216,6 +246,9 @@ agg_test() {
   gate record-id-selftest
   gate spec-dr-selftest
   gate runner-selftest
+  gate py-selftest
+  gate py-compile
+  gate py-tests
 }
 
 agg_pr_diff() {
@@ -246,6 +279,11 @@ case "$TARGET" in
     gate lint
     agg_test
     gate signoff
+    if why="$(klayout_wheel)"; then
+      gate py-klayout
+    else
+      skip py-klayout "$why"
+    fi
     if [ -n "$BASE" ]; then
       agg_pr_diff
     else

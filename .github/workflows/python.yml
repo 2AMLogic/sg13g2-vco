@@ -1,0 +1,53 @@
+name: python
+
+# Python gate (issue #118): every tracked *.py was previously ungated. Three
+# jobs, all PDK-free and installing nothing but the pinned klayout wheel:
+#   compile  - py_compile over all tracked *.py (syntax only, nothing imported)
+#   stdlib   - stdlib unittest known-answer tests (tests/stdlib)
+#   klayout  - unittest tests for the klayout-needing scripts (tests/klayout),
+#              using the klayout pip wheel pinned in .github/klayout-pip-version
+#              (a different pin from .github/klt-version, which is klayout-tools)
+# The gate self-test runs first: a gate that cannot fail is indistinguishable
+# from no gate. Steps call named targets of .github/scripts/check-all.sh, the
+# shared runner behind `npm test` / `npm run check:ci` / `npm run check:all`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-and-stdlib:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Python gate self-test (deliberately failing fixtures)
+        run: .github/scripts/check-all.sh py-selftest
+
+      - name: py_compile every tracked *.py
+        run: .github/scripts/check-all.sh py-compile
+
+      - name: Stdlib known-answer tests
+        run: .github/scripts/check-all.sh py-tests
+
+  klayout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pinned klayout wheel (throwaway venv)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/klayout-venv"
+          "$RUNNER_TEMP/klayout-venv/bin/python" -m pip install \
+            "klayout==$(cat .github/klayout-pip-version)"
+
+      - name: klayout-dependent script tests
+        env:
+          PYTHON: ${{ runner.temp }}/klayout-venv/bin/python
+        run: .github/scripts/check-all.sh py-klayout
