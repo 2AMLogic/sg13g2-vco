@@ -17,11 +17,13 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${HERE}/../.." && pwd)"
-STAMP="$(date -u +%Y%m%d-%H%M%S)-$(git -C "${REPO_ROOT}" rev-parse --short HEAD)"
+# Issue #93 candidates: TANK_AB_ARGS="--cells 14 --mim-um 1.14 --candidate NAME"
+# TANK_AB_LABEL=NAME adds a suffix to the record id.  Unset = the original #79 run.
+STAMP="$(date -u +%Y%m%d-%H%M%S)-$(git -C "${REPO_ROOT}" rev-parse --short HEAD)${TANK_AB_LABEL:+-${TANK_AB_LABEL}}"
 REC="${HERE}/records/${STAMP}"
 WORK="${REPO_ROOT}/sim/build/bn-substrate-tank/${STAMP}"
 mkdir -p "${REC}/reports" "${REC}/decks" "${WORK}"
-python3 -I "${HERE}/make_requests.py" "${WORK}" >/dev/null
+python3 -I "${HERE}/make_requests.py" "${WORK}" ${TANK_AB_ARGS:-} >/dev/null
 export KLT_SIM_BACKEND=batch
 fails=0
 for req in "${WORK}"/*/*/request.json; do

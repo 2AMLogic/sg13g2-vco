@@ -1,0 +1,7 @@
+variant,mim,temp_c,f0_vctrl0_ghz,f0_vctrl3p3_ghz,fmax_over_fmin
+cand-n14-m1p14,cap_bcs,-40,4.82727,4.29514,1.1239
+cand-n14-m1p14,cap_bcs,27,4.77349,4.25418,1.1221
+cand-n14-m1p14,cap_typ,-40,4.82365,4.29259,1.1237
+cand-n14-m1p14,cap_typ,27,4.76997,4.25169,1.1219
+cand-n14-m1p14,cap_wcs,-40,4.82004,4.29004,1.1235
+cand-n14-m1p14,cap_wcs,27,4.76645,4.24919,1.1217

@@ -1,0 +1,7 @@
+design,inductor,cells_per_side,mim_um,temp_c,mim_corner,f0_vctrl0_ghz,f0_vctrl3p3_ghz,ratio,row2_ratio_ge_1.15,q_phase45_tt_vctrl1p5,source_record
+baseline(vco.spice),p11,16,3.65,27,cap_typ,4.2747,3.84202,1.1126,False,9.997,20261009-002323-383f22e
+cand-n14-m1p14,p11,14,1.14,27,cap_typ,4.76997,4.25169,1.1219,False,9.631,20261009-205236-2eb3659-cand-n14-m1p14
+cand-n12-m1p14,p11,12,1.14,27,cap_typ,5.04292,4.51506,1.1169,False,9.686,20261009-205834-2eb3659-cand-n12-m1p14
+baseline(vco.spice),p11,16,3.65,-40,cap_typ,4.32063,3.87791,1.1142,False,11.396,20261009-002323-383f22e
+cand-n14-m1p14,p11,14,1.14,-40,cap_typ,4.82365,4.29259,1.1237,False,10.853,20261009-205236-2eb3659-cand-n14-m1p14
+cand-n12-m1p14,p11,12,1.14,-40,cap_typ,5.09717,4.55687,1.1186,False,10.88,20261009-205834-2eb3659-cand-n12-m1p14

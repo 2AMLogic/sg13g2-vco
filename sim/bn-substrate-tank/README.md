@@ -150,3 +150,50 @@ python3 -I sim/bn-substrate-tank/analyze.py sim/bn-substrate-tank/records/<stamp
 `make_requests.py` documents the circuit in its docstring; the frozen decks and
 requests of each unit are under `records/<stamp>/decks/`, the klt reports
 (job ids, ngspice 46 runner) under `reports/`.
+
+## Candidate re-tune (#93)
+
+`make_requests.py --cells N --mim-um S --candidate NAME` emits one bn=0 variant
+at an explicit sizing (defaults reproduce the #79 decks; decks identical, only
+`cell.json` gains the sizing keys). `run_tank_ab.sh` takes `TANK_AB_ARGS` and
+`TANK_AB_LABEL`. New records (append-only, the #79 record is untouched):
+
+- `records/20261009-2100-2eb3659-candidate-screen/` -- tank_screen output
+  (374 candidates), `envelope.py` output to 600 cells, the known-answer
+  self-check, `bench-comparison.csv`, and `COMMANDS.txt`.
+- `records/20261009-205236-2eb3659-cand-n14-m1p14/`,
+  `records/20261009-205834-2eb3659-cand-n12-m1p14/` -- frozen decks, reports
+  (job ids) and `tank-ab*.csv`. Same surrogate and limits as above: lumped
+  MOS-core R-C per cell (cell scaling assumed), no HBT loading, small-signal,
+  tt MOS corner at the Vctrl endpoints only, fleet ngspice. 15 of 45 rows in
+  each are +125 C error rows (the `dsubw` NaN problem, #95); they are errors,
+  not passes, and the ratios below use only -40/27 C.
+
+| | cells | MIM | ratio (27 C, typ) | f0 centre | Q (tt, 1.5 V) | row 2 |
+|---|---|---|---|---|---|---|
+| baseline | 16 | 3.65 um | 1.113 | 4.05 GHz (endpoints 4.275/3.842) | 10.00 | fail |
+| cand-n14-m1p14 | 14 | 1.14 um | 1.122 | 4.50 GHz | 9.63 | fail |
+| cand-n12-m1p14 | 12 | 1.14 um | 1.117 | 4.77 GHz | 9.69 | fail |
+
+"f0 centre" is the endpoint mean, (f(Vctrl=0) + f(Vctrl=3.3))/2, which is the
+row-1 definition and the one the screen uses. The #79 section above quotes
+4.27 GHz for the baseline. That figure is f at the band-centre bias Vctrl =
+1.5 V (4.268 GHz), and the Leeson estimate there uses it as the carrier. Both
+figures describe the same tank.
+
+Conclusion: the 374-point screen grid yields no candidate meeting rows 1 and 2,
+and neither benched candidate meets row 2. The extended envelope
+(`envelope-p11-p13-p1-mim1p14.csv`) has exactly one screen-arithmetic pass:
+`p1` at 600 cells/side, MIM 1.14 um, centre 5.22 GHz, ratio 1.166. It is
+rejected as an *assessed limitation*, not on a measured result, because:
+- it is about 37x the calibrated cell count and has no `p1` bench;
+- its fixed-C budget is about 360 fF for MIM, HBT parasitics and the routing
+  of 1200 cells;
+- `p1`'s EM Q is 6.46 at 5.2 GHz, which puts loaded Q at about 5.6, below
+  row 5;
+- Rp is about 20 ohm, against the baseline's 2.27 kohm.
+
+See `design/README.md` ("Re-tune against the corrected netlist (#93)") for the
+full reasoning, the structural argument and the decision needed. Q is the loaded-tank value without
+the HBT pair; startup, power and large-signal junction modulation are
+unassessed. #94 owns full oscillator/PVT/phase-noise regeneration.

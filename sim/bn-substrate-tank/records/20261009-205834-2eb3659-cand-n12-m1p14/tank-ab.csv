@@ -1,0 +1,46 @@
+variant,mos,vctrl_v,mim,temp_c,status,f0_ghz,zpk_ohm,q_phase45,job
+cand-n12-m1p14,ff,1.5,cap_typ,-40,ok,5.08484,2915.35,10.884,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_typ,27,ok,5.03091,2585.3,9.689,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_bcs,-40,ok,5.08908,2915.36,10.875,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_bcs,27,ok,5.03503,2585.58,9.682,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_wcs,-40,ok,5.08062,2915.35,10.894,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_wcs,27,ok,5.02679,2585.02,9.696,klt-sim-953020de9e80
+cand-n12-m1p14,ff,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-953020de9e80
+cand-n12-m1p14,ss,1.5,cap_typ,-40,ok,5.0927,2917.79,10.877,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_typ,27,ok,5.03857,2587.68,9.683,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_bcs,-40,ok,5.09696,2917.78,10.868,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_bcs,27,ok,5.04271,2587.95,9.676,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_wcs,-40,ok,5.08846,2917.78,10.886,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_wcs,27,ok,5.03443,2587.4,9.69,klt-sim-5ac31498e5a0
+cand-n12-m1p14,ss,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-5ac31498e5a0
+cand-n12-m1p14,tt,0.0,cap_typ,-40,ok,5.09717,2919.14,10.872,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_typ,27,ok,5.04292,2589.0,9.68,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_bcs,-40,ok,5.10144,2919.15,10.863,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_bcs,27,ok,5.04708,2589.27,9.673,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_wcs,-40,ok,5.09292,2919.13,10.881,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_wcs,27,ok,5.03878,2588.73,9.687,klt-sim-469c04d25507
+cand-n12-m1p14,tt,0.0,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-469c04d25507
+cand-n12-m1p14,tt,1.5,cap_typ,-40,ok,5.08915,2916.69,10.88,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_typ,27,ok,5.03511,2586.6,9.686,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_bcs,-40,ok,5.0934,2916.71,10.871,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_bcs,27,ok,5.03925,2586.87,9.679,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_wcs,-40,ok,5.08492,2916.67,10.889,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_wcs,27,ok,5.03098,2586.32,9.693,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-ff17492b1a16
+cand-n12-m1p14,tt,3.3,cap_typ,-40,ok,4.55687,2669.7,11.109,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_typ,27,ok,4.51506,2359.38,9.837,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_bcs,-40,ok,4.55992,2669.91,11.103,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_bcs,27,ok,4.51804,2359.78,9.833,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_wcs,-40,ok,4.55382,2669.43,11.116,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_wcs,27,ok,4.51207,2358.95,9.842,klt-sim-0af0798bc6fb
+cand-n12-m1p14,tt,3.3,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-0af0798bc6fb

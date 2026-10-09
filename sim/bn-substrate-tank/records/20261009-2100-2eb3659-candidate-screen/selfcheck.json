@@ -1,0 +1,42 @@
+{
+  "bn_sub_cell_c_eff_ff": {
+    "0.0": 14.069705716682405,
+    "3.3": 18.99180459382346
+  },
+  "bn_sub_model_f0_ghz": [
+    4.2747,
+    3.84202
+  ],
+  "bn_sub_record_f0_ghz": [
+    4.2747,
+    3.84202
+  ],
+  "bn_tank_f0_err_pct": [
+    0.3284200275387006,
+    0.29966123447517923
+  ],
+  "bn_tank_forward_f0_ghz": [
+    5.564464995777365,
+    4.705147378204342
+  ],
+  "bn_tank_record_f0_ghz": [
+    5.54625,
+    4.69109
+  ],
+  "df0_pct_model": [
+    -23.178598423318554,
+    -18.344321842129908
+  ],
+  "df0_pct_record": [
+    -22.9263015551048,
+    -18.099631428942953
+  ],
+  "dratio_model": -0.07001567617016691,
+  "dratio_record": -0.06967667838070901,
+  "label": "SCREENING ARITHMETIC, NOT EVIDENCE",
+  "method": "lumped LC resonance (2 L(f) EM-fitted, C = MIM + N/2 effective cells); no HBT pair loading, no parasitics beyond what the records carry; cell C calibrated on the bn=substrate A/B record (tt, cap_typ, 27 C), endpoints only; no loss/Q model",
+  "ratio_model_sub": 1.112617841656212,
+  "ratio_model_tank": 1.182633517826379,
+  "ratio_record_sub": 1.112617841656212,
+  "ratio_record_tank": 1.182294520036921
+}

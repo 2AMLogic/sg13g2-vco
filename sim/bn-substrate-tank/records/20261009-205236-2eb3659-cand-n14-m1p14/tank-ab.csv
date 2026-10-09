@@ -1,0 +1,46 @@
+variant,mos,vctrl_v,mim,temp_c,status,f0_ghz,zpk_ohm,q_phase45,job
+cand-n14-m1p14,ff,1.5,cap_typ,-40,ok,4.81145,2754.16,10.858,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_typ,27,ok,4.75809,2434.06,9.634,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_bcs,-40,ok,4.81504,2754.23,10.85,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_bcs,27,ok,4.76159,2434.36,9.629,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_wcs,-40,ok,4.80787,2754.07,10.865,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_wcs,27,ok,4.7546,2433.74,9.64,klt-sim-226988bcf462
+cand-n14-m1p14,ff,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-226988bcf462
+cand-n14-m1p14,ss,1.5,cap_typ,-40,ok,4.81923,2756.58,10.85,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_typ,27,ok,4.76566,2436.43,9.629,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_bcs,-40,ok,4.82284,2756.64,10.842,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_bcs,27,ok,4.76917,2436.72,9.623,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_wcs,-40,ok,4.81563,2756.5,10.857,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_wcs,27,ok,4.76216,2436.13,9.635,klt-sim-3c0c3326e268
+cand-n14-m1p14,ss,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-3c0c3326e268
+cand-n14-m1p14,tt,0.0,cap_typ,-40,ok,4.82365,2757.94,10.845,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_typ,27,ok,4.76997,2437.76,9.625,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_bcs,-40,ok,4.82727,2758.01,10.837,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_bcs,27,ok,4.77349,2438.06,9.62,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_wcs,-40,ok,4.82004,2757.86,10.853,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_wcs,27,ok,4.76645,2437.46,9.631,klt-sim-53de947630f4
+cand-n14-m1p14,tt,0.0,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-53de947630f4
+cand-n14-m1p14,tt,1.5,cap_typ,-40,ok,4.81572,2755.49,10.853,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_typ,27,ok,4.76224,2435.36,9.631,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_bcs,-40,ok,4.81932,2755.57,10.846,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_bcs,27,ok,4.76575,2435.66,9.625,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_wcs,-40,ok,4.81213,2755.4,10.861,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_wcs,27,ok,4.75875,2435.04,9.637,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-4c5f25df600e
+cand-n14-m1p14,tt,3.3,cap_typ,-40,ok,4.29259,2512.68,11.088,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_typ,27,ok,4.25169,2211.89,9.781,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_bcs,-40,ok,4.29514,2512.94,11.082,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_bcs,27,ok,4.25418,2212.32,9.777,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_wcs,-40,ok,4.29004,2512.41,11.093,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_wcs,27,ok,4.24919,2211.49,9.785,klt-sim-32daf5fb13e0
+cand-n14-m1p14,tt,3.3,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-32daf5fb13e0

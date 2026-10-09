@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """make_requests.py -- build the `klt sim` AC requests for the issue #79 tank A/B.
 
-    make_requests.py <outdir>
+    make_requests.py <outdir> [--cells N] [--mim-um S] [--candidate NAME]
 
 Writes, per (variant, mos corner, Vctrl): <outdir>/<variant>/<mos>_v<V>/{tank.spice,
 request.json} plus a copy of the EM inductor model.  Variants:
@@ -25,9 +25,29 @@ WHAT THE CIRCUIT IS.  design/vco.spice's passive tank, small-signal:
   cell WITHOUT the junction; the junction branch is therefore added by the
   native diode, not double counted.
 """
-import json, os, shutil, sys
+import argparse, json, os, shutil, sys
 
-out = sys.argv[1]
+# Defaults are the design/vco.spice sizing (16 cells/side, 3.65 um MIM) and
+# reproduce the original #79 decks byte-for-byte (cell.json gains the two
+# sizing keys; the decks themselves are identical).  --cells/--mim-um/--candidate
+# (issue #93) emit ONE bn=substrate variant named NAME at the given sizing and
+# skip the bn-tank and tnom supplements.  The cell R-C is the same mos_small
+# record value per cell, so cell scaling is an ASSUMPTION (see README).
+_ap = argparse.ArgumentParser()
+_ap.add_argument("outdir")
+_ap.add_argument("--cells", type=int, default=16)
+_ap.add_argument("--mim-um", type=float, default=3.65)
+_ap.add_argument("--candidate", default=None)
+_args = _ap.parse_args()
+if _args.cells < 1 or _args.mim_um < 1.14:
+    sys.exit("illegal sizing: need cells >= 1 and mim side >= 1.14 um (cmim_minLW)")
+if _args.candidate and "__" in _args.candidate:
+    sys.exit("candidate name must not contain '__'")
+if _args.candidate is None and (_args.cells, _args.mim_um) != (16, 3.65):
+    sys.exit("non-default sizing requires --candidate NAME")
+out = _args.outdir
+NCELLS = _args.cells
+MIM_STR = "%ge-6" % _args.mim_um
 repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 # (c_5ghz_f, q_5ghz) at 27 C from the varactor record, key (mos corner, V_rec)
 REC = {("tt", 3.3): (1.045e-14, 44.79), ("tt", 1.8): (5.63e-15, 83.98),
@@ -55,7 +75,7 @@ def deck(variant, c, r, vc, tnom=None):
     bn = "W" if variant == "bn-tank" else "0"
     cells = []
     for side, node in (("P", "OUTP"), ("N", "OUTN")):
-        for i in range(1, 17):
+        for i in range(1, NCELLS + 1):
             # subckt pins: G W bn   (bn connection is THE variable under test)
             cells.append(f"XCV{side}{i} VCTRL {node} {'%s' % node if variant == 'bn-tank' else '0'} svar")
     return f"""* tank A/B for issue #79 -- variant {variant}: varactor bn -> {'W (tank node)' if bn == 'W' else '0 (p-substrate)'}
@@ -78,7 +98,7 @@ VDD VDD 0 dc 3.3
 VCT VCTRL 0 dc {vc}
 XL1 VDD OUTP 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
 XL2 VDD OUTN 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
-XC1 OUTP OUTN cap_cmim w=3.65e-6 l=3.65e-6 m=1
+XC1 OUTP OUTN cap_cmim w={MIM_STR} l={MIM_STR} m=1
 {chr(10).join(cells)}
 * AC probe: 1 A differential current, so v(zd) IS the differential impedance
 Iac OUTN OUTP dc 0 ac 1
@@ -111,9 +131,15 @@ def emit(name, variant, mos, vc, temps, tnom=None):
     json.dump(request(vc, temps), open(os.path.join(d, "request.json"), "w"), indent=2)
     json.dump({"variant": name, "mos": mos, "vctrl": vc, "c_cell_f": c, "q5": q,
                "r_cell_ohm": r, "dsubw_tnom": tnom,
+               "cells_per_side": NCELLS, "mim_side_um": _args.mim_um,
                "source": "sim/varactor-characterization/records/20260927-081226-f88eb89.csv mos small 27C"},
               open(os.path.join(d, "cell.json"), "w"), indent=2)
 
+if _args.candidate:
+    for mos, vc in POINTS:
+        emit(_args.candidate, "bn-sub", mos, vc, (-40, 27, 125))
+    print("ok", out)
+    sys.exit(0)
 for variant in ("bn-tank", "bn-sub"):
     for mos, vc in POINTS:
         emit(variant, variant, mos, vc, (-40, 27, 125))

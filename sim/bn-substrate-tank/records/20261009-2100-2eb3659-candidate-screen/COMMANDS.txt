@@ -1,0 +1,8 @@
+input commit: 2eb3659 (origin/main at claim) + this branch's make_requests/run_tank_ab/analyze/envelope additions
+python3 -I sim/tank-screen/tank_screen.py --selfcheck > selfcheck.json            (known-answer check run first)
+python3 -I sim/tank-screen/tank_screen.py --out build/tank-screen                 (-> tank-screen.csv/.md; 374 candidates: p11,p13,p1 x N=8..48 step 2 x MIM side 1.14,2,3,3.65,4.5,6,8 um)
+python3 -I sim/tank-screen/envelope.py > envelope-p11-p13-p1-mim1p14.csv         (N up to 600, MIM 1.14 um)
+Bench validation (klt sim, Spot batch fleet, klayout-tools==0.6.0, bn=0 for every varactor):
+TANK_AB_LABEL=cand-n14-m1p14 TANK_AB_ARGS="--cells 14 --mim-um 1.14 --candidate cand-n14-m1p14" sim/bn-substrate-tank/run_tank_ab.sh   -> ../20261009-205236-2eb3659-cand-n14-m1p14
+TANK_AB_LABEL=cand-n12-m1p14 TANK_AB_ARGS="--cells 12 --mim-um 1.14 --candidate cand-n12-m1p14" sim/bn-substrate-tank/run_tank_ab.sh   -> ../20261009-205834-2eb3659-cand-n12-m1p14
+python3 -I sim/bn-substrate-tank/analyze.py <record>

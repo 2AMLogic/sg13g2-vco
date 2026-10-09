@@ -97,6 +97,44 @@ class MakeRequestsTests(unittest.TestCase):
         self.assertNotEqual(p.returncode, 0)
 
 
+class CandidateSizingTests(unittest.TestCase):
+    """Issue #93: explicit sizing, baseline defaults preserved, bn always 0."""
+
+    def _gen(self, *extra):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        p = run_script(MAKE, tmp.name, *extra)
+        return tmp.name, p
+
+    def test_candidate_sizing(self):
+        out, p = self._gen("--cells", "14", "--mim-um", "1.14", "--candidate", "c14")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(os.listdir(out), ["c14"])
+        with open(os.path.join(out, "c14", "tt_v1.5", "tank.spice")) as fh:
+            deck = fh.read()
+        self.assertIn("cap_cmim w=1.14e-6 l=1.14e-6", deck)
+        self.assertEqual(deck.count("\nXCVP"), 14)
+        self.assertEqual(deck.count("\nXCVN"), 14)
+        # every varactor cell's bn is the substrate
+        for ln in deck.splitlines():
+            if ln.startswith("XCV"):
+                self.assertTrue(ln.endswith(" 0 svar"), ln)
+        cell = read_json(out, "c14", "tt_v1.5", "cell.json")
+        self.assertEqual((cell["cells_per_side"], cell["mim_side_um"]), (14, 1.14))
+
+    def test_defaults_unchanged(self):
+        out, p = self._gen()
+        with open(os.path.join(out, "bn-sub", "tt_v1.5", "tank.spice")) as fh:
+            deck = fh.read()
+        self.assertIn("cap_cmim w=3.65e-6 l=3.65e-6", deck)
+        self.assertEqual(deck.count("\nXCV"), 32)
+
+    def test_illegal_or_unnamed_sizing_rejected(self):
+        self.assertNotEqual(self._gen("--cells", "14")[1].returncode, 0)
+        self.assertNotEqual(self._gen("--mim-um", "1.0", "--candidate", "x")[1].returncode, 0)
+        self.assertNotEqual(self._gen("--candidate", "a__b")[1].returncode, 0)
+
+
 def write_json(path, obj):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as fh:
