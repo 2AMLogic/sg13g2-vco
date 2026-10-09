@@ -18,8 +18,9 @@ earlier `coverage_unknown` label. Read §12–§13 before citing any DRC claim,
 and "What this record does *not* claim" before citing any claim at all.
 **Since 2026-10-08 (§14) a device-aware LVS has been run, and its verdict
 is `mismatch`.** IHP's own runset recognizes all 42 devices. It finds
-exactly two differences, the varactor `bn` tie (#79) and an extractor
-artefact on the mirrored spiral L1 (#80). `klt lvs` cannot run this compare
+exactly one difference, an extractor artefact on the mirrored spiral L1
+(#80); the varactor `bn` difference it first found was a schematic error,
+corrected in #79 (DR-005). `klt lvs` cannot run this compare
 at the pinned release. Read §14 before citing any LVS claim.
 
 <!-- toc -->
@@ -329,6 +330,13 @@ substrate is therefore the shared one, tied to `0` through the four
 **#62's LVS will see `bn` = `0` where `design/vco.spice` says `bn` = tank
 node.** That is expected, recorded here, and is a schematic question (is the
 netlist's `bn` tie physically meaningful?) rather than a layout defect.
+
+> **Update (issue #79).** The schematic question is answered: it was not
+> physically meaningful, and `design/vco.sch` now ties every varactor's `bn` to
+> `0` (DR-005). The sentence above describes the state this section was
+> written against; `design/vco.spice` now reads `XCVP1 VCTRL OUTP VCTRL 0
+> sg13_hv_svaricap`, which is what the layout draws, and the LVS difference
+> is gone (§14). The layout is unchanged.
 
 ### An honest note on the `bn` PCell parameter
 
@@ -1036,18 +1044,32 @@ section: `layout/vco.gds` is still
 **The verdict of record is `mismatch`.** This section is the record of an
 honest device-aware compare. It does not report LVS closure.
 
+> **Update (issue #79, 2026-10-09).** This section was first written with two
+> differences. The first, the 32 varactors' `bn` pin, was a schematic error:
+> `design/vco.sch` tied it to the tank node, the layout (correctly) to the
+> p-substrate. The schematic is corrected (DR-005), `design/vco.spice` is
+> regenerated, and `layout/lvs.sh` was re-run: **the `bn` difference is
+> gone**. One difference remains (spiral L1's terminal order, #80). The text
+> below is edited in place to the new state; the pre-#79 state is recoverable
+> from git history and is summarised once here: the record compare then
+> paired 5 of 13 nets and 6 of 43 device pairs, and control C1 (`bn` moved in
+> a scratch reference) removed all 32 varactor differences. It now pairs
+> **7 of 10 nets and 42 of 43 device pairs**, and the single unpaired device
+> pair is L1. The layout and the runset are unchanged (`layout/vco.gds` and
+> the runset hash are byte-for-byte what they were); only the reference moved.
+
 | | |
 |---|---|
 | Runner | `layout/lvs.sh` (fails on any verdict drift; two consecutive runs write byte-identical files) |
 | Engine | KLayout **0.30.12** LVS (`NetlistComparer`), running **IHP-Open-PDK's own runset** `libs.tech/klayout/tech/lvs/sg13g2.lvs` through its `run_lvs.py` driver (flat mode, simplify on, strict top-port mode) |
 | Runset identity | `sha256:fd11fced5b0bd5ee0bb66b700acbe359f23c30c5900b16e5f647ed9a430dcc09`, a hash over `sg13g2.lvs`, `run_lvs.py` and all 43 `rule_decks/*.lvs`, pinned in `lvs.sh` |
 | Layout | `layout/vco.gds` @ `sha256:937e5b16…` |
-| Reference | `layout/lvs/vco-reference.cir`, **derived** from `design/vco.spice` @ `sha256:f185c714…` (below) |
+| Reference | `layout/lvs/vco-reference.cir`, **derived** from `design/vco.spice` @ `sha256:090983d6…` (below; after #79) |
 | Compare of record | `layout/lvs/vco-lvs-ihp.json`, read back from KLayout's own `.lvsdb` cross-reference by `scripts/lvsdb_summary.py` |
 | Run record | `layout/lvs/vco-lvs-record.json`: tools, invocation, controls, the klt attempt and the limits |
 | Extracted netlist | `layout/lvs/vco-extracted.cir` (the runset's own writer; only its date-stamp line is removed) |
 | **Device census** | **42 of 42 devices recognized**, plus one `ptap1` guard-ring tie. The per-class census is identical on both sides: `cap_cmim` 1, `inductor` 2, `npn13G2v` 4, `ptap1` 1, `rppd` 3, `sg13_hv_svaricap` 32 |
-| **Status** | **`mismatch`**: exactly two classes of difference, both isolated below |
+| **Status** | **`mismatch`**: exactly one class of difference (spiral L1's terminal order), isolated below |
 
 `run_lvs.py` exits 0 when the netlists do **not** match, and its log says
 only "Netlists don't match". The verdict is therefore never taken from its
@@ -1099,8 +1121,8 @@ sha256. `design/vco.spice` itself is only read.
 | T2 | wrap in `.SUBCKT vco` with the nine named nets as ports | the layout labels all nine on pin layers (§9), so each one is a name-anchored compare point |
 | T3 | `X` device cards → `Q`/`L`/`C` cards; `El`→`le`, `we=120.0n`, `m=Nx` | **the PDK's own mapping**: each `sg13g2_pr/*.sym` symbol's `lvs_format`. Cross-checked against xschem's own LVS-mode netlist of `design/vco.sch`: **agrees on all 39 cards** (nodes, model, parameters) |
 | T4 | ideal `R` → `rppd`, w = 1 µm, l from `floorplan.rppd_length_um()` on the 5 nm grid | the physical device class §5 chose. The R-to-length law is the generator's own, measured from the PCell; 5 nm is the grid `snap_grid.py` places every drawn vertex on (rule 3.1) |
-| T5 | substrate pins the schematic ties to `0` (HBT 4th, inductor 3rd, `rppd` body) → net `sub`; add the guard-ring tie `ptap1 0 sub` with A = 1084 µm², P = 1084 µm | the runset extracts the p-substrate as its own net, joined to `0` only through the `ptap1` tie. ngspice models ignore the tie, so the schematic writes the substrate as `0`. The tie's A/P come from the generator's ring spec (`floorplan.py` `RING`, `RING_W`: four abutting bars = one annulus), **not** from the extraction |
-| T6 | substrate pins the schematic ties to anything **other** than `0` are left exactly as written | this is the varactor `bn`. The difference is kept visible, not reconciled |
+| T5 | substrate pins the schematic ties to `0` (HBT 4th, inductor 3rd, varactor 4th `bn` since #79, `rppd` body) → net `sub`; add the guard-ring tie `ptap1 0 sub` with A = 1084 µm², P = 1084 µm | the runset extracts the p-substrate as its own net, joined to `0` only through the `ptap1` tie. ngspice models ignore the tie, so the schematic writes the substrate as `0`. The tie's A/P come from the generator's ring spec (`floorplan.py` `RING`, `RING_W`: four abutting bars = one annulus), **not** from the extraction |
+| T6 | substrate pins the schematic ties to anything **other** than `0` are left exactly as written | before #79 this was the varactor `bn`, kept visible rather than reconciled. Since #79 no pin falls under T6; the rule stays so a future disagreement is still shown, not hidden |
 
 T4 and T5 restate the layout phase's own physical choices. Their parameters
 are therefore checked against the generator's intent, not against the
@@ -1110,34 +1132,41 @@ A = 1084 µm², P = 1084 µm). The runset also measures the spirals as
 w = 8.215, s = 3.734, d = 142.106 µm against the card's 8.22 / 3.74 /
 141.975, inside the runset's own 5 % inductor tolerance.
 
-### Exactly two differences, isolated by single-variable controls
+### Exactly one difference, isolated by a single-variable control
 
 KLayout's pairing degrades under ambiguity, so the record compare's raw
-counts (5 of 13 nets, 6 of 43 device pairs) overstate the damage. Two
-scratch-only diagnostic references, each changing one thing, show what
-actually differs. They come from `lvs_reference.py`'s `--bn-to-substrate` and
-`--swap-inductor=` switches and are never committed.
+counts (7 of 10 nets, 42 of 43 device pairs) can overstate the damage. A
+scratch-only diagnostic reference, changing one thing, shows what actually
+differs. It comes from `lvs_reference.py`'s `--swap-inductor=` switch and is
+never committed.
 
 | Control | Reference change (scratch) | Verdict | What remains |
 |---|---|---|---|
-| C1 | varactor `bn` → substrate | `mismatch` | **one** device: spiral L1, terminals (`OUTP`, `VDD`) in the layout vs (`VDD`, `OUTP`) in the reference |
-| C2 | C1 + L1's two winding terminals swapped | **`match`** | nothing: 43/43 device pairs, 10/10 nets, 9/9 pins |
+| record | none | `mismatch` | **one** device: spiral L1, terminals (`OUTP`, `VDD`) in the layout vs (`VDD`, `OUTP`) in the reference |
+| C1 | L1's two winding terminals swapped | **`match`** | nothing: 43/43 device pairs, 10/10 nets, 9/9 pins |
 
-So the layout differs from the derived reference in these two ways and **no
-others**.
+So the layout differs from the derived reference in this way and **no
+others**. (Before #79 a second control, "C1: `bn` moved to the substrate",
+isolated the varactor difference; it is retired, because the reference of
+record now carries that change itself. `lvs.sh` additionally gates that the
+record's only unpaired device pair is L1, so a re-introduced `bn` difference
+fails the run.)
 
-**1. Varactor `bn` (32 devices), a real schematic/layout disagreement, tracked
-as #79.** The runset's `SUB` terminal of every varactor is the p-substrate.
-`design/vco.spice` ties it to `OUTP`/`OUTN`, which the layout cannot do (§6).
-This is more than an LVS formality. `design/README.md` states that tying `W`
-and `bn` together "shorts out the internal `dsubw` well-to-substrate
-junction rather than hanging it on the tank node". The drawn layout *does*
-hang it on the tank, so every simulation run on the current netlist omits a
-well-to-substrate junction on both tank nodes. Its size has not been
-measured. #79 owns the schematic correction and the re-run of the evidence
-it moves. This section does not edit `design/` and does not relax anything.
+**Resolved by #79: varactor `bn` (32 devices).** The runset's `SUB` terminal
+of every varactor is the p-substrate. `design/vco.spice` used to tie it to
+`OUTP`/`OUTN`, which the layout cannot do (§6) and which was never physically
+meaningful: the `sg13_hv_svaricap` subcircuit's 4th pin is annotated
+*Substrate* in the PDK's own header. It now ties it to `0`. This was more
+than an LVS formality: with `bn` on the tank node the PDK's `dsubw`
+well-to-substrate junction was shorted out, and the drawn layout *does* hang
+that junction on the tank, so every simulation run on the old netlist omitted
+a junction on both tank nodes. Its size is now measured:
+`sim/bn-substrate-tank/` (a tank-level A/B) puts it at **-22 to -23 % on
+f0 and -27 % on tank Q** at band centre, a result with consequences for the
+spec bands; see DR-005 and `design/README.md`. The reference sha above is the
+only artefact of the change in this directory.
 
-**2. Spiral L1 terminal order, an extractor artefact, tracked as #80.** The
+**Remaining: spiral L1 terminal order, an extractor artefact, tracked as #80.** The
 stream's own labels put `LA` on `VDD` for **both** spirals, and `LB` on
 `OUTP`/`OUTN`, exactly as the schematic says. The two spiral cells are
 mirror images (`LA` at x = +25.315 µm in one, −25.315 µm in the other), and
@@ -1156,8 +1185,8 @@ Checked explicitly, not inferred from the top-level status:
 
 | | `VDD` | `0` | substrate |
 |---|---|---|---|
-| record compare | **not paired** (`LA,VDD` vs `VDD`, perturbed by difference 2) | paired | **not paired** (`$1` vs `SUB`, perturbed by difference 1) |
-| control C2 | paired 1:1 | paired 1:1 | paired 1:1 |
+| record compare | **not paired** (`LA,VDD` vs `VDD`, perturbed by L1's terminal order) | paired | **not paired** (`$1` vs `SUB`; still perturbed, by the same L1 difference) |
+| control C1 | paired 1:1 | paired 1:1 | paired 1:1 |
 
 `LA,VDD` is one net carrying two labels, the spiral PCell's `LA` text and the
 `VDD` pin label. It is not two nets.
@@ -1165,7 +1194,7 @@ Checked explicitly, not inferred from the top-level status:
 ### Negative controls: the compare rejects a broken layout
 
 Each control is a scratch copy of the stream with **one** top-level instance
-removed (`scripts/lvs_break.py`). Each is compared against the C2 reference,
+removed (`scripts/lvs_break.py`). Each is compared against the C1 reference,
 which matches the intact stream, so a `match` would mean the compare cannot
 see the break.
 
@@ -1176,8 +1205,8 @@ see the break.
 | N3 (device) | `C1` MIM instance removed | **`mismatch`** (rejected) |
 
 `lvs.sh` was also mutation-tested with throwaway copies of the script. A
-wrong runset hash fails before running. Pointing C2 at the reference of
-record fails the C2 gate. Both left the committed record untouched.
+wrong runset hash fails before running. Pointing C1 at the reference of
+record fails the C1 gate. Both left the committed record untouched.
 
 ### Item 1/2 sources, re-verified for this record (2026-10-08)
 
@@ -1189,6 +1218,17 @@ record fails the C2 gate. Both left the committed record untouched.
   cross-host reproduction, not a re-statement.
 - **Netlist freshness (item 1).** `design/netlist.sh --check` (xschem 3.4.7,
   the PDK symbol library): `design/vco.spice is current with design/vco.sch`.
+  Re-checked for #79 with xschem 3.4.4 (the only xschem on the host that
+  re-ran it): current.
+- **T3 cross-check against xschem's LVS netlist (limit, #79).** The 39-card
+  agreement recorded above needs xschem >= 3.4.7 (`set lvs_netlist 1` and the
+  symbols' `lvs_format`). The #79 re-run was on xschem 3.4.4, which ignores
+  both and writes the simulation X-cards, so the cross-check was **not
+  re-run**: `lvs.sh` detects that, records `skipped`, and carries the earlier
+  agreement forward labelled as not re-run (`reference_crosscheck_xschem.
+  last_rerun_agreement` in `vco-lvs-record.json`). #79's only change to T3's
+  inputs is the 4th node of the 32 varactor cards; re-run on xschem >= 3.4.7
+  to refresh.
 
 ### What this means for the signoff manifest
 

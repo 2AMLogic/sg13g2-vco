@@ -3,38 +3,38 @@
 XL1 VDD OUTP 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
 XL2 VDD OUTN 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
 XC1 OUTP OUTN cap_cmim w=3.65e-6 l=3.65e-6 m=1
-XCVP1 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP2 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP3 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP4 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP5 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP6 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP7 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP8 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP9 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP10 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP11 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP12 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP13 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP14 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP15 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVP16 VCTRL OUTP VCTRL OUTP sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN1 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN2 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN3 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN4 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN5 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN6 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN7 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN8 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN9 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN10 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN11 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN12 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN13 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN14 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN15 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
-XCVN16 VCTRL OUTN VCTRL OUTN sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP1 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP2 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP3 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP4 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP5 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP6 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP7 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP8 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP9 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP10 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP11 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP12 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP13 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP14 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP15 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP16 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN1 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN2 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN3 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN4 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN5 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN6 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN7 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN8 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN9 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN10 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN11 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN12 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN13 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN14 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN15 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN16 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
 XQ1 OUTP OUTN TAIL 0 npn13G2v Nx=1 El=1.0
 XQ2 OUTN OUTP TAIL 0 npn13G2v Nx=1 El=1.0
 XQ3 TAIL NBIAS TE 0 npn13G2v Nx=1 El=2.0

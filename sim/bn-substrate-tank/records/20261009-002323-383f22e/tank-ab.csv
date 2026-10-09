@@ -1,0 +1,109 @@
+variant,mos,vctrl_v,mim,temp_c,status,f0_ghz,zpk_ohm,q_phase45,job
+bn-sub-tnom125,ff,1.5,cap_typ,125,ok,4.25135,1992.98,8.736,klt-sim-9b4ed99e2b40
+bn-sub-tnom125,ff,1.5,cap_bcs,125,ok,4.27738,1999.37,8.712,klt-sim-9b4ed99e2b40
+bn-sub-tnom125,ff,1.5,cap_wcs,125,ok,4.2258,1986.5,8.759,klt-sim-9b4ed99e2b40
+bn-sub-tnom125,ss,1.5,cap_typ,125,ok,4.25758,1995.57,8.735,klt-sim-7501fe3249fc
+bn-sub-tnom125,ss,1.5,cap_bcs,125,ok,4.28372,2001.96,8.711,klt-sim-7501fe3249fc
+bn-sub-tnom125,ss,1.5,cap_wcs,125,ok,4.23192,1989.1,8.758,klt-sim-7501fe3249fc
+bn-sub-tnom125,tt,0.0,cap_typ,125,ok,4.26113,1997.05,8.735,klt-sim-4f73e3c46731
+bn-sub-tnom125,tt,0.0,cap_bcs,125,ok,4.28733,2003.44,8.71,klt-sim-4f73e3c46731
+bn-sub-tnom125,tt,0.0,cap_wcs,125,ok,4.2354,1990.57,8.758,klt-sim-4f73e3c46731
+bn-sub-tnom125,tt,1.5,cap_typ,125,ok,4.25477,1994.41,8.735,klt-sim-70187ea52a8f
+bn-sub-tnom125,tt,1.5,cap_bcs,125,ok,4.28085,2000.8,8.711,klt-sim-70187ea52a8f
+bn-sub-tnom125,tt,1.5,cap_wcs,125,ok,4.22915,1987.93,8.759,klt-sim-70187ea52a8f
+bn-sub-tnom125,tt,3.3,cap_typ,125,ok,3.82929,1779.89,8.639,klt-sim-73a44a3f83f9
+bn-sub-tnom125,tt,3.3,cap_bcs,125,ok,3.84832,1785.62,8.625,klt-sim-73a44a3f83f9
+bn-sub-tnom125,tt,3.3,cap_wcs,125,ok,3.81055,1774.12,8.652,klt-sim-73a44a3f83f9
+bn-sub-tnom85,tt,1.5,cap_typ,85,ok,4.26002,2095.51,9.199,klt-sim-50ab2604d903
+bn-sub-tnom85,tt,1.5,cap_bcs,85,ok,4.28612,2101.41,9.17,klt-sim-50ab2604d903
+bn-sub-tnom85,tt,1.5,cap_wcs,85,ok,4.23439,2089.5,9.227,klt-sim-50ab2604d903
+bn-sub,ff,1.5,cap_typ,-40,ok,4.31059,2593.46,11.399,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_typ,27,ok,4.26491,2267.96,9.999,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_bcs,-40,ok,4.33731,2597.17,11.346,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_bcs,27,ok,4.29097,2272.91,9.961,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_wcs,-40,ok,4.28436,2589.53,11.451,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_wcs,27,ok,4.23932,2262.88,10.036,klt-sim-21bc3e8373b4
+bn-sub,ff,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-21bc3e8373b4
+bn-sub,ss,1.5,cap_typ,-40,ok,4.31699,2596.18,11.394,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_typ,27,ok,4.27115,2270.52,9.996,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_bcs,-40,ok,4.34383,2599.92,11.341,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_bcs,27,ok,4.29733,2275.46,9.958,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_wcs,-40,ok,4.29065,2592.29,11.446,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_wcs,27,ok,4.24545,2265.46,10.033,klt-sim-13899e5cfeff
+bn-sub,ss,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-13899e5cfeff
+bn-sub,tt,0.0,cap_typ,-40,ok,4.32063,2597.75,11.392,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_typ,27,ok,4.2747,2272.0,9.994,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_bcs,-40,ok,4.34754,2601.44,11.338,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_bcs,27,ok,4.30094,2276.92,9.956,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_wcs,-40,ok,4.29422,2593.86,11.444,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_wcs,27,ok,4.24893,2266.91,10.032,klt-sim-ff777e910665
+bn-sub,tt,0.0,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-ff777e910665
+bn-sub,tt,1.5,cap_typ,-40,ok,4.3141,2594.98,11.396,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_typ,27,ok,4.26833,2269.39,9.997,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_bcs,-40,ok,4.34089,2598.67,11.343,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_bcs,27,ok,4.29445,2274.33,9.959,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_wcs,-40,ok,4.28781,2591.06,11.449,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_wcs,27,ok,4.24268,2264.3,10.034,klt-sim-a184875fd4be
+bn-sub,tt,1.5,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-a184875fd4be
+bn-sub,tt,3.3,cap_typ,-40,ok,3.87791,2346.49,11.443,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_typ,27,ok,3.84202,2045.68,9.99,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_typ,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_bcs,-40,ok,3.89736,2350.63,11.407,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_bcs,27,ok,3.86107,2050.56,9.966,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_bcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_wcs,-40,ok,3.85874,2342.26,11.479,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_wcs,27,ok,3.82324,2040.76,10.015,klt-sim-4b94d0004ed5
+bn-sub,tt,3.3,cap_wcs,125,NO-VALUE (measurement 'zpk' produced no value),,,,klt-sim-4b94d0004ed5
+bn-tank,ff,1.5,cap_typ,-40,ok,5.5365,4553.43,15.695,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_typ,27,ok,5.52507,4011.53,13.769,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_typ,125,ok,5.50972,3461.18,11.814,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_bcs,-40,ok,5.5931,4589.98,15.664,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_bcs,27,ok,5.58166,4048.3,13.757,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_bcs,125,ok,5.56627,3496.76,11.817,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_wcs,-40,ok,5.48157,4517.33,15.724,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_wcs,27,ok,5.47016,3975.25,13.778,klt-sim-bd69a3423ddf
+bn-tank,ff,1.5,cap_wcs,125,ok,5.45486,3426.23,11.809,klt-sim-bd69a3423ddf
+bn-tank,ss,1.5,cap_typ,-40,ok,5.55,4571.6,15.72,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_typ,27,ok,5.53856,4027.54,13.791,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_typ,125,ok,5.5232,3475.03,11.833,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_bcs,-40,ok,5.60702,4608.52,15.689,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_bcs,27,ok,5.59556,4064.76,13.779,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_bcs,125,ok,5.58016,3511.01,11.837,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_wcs,-40,ok,5.49467,4534.97,15.748,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_wcs,27,ok,5.48325,3990.93,13.8,klt-sim-0dc7499c19c2
+bn-tank,ss,1.5,cap_wcs,125,ok,5.46794,3439.75,11.828,klt-sim-0dc7499c19c2
+bn-tank,tt,0.0,cap_typ,-40,ok,5.55769,4581.93,15.734,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_typ,27,ok,5.54625,4036.69,13.803,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_typ,125,ok,5.53088,3482.95,11.844,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_bcs,-40,ok,5.61494,4619.08,15.703,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_bcs,27,ok,5.60349,4074.14,13.792,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_bcs,125,ok,5.58808,3519.13,11.848,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_wcs,-40,ok,5.50214,4545.08,15.762,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_wcs,27,ok,5.49071,3999.82,13.812,klt-sim-cc0632fe5071
+bn-tank,tt,0.0,cap_wcs,125,ok,5.47539,3447.43,11.839,klt-sim-cc0632fe5071
+bn-tank,tt,1.5,cap_typ,-40,ok,5.5439,4563.41,15.709,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_typ,27,ok,5.53246,4020.28,13.781,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_typ,125,ok,5.51711,3468.76,11.824,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_bcs,-40,ok,5.60073,4600.11,15.677,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_bcs,27,ok,5.58927,4057.32,13.769,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_bcs,125,ok,5.57388,3504.56,11.828,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_wcs,-40,ok,5.48875,4526.98,15.737,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_wcs,27,ok,5.47734,3983.85,13.79,klt-sim-caa3ddcac0ef
+bn-tank,tt,1.5,cap_wcs,125,ok,5.46202,3433.65,11.819,klt-sim-caa3ddcac0ef
+bn-tank,tt,3.3,cap_typ,-40,ok,4.70202,3434.01,13.889,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_typ,27,ok,4.69109,3027.67,12.189,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_typ,125,ok,4.67684,2615.63,10.468,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_bcs,-40,ok,4.73665,3449.57,13.852,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_bcs,27,ok,4.72571,3044.3,12.168,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_bcs,125,ok,4.71142,2632.49,10.461,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_wcs,-40,ok,4.66812,3418.37,13.924,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_wcs,27,ok,4.65722,3011.11,12.208,klt-sim-0f8bb0ca0759
+bn-tank,tt,3.3,cap_wcs,125,ok,4.64301,2598.87,10.475,klt-sim-0f8bb0ca0759
