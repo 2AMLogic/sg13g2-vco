@@ -33,6 +33,7 @@ for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/test-check-spec-change-has-dr.sh \
          .github/scripts/check-spec-change-has-dr.sh \
          .github/scripts/test-check-all.sh .github/scripts/run-method-checks.sh \
+         .github/scripts/test-check-python.sh .github/scripts/check-python.sh \
          sim/tests/test-reserve-record-id.sh; do
   cat > "$F/$c" <<'EOF'
 #!/usr/bin/env bash
@@ -80,17 +81,21 @@ run_case() {
 reset() { rm -f "$FAILDIR"/*; }
 calls() { tr '\n' '|' < "$CALLS"; }
 
+# PATH whose python3 cannot import klayout (the stub python3 accepts anything)
+NOKL="$T/bin-nokl"; mkdir -p "$NOKL"
+for f in "$BIN"/*; do [ "$(basename "$f")" = python3 ] || ln -s "$f" "$NOKL/"; done
+printf '#!/usr/bin/env bash\nexit 1\n' > "$NOKL/python3"; chmod +x "$NOKL/python3"
 # PATH without ngspice / without klt
 NONG="$T/bin-nong"; mkdir -p "$NONG"
 for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; done
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
-# 1. test aggregate: six self-tests in workflow order, exit 0
+# 1. test aggregate: nine gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '6 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '9 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -100,7 +105,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '5 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '8 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -126,6 +131,24 @@ if [ "$RC" -eq 1 ] && grep -q -- '--strict' "$OUT"; then
 reset; run_case "$NONG" test extra
 if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
   ok "stray argument to an aggregate -> exit 2"; else bad "stray arg: rc=$RC"; fi
+
+# 5b. py-klayout: skipped in all without the wheel, runs with it, and always
+#     required as a single target
+reset; run_case "$NOKL" all
+if [ "$RC" -eq 0 ] && grep -q 'SKIPPED: py-klayout: klayout pip wheel not importable' "$OUT" \
+   && ! grep -q 'check-python.sh klayout' "$CALLS"; then
+  ok "all without klayout wheel: py-klayout counted skip"; else bad "all no klayout: rc=$RC"; cat "$OUT"; fi
+reset; run_case "$NOKL" --strict all
+if [ "$RC" -eq 1 ]; then ok "all --strict with py-klayout skipped -> exit 1"; else bad "strict klayout: rc=$RC"; fi
+reset; run_case "$BIN" all
+if grep -q '^check-python.sh klayout$' "$CALLS"; then
+  ok "all with klayout wheel runs py-klayout"; else bad "all klayout run: $(calls)"; fi
+reset; touch "$FAILDIR/check-python.sh"; run_case "$NOKL" py-klayout
+if [ "$RC" -eq 1 ] && grep -q '^check-python.sh klayout$' "$CALLS"; then
+  ok "py-klayout single target always runs the gate (failure -> exit 1)"; else bad "py-klayout single: rc=$RC"; fi
+reset; run_case "$BIN" py-compile
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-python.sh compile|" ]; then
+  ok "py-compile target"; else bad "py-compile: $(calls)"; fi
 
 # 6. wrong-version ngspice: skip in all, failure for method
 reset; NGSPICE_VER=ngspice-41 run_case "$BIN" --base HEAD all

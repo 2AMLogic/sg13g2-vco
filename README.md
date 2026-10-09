@@ -64,9 +64,9 @@ summary at the end counts the passed, failed and skipped gates.
 
 | Command | Gates run | Requires |
 |---|---|---|
-| `npm test` | self-tests for shell lint, signoff drift, sim append-only, spec-DR and record-id reservation, plus the runner's own self-test | bash, git, `shellcheck`, `python3`, `klt` at the version in [`.github/klt-version`](.github/klt-version) |
+| `npm test` | self-tests for shell lint, signoff drift, sim append-only, spec-DR and record-id reservation, plus the runner's own self-test, then the Python gates (their self-test with a deliberately failing fixture, `py_compile` of every tracked `*.py`, and the stdlib known-answer tests in `tests/stdlib`) | bash, git, `shellcheck`, `python3`, `klt` at the version in [`.github/klt-version`](.github/klt-version) |
 | `npm run check:ci` | `lint` (shellcheck at warning+), then everything in `npm test` | same as `npm test` |
-| `npm run check:all` | `check:ci`, then the real signoff drift gate, then the PR diff gates (only when `--base` is given), then the method known-answer checks | same, plus ngspice 42 for the method checks |
+| `npm run check:all` | `check:ci`, then the real signoff drift gate, then the klayout-dependent Python tests (`tests/klayout`; skipped if the `klayout` wheel is not importable), then the PR diff gates (only when `--base` is given), then the method known-answer checks | same, plus the `klayout` wheel at the version in [`.github/klayout-pip-version`](.github/klayout-pip-version) and ngspice 42 for the method checks |
 | `npm run check:pr -- --base REF [--head REF]` | sim append-only and spec-change-has-DR, comparing REF with the checked-out HEAD | git, plus REF fetched locally |
 
 `check:ci` is the lightweight lint-plus-self-test contract. Passing it does
