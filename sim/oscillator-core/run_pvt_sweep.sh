@@ -25,6 +25,14 @@
 #          records/<id>-row3.csv; the global verdict needs EVERY corner of the
 #          grid graded. The Kvco(Vctrl) first differences and the
 #          segment-spread linearity column remain ungraded descriptors.
+#   row 7  RATIFIED (DR-004 (d)/(e)): Vpp_diff at the tank nodes (no buffer)
+#          >= 0.40 V target / 0.65 V stretch everywhere in W, and the HBT
+#          compliance (VDD + Vpp_diff/4) - V(TAIL)_min <= 2.2 V over the full
+#          Vctrl domain, from each point's SAMPLED cycle minimum of V(TAIL)
+#          and its actual rail, with a stated sampling bound. Per-corner grade
+#          in records/<id>-row7.csv; the global verdict needs every row-10
+#          bound corner graded, and even then reads STAGE-1 only: the DR-004
+#          stage-2 supply sub-corners are not run by this script.
 #   row 6  the startup margin, as the tail-current-scaling threshold proxy,
 #          at the bound corners of the row-10 set (see
 #          testbench/tb_vco_core_margin.spice.tmpl for what the proxy is, why
@@ -93,6 +101,7 @@
 #   records/<record-id>-tuning.csv                    row 1/2 summary per corner
 #   records/<record-id>-kvco.csv                      the Kvco curve, per segment (descriptor)
 #   records/<record-id>-row3.csv                      ratified row-3 grade per corner
+#   records/<record-id>-row7.csv                      ratified row-7 grade per corner
 #   records/<record-id>-margin.csv                    the row-6 ladder, per rung
 #   records/<record-id>-margin-summary.csv            the bracketed row-6 margin
 #   records/<record-id>.md                            the narrative record
@@ -120,6 +129,8 @@ TUNING_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-tuning.csv"
 KVCO_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-kvco.csv"
 # shellcheck disable=SC2034  # read by osc_bench.sh's osc_emit_row3
 ROW3_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-row3.csv"
+# shellcheck disable=SC2034  # read by osc_bench.sh's osc_emit_row7
+ROW7_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-row7.csv"
 # shellcheck disable=SC2034  # read by osc_bench.sh's osc_margin_corner
 MARGIN_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-margin.csv"
 MARGIN_SUM_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-margin-summary.csv"
@@ -252,6 +263,7 @@ for mos in ${MOS_LABELS}; do
         done
         osc_emit_tuning "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${VCTRL_LIST}"
         osc_emit_row3 "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${VCTRL_LIST}"
+        osc_emit_row7 "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${VCTRL_LIST}"
       done
     done
   done
@@ -298,6 +310,15 @@ ROW3_SUMMARY="$(awk -F, -v want="${ROW3_EXPECTED}" 'NR > 1 {
   END { if (n == 0) { print "NOT GRADED: no corner produced a row-3 line"; exit }
         if (n != want || inc > 0) { printf "NOT GRADED (partial): %d/%d corners present, %d INCOMPLETE; per-corner lines are evidence only, no global verdict", n, want, inc+0; exit }
         printf "%s: target MET at %d/%d corners, stretch MET at %d/%d corners (min window samples %d)", (t == n ? (s == n ? "MET (target and stretch)" : "MET (target); stretch NOT MET") : "NOT MET"), t+0, n, s+0, n, ns }' "${ROW3_CSV}")"
+# Row 7 global verdict over the row-10 BOUND corners -- the same declared set
+# the row-6 margin pass uses (MARGIN_* above; every one is inside the main
+# grid). Every bound corner must carry exactly one complete row-7 line or the
+# row is NOT GRADED; the other grid corners are reported as descriptors.
+ROW7_REQUIRED=""
+for mos in ${MARGIN_MOS}; do for cap in ${MARGIN_CAP}; do for hbt in ${MARGIN_HBT}; do for temp in ${MARGIN_TEMPS}; do
+  ROW7_REQUIRED="${ROW7_REQUIRED} ${mos}:${cap}:${hbt}:${temp}"
+done; done; done; done
+ROW7_SUMMARY="$(osc_row7_summary "${ROW7_CSV}" "${ROW7_REQUIRED# }")"
 ROW6_SUMMARY="$(awk -F, 'NR > 1 { n++; if ($11 == "MET") met++; else if ($11 ~ /STRADDLES/) strad++ }
   END { if (n == 0) { print "no margin corner completed"; exit }
         printf "%d/%d corners MET, %d straddling the bound", met+0, n, strad+0 }' "${MARGIN_SUM_CSV}")"
@@ -397,6 +418,25 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "    conservative (a near-threshold rung still growing at the end of"
   echo "    the window is recorded as not oscillating, which biases the"
   echo "    margin DOWN)."
+  echo "  - row 7 (DR-004 (d)/(e)): swing is \`vpp_diff_v\` at the tank nodes,"
+  echo "    no buffer and no added load, graded at every \`Vctrl\` in W."
+  echo "    Compliance evaluates \`(VDD + Vpp_diff/4) - V(TAIL)_min <= ${OSC_ROW7_BVCEO_MIN_V} V\`"
+  echo "    at every \`Vctrl\` of the full domain, per point, with that point's"
+  echo "    own rail (\`vdd_v\`, sampled max of V(VDD) over the settled window)"
+  echo "    and its SAMPLED instantaneous cycle minimum of V(TAIL)"
+  echo "    (\`v_tail_min_v\`; \`sim/lib.sh\` \`osc_trace_extrema\`) -- not"
+  echo "    \`v_tail_dc_op_v\` or \`v_tail_mean_v\`, the stand-ins DR-004 names."
+  echo "    **Sampling limit**: a sampled minimum can only read HIGH and a sampled"
+  echo "    pk-pk LOW, both understating VCE_max; each is bounded as"
+  echo "    \`A(1-cos(pi f dt_max))\` assuming a locally sinusoidal extremum (tail"
+  echo "    at max(f_tail, 2 f_osc), output at f_osc), and compliance passes only"
+  echo "    when \`vce_max_upper_v\` (both bounds applied) is <= the limit;"
+  echo "    otherwise WITHIN SAMPLING BOUND, not a pass. A cusp sharper than that"
+  echo "    sinusoid can exceed the bound. **Inequality assumptions** (DR-004 (e)):"
+  echo "    rail-centred differential swing (see \`vpp_cm_over_diff\`), pair"
+  echo "    emitters on TAIL, collector peak and tail minimum combined as if"
+  echo "    simultaneous (conservative), base-open BVCEO (conservative); the tail"
+  echo "    device's own VCE is not covered."
   echo "  - extractor validation: \`run_method_check.sh\` checks the same"
   echo "    \`osc_metrics\`/\`osc_settle\` against synthetic waveforms whose"
   echo "    frequency, amplitude, time average and settling time are known in"
@@ -443,6 +483,12 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "    Per-corner requirement verdicts: \`records/${RECORD_ID}-row3.csv\`;"
   echo "    the Kvco curve and the \`kvco_*\` columns of"
   echo "    \`records/${RECORD_ID}-tuning.csv\` are ungraded descriptors."
+  echo "  - row 7 (RATIFIED; Vpp_diff >= ${OSC_ROW7_VPP_MIN_V} V, stretch"
+  echo "    ${OSC_ROW7_VPP_MIN_STRETCH_V} V, in W; VCE_max <= ${OSC_ROW7_BVCEO_MIN_V} V over the domain;"
+  echo "    required set = the row-10 bound corners): ${ROW7_SUMMARY}"
+  echo "    Per-corner verdicts: \`records/${RECORD_ID}-row7.csv\`; per-point tail"
+  echo "    minimum, rail, bounds and VCE_max: columns 30-37 of"
+  echo "    \`records/${RECORD_ID}.csv\`."
   echo "- **Links**:"
   echo "  - Templates: \`testbench/tb_vco_core_tran.spice.tmpl\`,"
   echo "    \`testbench/tb_vco_core_margin.spice.tmpl\`"
@@ -452,6 +498,7 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "  - Tuning / Kvco summary: \`records/${RECORD_ID}-tuning.csv\`"
   echo "  - Kvco curve: \`records/${RECORD_ID}-kvco.csv\`"
   echo "  - Row-3 grade per corner: \`records/${RECORD_ID}-row3.csv\`"
+  echo "  - Row-7 grade per corner: \`records/${RECORD_ID}-row7.csv\`"
   echo "  - Row-6 ladder and bracket: \`records/${RECORD_ID}-margin.csv\`,"
   echo "    \`records/${RECORD_ID}-margin-summary.csv\`"
   echo "- **Reproduce**: \`sim/oscillator-core/run_pvt_sweep.sh\` (no"
@@ -469,6 +516,7 @@ echo "margin corners  : $(( margin_total - ${#margin_failed[@]} ))/${margin_tota
 echo "row 1           : ${ROW1_AT_CENTRE}"
 echo "row 2           : ${ROW2_SUMMARY}"
 echo "row 6           : ${ROW6_SUMMARY}"
+echo "row 7           : ${ROW7_SUMMARY}"
 echo "row 8           : ${ROW8_SUMMARY}"
 echo "written         : ${MD_OUT#"${REPO_ROOT}"/}"
 echo "---------------------------------------------------------------"

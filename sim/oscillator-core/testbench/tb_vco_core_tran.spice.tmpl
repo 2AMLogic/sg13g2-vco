@@ -111,7 +111,7 @@ Rvtail VTL   0 1G
 * binary; osc_bench.sh calls it, so a cold checkout needs no manual step.
 pre_osdi @@OSDI_MOSVAR@@
 * The netlist's own `.save i(vsup)` is stripped (see above). This `save` names
-* the ten vectors the extractors and the operating-point print actually read.
+* the eleven vectors the extractors and the operating-point print actually read.
 * It is NOT `save all`: `save all` additionally stores every internal node of
 * the 32 varactor subcircuits, the two inductor ladders and the four HBTs at
 * every accepted timepoint, which measured 169 s against 153 s for this same
@@ -120,7 +120,7 @@ pre_osdi @@OSDI_MOSVAR@@
 * two. It must stay in sync with the wrdata/print lines below -- a vector that
 * is read but not saved comes back empty, and osc_simulate_point records that
 * point as a FAIL rather than silently reporting a zero.
-save v(VDIFF) v(VCM) v(VTL) i(VSUP) v(NBIAS) v(TE) v(RE) v(TAIL) v(OUTP) v(OUTN)
+save v(VDIFF) v(VCM) v(VTL) i(VSUP) v(NBIAS) v(TE) v(RE) v(TAIL) v(OUTP) v(OUTN) v(VDD)
 alter VCT dc = @@VCTRL@@
 op
 * The DC operating point, printed so the record can report the SMALL-SIGNAL
@@ -128,7 +128,7 @@ op
 * large-signal number -- the pair's average current shifts once it is
 * switching -- but reporting only one of the two would hide which is which.
 echo op_point_follows
-print v(NBIAS) v(TE) v(RE) v(TAIL) v(OUTP) v(OUTN) i(VSUP)
+print v(NBIAS) v(TE) v(RE) v(TAIL) v(OUTP) v(OUTN) i(VSUP) v(VDD)
 tran @@TSTEP@@ @@TSTOP@@ 0 @@TMAX@@
 let vdiff_w = v(VDIFF)
 wrdata @@OUT_PREFIX@@_vdiff vdiff_w
@@ -139,5 +139,10 @@ wrdata @@OUT_PREFIX@@_vtail vtail_w
 * Sign flipped so the recorded number is current OUT of the rail.
 let isup_w = -i(VSUP)
 wrdata @@OUT_PREFIX@@_isup isup_w
+* The point's ACTUAL rail over the run (row 7, issue #112): the DR-004 (e)
+* compliance inequality is evaluated with each point's own VDD, never with the
+* 3.3 V nominal constant, so a supply sub-corner needs no extractor change.
+let vdd_w = v(VDD)
+wrdata @@OUT_PREFIX@@_vdd vdd_w
 .endc
 .end

@@ -162,8 +162,10 @@ nom2="$(render_tran tt cap_typ hbt_typ 27)"
 [[ "$(grep '^VSUP ' "${nom2}")" == "VSUP VDD 0 dc 3.3" ]] && check nominal-rail-spelled-3.30-is-nominal ok || check nominal-rail-spelled-3.30-is-nominal bad
 OSC_VSUP_V=""
 eq nominal-ic "$(osc_rail_ic)" "3.305 3.295"
-eq nominal-csv-header-has-no-rail "$(OSC_CSV_RAIL=0; CSV_OUT="${W}/h0.csv"; osc_write_csv_headers; awk -F, '{print NF","$NF}' "${W}/h0.csv")" "29,meas_reason"
-eq stage2-csv-header-rail-last "$(OSC_CSV_RAIL=1; CSV_OUT="${W}/h1.csv"; osc_write_csv_headers; awk -F, '{print NF","$NF}' "${W}/h1.csv")" "30,vsup_v"
+# Point-CSV width: 29 base columns + 8 row-7 columns (#112) = 37; the stage-2
+# rail identity column (#113) trails them as column 38.
+eq nominal-csv-header-has-no-rail "$(OSC_CSV_RAIL=0; CSV_OUT="${W}/h0.csv"; osc_write_csv_headers; awk -F, '{print NF","$NF}' "${W}/h0.csv")" "37,vce_max_upper_v"
+eq stage2-csv-header-rail-last "$(OSC_CSV_RAIL=1; CSV_OUT="${W}/h1.csv"; osc_write_csv_headers; awk -F, '{print NF","$NF}' "${W}/h1.csv")" "38,vsup_v"
 ( OSC_CSV_RAIL=1; CSV_OUT="${W}/a"; TUNING_CSV="${W}/b"; KVCO_CSV="${W}/c"; MARGIN_CSV="${W}/d"; MARGIN_SUM_CSV="${W}/e"; osc_write_csv_headers
   for f in a b c d e; do tail -c 20 "${W}/${f}" | grep -q 'vsup_v$' || exit 1; done ) \
   && check every-stage2-csv-has-rail-column ok || check every-stage2-csv-has-rail-column bad
@@ -193,7 +195,7 @@ for rail in 2.970 3.630 3.3; do
 done
 for rail in 2.970 3.630 3.3; do
   row="$(grep "^ptest_${rail}," "${CSV_OUT}")"
-  p="$(echo "${row}" | awk -F, '{print $27}')"; r="$(echo "${row}" | awk -F, '{print $30}')"; pop="$(echo "${row}" | awk -F, '{print $26}')"
+  p="$(echo "${row}" | awk -F, '{print $27}')"; r="$(echo "${row}" | awk -F, '{print $NF}')"; pop="$(echo "${row}" | awk -F, '{print $26}')"
   expp="$(awk -v v="${rail}" 'BEGIN{printf "%.6e", 1e-3*v}')"
   [[ "$(awk -v a="${p}" -v b="${expp}" 'BEGIN{d=a-b; if(d<0)d=-d; print (d<1e-9*1e-3)?"ok":"bad"}')" == ok \
      && "$(awk -v a="${pop}" -v b="${expp}" 'BEGIN{d=a-b; if(d<0)d=-d; print (d<1e-9*1e-3)?"ok":"bad"}')" == ok \
@@ -207,8 +209,8 @@ source "${EXPERIMENT_DIR}/osc_bench.sh"
 # ------------------------------- 6. no mixed-rail aggregation in the tuning
 TUNING_CSV="${W}/t.csv"; KVCO_CSV="${W}/k.csv"
 FULL="${S2_VCTRL_LIST}"
-prow() { # rail v f   (30-col points row, ss/cap_wcs/hbt_wcs, -40 C)
-  echo "c,ss,cap_wcs,hbt_wcs,-40,$2,${OSC_TMAX},PASS,$3,20,1e-12,0.1,0.1,1,1e-9,0,0,0,0,0,0,0,0,0,0,0,0,VALID,-,$1"
+prow() { # rail v f   (38-col points row: 37 point columns incl. row-7 (#112) + vsup_v; ss/cap_wcs/hbt_wcs, -40 C)
+  echo "c,ss,cap_wcs,hbt_wcs,-40,$2,${OSC_TMAX},PASS,$3,20,1e-12,0.1,0.1,1,1e-9,0,0,0,0,0,0,0,0,0,0,0,0,VALID,-,nan,nan,nan,nan,nan,nan,nan,nan,$1"
 }
 { echo "$(OSC_CSV_RAIL=1; CSV_OUT="${W}/hh"; osc_write_csv_headers; cat "${W}/hh")"
   n=0; for v in ${FULL}; do
@@ -226,7 +228,7 @@ eq per-rail-curve-n10-and-rail-last "$(echo "${row}" | awk -F, '{print $5","$NF}
 eq per-rail-curve-fmax-is-this-rails "$(echo "${row}" | awk -F, '{printf "%.3e", $7}')" "5.400e+09"
 eq per-rail-kvco-rail-column "$(awk -F, '{print $NF}' "${KVCO_CSV}" | sort -u)" "2.970"
 # a nominal (rail-less) CSV must not be handed a rail
-{ OSC_CSV_RAIL=0; CSV_OUT="${W}/hn"; osc_write_csv_headers; cat "${W}/hn"; echo "c,m,c1,h,27,0.0,${OSC_TMAX},PASS,5e9,20,1e-12,0.1,0.1,1,1e-9,0,0,0,0,0,0,0,0,0,0,0,0,VALID,-"; } > "${W}/nom.csv"
+{ OSC_CSV_RAIL=0; CSV_OUT="${W}/hn"; osc_write_csv_headers; cat "${W}/hn"; echo "c,m,c1,h,27,0.0,${OSC_TMAX},PASS,5e9,20,1e-12,0.1,0.1,1,1e-9,0,0,0,0,0,0,0,0,0,0,0,0,VALID,-,nan,nan,nan,nan,nan,nan,nan,nan"; } > "${W}/nom.csv"
 CSV_OUT="${W}/nom.csv" osc_emit_tuning m c1 h 27 "${OSC_TMAX}" "${FULL}" 3.3 >/dev/null 2>&1; eq nominal-csv-refuses-rail $? 2
 
 # ----------------------------------------------- 7. report on fixtures

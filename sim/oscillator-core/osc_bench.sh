@@ -158,6 +158,13 @@ OSC_ROW3_KVCO_MEAN_MIN_HZ_PER_V="381e6"
 OSC_ROW3_CHORD_INL_PCT="30"
 OSC_ROW3_CHORD_INL_PCT_STRETCH="20"
 OSC_ROW3_MIN_SAMPLES="5"
+# Row 7 (RATIFIED per DR-004 (d)/(e)): Vpp_diff at the tank nodes, no buffer,
+# everywhere in the row-3 window W at every bound corner; and the HBT
+# compliance inequality (VDD + Vpp_diff/4) - V(TAIL)_min <= BVCEO(min).
+OSC_ROW7_VPP_MIN_V="0.40"
+OSC_ROW7_VPP_MIN_STRETCH_V="0.65"
+OSC_ROW7_BVCEO_MIN_V="2.2"
+OSC_ROW7_MIN_WINDOW_SAMPLES="5"
 OSC_ROW6_MARGIN="3.0"
 # shellcheck disable=SC2034  # read by the run_*.sh that source this file
 OSC_ROW8_P_MAX_W="10e-3"
@@ -525,13 +532,24 @@ osc_trace_validity() {
 #   vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,
 #   f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,
 #   isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w,
-#   meas_status,meas_reason
+#   meas_status,meas_reason,
+#   v_tail_min_v,t_tail_min_s,v_tail_pp_v,v_tail_min_err_v,vpp_diff_err_v,
+#   vdd_v,vce_max_v,vce_max_upper_v
+#
+# Columns 30-37 (issue #112, row 7) are APPENDED so every column 1-29 keeps
+# its meaning for readers of older records: the sampled cycle minimum of
+# V(TAIL) over the settled window and its time, the tail ripple peak-to-peak,
+# the sampling bounds on the tail minimum and on vpp_diff, the actual rail
+# (sampled max of V(VDD) over the window), and the DR-004 (e) inequality's
+# left side as measured and at its sampling-bound worst case (see
+# osc_row7_point). Older records have 29 columns and are never re-graded.
 #
 # status is the SIMULATOR/oscillation classification (PASS/NOSC/FAIL, or NODATA
 # when the clean run left no usable differential trace to classify with).
-# meas_status is separate: VALID only when all four required traces passed
-# osc_trace_validity; otherwise INVALID with meas_reason naming each trace and
-# its fault, and every value derived from an invalid trace is nan, never 0.
+# meas_status is separate: VALID only when all five required traces (vdiff,
+# vcm, vtail, isup, vdd) passed osc_trace_validity; otherwise INVALID with
+# meas_reason naming each trace and its fault, and every value derived from an
+# invalid trace is nan, never 0.
 # --------------------------------------------------------------------------
 osc_simulate_point() {
   local corner_id="$1" mos="$2" cap="$3" hbt="$4" temp="$5" vctrl="$6" tmax="$7"
@@ -558,23 +576,26 @@ osc_simulate_point() {
   local d_vcm="${WORKDIR}/${prefix}_vcm"
   local d_vtail="${WORKDIR}/${prefix}_vtail"
   local d_isup="${WORKDIR}/${prefix}_isup"
+  local d_vdd="${WORKDIR}/${prefix}_vdd"
 
   local status=FAIL
   local f_osc=0 cycles=0 dtmax=0 vpp_d=0
   local f_cm=nan vpp_cm=nan f_tail=nan vtail_mean=nan isup_avg=nan
+  local vpp_tail=nan dt_tail=nan vtail_min=nan t_tail_min=nan vdd=nan
   local t_settle=nan
   local floor_i=nan floor_c=nan
 
   # Measurement validity first, per trace, BEFORE any extractor sees the data:
   # a missing trace must stay unavailable (nan), not become a measured zero.
   local tstop_s="${OSC_TSTOP_S}"
-  local meas_reason="" v name tv_vdiff tv_vcm tv_vtail tv_isup
-  for name in vdiff vcm vtail isup; do
+  local meas_reason="" v name tv_vdiff tv_vcm tv_vtail tv_isup tv_vdd
+  for name in vdiff vcm vtail isup vdd; do
     v="$(osc_trace_validity "${WORKDIR}/${prefix}_${name}" "${OSC_TMEAS_START}" "${tstop_s}")"
     [[ "${v}" != "ok" ]] && meas_reason="${meas_reason:+${meas_reason};}${name}:${v}"
     case "${name}" in
       vdiff) tv_vdiff="${v}" ;; vcm) tv_vcm="${v}" ;;
       vtail) tv_vtail="${v}" ;; isup) tv_isup="${v}" ;;
+      vdd) tv_vdd="${v}" ;;
     esac
   done
   local meas_status=VALID
@@ -592,12 +613,29 @@ osc_simulate_point() {
       <<<"$(osc_metrics "${d_vcm}" "${OSC_TMEAS_START}")"
   fi
   if [[ "${tv_vtail}" == "ok" ]]; then
-    read -r f_tail _vpp _c vtail_mean _a _b _d _n \
+    read -r f_tail vpp_tail _c vtail_mean _a _b dt_tail _n \
       <<<"$(osc_metrics "${d_vtail}" "${OSC_TMEAS_START}")"
+    # Row 7: the instantaneous (sampled) cycle minimum, never the mean or the
+    # DC operating point (DR-004 (e) names both as stand-ins).
+    read -r vtail_min t_tail_min _vmax _tmax _dt _n \
+      <<<"$(osc_trace_extrema "${d_vtail}" "${OSC_TMEAS_START}")"
   fi
   if [[ "${tv_isup}" == "ok" ]]; then
     read -r _f _vpp _c isup_avg _a _b _d _n \
       <<<"$(osc_metrics "${d_isup}" "${OSC_TMEAS_START}")"
+  fi
+  if [[ "${tv_vdd}" == "ok" ]]; then
+    # The point's ACTUAL rail: the sampled maximum of V(VDD) over the settled
+    # window (the larger VDD is the worse case for the inequality). With the
+    # netlist's ideal VSUP it equals the source value; a future supply
+    # sub-corner or non-ideal rail is picked up without a code change.
+    read -r _vmin _tmin vdd _tmax _dt _n \
+      <<<"$(osc_trace_extrema "${d_vdd}" "${OSC_TMEAS_START}")"
+  fi
+  local vpp_d_err=nan vtail_min_err=nan vce=nan vce_up=nan
+  if [[ "${tv_vdiff}" == "ok" ]]; then
+    read -r vpp_d_err vtail_min_err vce vce_up \
+      <<<"$(osc_row7_point "${vpp_d}" "${f_osc}" "${dtmax}" "${vpp_tail}" "${f_tail}" "${dt_tail}" "${vtail_min}" "${vdd}")"
   fi
 
   local vtail_op isup_op
@@ -637,16 +675,16 @@ osc_simulate_point() {
   local r_cm fr_cm fr_tail iop p_op p_ls
   IFS=, read -r r_cm fr_cm fr_tail iop p_op p_ls _ <<<"${row}"
 
-  echo "${corner_id},${mos},${cap},${hbt},${temp},${vctrl},${tmax},${status},${f_osc},${cycles},${dtmax},${floor_i},${floor_c},${vpp_d},${t_settle},${vpp_cm},${r_cm},${f_cm},${fr_cm},${f_tail},${fr_tail},${vtail_op:-nan},${vtail_mean},${iop},${isup_avg},${p_op},${p_ls},${meas_status},${meas_reason:--}$(osc_csv_rail_suffix)" >> "${CSV_OUT}"
+  echo "${corner_id},${mos},${cap},${hbt},${temp},${vctrl},${tmax},${status},${f_osc},${cycles},${dtmax},${floor_i},${floor_c},${vpp_d},${t_settle},${vpp_cm},${r_cm},${f_cm},${fr_cm},${f_tail},${fr_tail},${vtail_op:-nan},${vtail_mean},${iop},${isup_avg},${p_op},${p_ls},${meas_status},${meas_reason:--},${vtail_min},${t_tail_min},${vpp_tail},${vtail_min_err},${vpp_d_err},${vdd},${vce},${vce_up}$(osc_csv_rail_suffix)" >> "${CSV_OUT}"
 
   printf "[%s] %s  f=%s Hz  Vpp_d=%s V  t_settle=%s s  P_ls=%s W  (rc=%s model_error=%s meas=%s%s)\n" \
          "${corner_id}" "${status}" "${f_osc}" "${vpp_d}" "${t_settle}" "${p_ls}" \
          "${rc}" "${model_error}" "${meas_status}" "${meas_reason:+ ${meas_reason}}"
 
-  # Keep the scratch dir bounded: a full grid writes four traces per point and
+  # Keep the scratch dir bounded: a full grid writes five traces per point and
   # each is a few hundred kB. The frozen netlist and the raw log are the
   # committed evidence; the traces are intermediates the record derives from.
-  rm -f "${d_vdiff}" "${d_vcm}" "${d_vtail}" "${d_isup}"
+  rm -f "${d_vdiff}" "${d_vcm}" "${d_vtail}" "${d_isup}" "${d_vdd}"
 
   [[ "${status}" == "PASS" ]]
 }
@@ -779,7 +817,7 @@ osc_csv_rail_suffix() {
 osc_write_csv_headers() {
   local rc=""
   [[ "${OSC_CSV_RAIL}" == "1" ]] && rc=",vsup_v"
-  echo "corner_id,mos,cap,hbt,temp_c,vctrl_v,tmax,status,f_osc_hz,cycles,dt_max_s,quant_floor_interp_pct,quant_floor_count_pct,vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w,meas_status,meas_reason${rc}" > "${CSV_OUT}"
+  echo "corner_id,mos,cap,hbt,temp_c,vctrl_v,tmax,status,f_osc_hz,cycles,dt_max_s,quant_floor_interp_pct,quant_floor_count_pct,vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w,meas_status,meas_reason,v_tail_min_v,t_tail_min_s,v_tail_pp_v,v_tail_min_err_v,vpp_diff_err_v,vdd_v,vce_max_v,vce_max_upper_v${rc}" > "${CSV_OUT}"
   if [[ -n "${TUNING_CSV:-}" ]]; then
     echo "mos,cap,hbt,temp_c,n_points,f_min_hz,f_max_hz,v_at_f_min,v_at_f_max,tuning_ratio,tuning_pct,f_center_geo_hz,kvco_mean_hz_per_v,kvco_peak_hz_per_v,kvco_min_hz_per_v,kvco_linearity_pct,quant_floor_worst_pct,row1_verdict,row2_verdict,row2_stretch_verdict${rc}" > "${TUNING_CSV}"
   fi
@@ -788,6 +826,9 @@ osc_write_csv_headers() {
   fi
   if [[ -n "${ROW3_CSV:-}" ]]; then
     osc_row3_header > "${ROW3_CSV}"
+  fi
+  if [[ -n "${ROW7_CSV:-}" ]]; then
+    osc_row7_header > "${ROW7_CSV}"
   fi
   if [[ -n "${MARGIN_CSV:-}" ]]; then
     echo "corner,mos,cap,hbt,temp_c,rung,rref_ohm,itail_a,v_te_mean_v,v_tail_mean_v,vpp_diff_late_v,f_late_hz,osc_criterion_v,oscillates${rc}" > "${MARGIN_CSV}"
@@ -842,8 +883,11 @@ osc_emit_tuning() {
   # rows of any other rail are excluded: a curve is never aggregated across
   # rails. A CSV without the column is single-rail by construction and must
   # not be given one.
-  local csv_has_rail=0
-  [[ "$(head -1 "${CSV_OUT}" | awk -F, '{ print $30 }')" == "vsup_v" ]] && csv_has_rail=1
+  # The rail column is located by NAME: it trails the point columns, whose
+  # count grew with the row-7 columns (#112), so no fixed index is assumed.
+  local csv_has_rail=0 rail_col
+  rail_col="$(head -1 "${CSV_OUT}" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "vsup_v") { print i; exit } print 0 }')"
+  [[ "${rail_col}" -gt 0 ]] && csv_has_rail=1
   if [[ "${csv_has_rail}" == 1 && -z "${rail}" ]]; then
     echo "osc_emit_tuning: ${CSV_OUT} has a vsup_v column; the rail (7th argument) is required to prevent mixed-rail aggregation" >&2
     return 2
@@ -852,7 +896,7 @@ osc_emit_tuning() {
     echo "osc_emit_tuning: a rail was given but ${CSV_OUT} has no vsup_v column" >&2
     return 2
   fi
-  awk -F, -v vlist="${vlist}" -v rail="${rail}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
+  awk -F, -v vlist="${vlist}" -v rail="${rail}" -v rc="${rail_col}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
       -v tmax="${tmax}" \
       -v f1lo="${OSC_ROW1_F_MIN_HZ}" -v f1hi="${OSC_ROW1_F_MAX_HZ}" \
       -v r2="${OSC_ROW2_RATIO}" -v r2s="${OSC_ROW2_RATIO_STRETCH}" \
@@ -860,7 +904,7 @@ osc_emit_tuning() {
     function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
     BEGIN { ne = split(vlist, ev, " "); rs = (rail == "") ? "" : "," rail }
     NR == 1 { next }
-    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax && (rail == "" || near($30, rail)) {
+    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax && (rail == "" || near($rc, rail)) {
       x = $6 + 0; ix = 0
       for (e = 1; e <= ne; e++) { d = x - ev[e]; if (d < 0) d = -d; if (d < 1e-9) { ix = e; break } }
       if (ix == 0) unexpected = 1
@@ -1058,4 +1102,250 @@ osc_emit_row3() {
              mos, cap, hbt, temp, vlo, vhi, nw, f0, flo, fhi, fs, ws, cov, km, \
              (ci == "nan" ? "nan" : sprintf("%.4f", ci)), r1, r2, r3, r4, r4s, vt, vs
     }' "${CSV_OUT}" >> "${ROW3_CSV}"
+}
+
+# --------------------------------------------------------------------------
+# Row 7 (RATIFIED per DR-004 (d) and (e), spec/target-spec.md row 7; issue
+# #112): output swing and the cycle-minimum HBT compliance condition.
+#
+# THE INEQUALITY AND ITS ASSUMPTIONS (DR-004 (e), copied, not re-derived):
+#   VCE_max = (VDD + Vpp_diff/4) - V(TAIL)_min  <=  BVCEO(min) = 2.2 V
+# evaluated per simulated point with THAT point's own quantities:
+#   * VDD        the sampled max of V(VDD) over the settled window (the
+#                point's actual rail, not the 3.3 V nominal constant);
+#   * Vpp_diff   vpp_diff_v (column 14), sampled max-min of V(OUTP)-V(OUTN);
+#   * V(TAIL)_min the sampled INSTANTANEOUS minimum of V(TAIL) over the
+#                settled window (column 30) -- NOT v_tail_dc_op_v and NOT
+#                v_tail_mean_v, which DR-004 names as stand-ins.
+# The formula's own assumptions, which this bench does not test: each tank
+# node swings +/- Vpp_diff/4 about VDD (a differential, rail-centred swing --
+# the per-point vpp_cm_over_diff column is the evidence for that premise);
+# the pair emitters sit at TAIL (true in design/vco.spice: XQ1/XQ2 emitters
+# are on TAIL with no degeneration); and the collector peak and the tail
+# minimum are combined as if simultaneous, which over-states the true peak
+# VCE (conservative). BVCEO is the base-open rating; the driven-base pair is
+# rated higher (conservative). The tail device XQ3's own VCE is NOT covered.
+#
+# SAMPLING LIMIT, stated with every number: both extremes are SAMPLES of an
+# adaptive-timestep trace (osc_trace_extrema), so the sampled V(TAIL)_min can
+# sit ABOVE the true minimum and the sampled vpp_diff BELOW the true one --
+# both errors make VCE_max look smaller than it is. osc_row7_point bounds each
+# under a locally-sinusoidal assumption, A*(1-cos(pi*f*dt_max)): the tail at
+# f = max(f_tail, 2*f_osc) with A = half its ripple peak-to-peak, the
+# differential output at f_osc with A = vpp_diff/2 per extreme. vce_max_upper_v
+# carries both bounds against the inequality. A compliance pass needs the
+# UPPER value <= 2.2 V; a measured value under the limit whose upper value is
+# not is WITHIN SAMPLING BOUND, which is NOT a pass. For swing the sampling
+# error is in the safe direction (a sampled pk-pk can only under-read), so the
+# swing verdict uses the measured vpp_diff directly. A cusp sharper than a
+# sinusoid at the stated f can hide more than the bound: a stated limit.
+# --------------------------------------------------------------------------
+# shellcheck disable=SC2016  # awk source, expanded by awk, not by the shell
+OSC_ROW7_AWK_LIB='
+function r7_num(x) { return x ~ /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$/ }
+function r7_vce(vdd, vpp, vtmin) { return vdd + vpp / 4.0 - vtmin }
+function r7_sample_err(halfpp, f, dt,   s) {
+  if (halfpp + 0 == 0) return 0
+  if (f + 0 <= 0 || dt + 0 < 0) return "nan"
+  s = sin(3.141592653589793 * f * dt / 2.0)
+  return halfpp * 2.0 * s * s
+}
+'
+
+# osc_row7_point <vpp_diff> <f_osc> <dt_max> <vpp_tail> <f_tail> <dt_tail> <v_tail_min> <vdd>
+# Print "vpp_diff_err_v v_tail_min_err_v vce_max_v vce_max_upper_v" for one
+# point. Any non-numeric input that a value depends on makes that value nan.
+osc_row7_point() {
+  awk -v vpp="$1" -v fo="$2" -v dt="$3" -v vtp="$4" -v ft="$5" -v dtt="$6" \
+      -v vtm="$7" -v vdd="$8" "${OSC_ROW7_AWK_LIB}"'
+    function fmt(x) { return (x == "nan") ? "nan" : sprintf("%.6e", x) }
+    BEGIN {
+      ev = "nan"; et = "nan"; vce = "nan"; vup = "nan"
+      if (r7_num(vpp) && r7_num(fo) && r7_num(dt)) ev = r7_sample_err(vpp, fo, dt)
+      if (r7_num(vtp) && r7_num(dtt)) {
+        fb = 0
+        if (r7_num(ft) && ft + 0 > fb) fb = ft + 0
+        if (r7_num(fo) && 2 * fo > fb) fb = 2 * fo
+        et = r7_sample_err(vtp / 2.0, fb, dtt)
+      }
+      if (r7_num(vpp) && r7_num(vtm) && r7_num(vdd)) {
+        vce = r7_vce(vdd, vpp, vtm)
+        if (ev != "nan" && et != "nan") vup = r7_vce(vdd, vpp + ev, vtm - et)
+      }
+      printf "%s %s %s %s\n", fmt(ev), fmt(et), fmt(vce), fmt(vup)
+    }'
+}
+
+# --------------------------------------------------------------------------
+# osc_row7_header / osc_emit_row7 <mos> <cap> <hbt> <temp> <tmax> <vlist>
+# The row-7 grade for one PVT point, appended to ${ROW7_CSV} (no-op when
+# unset, so pilots grade nothing). Reads the rows already in ${CSV_OUT}.
+#   swing      Vpp_diff >= 0.40 V target / 0.65 V stretch at EVERY expected
+#              Vctrl in the row-3 window W = [OSC_ROW3_V_LO, OSC_ROW3_V_HI]
+#              ("everywhere in W", DR-004 (d)), sampled on >= 5 window points
+#              including both endpoints. A NOSC point in W is a measured swing
+#              failure (NOT MET), never a pass.
+#   compliance VCE_max upper value <= 2.2 V at EVERY expected Vctrl of the
+#              full domain, not only W: DR-004 (e) states it per bound corner
+#              without a window, and the largest swing (the worst case) sits
+#              outside W at Vctrl = 0.0 V. One stretch-free bound.
+# Verdicts: MET, NOT MET, WITHIN SAMPLING BOUND (compliance only; not a pass),
+# or INCOMPLETE (never a pass): an expected Vctrl missing, duplicated, at a
+# non-PASS/NOSC status, with an INVALID measurement, from a pre-row-7
+# 29-column record, or with a non-numeric swing/tail-minimum/VDD; a row at an
+# unexpected Vctrl; a list lacking either window endpoint or with fewer than 5
+# window samples. A point whose sampling bound cannot be formed (only possible
+# when it did not oscillate) leaves compliance INCOMPLETE unless another point
+# is already NOT MET. target = swing target AND compliance; stretch = swing
+# stretch AND compliance. Only rows at the given tmax count.
+# --------------------------------------------------------------------------
+osc_row7_header() {
+  echo "mos,cap,hbt,temp_c,v_lo,v_hi,n_domain_points,n_window_samples,vpp_diff_min_window_v,vctrl_at_vpp_min_v,vce_max_v,vce_max_upper_v,vctrl_at_vce_max_upper_v,vdd_at_vce_max_v,vpp_diff_at_vce_max_v,v_tail_min_at_vce_max_v,v_tail_mean_at_vce_max_v,v_tail_dc_op_at_vce_max_v,swing_target,swing_stretch,compliance,row7_target_verdict,row7_stretch_verdict,reason"
+}
+osc_emit_row7() {
+  [[ -n "${ROW7_CSV:-}" ]] || return 0
+  local mos="$1" cap="$2" hbt="$3" temp="$4" tmax="${5:-${OSC_TMAX}}"
+  local vlist="${6:-}"
+  if [[ -z "${vlist// /}" ]]; then
+    echo "osc_emit_row7: expected Vctrl list (6th argument) is required" >&2
+    return 2
+  fi
+  awk -F, -v vlist="${vlist}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
+      -v tmax="${tmax}" -v vlo="${OSC_ROW3_V_LO}" -v vhi="${OSC_ROW3_V_HI}" \
+      -v vt="${OSC_ROW7_VPP_MIN_V}" -v vs="${OSC_ROW7_VPP_MIN_STRETCH_V}" \
+      -v bv="${OSC_ROW7_BVCEO_MIN_V}" -v minn="${OSC_ROW7_MIN_WINDOW_SAMPLES}" \
+      "${OSC_ROW7_AWK_LIB}"'
+    function abs(x) { return x < 0 ? -x : x }
+    function near(a, b) { return abs(a - b) < 1e-9 }
+    function and3(a, b) {
+      if (a == "NOT MET" || b == "NOT MET") return "NOT MET"
+      if (a == "MET" && b == "MET") return "MET"
+      if (a == "INCOMPLETE" || b == "INCOMPLETE") return "INCOMPLETE"
+      return b
+    }
+    function emit(reason, nd, nw, a, b, c, d, e, f, g, h, i, j, s1, s2, cp, tg, sg) {
+      printf "%s,%s,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", \
+             mos, cap, hbt, temp, vlo, vhi, nd, nw, a, b, c, d, e, f, g, h, i, j, s1, s2, cp, tg, sg, reason
+    }
+    function g6(x) { return r7_num(x) ? sprintf("%.6g", x) : "nan" }
+    BEGIN { ne = split(vlist, ev, " ") }
+    NR == 1 { next }
+    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax {
+      x = $6 + 0; ix = 0
+      for (e = 1; e <= ne; e++) if (near(x, ev[e] + 0)) { ix = e; break }
+      if (ix == 0) { unexpected = 1; next }
+      rows[ix]++
+      if (NF < 37) { why[ix] = "row predates the row-7 columns (" NF " columns)"; next }
+      if ($28 != "VALID") { why[ix] = "INVALID measurement (" $29 ")"; next }
+      if ($8 != "PASS" && $8 != "NOSC") { why[ix] = "status " $8; next }
+      if (!r7_num($14) || !r7_num($30) || !r7_num($35)) { why[ix] = "swing, tail minimum or VDD is not a number"; next }
+      good[ix] = 1; st[ix] = $8
+      vpp[ix] = $14 + 0; vtm[ix] = $30 + 0; vdd[ix] = $35 + 0
+      tmean[ix] = $23; top[ix] = $22
+      vce[ix] = r7_vce(vdd[ix], vpp[ix], vtm[ix])
+      if (r7_num($33) && r7_num($34)) { cok[ix] = 1; vup[ix] = r7_vce(vdd[ix], vpp[ix] + $34, vtm[ix] - $33) }
+      else cok[ix] = 0
+    }
+    END {
+      nw = 0; ilo = 0; ihi = 0
+      for (e = 1; e <= ne; e++) {
+        x = ev[e] + 0
+        if (near(x, vlo + 0)) ilo = e
+        if (near(x, vhi + 0)) ihi = e
+        if (x > vlo - 1e-9 && x < vhi + 1e-9) { nw++; inw[e] = 1 }
+      }
+      INC = "INCOMPLETE"; reason = ""
+      if (!ilo || !ihi) reason = "window endpoint not in the expected Vctrl list"
+      else if (nw < minn) reason = "fewer than " minn " window samples (" nw ")"
+      else if (unexpected) reason = "row at an unexpected Vctrl"
+      else {
+        for (e = 1; e <= ne; e++) if (rows[e] > 1) { reason = "duplicate rows at Vctrl " ev[e]; break }
+        if (reason == "") for (e = 1; e <= ne; e++) if (!good[e]) {
+          reason = "Vctrl " ev[e] " V: " (rows[e] == 0 ? "missing" : why[e]); break
+        }
+      }
+      if (reason != "") {
+        emit(reason, ne, nw, "nan","nan","nan","nan","nan","nan","nan","nan","nan","nan", INC, INC, INC, INC, INC)
+        exit
+      }
+      # swing over W
+      vmin = ""; nosc = ""
+      for (e = 1; e <= ne; e++) if (inw[e]) {
+        if (vmin == "" || vpp[e] < vmin) { vmin = vpp[e]; vatmin = ev[e] }
+        if (st[e] == "NOSC" && nosc == "") nosc = ev[e]
+      }
+      s1 = (nosc == "" && vmin >= vt + 0) ? "MET" : "NOT MET"
+      s2 = (nosc == "" && vmin >= vs + 0) ? "MET" : "NOT MET"
+      # compliance over the full expected domain
+      over = 0; unb = 0; mx = ""; mxu = ""; iw = 0
+      for (e = 1; e <= ne; e++) {
+        if (vce[e] > bv + 0) over = 1
+        if (mx == "" || vce[e] > mx) mx = vce[e]
+        if (!cok[e]) { unb = 1; continue }
+        if (mxu == "" || vup[e] > mxu) { mxu = vup[e]; iw = e }
+      }
+      if (over) cp = "NOT MET"
+      else if (unb) cp = INC
+      else if (mxu <= bv + 0) cp = "MET"
+      else cp = "WITHIN SAMPLING BOUND"
+      t = and3(s1, cp); stv = and3(s2, cp)
+      note = "-"
+      if (nosc != "") note = "Vctrl " nosc " V in W did not oscillate (NOSC)"
+      else if (unb) note = "a non-oscillating point has no sampling bound"
+      if (iw) emit(note, ne, nw, sprintf("%.6g", vmin), vatmin, sprintf("%.6g", mx), sprintf("%.6g", mxu), ev[iw], \
+                   sprintf("%.6g", vdd[iw]), sprintf("%.6g", vpp[iw]), sprintf("%.6g", vtm[iw]), g6(tmean[iw]), g6(top[iw]), s1, s2, cp, t, stv)
+      else emit(note, ne, nw, sprintf("%.6g", vmin), vatmin, sprintf("%.6g", mx), "nan", "nan", "nan", "nan", "nan", "nan", "nan", s1, s2, cp, t, stv)
+    }' "${CSV_OUT}" >> "${ROW7_CSV}"
+}
+
+# --------------------------------------------------------------------------
+# osc_row7_summary <row7-csv> <required corners>
+# One-line global row-7 verdict over a DECLARED set of required corners,
+# given as space-separated mos:cap:hbt:temp tokens (run_pvt_sweep.sh passes
+# the row-10 bound-corner set). Graded only when every required corner has
+# exactly one non-INCOMPLETE line; otherwise NOT GRADED (partial) with counts.
+# Corners in the CSV outside the required set are reported as descriptors and
+# never rescue a missing required one.
+#
+# Even a complete pass is reported as "STAGE-1 MET", never a bare MET: the
+# DR-004 stage-2 supply sub-corners ({2.970, 3.630} V x SLOW/TYP/FAST x T) are
+# part of row 7's coverage and no bench here runs them yet, so row 7 is not
+# fully covered until they are graded through this same function.
+# --------------------------------------------------------------------------
+osc_row7_summary() {
+  local csv="$1" req="${2:-}"
+  if [[ ! -f "${csv}" ]]; then echo "NOT GRADED: no row-7 CSV"; return 0; fi
+  awk -F, -v req="${req}" '
+    BEGIN { nr = split(req, rq, " "); for (i = 1; i <= nr; i++) isreq[rq[i]] = 1 }
+    NR == 1 { next }
+    {
+      k = $1 ":" $2 ":" $3 ":" $4; cnt[k]++
+      tv[k] = $22; sv[k] = $23; cv[k] = $21; up[k] = $12; vm[k] = $9
+      if (!(k in isreq)) { nx++; if ($22 != "MET") nxbad++ }
+    }
+    END {
+      tail = "; stage-2 +/-10 % supply sub-corners NOT graded -- row 7 is not fully covered until they are"
+      if (nr == 0) { print "NOT GRADED: no required bound corners declared" tail; exit }
+      miss = 0; dup = 0; inc = 0; t = 0; s = 0; cm = 0; cw = 0; worst = ""; vmin = ""
+      for (i = 1; i <= nr; i++) {
+        k = rq[i]
+        if (cnt[k] == 0) { miss++; continue }
+        if (cnt[k] > 1) { dup++; continue }
+        if (tv[k] == "INCOMPLETE" || sv[k] == "INCOMPLETE" || cv[k] == "INCOMPLETE") { inc++; continue }
+        if (tv[k] == "MET") t++
+        if (sv[k] == "MET") s++
+        if (cv[k] == "MET") cm++; else if (cv[k] ~ /SAMPLING/) cw++
+        if (up[k] != "nan" && (worst == "" || up[k] + 0 > worst + 0)) { worst = up[k]; wk = k }
+        if (vm[k] != "nan" && (vmin == "" || vm[k] + 0 < vmin + 0)) { vmin = vm[k]; vk = k }
+      }
+      ex = (nx > 0) ? sprintf("; %d further non-required corner(s) graded as descriptors, %d not target-MET", nx, nxbad) : ""
+      if (miss + dup + inc > 0) {
+        printf "NOT GRADED (partial): %d/%d required corners graded, %d missing, %d duplicated, %d INCOMPLETE; per-corner lines are evidence only%s%s\n", \
+               nr - miss - dup - inc, nr, miss, dup, inc, ex, tail
+        exit
+      }
+      lab = (t == nr) ? ((s == nr) ? "STAGE-1 MET (target and stretch)" : "STAGE-1 MET (target); stretch NOT MET") : "NOT MET"
+      printf "%s: target MET at %d/%d, stretch MET at %d/%d, compliance MET at %d/%d (%d within sampling bound, not a pass); min window Vpp_diff %s V at %s; worst VCE_max upper %s V at %s%s%s\n", \
+             lab, t, nr, s, nr, cm, nr, cw, vmin, vk, worst, wk, ex, tail
+    }' "${csv}"
 }

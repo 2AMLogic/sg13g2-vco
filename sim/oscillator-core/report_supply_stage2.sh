@@ -137,9 +137,9 @@ get_row8() { # prefix mos cap hbt temp rail
   awk -F, -v mos="$2" -v cap="$3" -v hbt="$4" -v temp="$5" -v rail="$6" -v nom="${S2_NOMINAL_RAIL}" \
       -v vc="${S2_BAND_CENTRE_VCTRL}" -v tmax="${OSC_TMAX}" -v pmax="${OSC_ROW8_P_MAX_W}" '
     function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
-    NR == 1 { hasrail = ($30 == "vsup_v"); next }
+    NR == 1 { rc = 0; for (i = 1; i <= NF; i++) if ($i == "vsup_v") rc = i; hasrail = (rc > 0); next }
     $2 == mos && $3 == cap && $4 == hbt && ($5 + 0) == (temp + 0) && near($6, vc) && $7 == tmax {
-      if (hasrail) { if (!near($30, rail)) next }
+      if (hasrail) { if (!near($rc, rail)) next }
       else if (!near(rail, nom)) next
       n++; st = $8; p = $27; ms = $28; mr = $29
     }
