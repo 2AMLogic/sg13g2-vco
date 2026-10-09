@@ -6,6 +6,15 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-09
 
+- **PR #128**: ci: compute sim record currency against design/vco.spice (#122)
+- **Issue #129** (closed): analysis: PDK-free analytic tank screen to prune the #93 re-tune while the OSDI path (#94) is blocked
+- **PR #130**: analysis: PDK-free analytic tank screen with A/B known-answer test
+- **Issue #126** (closed): ci: add job timeouts and SHA-pinned actions to all workflows
+- **PR #131**: ci: add job timeouts and SHA-pinned actions (#126)
+- **Issue #132** (closed): ci: run simulator-free grading fixtures in the lightweight gate aggregate
+- **Issue #133** (closed): sim: capture stable model inputs before long oscillator and phase-noise runs
+- **PR #134**: ci: run simulator-free grading fixtures in test/ci aggregates (#132)
+- **PR #135**: sim: capture stable model inputs before oscillator and phase-noise runs (#133)
 - **Issue #79** (closed): design: varactor bn (p-substrate) is tied to the tank node in design/vco.sch -- physically unrealizable; correct the schematic and re-run the evidence it moves (blocks #62 LVS match)
 - **Issue #88** (closed): ci: enforce append-only sim/ evidence (records, netlist-snapshots, corners) at PR time
 - **Issue #89** (closed): ci: require a decision record in the same PR as any spec/target-spec.md edit
