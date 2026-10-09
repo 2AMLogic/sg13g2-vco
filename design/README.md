@@ -281,6 +281,11 @@ result above is the bound that could be measured; phase noise has not been.
 
 ### Row 2 — tuning range ≥ 15 % (F ≤ 0.92·V)
 
+> **Pre-#79 numbers (including the predicted-vs-simulated f0 endpoints below).** The simulated figures in this section were produced
+> against the netlist before the `bn` correction. See "Correction (#79)" above and
+> [DR-005](../spec/decision-records/DR-005-varactor-bn-substrate.md); they are not current
+> (re-tuning #93, regeneration #94).
+
 Sixteen cells per side, i.e. 32 cells, all in parallel between a tank node and
 `VCTRL`. Two equal single-ended banks present **half** their capacitance to the
 differential port, so the differential varactor contribution is 8 cells' worth:
@@ -487,6 +492,11 @@ resonator, with TAIL behaving as a virtual ground at the fundamental.
 
 ### Result as of this schematic (ngspice-46, IHP-Open-PDK v0.3.0, nominal corner)
 
+> **Pre-#79 numbers (table below).** The simulated figures in this section were produced
+> against the netlist before the `bn` correction. See "Correction (#79)" above and
+> [DR-005](../spec/decision-records/DR-005-varactor-bn-substrate.md); they are not current
+> (re-tuning #93, regeneration #94).
+
 | Vctrl (V) | f_osc (GHz) | Vpp_diff (V) | P_core (mW) |
 |---|---|---|---|
 | 0.0 | 5.41854 | 1.1000 | 1.0119 |
@@ -497,6 +507,11 @@ Fractional tuning range 17.22 %; geometric band centre 5.0048 GHz; both
 endpoints inside the row-1 4.5–5.5 GHz window.
 
 ## Reportable findings (not fixed by relaxing anything)
+
+> **Pre-#79 numbers (including the Kvco non-linearity figures).** The simulated figures in this section were produced
+> against the netlist before the `bn` correction. See "Correction (#79)" above and
+> [DR-005](../spec/decision-records/DR-005-varactor-bn-substrate.md); they are not current
+> (re-tuning #93, regeneration #94).
 
 1. **Kvco is strongly non-linear over the `Vctrl` domain.** 5.4185 → 5.3842 GHz
    over the *lower* half of the range (0 → 1.65 V), and 5.3842 → 4.6226 GHz over
