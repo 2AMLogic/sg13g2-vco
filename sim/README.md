@@ -8,6 +8,16 @@ after it lands. The convention follows `spec/porting-plan.md` §3, which names
 it as the one category that transfers to this block from the catalog's more
 mature siblings unchanged.
 
+**Enforcement.** The `sim-append-only` job in `.github/workflows/signoff.yml`
+runs `.github/scripts/check-sim-append-only.sh` on every pull request and fails
+on any change other than a pure addition to a `records/`, `netlist-snapshots/`
+or `corners/` directory anywhere below `sim/` (including
+`inductor-model/em-extraction/records/`); a rename counts as delete + add and
+fails. There is **no exemption** (no label, no PR-body marker): correct an old
+record by adding a new record that supersedes it. Working output such as
+`em-extraction/results/` is not covered. Its self-test is
+`.github/scripts/test-check-sim-append-only.sh`.
+
 ## Experiments
 
 | Directory | Claim under test | Status |
