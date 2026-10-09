@@ -10,6 +10,7 @@
 #   2. tampered committed record   -> check-signoff.sh FAILS (drift gate)
 #   3. tampered vendored tiers doc -> check-signoff.sh FAILS (drift gate)
 #   4. broken manifest JSON        -> check-signoff.sh FAILS (runs-clean gate)
+#   5. pin disagrees with PATH klt -> check-signoff.sh FAILS (version gate)
 
 set -u
 
@@ -104,6 +105,25 @@ run_case "tampered tiers doc fails" 1 "$t"
 t="$(fresh_tree)"
 printf '{ oops\n' > "$t/signoff/manifest.json"
 run_case "broken manifest fails" 1 "$t"
+
+# 5. Version mismatch fails: a copy of the checker whose .github/klt-version
+#    names a release that is not the klt on PATH must refuse to grade, even
+#    on an otherwise pristine tree.
+t="$(fresh_tree)"
+v="$(mktemp -d)"
+mkdir -p "$v/.github/scripts"
+cp "$CHECKER" "$v/.github/scripts/check-signoff.sh"
+echo "0.0.0-mismatch" > "$v/.github/klt-version"
+if "$v/.github/scripts/check-signoff.sh" --root "$t" 2>"$v/err" >/dev/null; then
+  echo "FAIL: version mismatch fails (checker passed)" >&2
+  fail=$((fail + 1))
+elif grep -q "version mismatch" "$v/err"; then
+  echo "PASS: version mismatch fails"
+  pass=$((pass + 1))
+else
+  echo "FAIL: version mismatch fails (wrong reason)" >&2
+  fail=$((fail + 1))
+fi
 
 echo "self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
