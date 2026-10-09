@@ -41,6 +41,8 @@ for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/check-record-currency.sh \
          .github/scripts/test-model-inputs.sh \
          .github/scripts/check-model-inputs.sh \
+         .github/scripts/test-check-klt-friction.sh \
+         .github/scripts/check-klt-friction.sh \
          sim/tests/test-reserve-record-id.sh; do
   cat > "$F/$c" <<'EOF'
 #!/usr/bin/env bash
@@ -98,11 +100,11 @@ for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; d
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-check-klt-friction.sh|check-klt-friction.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
-# 1. test aggregate: sixteen gates in workflow order, exit 0
+# 1. test aggregate: eighteen gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '16 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '18 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -112,7 +114,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '15 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '17 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -132,6 +134,15 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-record-currency.sh|" ]; then
   ok "currency target dispatches the index gate"; else bad "currency: rc=$RC $(calls)"; fi
 reset; touch "$FAILDIR/check-record-currency.sh"; run_case "$BIN" currency
 if [ "$RC" -eq 1 ]; then ok "currency failure -> exit 1"; else bad "currency failure: rc=$RC"; fi
+# 4b3. friction-ledger targets (issue #146)
+reset; run_case "$BIN" friction-selftest
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "test-check-klt-friction.sh|" ]; then
+  ok "friction-selftest target dispatches the fixture self-test"; else bad "friction-selftest: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" friction
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-klt-friction.sh|" ]; then
+  ok "friction target dispatches the ledger gate"; else bad "friction: rc=$RC $(calls)"; fi
+reset; touch "$FAILDIR/check-klt-friction.sh"; run_case "$BIN" friction
+if [ "$RC" -eq 1 ]; then ok "friction failure -> exit 1"; else bad "friction failure: rc=$RC"; fi
 # 4c. named grader/spec agreement targets (issue #138)
 reset; run_case "$BIN" grader-spec-selftest
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "test-check-grader-spec-agreement.sh|" ]; then
@@ -142,7 +153,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-grader-spec-agreement.sh|" ]; then
 reset; touch "$FAILDIR/check-grader-spec-agreement.sh"; run_case "$BIN" grader-spec
 if [ "$RC" -eq 1 ]; then ok "grader-spec failure -> exit 1"; else bad "grader-spec failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-record-currency.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q '15 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
+if [ "$RC" -eq 1 ] && grep -q '17 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
   ok "currency self-test failure fails test, later gates still run"; else bad "currency selftest fail: rc=$RC"; fi
 
 # 4b2. model-inputs targets (issue #139)
@@ -160,7 +171,7 @@ reset; run_case "$NONG" grading-fixtures
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-grading-fixtures.sh|" ]; then
   ok "grading-fixtures target dispatches without ngspice"; else bad "grading-fixtures: rc=$RC $(calls)"; fi
 reset; touch "$FAILDIR/run-grading-fixtures.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '15 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '17 passed, 1 failed' "$OUT" \
    && grep -q '^check-python.sh tests$' "$CALLS"; then
   ok "grading-fixtures failure fails test, later gates still run"; else bad "grading-fixtures fail: rc=$RC"; fi
 

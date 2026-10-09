@@ -1,0 +1,241 @@
+{
+  "schema": 1,
+  "upstream": "2AMLogic/klayout-tools",
+  "note": "Hand-maintained ledger of filed klayout-tools friction issues; see README.md 'klayout-tools friction ledger'. Gate: .github/scripts/check-klt-friction.sh",
+  "entries": [
+    {
+      "number": 1232,
+      "gap": "Extraction deck recognises no SiGe HBT (bipolar) devices.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 1242,
+      "gap": "Documentation of why SiGe HBTs are not recognised by the extraction deck.",
+      "status": "merged",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 1895,
+      "gap": "Composition router: a cross-block via drop can short an unrelated net without any routed/unrouted/warning signal (cited here for the router's pin-approach-side behaviour).",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/scripts/measure_ports.py"
+      ]
+    },
+    {
+      "number": 1630,
+      "gap": "Generator cannot reach the PDK's PCell library from the tool's Python path (compat shim not on sys.path; GUI-toolkit crash in the vendor shim).",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/scripts/pdk_env.sh",
+        "layout/scripts/manifest.py",
+        "layout/vco_manifest.json"
+      ]
+    },
+    {
+      "number": 2057,
+      "gap": "Signoff tier item for power delivery (structural) added.",
+      "status": "merged",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2175,
+      "gap": "Signoff tier report names its checklist but does not pin the checklist content.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2176,
+      "gap": "With an external tiers doc, the doc's item list and the build's grading logic can diverge silently.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2192,
+      "gap": "Design spike for ERC well/substrate-tap net continuity.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2201,
+      "gap": "Signoff report lacked per-item build-grading coverage and the build name.",
+      "status": "merged",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2234,
+      "gap": "ERC has no declarable tap for an implant-free stream, so the missing-tie half of the power-delivery item is unreachable for full-custom analog.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2511,
+      "gap": "Simulation requests cannot express an OSDI device, an ngspice compatibility mode, a save policy, or a multi-library corner axis.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "sim/oscillator-core/run_pilot_grid.sh",
+        "sim/phase-noise/run_isf_pilot.sh"
+      ]
+    },
+    {
+      "number": 2679,
+      "gap": "Curated deck's poly-resistor body/marker roles are inverted relative to the PDK's own PCell convention, so no drawn poly resistor is recognised.",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2688,
+      "gap": "Curated DRC contact rule drops the active-mask join, so every HBT contact false-positives.",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/scripts/activ_mask_overlay.py"
+      ]
+    },
+    {
+      "number": 2689,
+      "gap": "External-deck DRC engine cannot use the bundled KLayout and does not preflight the PATH one's DSL feature level.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/scripts/native_drc_env.sh"
+      ]
+    },
+    {
+      "number": 2690,
+      "gap": "Ring continuity check cannot scope its layer set, so a shared layer can report continuous from unrelated geometry.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/scripts/break_ring.py",
+        "layout/scripts/prune_spirals.py"
+      ]
+    },
+    {
+      "number": 2697,
+      "gap": "Zero-finding external-deck DRC runs can never be labelled clean; needs an opt-in coverage assertion.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/drc.sh"
+      ]
+    },
+    {
+      "number": 2698,
+      "gap": "Router via drops use a fixed contact constant that violates PDKs whose via rules are min-and-max.",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/scripts/floorplan.py"
+      ]
+    },
+    {
+      "number": 2806,
+      "gap": "No independent way to derive or check the expected rule-category set of an external-deck DRC run (count-only, input-dependent).",
+      "status": "closed",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/scripts/ihp_deck_categories.py",
+        "layout/scripts/ihp_deck_facts.py"
+      ]
+    },
+    {
+      "number": 2849,
+      "gap": "No device-aware LVS path when a PDK's own LVS runset recognises devices the curated deck lacks (no native-runset engine).",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/lvs.sh",
+        "layout/lvs/vco-lvs-record.json"
+      ]
+    },
+    {
+      "number": 2850,
+      "gap": "Extract writes its default netlist next to the input stream, so a read-only run drops a file into the source tree.",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "layout/lvs.sh"
+      ]
+    },
+    {
+      "number": 2851,
+      "gap": "Batch simulation: runner/client tool version mismatch surfaces only after instance launch as per-corner errors; no override or preflight.",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "sim/bn-substrate-tank/README.md"
+      ]
+    },
+    {
+      "number": 2870,
+      "gap": "Tiers: accept a PDK-runset LVS report as evidence for the LVS items (depends on the native-runset LVS gap).",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2877,
+      "gap": "Batch simulation: request features newer than the fleet runner fail the whole job instead of being refused client-side.",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "sim/bn-substrate-tank/README.md"
+      ]
+    },
+    {
+      "number": 2887,
+      "gap": "Signoff: no evidence form for the generator/netlist-freshness items (directory of committed artifacts).",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": []
+    },
+    {
+      "number": 2901,
+      "gap": "Batch runner older than the client silently drops newer request options under a warn-only version check.",
+      "status": "open",
+      "status_checked_on": "2026-10-09",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "sim/bn-substrate-tank/README.md"
+      ]
+    }
+  ]
+}

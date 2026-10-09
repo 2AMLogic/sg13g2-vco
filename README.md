@@ -108,6 +108,43 @@ If `python3 -m venv` is not available, `uv venv` followed by
 The `shellcheck-py` package provides a `shellcheck` binary for the same
 environment if your system does not have shellcheck.
 
+## klayout-tools friction ledger
+
+The friction protocol in [`CLAUDE.md`](CLAUDE.md) makes tool gaps a deliverable,
+so [`.github/klt-friction-ledger.json`](.github/klt-friction-ledger.json) lists
+every `2AMLogic/klayout-tools` issue this repository cites. Each entry has the
+issue number, a one-line generic description of the gap, its status as last
+checked (`open`, `closed` or `merged`) and the date, the klt version it was
+verified against (`klt_version_verified`), and the in-tree paths of the
+workarounds it justifies (`workarounds`, which may be empty). The ledger is
+hand-maintained and never queries the upstream tracker. The initial statuses
+were read once, by hand, on 2026-10-09 against klt 0.6.0.
+
+The `friction` gate (`check-all.sh friction`, part of `npm test` and CI) is
+offline and stdlib-only. It fails when:
+
+- a tracked file cites an issue (`klayout-tools#N`, `klayout-tools #N` or
+  `klayout-tools/issues/N`) that has no ledger entry. Files under
+  `sim/**/records/` are read for citations but never edited, because that
+  evidence is append-only; a ledger entry covers their citations instead;
+- a ledger entry lists a workaround path that does not exist;
+- an entry's `klt_version_verified` differs from
+  [`.github/klt-version`](.github/klt-version) and its optional `reverified`
+  field does not name the current pin.
+
+Adding a citation: add the ledger entry in the same change. Keep design detail
+out of the gap text and out of the upstream issue.
+
+Re-verify procedure on a pin bump: after changing `.github/klt-version`, run
+`check-all.sh friction`. Every entry now fails as stale, and the list is the
+re-check queue. For each one, read the upstream issue state, run or read the
+workaround to see whether it is still needed, remove or keep the workaround,
+update `status` and `status_checked_on`, and set `klt_version_verified` to the
+new pin. Set `"reverified": "<pin>"` instead only when you checked the entry
+at the new pin but deliberately keep the older stamp. Claims in prose that
+depended on a changed behavior are corrected in the same PR (never in
+`sim/**/records/`).
+
 ## License
 
 Apache-2.0.
