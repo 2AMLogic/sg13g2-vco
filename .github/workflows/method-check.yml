@@ -16,7 +16,7 @@ permissions:
 jobs:
   known-answer:
     runs-on: ubuntu-24.04   # apt ngspice is 42.x (pinned by runner image)
-    timeout-minutes: 10     # measured ~10 s of checks; generous for apt install
+    timeout-minutes: 10     # measured ~1 min of checks (incl. 38 s of deck rendering); generous for apt install
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

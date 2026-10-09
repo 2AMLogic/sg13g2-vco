@@ -35,7 +35,11 @@ record by adding a new record that supersedes it. Working output such as
 estimators in `lib.sh` on every push to `main` and every pull request:
 `oscillator-core/run_method_check.sh`, `phase-noise/run_method_check.sh`,
 `inductor-model/run_model_check.sh` (self-contained, loads no PDK model) and
-`oscillator-core/tests/test_emit_tuning.sh`. The same command runs locally:
+`oscillator-core/tests/test_emit_tuning.sh`, and (issue #113)
+`oscillator-core/tests/test_supply_stage2.sh` -- the DR-004 stage-2 supply
+sub-corner enumeration, rails in generated decks, nominal reproducibility,
+rail identity and escalation-report fixtures (renders decks, runs no PDK
+simulation). The same command runs locally:
 
     .github/scripts/run-method-checks.sh [artifact-dir]
 

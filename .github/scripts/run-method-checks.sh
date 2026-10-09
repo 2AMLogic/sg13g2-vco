@@ -105,6 +105,16 @@ if ! grep -q '^all cases passed$' "${ART}/logs/waveform-validity.log" || grep -q
   fail "waveform-validity: no 'all cases passed' line or a FAIL line in logs/waveform-validity.log"
 fi
 
+# DR-004 stage-2 supply sub-corners (issue #113): enumeration, rails in
+# generated decks, nominal reproducibility, rail identity and the escalation
+# report on synthetic fixtures. Renders decks and runs no PDK simulation.
+MIN_S2="${METHOD_CHECK_MIN_S2:-79}"
+run_check supply-stage2 sim/oscillator-core/tests/test_supply_stage2.sh
+s2_pass="$(grep -c '^PASS ' "${ART}/logs/supply-stage2.log" || true)"
+if [[ "${s2_pass}" -lt "${MIN_S2}" ]] || grep -q '^FAIL ' "${ART}/logs/supply-stage2.log"; then
+  fail "supply-stage2: ${s2_pass} PASS lines (minimum ${MIN_S2}) or a FAIL line in logs/supply-stage2.log"
+fi
+
 # Ship the freshly generated evidence (disposable copy only) for diagnosis.
 comm -13 "${ART}/files.before" <(find sim -type f | sort) > "${ART}/files.new"
 if [[ -s "${ART}/files.new" ]]; then

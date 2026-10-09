@@ -585,3 +585,48 @@ are historical evidence and are not rewritten. PDK-free check:
 - **This ratifies no `spec/target-spec.md` row**, including row 3, whose
   evidence it supplies. Ratification is a `spec/decision-records/` PR.
 - **No layout, DRC, LVS or post-layout anything.** Later in the sequence.
+
+## DR-004 stage 2: supply sub-corners (issue #113)
+
+`spec/decision-records/DR-004-target-spec-ratification-pass-2.md` activates 18
+supply sub-corners on top of the nominal-rail stage-1 grid:
+`{2.970, 3.630} V x {SLOW, TYP, FAST} x {-40, 27, 125} C`, with the process
+vertices *aggregate* (SLOW = `ss`/`hbt_wcs`/`cap_wcs`, TYP =
+`tt`/`hbt_typ`/`cap_typ`, FAST = `ff`/`hbt_bcs`/`cap_bcs`), reporting rows
+1/4/6/7/8. `run_pvt_sweep.sh` is unchanged and remains stage 1.
+
+| File | Role |
+|---|---|
+| `supply_stage2.sh` | PDK-free definition: the 18 points, mappings, the margin-pass subset, and the escalation rule `s2_status` |
+| `run_supply_stage2.sh` | rows 1/6/7/8 driver (`--list`/`--check` need no PDK; a real run is a ~27 CPU-hour fleet job -- **not for a shared dispatch host**) |
+| `../phase-noise/run_supply_stage2.sh` | row 4: the existing ISF pilot per sub-corner via `PILOT_*` overrides (~14 CPU-hours) |
+| `report_supply_stage2.sh` | PDK-free report: per-point row results, comparison with the matching stage-1 margin, `ESCALATION_REQUIRED` / `NO_ESCALATION` / `INSUFFICIENT`, row 7 `MISSING` |
+| `tests/test_supply_stage2.sh` | CI check (`method-check.yml`): enumeration, rails in decks, nominal reproducibility, rail identity, fixtures |
+
+**Rail parameterization.** `osc_bench.sh`'s `OSC_VSUP_V` (empty = nominal
+3.3 V) is applied in exactly one place, `osc_render`, which rewrites the device
+section's single `VSUP` line, the `Bvcm` common-mode offset and the startup
+`.ic` (centred on the rail, same 10 mV perturbation); core power is current x
+that rail. At the nominal rail decks are byte-identical to before. Stage-2 CSVs
+gain a trailing `vsup_v` column (`OSC_CSV_RAIL=1`), point ids contain the rail,
+and `osc_emit_tuning` *requires* the rail for a rail-tagged CSV, so a curve can
+never be aggregated across rails.
+
+**Escalation rule** (DR-004 stage 3). Margins are positive inside a bound.
+Escalate when `|m2 - m1| > m1` (DR-004's "moves ... by more than the margin
+stage 1 left", read literally; equality does not escalate), or, when stage 1 left no
+margin (`m1 <= 0`), when stage 2 is worse. Escalation routes to a superseding
+decision record; nothing here edits `spec/` or launches the 405-point cross.
+The overall status is `NO_ESCALATION` only when every required (row, point) was
+compared, so a missing baseline, an invalid/incomplete point or differing
+design/model provenance reads `INSUFFICIENT_EVIDENCE`, never a pass.
+
+**Row 7** is reported `MISSING` per point: the waveform-compliance grader of
+issue #112 is not in this tree and is not duplicated here. Until it is
+integrated the overall status can not read `NO_ESCALATION`.
+
+```
+sim/oscillator-core/run_supply_stage2.sh --list     # the 18 points, no PDK
+sim/oscillator-core/report_supply_stage2.sh --stage2-osc records/<s2-id> \
+    --baseline-osc records/<stage1-id> [--stage2-pn ...] [--baseline-pn ...] --out records/<new-id>
+```

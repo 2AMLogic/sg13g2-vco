@@ -81,10 +81,16 @@ source "${SIM_DIR}/oscillator-core/osc_bench.sh"
 source "${EXPERIMENT_DIR}/pn_bench.sh"
 
 # ---------------------------------------------------------- the declared corner
-PILOT_MOS="tt"
-PILOT_CAP="cap_typ"
-PILOT_HBT="hbt_typ"
-PILOT_TEMP="27"
+# Defaults are the nominal corner and rail. The environment overrides exist so
+# the DR-004 stage-2 supply driver (run_supply_stage2.sh, issue #113) can run
+# this same estimator at an aggregate process vertex and a non-nominal rail;
+# with nothing set, behaviour is unchanged. PILOT_VSUP_V empty = nominal rail.
+PILOT_MOS="${PILOT_MOS:-tt}"
+PILOT_CAP="${PILOT_CAP:-cap_typ}"
+PILOT_HBT="${PILOT_HBT:-hbt_typ}"
+PILOT_TEMP="${PILOT_TEMP:-27}"
+# shellcheck disable=SC2034  # read by osc_bench.sh osc_rail
+OSC_VSUP_V="${PILOT_VSUP_V:-}"
 
 osc_preflight
 
@@ -107,7 +113,7 @@ echo "phase-noise ISF PILOT   record ${RECORD_ID}"
 echo "ONE CORNER. THIS GRADES NO spec/target-spec.md ROW."
 echo "---------------------------------------------------------------"
 echo "corner            : mos_${PILOT_MOS} / ${PILOT_CAP} / ${PILOT_HBT}, ${PILOT_TEMP} C,"
-echo "                    Vctrl = ${PN_VCTRL} V, V_DD = ${OSC_VDD_NOM} V"
+echo "                    Vctrl = ${PN_VCTRL} V, V_DD = $(osc_rail) V"
 echo "transient         : tran ${PN_TSTEP} ${PN_TSTOP_S}, ceiling ${PN_TMAX},"
 echo "                    crossings compared from ${PN_TMEAS_START} s"
 echo "impulse train     : ${PN_N_IMP} impulses, first at ${PN_IMP_T1} s,"
@@ -287,6 +293,12 @@ RATE_PS_PER_S="$(awk -v t="${T_WALL_REF}" -v ts="${PN_TSTOP_S}" \
 GRID_HOURS="$(awk -v t="${T_WALL_TOTAL}" -v n="${N_RUNS}" 'BEGIN{ printf "%.0f", 135*t/3600 }')"
 
 {
+  echo "mos,${PILOT_MOS},,process model section"
+  echo "cap,${PILOT_CAP},,process model section"
+  echo "hbt,${PILOT_HBT},,process model section"
+  echo "temp_c,${PILOT_TEMP},C,simulation temperature"
+  echo "vctrl_v,${PN_VCTRL},V,control voltage"
+  echo "vsup_v,$(osc_rail),V,supply rail simulated (startup .ic centred on it)"
   echo "f0_measured,${F0_MEAS},Hz,crossing-counted over the reference run"
   echo "vpp_diff,${VPP_MEAS},V,peak-to-peak of v(OUTP)-v(OUTN) over the measurement window"
   echo "si_tank,${SI_TANK},A^2/Hz,input-referred one-sided noise current at the differential tank port"
@@ -330,6 +342,12 @@ GRID_HOURS="$(awk -v t="${T_WALL_TOTAL}" -v n="${N_RUNS}" 'BEGIN{ printf "%.0f",
   echo "  orientation. **Measuring a row is not ratifying it**, and a number"
   echo "  that misses a bound is recorded as a miss -- this experiment does not"
   echo "  edit \`spec/target-spec.md\`."
+  echo "- **Supply rail**: $(osc_rail) V (the startup \`.ic\` is centred on it)."
+  if ! osc_rail_is_nominal; then
+    echo "  This is a DR-004 stage-2 supply sub-corner run (issue #113); read"
+    echo "  it with \`sim/oscillator-core/report_supply_stage2.sh\`, never"
+    echo "  alongside nominal-rail numbers as if they shared a rail."
+  fi
   echo
   echo "## Method"
   echo

@@ -100,6 +100,35 @@ OSC_IC_DIFF_MV="10"
 OSC_IC_OUTP="3.305"
 OSC_IC_OUTN="3.295"
 
+# SUPPLY RAIL (issue #113, DR-004 stage 2). OSC_VSUP_V is the rail a run
+# simulates; EMPTY means the nominal rail (OSC_VDD_NOM) and leaves every
+# generated deck, CSV and column byte-identical to the stage-1 behaviour. A
+# non-nominal rail is carried through ONE place (osc_render) so the device
+# section's VSUP, the common-mode observation offset, the startup .ic and the
+# power calculation can never disagree about the rail. OSC_CSV_RAIL=1 (set by
+# the stage-2 driver only) appends a `vsup_v` identity column to the CSVs so a
+# row can never be aggregated across rails; nominal records keep their columns.
+OSC_VSUP_V="${OSC_VSUP_V:-}"
+OSC_CSV_RAIL="${OSC_CSV_RAIL:-0}"
+
+# osc_rail -- the rail in volts this run simulates, as text.
+osc_rail() { echo "${OSC_VSUP_V:-${OSC_VDD_NOM}}"; }
+
+# osc_rail_is_nominal -- exit 0 when the active rail equals OSC_VDD_NOM.
+osc_rail_is_nominal() {
+  awk -v a="$(osc_rail)" -v b="${OSC_VDD_NOM}" \
+    'BEGIN { d = a - b; if (d < 0) d = -d; exit (d < 1e-9) ? 0 : 1 }'
+}
+
+# osc_rail_ic -- "<outp> <outn>": the startup .ic pair, centred on the active
+# rail with the same OSC_IC_DIFF_MV perturbation. At the nominal rail this is
+# the OSC_IC_OUTP/OSC_IC_OUTN constants verbatim.
+osc_rail_ic() {
+  if osc_rail_is_nominal; then echo "${OSC_IC_OUTP} ${OSC_IC_OUTN}"; return 0; fi
+  awk -v r="$(osc_rail)" -v d="${OSC_IC_DIFF_MV}" \
+    'BEGIN { h = d * 1e-3 / 2; printf "%.6g %.6g\n", r + h, r - h }'
+}
+
 # Margin (row-6) proxy. See testbench/tb_vco_core_margin.spice.tmpl's header.
 # RREF multipliers; rung 1 is the netlist's own nominal. The ladder keeps its
 # finest spacing around the row-6 bound of 3.0 (rungs at 2/3/4) so a corner
@@ -329,15 +358,19 @@ osc_render() {
   local tmpl="$1" out="$2" corner_id="$3"
   shift 3
 
+  local rail ic_outp ic_outn
+  rail="$(osc_rail)"
+  read -r ic_outp ic_outn <<<"$(osc_rail_ic)"
+
   sed \
     -e "s|@@RECORD_ID@@|${RECORD_ID}|g" \
     -e "s|@@CORNER_ID@@|${corner_id}|g" \
     -e "s|@@MODELS_DIR@@|${SG13G2_NGSPICE_MODELS}|g" \
     -e "s|@@IND_MODEL@@|${OSC_IND_MODEL}|g" \
     -e "s|@@OSDI_MOSVAR@@|${OSC_OSDI_MOSVAR}|g" \
-    -e "s|@@VDD_NOM@@|${OSC_VDD_NOM}|g" \
-    -e "s|@@IC_OUTP@@|${OSC_IC_OUTP}|g" \
-    -e "s|@@IC_OUTN@@|${OSC_IC_OUTN}|g" \
+    -e "s|@@VDD_NOM@@|${rail}|g" \
+    -e "s|@@IC_OUTP@@|${ic_outp}|g" \
+    -e "s|@@IC_OUTN@@|${ic_outn}|g" \
     -e "s|@@IC_DIFF_MV@@|${OSC_IC_DIFF_MV}|g" \
     -e "s|@@TSTEP@@|${OSC_TSTEP}|g" \
     -e "s|@@TSTOP@@|${OSC_TSTOP}|g" \
@@ -347,10 +380,28 @@ osc_render() {
     "$@" \
     "${tmpl}" > "${out}.pre"
 
-  awk -v body="${OSC_VCO_BODY}" '
-    /^@@VCO_BODY@@[[:space:]]*$/ { while ((getline line < body) > 0) print line; next }
+  # The device section's own `VSUP VDD 0 dc <v>` line is the ONLY place the
+  # rail lives in the netlist. At a non-nominal rail it is rewritten here --
+  # exactly one line, loudly -- and nowhere else; at the nominal rail the body
+  # is spliced verbatim.
+  local rewrite=0
+  osc_rail_is_nominal || rewrite=1
+  awk -v body="${OSC_VCO_BODY}" -v rewrite="${rewrite}" -v rail="${rail}" '
+    /^@@VCO_BODY@@[[:space:]]*$/ {
+      while ((getline line < body) > 0) {
+        if (rewrite && line ~ /^VSUP[ \t]+VDD[ \t]+0[ \t]+dc[ \t]+[-+0-9.eE]+/) {
+          sub(/dc[ \t]+[-+0-9.eE]+/, "dc " rail, line); nsub++
+        }
+        print line
+      }
+      next
+    }
     { print }
-  ' "${out}.pre" > "${out}"
+    END { if (rewrite && nsub != 1) exit 3 }
+  ' "${out}.pre" > "${out}" || {
+    echo "error: could not rewrite exactly one 'VSUP VDD 0 dc <v>' line for rail ${rail} V in ${out}." >&2
+    return 1
+  }
   rm -f "${out}.pre"
 
   if grep -vE '^[[:space:]]*\*' "${out}" | grep -q '@@'; then
@@ -610,7 +661,7 @@ osc_simulate_point() {
   local row
   row="$(awk -v vpp_cm="${vpp_cm}" -v vpp_d="${vpp_d}" -v f_cm="${f_cm}" \
              -v f_tail="${f_tail}" -v f_osc="${f_osc}" -v isup_avg="${isup_avg}" \
-             -v isup_op="${isup_op:-nan}" -v vdd="${OSC_VDD_NOM}" 'BEGIN {
+             -v isup_op="${isup_op:-nan}" -v vdd="$(osc_rail)" 'BEGIN {
     r_cm    = (vpp_d  > 0 && vpp_cm != "nan") ? vpp_cm / vpp_d : "nan"
     fr_cm   = (f_osc  > 0 && f_cm   != "nan") ? f_cm   / f_osc : "nan"
     fr_tail = (f_osc  > 0 && f_tail != "nan") ? f_tail / f_osc : "nan"
@@ -624,7 +675,7 @@ osc_simulate_point() {
   local r_cm fr_cm fr_tail iop p_op p_ls
   IFS=, read -r r_cm fr_cm fr_tail iop p_op p_ls _ <<<"${row}"
 
-  echo "${corner_id},${mos},${cap},${hbt},${temp},${vctrl},${tmax},${status},${f_osc},${cycles},${dtmax},${floor_i},${floor_c},${vpp_d},${t_settle},${vpp_cm},${r_cm},${f_cm},${fr_cm},${f_tail},${fr_tail},${vtail_op:-nan},${vtail_mean},${iop},${isup_avg},${p_op},${p_ls},${meas_status},${meas_reason:--},${vtail_min},${t_tail_min},${vpp_tail},${vtail_min_err},${vpp_d_err},${vdd},${vce},${vce_up}" >> "${CSV_OUT}"
+  echo "${corner_id},${mos},${cap},${hbt},${temp},${vctrl},${tmax},${status},${f_osc},${cycles},${dtmax},${floor_i},${floor_c},${vpp_d},${t_settle},${vpp_cm},${r_cm},${f_cm},${fr_cm},${f_tail},${fr_tail},${vtail_op:-nan},${vtail_mean},${iop},${isup_avg},${p_op},${p_ls},${meas_status},${meas_reason:--},${vtail_min},${t_tail_min},${vpp_tail},${vtail_min_err},${vpp_d_err},${vdd},${vce},${vce_up}$(osc_csv_rail_suffix)" >> "${CSV_OUT}"
 
   printf "[%s] %s  f=%s Hz  Vpp_d=%s V  t_settle=%s s  P_ls=%s W  (rc=%s model_error=%s meas=%s%s)\n" \
          "${corner_id}" "${status}" "${f_osc}" "${vpp_d}" "${t_settle}" "${p_ls}" \
@@ -718,7 +769,7 @@ osc_margin_corner() {
       osc=yes
     fi
 
-    echo "${base},${mos},${cap},${hbt},${temp},${rung},${rr},${itail},${vte_mean},${vtail_mean},${vpp_late},${f_late},${crit},${osc}" >> "${MARGIN_CSV}"
+    echo "${base},${mos},${cap},${hbt},${temp},${rung},${rr},${itail},${vte_mean},${vtail_mean},${vpp_late},${f_late},${crit},${osc}$(osc_csv_rail_suffix)" >> "${MARGIN_CSV}"
 
     if [[ ${rung} -eq 1 ]]; then i_nom="${itail}"; fi
     if [[ "${osc}" == "yes" ]]; then
@@ -745,7 +796,7 @@ osc_margin_corner() {
     }
     printf "%s,%s,%s\n", lo, hi, v
   }')"
-  echo "${base},${mos},${cap},${hbt},${temp},${i_nom},${i_last_osc},${i_first_fail},${summary},${OSC_ROW6_MARGIN},rc=${rc},model_error=${model_error}" >> "${MARGIN_SUM_CSV}"
+  echo "${base},${mos},${cap},${hbt},${temp},${i_nom},${i_last_osc},${i_first_fail},${summary},${OSC_ROW6_MARGIN},rc=${rc},model_error=${model_error}$(osc_csv_rail_suffix)" >> "${MARGIN_SUM_CSV}"
   printf "[%s] margin_proxy %s  (I_nom=%s A, last-osc=%s A, first-fail=%s A)\n" \
          "${corner_id}" "${summary}" "${i_nom}" "${i_last_osc}" "${i_first_fail}"
 
@@ -759,13 +810,19 @@ osc_margin_corner() {
 # writes, so a reader of an old record and a reader of the script never
 # disagree about what column 14 was.
 # --------------------------------------------------------------------------
+osc_csv_rail_suffix() {
+  if [[ "${OSC_CSV_RAIL}" == "1" ]]; then echo ",$(osc_rail)"; fi
+}
+
 osc_write_csv_headers() {
-  echo "corner_id,mos,cap,hbt,temp_c,vctrl_v,tmax,status,f_osc_hz,cycles,dt_max_s,quant_floor_interp_pct,quant_floor_count_pct,vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w,meas_status,meas_reason,v_tail_min_v,t_tail_min_s,v_tail_pp_v,v_tail_min_err_v,vpp_diff_err_v,vdd_v,vce_max_v,vce_max_upper_v" > "${CSV_OUT}"
+  local rc=""
+  [[ "${OSC_CSV_RAIL}" == "1" ]] && rc=",vsup_v"
+  echo "corner_id,mos,cap,hbt,temp_c,vctrl_v,tmax,status,f_osc_hz,cycles,dt_max_s,quant_floor_interp_pct,quant_floor_count_pct,vpp_diff_v,t_settle_s,vpp_cm_v,vpp_cm_over_diff,f_cm_hz,f_cm_over_diff,f_tail_hz,f_tail_over_diff,v_tail_dc_op_v,v_tail_mean_v,isup_dc_op_a,isup_ls_avg_a,p_core_dc_op_w,p_core_ls_w,meas_status,meas_reason,v_tail_min_v,t_tail_min_s,v_tail_pp_v,v_tail_min_err_v,vpp_diff_err_v,vdd_v,vce_max_v,vce_max_upper_v${rc}" > "${CSV_OUT}"
   if [[ -n "${TUNING_CSV:-}" ]]; then
-    echo "mos,cap,hbt,temp_c,n_points,f_min_hz,f_max_hz,v_at_f_min,v_at_f_max,tuning_ratio,tuning_pct,f_center_geo_hz,kvco_mean_hz_per_v,kvco_peak_hz_per_v,kvco_min_hz_per_v,kvco_linearity_pct,quant_floor_worst_pct,row1_verdict,row2_verdict,row2_stretch_verdict" > "${TUNING_CSV}"
+    echo "mos,cap,hbt,temp_c,n_points,f_min_hz,f_max_hz,v_at_f_min,v_at_f_max,tuning_ratio,tuning_pct,f_center_geo_hz,kvco_mean_hz_per_v,kvco_peak_hz_per_v,kvco_min_hz_per_v,kvco_linearity_pct,quant_floor_worst_pct,row1_verdict,row2_verdict,row2_stretch_verdict${rc}" > "${TUNING_CSV}"
   fi
   if [[ -n "${KVCO_CSV:-}" ]]; then
-    echo "mos,cap,hbt,temp_c,v_lo,v_hi,v_mid,f_lo_hz,f_hi_hz,kvco_hz_per_v" > "${KVCO_CSV}"
+    echo "mos,cap,hbt,temp_c,v_lo,v_hi,v_mid,f_lo_hz,f_hi_hz,kvco_hz_per_v${rc}" > "${KVCO_CSV}"
   fi
   if [[ -n "${ROW3_CSV:-}" ]]; then
     osc_row3_header > "${ROW3_CSV}"
@@ -774,10 +831,10 @@ osc_write_csv_headers() {
     osc_row7_header > "${ROW7_CSV}"
   fi
   if [[ -n "${MARGIN_CSV:-}" ]]; then
-    echo "corner,mos,cap,hbt,temp_c,rung,rref_ohm,itail_a,v_te_mean_v,v_tail_mean_v,vpp_diff_late_v,f_late_hz,osc_criterion_v,oscillates" > "${MARGIN_CSV}"
+    echo "corner,mos,cap,hbt,temp_c,rung,rref_ohm,itail_a,v_te_mean_v,v_tail_mean_v,vpp_diff_late_v,f_late_hz,osc_criterion_v,oscillates${rc}" > "${MARGIN_CSV}"
   fi
   if [[ -n "${MARGIN_SUM_CSV:-}" ]]; then
-    echo "corner,mos,cap,hbt,temp_c,itail_nominal_a,itail_last_osc_a,itail_first_fail_a,margin_lower_bound,margin_upper_bound,row6_verdict,row6_bound,ngspice_rc,model_error" > "${MARGIN_SUM_CSV}"
+    echo "corner,mos,cap,hbt,temp_c,itail_nominal_a,itail_last_osc_a,itail_first_fail_a,margin_lower_bound,margin_upper_bound,row6_verdict,row6_bound,ngspice_rc,model_error${rc}" > "${MARGIN_SUM_CSV}"
   fi
 }
 
@@ -816,19 +873,38 @@ osc_write_csv_headers() {
 # two PASS points stays INSUFFICIENT. Column layout is unchanged.
 osc_emit_tuning() {
   local mos="$1" cap="$2" hbt="$3" temp="$4" tmax="${5:-${OSC_TMAX}}"
-  local vlist="${6:-}"
+  local vlist="${6:-}" rail="${7:-}"
   if [[ -z "${vlist// /}" ]]; then
     echo "osc_emit_tuning: expected Vctrl list (6th argument) is required" >&2
     return 2
   fi
-  awk -F, -v vlist="${vlist}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
+  # Rail identity (issue #113). A CSV that carries a vsup_v column (stage 2)
+  # holds rows from several rails, so the rail is a REQUIRED 7th argument and
+  # rows of any other rail are excluded: a curve is never aggregated across
+  # rails. A CSV without the column is single-rail by construction and must
+  # not be given one.
+  # The rail column is located by NAME: it trails the point columns, whose
+  # count grew with the row-7 columns (#112), so no fixed index is assumed.
+  local csv_has_rail=0 rail_col
+  rail_col="$(head -1 "${CSV_OUT}" | awk -F, '{ for (i = 1; i <= NF; i++) if ($i == "vsup_v") { print i; exit } print 0 }')"
+  [[ "${rail_col}" -gt 0 ]] && csv_has_rail=1
+  if [[ "${csv_has_rail}" == 1 && -z "${rail}" ]]; then
+    echo "osc_emit_tuning: ${CSV_OUT} has a vsup_v column; the rail (7th argument) is required to prevent mixed-rail aggregation" >&2
+    return 2
+  fi
+  if [[ "${csv_has_rail}" == 0 && -n "${rail}" ]]; then
+    echo "osc_emit_tuning: a rail was given but ${CSV_OUT} has no vsup_v column" >&2
+    return 2
+  fi
+  awk -F, -v vlist="${vlist}" -v rail="${rail}" -v rc="${rail_col}" -v mos="${mos}" -v cap="${cap}" -v hbt="${hbt}" -v temp="${temp}" \
       -v tmax="${tmax}" \
       -v f1lo="${OSC_ROW1_F_MIN_HZ}" -v f1hi="${OSC_ROW1_F_MAX_HZ}" \
       -v r2="${OSC_ROW2_RATIO}" -v r2s="${OSC_ROW2_RATIO_STRETCH}" \
       -v kvco_csv="${KVCO_CSV:-/dev/null}" '
-    BEGIN { ne = split(vlist, ev, " ") }
+    function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
+    BEGIN { ne = split(vlist, ev, " "); rs = (rail == "") ? "" : "," rail }
     NR == 1 { next }
-    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax {
+    $2 == mos && $3 == cap && $4 == hbt && $5 == temp && $7 == tmax && (rail == "" || near($rc, rail)) {
       x = $6 + 0; ix = 0
       for (e = 1; e <= ne; e++) { d = x - ev[e]; if (d < 0) d = -d; if (d < 1e-9) { ix = e; break } }
       if (ix == 0) unexpected = 1
@@ -843,8 +919,8 @@ osc_emit_tuning() {
       complete = !unexpected
       for (e = 1; e <= ne; e++) if (rows[e] != 1 || passrows[e] != 1) complete = 0
       if (n < 2) {
-        printf "%s,%s,%s,%s,%d,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,INSUFFICIENT,INSUFFICIENT,INSUFFICIENT\n", \
-               mos, cap, hbt, temp, n
+        printf "%s,%s,%s,%s,%d,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,INSUFFICIENT,INSUFFICIENT,INSUFFICIENT%s\n", \
+               mos, cap, hbt, temp, n, rs
         exit
       }
       # the rows arrive in the sweep order the caller used, which is
@@ -871,9 +947,9 @@ osc_emit_tuning() {
         ak = (k < 0) ? -k : k
         if (kpk == "" || ak > apk) { apk = ak; kpk = k }
         if (kmn == "" || ak < amn) { amn = ak; kmn = k }
-        printf "%s,%s,%s,%s,%.6g,%.6g,%.6g,%.6e,%.6e,%.6e\n", \
+        printf "%s,%s,%s,%s,%.6g,%.6g,%.6g,%.6e,%.6e,%.6e%s\n", \
                mos, cap, hbt, temp, v[i], v[i+1], 0.5*(v[i]+v[i+1]), \
-               f[i], f[i+1], k >> kvco_csv
+               f[i], f[i+1], k, rs >> kvco_csv
       }
       kmean = (kn > 0) ? ksum / kn : "nan"
       lin = "nan"
@@ -900,9 +976,9 @@ osc_emit_tuning() {
         else if (ratio >= r2s * (1 - floorfrac)) row2s = "WITHIN QUANTIZATION FLOOR OF BOUND"
       }
       if (!complete) { row1 = "INCOMPLETE"; row2 = "INCOMPLETE"; row2s = "INCOMPLETE" }
-      printf "%s,%s,%s,%s,%d,%.6e,%.6e,%.6g,%.6g,%.6f,%.4f,%.6e,%.6e,%.6e,%.6e,%s,%.6g,%s,%s,%s\n", \
+      printf "%s,%s,%s,%s,%d,%.6e,%.6e,%.6g,%.6g,%.6f,%.4f,%.6e,%.6e,%.6e,%.6e,%s,%.6g,%s,%s,%s%s\n", \
              mos, cap, hbt, temp, n, fmin, fmax, vmin, vmax, ratio, pct, fgeo, \
-             kmean, kpk, kmn, lin, worstfloor, row1, row2, row2s
+             kmean, kpk, kmn, lin, worstfloor, row1, row2, row2s, rs
     }' "${CSV_OUT}" >> "${TUNING_CSV}"
 }
 
