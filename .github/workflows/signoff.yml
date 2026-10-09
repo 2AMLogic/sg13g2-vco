@@ -34,9 +34,10 @@ permissions:
 jobs:
   signoff:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install pinned klt
         run: python3 -m pip install "klayout-tools==$(cat .github/klt-version)"
@@ -53,9 +54,10 @@ jobs:
   # resolve. Refresh: python3 .github/scripts/record_currency.py write
   record-currency:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
@@ -69,9 +71,10 @@ jobs:
   # PDK. Needs full history so the PR merge-base is resolvable.
   sim-append-only:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository (full history)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
@@ -90,9 +93,10 @@ jobs:
     # spec/decision-records/DR-NNN-slug.md in the same PR (issue #89).
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository (full history)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
