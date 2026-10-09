@@ -282,6 +282,8 @@ H37="$(OSC_CSV_RAIL=0 osc_row7_header)"
 # rail A = 2.970 V: vpp 0.80, tail min 2.0 -> VCE 2.97 + 0.2 - 2.0 = 1.17
 # rail B = 3.630 V: vpp 0.30 (swing NOT MET), tail min 1.2 -> VCE 2.505 (NOT MET)
 rgrid() { grid "$1" "$2" "$3" | sed "s/\$/,$3/"; }
+# OSC_CSV_RAIL is read by osc_write_csv_headers inside the command substitution.
+# shellcheck disable=SC2034
 { echo "$(OSC_CSV_RAIL=1; CSV_OUT="${W}/hh.csv"; unset ROW7_CSV; osc_write_csv_headers; cat "${W}/hh.csv")"
   rgrid 0.8 2.0 2.970; rgrid 0.3 1.2 3.630; } > "${W}/two.csv"
 two() { CSV_OUT="${W}/two.csv"; : > "${ROW7_CSV}"; osc_emit_row7 m c1 h 27 "${OSC_TMAX}" "${FULL}" "$@"; }
