@@ -1,0 +1,288 @@
+{
+  "counts": {
+    "current": 0,
+    "superseded": 0,
+    "unknown": 18
+  },
+  "records": [
+    {
+      "basis": "not-applicable",
+      "deck_integrity": {
+        "checked": 16,
+        "matched": 16,
+        "mismatched": [],
+        "unpaired": 0
+      },
+      "design_netlist_sha256": null,
+      "family": "sim/bn-substrate-tank",
+      "file_count": 83,
+      "filename_commit": {
+        "id": "383f22e",
+        "resolution": "resolved",
+        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      },
+      "path": "sim/bn-substrate-tank/records/20261009-002323-383f22e",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20261009-002323-383f22e",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/inductor-model/em-extraction",
+      "file_count": 5,
+      "filename_commit": {
+        "id": "3896421",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/inductor-model/em-extraction/records/20260910-052657-3896421.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260910-052657-3896421",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/inductor-model",
+      "file_count": 31,
+      "filename_commit": {
+        "id": "a73c3c7",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/inductor-model/records/20260906-160637-a73c3c7.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260906-160637-a73c3c7",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/inductor-model",
+      "file_count": 31,
+      "filename_commit": {
+        "id": "b61674c",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/inductor-model/records/20260909-132712-b61674c.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260909-132712-b61674c",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/inductor-model",
+      "file_count": 31,
+      "filename_commit": {
+        "id": "3896421",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/inductor-model/records/20260910-052743-3896421.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260910-052743-3896421",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 2,
+      "filename_commit": {
+        "id": "9c26531",
+        "resolution": "resolved",
+        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      },
+      "path": "sim/oscillator-core/records/20260926-002254-9c26531.md",
+      "reason": "filename-only provenance: the commit 9c26531 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "record_id": "20260926-002254-9c26531",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 6,
+      "filename_commit": {
+        "id": "e391693",
+        "resolution": "unresolved",
+        "source_sha256": null
+      },
+      "path": "sim/oscillator-core/records/20260926-010627-e391693.md",
+      "reason": "no explicit source hash; filename commit e391693 is unresolved",
+      "record_id": "20260926-010627-e391693",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 2,
+      "filename_commit": {
+        "id": "e391693",
+        "resolution": "unresolved",
+        "source_sha256": null
+      },
+      "path": "sim/oscillator-core/records/20260926-010713-e391693.md",
+      "reason": "no explicit source hash; filename commit e391693 is unresolved",
+      "record_id": "20260926-010713-e391693",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 2,
+      "filename_commit": {
+        "id": "762fc8e",
+        "resolution": "resolved",
+        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      },
+      "path": "sim/oscillator-core/records/20261001-231538-762fc8e.md",
+      "reason": "filename-only provenance: the commit 762fc8e proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "record_id": "20261001-231538-762fc8e",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/phase-noise",
+      "file_count": 3,
+      "filename_commit": {
+        "id": "7a02483",
+        "resolution": "resolved",
+        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      },
+      "path": "sim/phase-noise/records/20260926-071150-7a02483.md",
+      "reason": "filename-only provenance: the commit 7a02483 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "record_id": "20260926-071150-7a02483",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/phase-noise",
+      "file_count": 5,
+      "filename_commit": {
+        "id": "7a02483",
+        "resolution": "resolved",
+        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      },
+      "path": "sim/phase-noise/records/20260926-071903-7a02483.md",
+      "reason": "filename-only provenance: the commit 7a02483 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "record_id": "20260926-071903-7a02483",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/tank-characterization",
+      "file_count": 22,
+      "filename_commit": {
+        "id": "d3410d1",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/tank-characterization/records/20260906-135025-d3410d1.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260906-135025-d3410d1",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/tank-characterization",
+      "file_count": 23,
+      "filename_commit": {
+        "id": "a73c3c7",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/tank-characterization/records/20260906-160246-a73c3c7.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260906-160246-a73c3c7",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/tank-characterization",
+      "file_count": 23,
+      "filename_commit": {
+        "id": "b61674c",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/tank-characterization/records/20260909-132835-b61674c.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260909-132835-b61674c",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/tank-characterization",
+      "file_count": 23,
+      "filename_commit": {
+        "id": "3896421",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/tank-characterization/records/20260910-052245-3896421.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260910-052245-3896421",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/tank-characterization",
+      "file_count": 23,
+      "filename_commit": {
+        "id": "f88eb89",
+        "resolution": "resolved",
+        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      },
+      "path": "sim/tank-characterization/records/20260927-081110-f88eb89.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260927-081110-f88eb89",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/varactor-characterization",
+      "file_count": 220,
+      "filename_commit": {
+        "id": "de50891",
+        "resolution": "resolved-no-source",
+        "source_sha256": null
+      },
+      "path": "sim/varactor-characterization/records/20260909-231619-de50891.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260909-231619-de50891",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "design_netlist_sha256": null,
+      "family": "sim/varactor-characterization",
+      "file_count": 220,
+      "filename_commit": {
+        "id": "f88eb89",
+        "resolution": "resolved",
+        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+      },
+      "path": "sim/varactor-characterization/records/20260927-081226-f88eb89.md",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20260927-081226-f88eb89",
+      "state": "unknown"
+    }
+  ],
+  "schema": "sg13g2-vco/record-currency/1",
+  "source": "design/vco.spice",
+  "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+}

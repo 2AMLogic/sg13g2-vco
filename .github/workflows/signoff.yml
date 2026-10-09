@@ -47,6 +47,24 @@ jobs:
       - name: T1 verdict of record is current
         run: .github/scripts/check-all.sh signoff
 
+  # Record currency (issue #122): sim/record-currency.json is the derived
+  # index of which sim/**/records/ are current / superseded / unknown against
+  # design/vco.spice. Stdlib python3 + git, full history so filename commits
+  # resolve. Refresh: python3 .github/scripts/record_currency.py write
+  record-currency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Record-currency classifier self-test
+        run: .github/scripts/check-all.sh currency-selftest
+
+      - name: Record-currency index is fresh
+        run: .github/scripts/check-all.sh currency
+
   # Append-only sim/ evidence gate (issue #88). Pure bash + git: no klt, no
   # PDK. Needs full history so the PR merge-base is resolvable.
   sim-append-only:

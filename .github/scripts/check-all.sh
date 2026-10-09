@@ -19,6 +19,9 @@
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
 #   spec-dr-selftest      .github/scripts/test-check-spec-change-has-dr.sh
 #   runner-selftest       .github/scripts/test-check-all.sh
+#   currency-selftest     .github/scripts/test-record-currency.sh   python3
+#   currency              .github/scripts/check-record-currency.sh  python3
+#                         (sim/record-currency.json == fresh classification)
 #   py-selftest           .github/scripts/test-check-python.sh      python3
 #   py-compile            check-python.sh compile (py_compile, all tracked *.py)
 #   py-tests              check-python.sh tests (stdlib unittest, tests/stdlib)
@@ -31,7 +34,7 @@
 # Aggregates:
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest spec-dr-selftest runner-selftest
-#           py-selftest py-compile py-tests
+#           currency-selftest currency py-selftest py-compile py-tests
 #   ci    = lint + test
 #   all   = ci + signoff + py-klayout (only with the pinned klayout wheel)
 #           + pr-diff (only with --base) + method
@@ -200,6 +203,10 @@ gate() {
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-spec-change-has-dr.sh" "$@" ;;
     runner-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-all.sh" "$@" ;;
+    currency-selftest)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-record-currency.sh" "$@" ;;
+    currency)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-record-currency.sh" "$@" ;;
     py-selftest)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-check-python.sh" "$@" ;;
     py-compile)
@@ -246,6 +253,8 @@ agg_test() {
   gate record-id-selftest
   gate spec-dr-selftest
   gate runner-selftest
+  gate currency-selftest
+  gate currency
   gate py-selftest
   gate py-compile
   gate py-tests

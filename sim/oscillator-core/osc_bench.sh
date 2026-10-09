@@ -261,6 +261,32 @@ osc_provenance_md() {
   echo "  - \`mosvar.osdi\` (this run's build) sha256 \`$(sha256_of "${OSC_OSDI_MOSVAR}")\`"
 }
 
+# osc_write_source_provenance <sha256> <captured-copy>
+# Persist the source actually consumed, associated with the reserved record id:
+#   <experiment>/netlist-snapshots/<id>/design-vco.spice   (captured bytes)
+#   <experiment>/records/<id>-source-provenance.json       (sidecar)
+# Only when a record id is reserved for this run (RECORD_ID set and its
+# corners/<id> reservation directory exists); benches sourced without one
+# (fixtures, unit tests) derive exactly as before and write nothing.
+osc_write_source_provenance() {
+  local sha="$1" captured="$2"
+  [[ -n "${RECORD_ID:-}" && -n "${EXPERIMENT_DIR:-}" \
+     && -d "${EXPERIMENT_DIR}/corners/${RECORD_ID}" ]] || return 0
+  local rel_exp="${EXPERIMENT_DIR#"${REPO_ROOT}"/}"
+  local snap="${EXPERIMENT_DIR}/netlist-snapshots/${RECORD_ID}/design-vco.spice"
+  if [[ -e "${snap}" ]]; then
+    cmp -s "${snap}" "${captured}" || {
+      echo "error: ${snap} already exists with different content (append-only)" >&2
+      return 1
+    }
+  else
+    mkdir -p "$(dirname "${snap}")" && cp "${captured}" "${snap}" || return 1
+  fi
+  write_source_provenance "${EXPERIMENT_DIR}/records/${RECORD_ID}-source-provenance.json" \
+    "${RECORD_ID}" "design/vco.spice" "${sha}" \
+    "${rel_exp}/netlist-snapshots/${RECORD_ID}/design-vco.spice"
+}
+
 # --------------------------------------------------------------------------
 # osc_derive_body
 # Extract the DEVICE SECTION of design/vco.spice into ${WORKDIR}/vco_body.spice
@@ -283,8 +309,14 @@ osc_provenance_md() {
 osc_derive_body() {
   local src="${REPO_ROOT}/design/vco.spice"
   local out="${WORKDIR}/vco_body.spice"
+  local captured="${WORKDIR}/vco_source.spice" src_sha
 
-  if ! grep -q '^\*\*\*\* begin user architecture code' "${src}"; then
+  # Source capture (issue #122): copy design/vco.spice once and derive from
+  # the COPY, so the hash recorded in the provenance sidecar names exactly the
+  # bytes consumed; an edit during the run is detected below and fails it.
+  src_sha="$(snapshot_source "${src}" "${captured}")" || return 1
+
+  if ! grep -q '^\*\*\*\* begin user architecture code' "${captured}"; then
     echo "error: ${src} has no '**** begin user architecture code' marker." >&2
     echo "       osc_bench.sh splits the netlist there to separate the" >&2
     echo "       schematic-derived devices from the elaboration harness;" >&2
@@ -298,7 +330,10 @@ osc_derive_body() {
     /^\*\*/ { next }
     /^[[:space:]]*\.save[[:space:]]/ { next }
     { print }
-  ' "${src}" > "${out}"
+  ' "${captured}" > "${out}"
+
+  assert_source_unchanged "${src}" "${src_sha}" || return 1
+  osc_write_source_provenance "${src_sha}" "${captured}" || return 1
 
   # Every device line the circuit needs must be here. These three are the
   # load-bearing ones for this bench (the tank, the pair, the bias mirror);
