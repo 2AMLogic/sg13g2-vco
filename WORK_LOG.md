@@ -6,6 +6,17 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-09
 
+- **Issue #146** (closed): docs: track filed klayout-tools friction in a checked ledger tied to the klt pin
+- **PR #147**: docs: track filed klayout-tools friction in a checked ledger tied to the klt pin
+- **Issue #93** (closed): design: re-tune the tank against the corrected varactor bn=substrate netlist (band centre fell to ~4.3 GHz, tuning ratio ~1.11; #79 follow-up)
+- **PR #145**: design: #93 tank re-tune vs bn=substrate netlist -- no defensible candidate, decision needed
+- **Issue #139** (closed): ci: verify retained model-input manifests against committed snapshots
+- **PR #142**: ci: verify retained model-input manifests against committed snapshots
+- **Issue #138** (closed): ci: verify grader constants agree with ratified spec bounds
+- **PR #141**: ci: verify grader constants agree with ratified spec bounds
+- **Issue #137** (closed): sim: reject non-finite and incomplete phase-noise measurements
+- **PR #140**: sim: reject non-finite and incomplete phase-noise measurements
+- **Issue #122** (closed): ci: compute which sim records are current vs superseded against design/vco.spice
 - **PR #128**: ci: compute sim record currency against design/vco.spice (#122)
 - **Issue #129** (closed): analysis: PDK-free analytic tank screen to prune the #93 re-tune while the OSDI path (#94) is blocked
 - **PR #130**: analysis: PDK-free analytic tank screen with A/B known-answer test
