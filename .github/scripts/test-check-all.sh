@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# Self-test for check-all.sh (issue #117): a runner that turns failures or
+# skips into a pass is worse than no runner. Runs the REAL check-all.sh from
+# a scratch git repo whose children are logging stubs and whose PATH holds
+# stub tools (shellcheck, klt, python3, ngspice), so it needs no shellcheck,
+# klt, ngspice or PDK and never touches the real tree.
+#
+# Cases: aggregate order and success, child-failure propagation, absent
+# mandatory tool, missing / wrong-version ngspice (counted skip in `all`,
+# failure for `method`), --strict skip failure, argument forwarding, method
+# artifact-dir forwarding and failure, unavailable explicit refs, usage
+# errors.
+set -u
+HERE="$(cd "$(dirname "$0")" && pwd)"
+RUNNER_SRC="$HERE/check-all.sh"
+[ -x "$RUNNER_SRC" ] || { echo "FAIL: $RUNNER_SRC not executable" >&2; exit 1; }
+
+T="$(mktemp -d)"
+trap 'rm -rf "$T"' EXIT
+pass=0; fail=0
+ok()  { pass=$((pass + 1)); echo "PASS: $1"; }
+bad() { fail=$((fail + 1)); echo "FAIL: $1"; }
+
+# --- fixture repo: real runner, stub children ------------------------------
+F="$T/repo"
+mkdir -p "$F/.github/scripts" "$F/sim/tests"
+cp "$RUNNER_SRC" "$F/.github/scripts/check-all.sh"
+RUNNER="$F/.github/scripts/check-all.sh"
+for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
+         .github/scripts/test-check-signoff.sh .github/scripts/check-signoff.sh \
+         .github/scripts/test-check-sim-append-only.sh \
+         .github/scripts/check-sim-append-only.sh \
+         .github/scripts/test-check-spec-change-has-dr.sh \
+         .github/scripts/check-spec-change-has-dr.sh \
+         .github/scripts/test-check-all.sh .github/scripts/run-method-checks.sh \
+         sim/tests/test-reserve-record-id.sh; do
+  cat > "$F/$c" <<'EOF'
+#!/usr/bin/env bash
+n="$(basename "$0")"
+echo "$n${*:+ $*}" >> "$CALLS"
+[ ! -e "$FAILDIR/$n" ]
+EOF
+  chmod +x "$F/$c"
+done
+git -C "$F" init -q -b main
+git -C "$F" config user.email t@t
+git -C "$F" config user.name t
+git -C "$F" add -A
+git -C "$F" commit -q -m base
+echo two > "$F/two.txt"; git -C "$F" add two.txt; git -C "$F" commit -q -m two
+FIRST="$(git -C "$F" rev-parse HEAD~1)"
+
+# --- stub PATH ---------------------------------------------------------------
+BIN="$T/bin"; mkdir -p "$BIN"
+for t in bash git awk grep sed dirname basename cat rm mkdir mktemp env tr; do
+  p="$(command -v "$t")" || { echo "FAIL: host lacks $t" >&2; exit 1; }
+  ln -s "$p" "$BIN/$t"
+done
+for t in shellcheck klt python3; do
+  printf '#!/usr/bin/env bash\nexit 0\n' > "$BIN/$t"; chmod +x "$BIN/$t"
+done
+cat > "$BIN/ngspice" <<'EOF'
+#!/usr/bin/env bash
+echo "******"
+echo "** ${NGSPICE_VER:-ngspice-42} : Circuit level simulation program"
+EOF
+chmod +x "$BIN/ngspice"
+
+export CALLS="$T/calls" FAILDIR="$T/fail"
+mkdir -p "$FAILDIR"
+OUT="$T/out"
+
+# run_case <path-dir> <args...>: sets RC; output in $OUT, child calls in $CALLS.
+run_case() {
+  local path="$1"; shift
+  : > "$CALLS"
+  PATH="$path" "$RUNNER" "$@" > "$OUT" 2>&1
+  RC=$?
+}
+reset() { rm -f "$FAILDIR"/*; }
+calls() { tr '\n' '|' < "$CALLS"; }
+
+# PATH without ngspice / without klt
+NONG="$T/bin-nong"; mkdir -p "$NONG"
+for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; done
+NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
+for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
+
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|"
+
+# 1. test aggregate: six self-tests in workflow order, exit 0
+reset; run_case "$NONG" test
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '6 passed, 0 failed, 0 skipped' "$OUT"; then
+  ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
+
+# 2. ci = lint + test
+reset; run_case "$NONG" ci
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
+  ok "ci runs lint then the self-tests"; else bad "ci: rc=$RC calls=$(calls)"; fi
+
+# 3. child failure propagates, remaining gates still run
+reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '5 passed, 1 failed' "$OUT"; then
+  ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
+
+# 4. absent mandatory tool fails (child not run)
+reset; run_case "$NOKLT" test
+if [ "$RC" -eq 1 ] && grep -q 'MISSING TOOL: klt' "$OUT" && ! grep -q 'test-check-signoff' "$CALLS"; then
+  ok "missing klt -> exit 1, signoff self-test not run"; else bad "missing tool: rc=$RC"; fi
+reset; run_case "$NOKLT" signoff
+if [ "$RC" -eq 1 ] && [ ! -s "$CALLS" ]; then
+  ok "signoff target without klt -> exit 1"; else bad "signoff no klt: rc=$RC"; fi
+
+# 5. all without ngspice: counted skip, exit 0; --strict -> 1
+reset; run_case "$NONG" all
+if [ "$RC" -eq 0 ] && grep -q 'SKIPPED: method: ngspice 42 not found' "$OUT" \
+   && grep -q 'SKIPPED: pr-diff' "$OUT" && grep -q '0 failed, 2 skipped' "$OUT" \
+   && ! grep -q 'run-method-checks' "$CALLS" && grep -q '^check-signoff.sh$' "$CALLS"; then
+  ok "all without ngspice: counted skips, exit 0"; else bad "all skip: rc=$RC"; cat "$OUT"; fi
+reset; run_case "$NONG" --strict all
+if [ "$RC" -eq 1 ] && grep -q -- '--strict' "$OUT"; then
+  ok "all --strict with skips -> exit 1"; else bad "strict: rc=$RC"; fi
+reset; run_case "$NONG" all --strict   # npm run check:all -- --strict
+if [ "$RC" -eq 1 ] && grep -q -- '--strict' "$OUT"; then
+  ok "options after the aggregate (npm -- form) are honoured"; else bad "trailing strict: rc=$RC"; fi
+reset; run_case "$NONG" test extra
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "stray argument to an aggregate -> exit 2"; else bad "stray arg: rc=$RC"; fi
+
+# 6. wrong-version ngspice: skip in all, failure for method
+reset; NGSPICE_VER=ngspice-41 run_case "$BIN" --base HEAD all
+if [ "$RC" -eq 0 ] && grep -q 'SKIPPED: method: ngspice 42 not found (found ngspice-41)' "$OUT"; then
+  ok "ngspice-41 -> counted skip in all"; else bad "wrong version all: rc=$RC"; fi
+reset; NGSPICE_VER=ngspice-41 run_case "$BIN" method
+if [ "$RC" -eq 1 ] && [ ! -s "$CALLS" ]; then
+  ok "ngspice-41 -> method target fails, runner not started"; else bad "wrong version method: rc=$RC"; fi
+reset; run_case "$NONG" method
+if [ "$RC" -eq 1 ] && grep -q 'MISSING TOOL: ngspice 42 not found' "$OUT"; then
+  ok "no ngspice -> method target fails"; else bad "no ngspice method: rc=$RC"; fi
+
+# 7. method with ngspice 42: artifact dir forwarded; failure propagates
+reset; run_case "$BIN" method "$T/art"
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-method-checks.sh $T/art|" ]; then
+  ok "method forwards the artifact dir"; else bad "method fwd: rc=$RC calls=$(calls)"; fi
+reset; touch "$FAILDIR/run-method-checks.sh"; run_case "$BIN" method "$T/art"
+if [ "$RC" -eq 1 ]; then ok "method failure -> exit 1"; else bad "method failure: rc=$RC"; fi
+reset; run_case "$BIN" --strict --base HEAD --artifacts "$T/art" all
+if [ "$RC" -eq 0 ] && grep -q "^run-method-checks.sh $T/art$" "$CALLS" \
+   && grep -q '^check-sim-append-only.sh --base HEAD$' "$CALLS" \
+   && grep -q '^check-spec-change-has-dr.sh --base HEAD$' "$CALLS" \
+   && grep -q '0 failed, 0 skipped' "$OUT"; then
+  ok "all --strict with every tool and --base: no skips, exit 0"; else bad "all full: rc=$RC calls=$(calls)"; fi
+
+# 8. argument forwarding to single targets
+reset; run_case "$BIN" lint a.sh b.sh
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh a.sh b.sh|" ]; then
+  ok "lint forwards file args"; else bad "lint fwd: $(calls)"; fi
+reset; run_case "$BIN" spec-dr --base "$FIRST" --head HEAD
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-spec-change-has-dr.sh --base $FIRST --head HEAD|" ]; then
+  ok "spec-dr forwards --base/--head"; else bad "spec-dr fwd: $(calls)"; fi
+reset; run_case "$BIN" append-only
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-sim-append-only.sh|" ]; then
+  ok "append-only with no args keeps the checker's CI default"; else bad "append-only bare: $(calls)"; fi
+reset; touch "$FAILDIR/check-spec-change-has-dr.sh"; run_case "$BIN" pr-diff --base "$FIRST"
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "check-sim-append-only.sh --base $FIRST|check-spec-change-has-dr.sh --base $FIRST|" ]; then
+  ok "pr-diff runs both diff gates and propagates failure"; else bad "pr-diff fail: rc=$RC $(calls)"; fi
+
+# 9. unavailable explicit refs fail without running the gate
+reset; run_case "$BIN" spec-dr --base no-such-ref --head HEAD
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF: 'no-such-ref'" "$OUT" && [ ! -s "$CALLS" ]; then
+  ok "unavailable --base on spec-dr -> exit 1"; else bad "bad ref spec-dr: rc=$RC"; fi
+reset; run_case "$BIN" append-only --base no-such-ref
+if [ "$RC" -eq 1 ] && [ ! -s "$CALLS" ]; then
+  ok "unavailable --base on append-only -> exit 1"; else bad "bad ref append-only: rc=$RC"; fi
+reset; run_case "$BIN" --base no-such-ref all
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF" "$OUT"; then
+  ok "unavailable --base on all -> exit 1"; else bad "bad ref all: rc=$RC"; fi
+reset; run_case "$BIN" --base HEAD --head "$FIRST" pr-diff
+if [ "$RC" -eq 1 ] && grep -q 'not the checked-out HEAD' "$OUT" \
+   && [ "$(calls)" = "check-spec-change-has-dr.sh --base HEAD --head $FIRST|" ]; then
+  ok "pr-diff --head other than checked-out HEAD fails append-only"; else bad "head mismatch: rc=$RC $(calls)"; fi
+
+# 10. usage errors
+reset; run_case "$BIN" pr-diff
+if [ "$RC" -eq 2 ]; then ok "pr-diff without --base -> exit 2"; else bad "pr-diff no base: rc=$RC"; fi
+reset; run_case "$BIN" no-such-target
+if [ "$RC" -eq 2 ]; then ok "unknown target -> exit 2"; else bad "unknown target: rc=$RC"; fi
+reset; run_case "$BIN"
+if [ "$RC" -eq 2 ]; then ok "no target -> exit 2"; else bad "no target: rc=$RC"; fi
+
+echo "check-all self-test: $pass passed, $fail failed"
+[ "$fail" -eq 0 ]

@@ -3,7 +3,9 @@ name: method-check
 # PDK-free known-answer checks of the measurement estimators in sim/lib.sh
 # (issue #103). Runs from a disposable copy of the tracked tree; CI never
 # commits evidence. Artifacts are method diagnostics, not device signoff.
-# Local invocation: .github/scripts/run-method-checks.sh (see sim/README.md).
+# Local invocation: .github/scripts/check-all.sh method [artifact-dir] (the
+# shared runner, issue #117; it requires ngspice 42 and forwards the artifact
+# dir to .github/scripts/run-method-checks.sh -- see sim/README.md).
 
 on:
   push:
@@ -29,7 +31,7 @@ jobs:
           ngspice --version | grep -q 'ngspice-42' || { echo "expected ngspice-42" >&2; exit 1; }
 
       - name: Run known-answer checks
-        run: .github/scripts/run-method-checks.sh "${RUNNER_TEMP}/method-check-artifacts"
+        run: .github/scripts/check-all.sh method "${RUNNER_TEMP}/method-check-artifacts"
 
       - name: Upload logs and records
         if: always()

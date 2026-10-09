@@ -18,6 +18,10 @@ name: signoff
 # an all-unmet report is a correct verdict, not a CI failure. The
 # checker self-test runs first — a drift gate that cannot fail is
 # indistinguishable from no gate at all.
+#
+# Every step calls a named target of .github/scripts/check-all.sh, the shared
+# runner behind `npm test` / `npm run check:ci` / `npm run check:all` (issue
+# #117); the targets forward their arguments to the checkers unchanged.
 
 on:
   push:
@@ -38,10 +42,10 @@ jobs:
         run: python3 -m pip install "klayout-tools==$(cat .github/klt-version)"
 
       - name: Drift-checker self-test
-        run: .github/scripts/test-check-signoff.sh
+        run: .github/scripts/check-all.sh signoff-selftest
 
       - name: T1 verdict of record is current
-        run: .github/scripts/check-signoff.sh
+        run: .github/scripts/check-all.sh signoff
 
   # Append-only sim/ evidence gate (issue #88). Pure bash + git: no klt, no
   # PDK. Needs full history so the PR merge-base is resolvable.
@@ -54,14 +58,14 @@ jobs:
           fetch-depth: 0
 
       - name: Append-only checker self-test
-        run: .github/scripts/test-check-sim-append-only.sh
+        run: .github/scripts/check-all.sh append-only-selftest
 
       - name: Record-reservation self-test (no PDK, no simulator)
-        run: sim/tests/test-reserve-record-id.sh
+        run: .github/scripts/check-all.sh record-id-selftest
 
       - name: sim/ evidence is append-only
         if: github.event_name == 'pull_request'
-        run: .github/scripts/check-sim-append-only.sh
+        run: .github/scripts/check-all.sh append-only
 
   spec-change-has-dr:
     # Presence check: an edit to spec/target-spec.md needs a
@@ -75,9 +79,9 @@ jobs:
           fetch-depth: 0
 
       - name: Spec-DR checker self-test
-        run: .github/scripts/test-check-spec-change-has-dr.sh
+        run: .github/scripts/check-all.sh spec-dr-selftest
 
       - name: Spec edit carries a decision record
         run: |
-          .github/scripts/check-spec-change-has-dr.sh \
+          .github/scripts/check-all.sh spec-dr \
             --base "origin/${{ github.base_ref }}" --head "${{ github.event.pull_request.head.sha }}"
