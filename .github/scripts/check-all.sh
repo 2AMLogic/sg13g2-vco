@@ -34,6 +34,11 @@
 #                         stage-2 supply fixtures from a disposable copy of the
 #                         tracked tree; no ngspice/PDK; source-capture stays
 #                         in currency-selftest)
+#   model-inputs-selftest .github/scripts/test-model-inputs.sh      python3
+#   model-inputs          .github/scripts/check-model-inputs.sh     python3
+#                         (issue #139: committed model-input manifests ==
+#                         their retained snapshots; separate from currency,
+#                         never reads live model files)
 #   py-selftest           .github/scripts/test-check-python.sh      python3
 #   py-compile            check-python.sh compile (py_compile, all tracked *.py)
 #   py-tests              check-python.sh tests (stdlib unittest, tests/stdlib)
@@ -47,6 +52,7 @@
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest spec-dr-selftest runner-selftest
 #           grader-spec-selftest grader-spec currency-selftest currency
+#           model-inputs-selftest model-inputs
 #           grading-fixtures py-selftest py-compile py-tests
 #   ci    = lint + test
 #   all   = ci + signoff + py-klayout (only with the pinned klayout wheel)
@@ -224,6 +230,10 @@ gate() {
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-record-currency.sh" "$@" ;;
     currency)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-record-currency.sh" "$@" ;;
+    model-inputs-selftest)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-model-inputs.sh" "$@" ;;
+    model-inputs)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-model-inputs.sh" "$@" ;;
     grading-fixtures)
       need_tools "$g" git awk grep && run_gate "$g" "$SCRIPTS/run-grading-fixtures.sh" "$@" ;;
     py-selftest)
@@ -276,6 +286,8 @@ agg_test() {
   gate grader-spec
   gate currency-selftest
   gate currency
+  gate model-inputs-selftest
+  gate model-inputs
   gate grading-fixtures
   gate py-selftest
   gate py-compile

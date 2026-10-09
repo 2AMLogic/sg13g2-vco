@@ -151,6 +151,23 @@ only.** Records written before #133 are unchanged and carry no model manifest;
 their model digests were computed from live files when the narrative was
 written.
 
+**Committed-tree integrity gate** (issue #139). Run-time verification above
+happens only when a run publishes; `check-all.sh model-inputs`
+(`.github/scripts/model_inputs_check.py`, stdlib python3, no PDK) independently
+audits what is committed. For every `records/<id>-model-inputs.json` it checks
+the schema, that `record_id` equals the id in the filename, 64-hex digests,
+unique `(role, bundle_path)` identities, and that each non-null
+`retained_snapshot` is a safe relative path (no absolute, `.`/`..`, backslash or
+symlink) equal to `<experiment>/netlist-snapshots/<id>/model-inputs/<bundle_path>`,
+exists, and hashes to the declared `sha256`. `retained_snapshot: null` (PDK
+libraries, `mosvar.osdi`) is accepted and never demanded. Only the manifest and
+the retained snapshot bytes are read -- never live models -- so editing today's
+inductor model cannot invalidate a historical capture. Records with no
+manifest (everything before #133) are listed as `legacy / not checked`, not
+counted as verified. The gate is separate from record currency, which still
+concerns `design/vco.spice` only. Fixture self-test:
+`check-all.sh model-inputs-selftest`.
+
 **Refresh** after any `design/vco.spice` change or new record:
 `python3 .github/scripts/record_currency.py write`, commit the index. CI gates:
 `check-all.sh currency` (index equals fresh classification; in a shallow clone
