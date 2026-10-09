@@ -88,6 +88,11 @@ if ! grep -q '^PASS ' "${ART}/logs/emit-tuning.log" || grep -q '^FAIL ' "${ART}/
   fail "emit-tuning: no PASS lines or a FAIL line in logs/emit-tuning.log"
 fi
 
+run_check row3-grade sim/oscillator-core/tests/test_row3.sh
+if ! grep -q '^PASS ' "${ART}/logs/row3-grade.log" || grep -q '^FAIL ' "${ART}/logs/row3-grade.log"; then
+  fail "row3-grade: no PASS lines or a FAIL line in logs/row3-grade.log"
+fi
+
 # Ship the freshly generated evidence (disposable copy only) for diagnosis.
 comm -13 "${ART}/files.before" <(find sim -type f | sort) > "${ART}/files.new"
 if [[ -s "${ART}/files.new" ]]; then
