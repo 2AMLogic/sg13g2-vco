@@ -5,6 +5,9 @@
 #   2. GDS bytes changed        -> FAILS
 #   3. one record digest edited -> FAILS
 #   4. one record omits digest  -> FAILS
+#   5. one record holds a different, valid-looking GDS digest -> FAILS
+# Mutations are applied programmatically (never by matching the current
+# digest), so they stay effective after the GDS and its evidence are refreshed.
 
 set -u
 
@@ -16,16 +19,35 @@ CHECKER="$HERE/check-layout-evidence.sh"
 
 pass=0
 fail=0
-trees=()
-trap 'rm -rf "${trees[@]}"' EXIT
+# One tracked parent dir: cases are created in the parent shell (no command
+# substitution), so cleanup always covers every tree.
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+n=0
 
+# Sets $t to a fresh throwaway copy of the evidence under test.
 fresh_tree() {
-  t="$(mktemp -d)"
-  trees+=("$t")
-  mkdir "$t/layout"
+  n=$((n + 1))
+  t="$TMP/case$n"
+  mkdir -p "$t/layout"
   cp -R "$ROOT/layout/drc" "$ROOT/layout/lvs" "$ROOT/layout/vco.gds" \
     "$ROOT/layout/vco_manifest.json" "$t/layout/"
-  echo "$t"
+}
+
+# set_digest FILE JSON_KEY... VALUE : set a record field, then verify it took.
+set_digest() {
+  python3 - "$@" <<'PY'
+import json, sys
+p, *keys, value = sys.argv[1:]
+d = json.load(open(p))
+node = d
+for k in keys[:-1]:
+    node = node[k]
+if node[keys[-1]] == value:
+    sys.exit("mutation is a no-op: field already holds " + value)
+node[keys[-1]] = value
+json.dump(d, open(p, "w"))
+PY
 }
 
 run_case() {
@@ -38,18 +60,20 @@ run_case() {
   fi
 }
 
-t="$(fresh_tree)"
+fresh_tree
 run_case "pristine tree passes" 0 "$t"
 
-t="$(fresh_tree)"
+fresh_tree
 printf 'x' >> "$t/layout/vco.gds"
 run_case "changed GDS bytes fail" 1 "$t"
 
-t="$(fresh_tree)"
-sed -i 's/sha256:937e5b16/sha256:937e5b17/' "$t/layout/lvs/vco-lvs-ihp.json"
+# A digest that cannot equal any real GDS hash (and differs from the current one).
+fresh_tree
+set_digest "$t/layout/lvs/vco-lvs-ihp.json" input content_hash "sha256:$(printf '0%.0s' {1..64})" \
+  || { echo "FAIL: digest mutation did not apply" >&2; fail=$((fail + 1)); }
 run_case "edited record digest fails" 1 "$t"
 
-t="$(fresh_tree)"
+fresh_tree
 python3 - "$t/layout/drc/vco-cnt-c-control.json" <<'PY'
 import json, sys
 p = sys.argv[1]
@@ -58,6 +82,13 @@ del d["layout"]["content_hash"]
 json.dump(d, open(p, "w"))
 PY
 run_case "record omitting digest fails" 1 "$t"
+
+# A well-formed digest of a *different* GDS (sha256 of other bytes).
+fresh_tree
+other="sha256:$(printf 'not-the-committed-gds' | sha256sum | cut -d' ' -f1)"
+set_digest "$t/layout/vco_manifest.json" artifact digest "$other" \
+  || { echo "FAIL: digest mutation did not apply" >&2; fail=$((fail + 1)); }
+run_case "record with another valid GDS digest fails" 1 "$t"
 
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
