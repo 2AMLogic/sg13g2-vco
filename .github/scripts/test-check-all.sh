@@ -34,6 +34,8 @@ for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/check-spec-change-has-dr.sh \
          .github/scripts/test-check-all.sh .github/scripts/run-method-checks.sh \
          .github/scripts/test-check-python.sh .github/scripts/check-python.sh \
+         .github/scripts/test-record-currency.sh \
+         .github/scripts/check-record-currency.sh \
          sim/tests/test-reserve-record-id.sh; do
   cat > "$F/$c" <<'EOF'
 #!/usr/bin/env bash
@@ -91,11 +93,11 @@ for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; d
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-record-currency.sh|check-record-currency.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
-# 1. test aggregate: nine gates in workflow order, exit 0
+# 1. test aggregate: eleven gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '9 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '11 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -105,7 +107,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '8 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '10 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -115,6 +117,19 @@ if [ "$RC" -eq 1 ] && grep -q 'MISSING TOOL: klt' "$OUT" && ! grep -q 'test-chec
 reset; run_case "$NOKLT" signoff
 if [ "$RC" -eq 1 ] && [ ! -s "$CALLS" ]; then
   ok "signoff target without klt -> exit 1"; else bad "signoff no klt: rc=$RC"; fi
+
+# 4b. named currency targets: dispatch, argument forwarding, failure, tools
+reset; run_case "$BIN" currency-selftest
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "test-record-currency.sh|" ]; then
+  ok "currency-selftest target dispatches the classifier self-test"; else bad "currency-selftest: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" currency
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-record-currency.sh|" ]; then
+  ok "currency target dispatches the index gate"; else bad "currency: rc=$RC $(calls)"; fi
+reset; touch "$FAILDIR/check-record-currency.sh"; run_case "$BIN" currency
+if [ "$RC" -eq 1 ]; then ok "currency failure -> exit 1"; else bad "currency failure: rc=$RC"; fi
+reset; touch "$FAILDIR/test-record-currency.sh"; run_case "$NONG" test
+if [ "$RC" -eq 1 ] && grep -q '10 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
+  ok "currency self-test failure fails test, later gates still run"; else bad "currency selftest fail: rc=$RC"; fi
 
 # 5. all without ngspice: counted skip, exit 0; --strict -> 1
 reset; run_case "$NONG" all

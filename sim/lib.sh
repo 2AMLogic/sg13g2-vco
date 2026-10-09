@@ -35,6 +35,51 @@ sha256_of() {
   else echo "unavailable"; fi
 }
 
+# snapshot_source <src> <dest>
+# Copy <src> to <dest> and print the sha256 of the COPY. The caller must derive
+# from <dest>, not <src>: the recorded hash then names the bytes actually
+# consumed even if <src> is edited mid-run (issue #122). Fails if the copy is
+# not byte-identical to <src> at copy time or no hasher is available.
+snapshot_source() {
+  local src="$1" dest="$2" h
+  mkdir -p "$(dirname "${dest}")" || return 1
+  cp "${src}" "${dest}" || return 1
+  cmp -s "${src}" "${dest}" || { echo "snapshot_source: ${src} changed while being copied" >&2; return 1; }
+  h="$(sha256_of "${dest}")"
+  [ "${h}" != "unavailable" ] || { echo "snapshot_source: no sha256 tool on PATH" >&2; return 1; }
+  echo "${h}"
+}
+
+# assert_source_unchanged <src> <sha256>
+# Fail (status 1, message on stderr) if <src> no longer hashes to <sha256>,
+# i.e. it was edited between snapshot_source and now.
+assert_source_unchanged() {
+  local now
+  now="$(sha256_of "$1")"
+  if [ "${now}" != "$2" ]; then
+    echo "error: $1 changed during the run (captured ${2}, now ${now});" >&2
+    echo "       the recorded source provenance would not describe this run -- re-run." >&2
+    return 1
+  fi
+}
+
+# write_source_provenance <sidecar> <record_id> <src_repo_rel> <sha256> <snapshot_repo_rel>
+# Write the source-provenance sidecar (schema sg13g2-vco/source-provenance/1,
+# documented in sim/README.md "Record currency"). Refuses to overwrite an
+# existing sidecar with different content: records are append-only.
+write_source_provenance() {
+  local sidecar="$1" id="$2" src="$3" sha="$4" snap="$5" body
+  body="$(printf '{\n  "schema": "sg13g2-vco/source-provenance/1",\n  "record_id": "%s",\n  "design_netlist_path": "%s",\n  "design_netlist_sha256": "%s",\n  "source_snapshot": "%s"\n}\n' \
+    "${id}" "${src}" "${sha}" "${snap}")"
+  mkdir -p "$(dirname "${sidecar}")" || return 1
+  if [ -e "${sidecar}" ]; then
+    [ "$(cat "${sidecar}")" = "${body}" ] && return 0
+    echo "error: ${sidecar} already exists with different content (append-only)" >&2
+    return 1
+  fi
+  printf '%s\n' "${body}" > "${sidecar}"
+}
+
 # meas_value <log> <name>
 # Pull a scalar out of an ngspice batch log. `meas` prints
 #   "<name>                =  <value>"

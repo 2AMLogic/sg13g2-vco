@@ -22,7 +22,10 @@
 # fresh render must parse, carry the expected block/kind, and contain no
 # top-level error block.
 #
-# Requirements: klt on PATH at exactly the version in .github/klt-version
+# Simulation citations: manifest evidence under sim/**/records/ must be
+# "current" per .github/scripts/record_currency.py (see the check below).
+#
+# Requirements: python3 and klt on PATH at exactly the version in .github/klt-version
 # (see signoff/README.md for the pinned install). Headless — needs no PDK, no KLayout project, no network
 # beyond the pip install that put klt there.
 
@@ -60,6 +63,11 @@ KLT_ACTUAL="$(klt --version 2>/dev/null | awk '{print $NF; exit}')"
 if [ "$KLT_ACTUAL" != "$PIN" ]; then
   fail "klt version mismatch: PATH has '${KLT_ACTUAL:-unknown}', pin (.github/klt-version) is '$PIN' — use: uvx --from \"klayout-tools==$PIN\" bash .github/scripts/check-signoff.sh"
 fi
+
+# The classifier lives next to this script (not under --root); resolve it
+# before the cd below so a relative $0 still works.
+CLASSIFIER="$(cd "$(dirname "$0")" && pwd)/record_currency.py"
+[ -f "$CLASSIFIER" ] || fail "missing $CLASSIFIER"
 
 cd "$ROOT" || fail "cannot cd to $ROOT"
 [ -f "$MANIFEST" ] || fail "missing $MANIFEST"
@@ -99,6 +107,18 @@ case "$rc" in
   0|3) ;;  # ran clean: all-met (0) or tier: null with unmet items (3)
   *) cat "$err" >&2; fail "klt signoff did not run clean (exit $rc) — 0 (all T1 met) and 3 (>=1 unmet) are both valid verdicts; any other exit is a broken manifest/doc" ;;
 esac
+
+# Simulation-record citations (issue #122): any manifest evidence file under
+# sim/**/records/ must belong to exactly one record whose FRESHLY computed
+# currency against design/vco.spice is "current" (and the committed
+# sim/record-currency.json must match that fresh computation). This runs
+# before the rendered-report comparison and is independent of it: a stale
+# citation fails even when the render matches byte-for-byte. A DRC-only
+# manifest has no such citation and is unaffected. See sim/README.md,
+# "Record currency".
+if ! python3 -I "$CLASSIFIER" --root "$ROOT" cite --manifest "$MANIFEST" >&2; then
+  fail "the manifest cites a sim record that is not current against design/vco.spice (or the record-currency index is stale) — cite a current record, or refresh the index with: python3 .github/scripts/record_currency.py write"
+fi
 
 if cmp -s "$tmp" "$RECORD"; then
   met="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); print(r["t1_met_count"])' "$RECORD")"

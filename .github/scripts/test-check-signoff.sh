@@ -11,6 +11,13 @@
 #   3. tampered vendored tiers doc -> check-signoff.sh FAILS (drift gate)
 #   4. broken manifest JSON        -> check-signoff.sh FAILS (runs-clean gate)
 #   5. pin disagrees with PATH klt -> check-signoff.sh FAILS (version gate)
+#   6-11. simulation citations (issue #122): a manifest that cites a sim
+#      record file passes only if the record is freshly computed "current"
+#      against design/vco.spice. Each case re-renders signoff/t1-report.json
+#      with klt so the rendered-report comparison matches perfectly; only the
+#      citation gate can then reject: superseded, unknown (filename-only),
+#      missing file, unmapped name, stale committed index. A current record
+#      passes, and the DRC-only manifest (case 1) is unaffected.
 
 set -u
 
@@ -124,6 +131,66 @@ else
   echo "FAIL: version mismatch fails (wrong reason)" >&2
   fail=$((fail + 1))
 fi
+
+# --- 6-11. simulation-record citations (issue #122) ------------------------
+CLASSIFIER="$HERE/record_currency.py"
+REC="20261001-000000-abc1234"
+RDIR="sim/oscillator-core/records"
+
+# sim_tree <sidecar-hash|none> <cite-path|default>: a tree whose manifest
+# cites a sim record file, with the index written and the verdict of record
+# re-rendered by klt so the render comparison matches.
+sim_tree() {
+  local hash="$1" cite="$2" t
+  t="$(fresh_tree)"
+  mkdir -p "$t/design" "$t/$RDIR"
+  cp "$ROOT/design/vco.spice" "$t/design/vco.spice"
+  echo "# record" > "$t/$RDIR/$REC.md"
+  if [ "$hash" != "none" ]; then
+    printf '{"design_netlist_sha256": "%s"}\n' "$hash" > "$t/$RDIR/$REC-source-provenance.json"
+  fi
+  [ "$cite" = default ] && cite="$RDIR/$REC.md"
+  python3 - "$t/signoff/manifest.json" "$cite" <<'PY'
+import json, sys
+p, cite = sys.argv[1], sys.argv[2]
+m = json.load(open(p))
+m["evidence"]["3"] = {"file": cite, "content_hash": "sha256:" + "0" * 64}
+json.dump(m, open(p, "w"), indent=2)
+PY
+  echo "$t"
+}
+
+# finish_tree <tree> [noindex]: write the index and re-render the record.
+finish_tree() {
+  [ "${2:-}" = noindex ] || python3 -I "$CLASSIFIER" --root "$1" write >/dev/null
+  ( cd "$1" && klt signoff --manifest signoff/manifest.json \
+      --tiers-doc signoff/design-evidence-tiers.md --format json \
+      > signoff/t1-report.json 2>/dev/null ) || true
+}
+
+CUR="$(python3 -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' "$ROOT/design/vco.spice")"
+
+t="$(sim_tree "$CUR" default)"; finish_tree "$t"
+run_case "current sim citation passes" 0 "$t"
+
+t="$(sim_tree "$(printf 'f%.0s' $(seq 64))" default)"; finish_tree "$t"
+run_case "superseded sim citation fails despite matching render" 1 "$t"
+
+t="$(sim_tree none default)"; finish_tree "$t"
+run_case "unknown (filename-only) sim citation fails despite matching render" 1 "$t"
+
+t="$(sim_tree "$CUR" "$RDIR/20269999-000000-abc1234.md")"; finish_tree "$t"
+run_case "missing sim citation fails despite matching render" 1 "$t"
+
+t="$(sim_tree "$CUR" "$RDIR/notes.txt")"; echo x > "$t/$RDIR/notes.txt"; finish_tree "$t"
+run_case "unmapped sim citation fails despite matching render" 1 "$t"
+
+t="$(sim_tree "$CUR" default)"; finish_tree "$t"
+echo '{}' > "$t/sim/record-currency.json"
+run_case "stale committed currency index fails" 1 "$t"
+
+t="$(sim_tree "$CUR" "./$RDIR/../records/$REC.md")"; finish_tree "$t"
+run_case "unnormalized current citation path still maps and passes" 0 "$t"
 
 echo "self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

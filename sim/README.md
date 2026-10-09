@@ -37,6 +37,77 @@ record by adding a new record that supersedes it. Working output such as
 | [`oscillator-core/`](oscillator-core/) | the first experiment here that contains an **oscillator**: start-up from the differential initial condition, `f_osc` over the full 0.0–3.3 V `Vctrl` domain (hence the row-2 tuning ratio and the row-3 `Kvco` curve), the large-signal supply current, the differential-mode check, and the row-6 startup margin — all against the committed `design/vco.spice`, over the row-10/11 PVT grid | **(pre-#79 netlist)** Bench and method shipped and exercised against the real netlist; **the graded PVT grid has not run, so no row is graded.** Extractor known-answer check: 56/56 quantities within tolerances *derived* from the estimator's own discretization bounds. Measured **pilot subset** (typical process corner, three row-11 temperatures, 13 transients + a 9-rung margin ladder): the oscillator starts at every point from the 10 mV `.ic` (settling 0.49–1.26 ns), is cleanly differential (`f(TAIL)/f_osc` = 2.000, common-mode amplitude ≤ 1.1 % of differential), tunes 4.61–5.45 GHz with a geometric band centre of 4.96–5.02 GHz, and draws 0.99–1.05 mW large-signal. **`Kvco` is strongly non-linear** — at 27 °C the per-segment slope runs from ~0 to −640 MHz/V, all of the tuning sitting above `Vctrl` ≈ 1.2 V. The remaining 134 PVT points (~180 CPU-hours) are blocked on `klt sim`, which cannot express this deck (no OSDI device loading, no `ngbehavior` selection, no `ihp-sg13g2` off-host image) — reproduced in [`oscillator-core/klt-sim/`](oscillator-core/klt-sim/), filed as [klayout-tools#2511](https://github.com/2AMLogic/klayout-tools/issues/2511), tracked as #50. No phase-noise (row 4) claim is made (#49). Ratifies no `spec/target-spec.md` row. |
 | [`bn-substrate-tank/`](bn-substrate-tank/) | what correcting the varactor `bn` pin from the tank node to the p-substrate (#79, DR-005) does to the passive tank's f0, Q and tuning ratio | Small-signal AC A/B, 108 rows on the batch fleet over MIM 3 x T 3 x (MOS tt x Vctrl 3 + ss/ff at band centre): **f0 -17 .. -23 %, tank Q -17 .. -28 %, tuning ratio 1.18 -> 1.11**. A lumped surrogate stands in for the OSDI MOS core, so the delta is native and the absolute f0 is not. With `bn` on the substrate the PDK's `dsubw` card is NaN above ~52 C -- the +125 C rows are errors. Phase noise **not measured** (OSDI blocked). Grades no row. |
 
+## Record currency (`sim/record-currency.json`)
+
+Records are append-only, so "is this record still about today's design?" is
+computed **outside** them by `.github/scripts/record_currency.py` (Python
+stdlib, PDK-free) and published as the derived, deterministic index
+`sim/record-currency.json` (sorted, no timestamps, no HEAD-dependent fields
+beyond the blob hash of the commit a record's own filename names). It
+enumerates every `sim/**/records/` entry, groups flat companions
+(`<id>.md`, `<id>-pilot.csv`, `<id>-curves/...`) and directory records by
+record ID, and reports per record: path, `state`, `basis`, `reason`.
+
+**States are narrow: currency against the bytes of `design/vco.spice`** -- not
+simulation validity, grading completeness, or PDK/model currency.
+
+| State | Meaning |
+|---|---|
+| `current` | an explicit, valid `design_netlist_sha256` (captured from the source the run actually consumed) equals the current `design/vco.spice` hash |
+| `superseded` | the same, but unequal: the run consumed a different source than today's |
+| `unknown` | anything else, always with a reason (below) |
+
+`unknown` covers: filename-only provenance (the commit id in the name proves at
+most the checkout the writer named -- not a clean tree nor the inputs consumed;
+the index reports that commit's `design/vco.spice` blob hash as context only and
+never upgrades it); unresolvable, ambiguous, shallow-history-missing or absent
+commit ids; malformed or mutually conflicting explicit hashes; an explicit hash
+that conflicts with (or whose declared snapshot is missing from) the captured
+source snapshot -- filename inference is never used to hide bad explicit
+provenance; and component/model characterization or synthetic comparison
+records (`tank-characterization`, `inductor-model`, `varactor-characterization`,
+`bn-substrate-tank`), which are not derived from `design/vco.spice` and so
+are `unknown` ("not-applicable") unless they carry documented explicit source
+provenance. A dirty run (explicit hash differs from the filename commit's blob)
+is accepted when the consumed source is identified by the explicit hash; the
+reason says so.
+
+**Deck integrity is a separate diagnostic.** A klt report's `netlist_sha256`
+hashes the *generated deck*, not `design/vco.spice`; it is compared only to the
+deck paired by name (`reports/<n>.json` <-> `decks/<n>.spice`) and shown as
+`deck_integrity`. A deck/source mismatch alone proves neither supersession nor
+invalidity.
+
+**Provenance schema** (`sg13g2-vco/source-provenance/1`): for new
+`osc_derive_body()`-based runs (`run_pilot_grid.sh`, `run_pvt_sweep.sh`,
+`run_supply_stage2.sh`, `phase-noise/run_isf_pilot.sh`), the bench copies
+`design/vco.spice` once, derives from the copy, fails if the source changed
+during derivation, and writes, for the reserved record ID,
+`<experiment>/netlist-snapshots/<id>/design-vco.spice` (captured bytes) and
+`<experiment>/records/<id>-source-provenance.json`:
+
+```json
+{"schema": "sg13g2-vco/source-provenance/1", "record_id": "<id>",
+ "design_netlist_path": "design/vco.spice",
+ "design_netlist_sha256": "<64 lowercase hex>",
+ "source_snapshot": "sim/<experiment>/netlist-snapshots/<id>/design-vco.spice"}
+```
+
+The classifier also accepts a `design_netlist_sha256` key anywhere in a
+record's JSON files; the helpers are `snapshot_source`,
+`assert_source_unchanged` and `write_source_provenance` in `sim/lib.sh`.
+Existing records are untouched and so remain `unknown`.
+
+**Refresh** after any `design/vco.spice` change or new record:
+`python3 .github/scripts/record_currency.py write`, commit the index. CI gates:
+`check-all.sh currency` (index equals fresh classification; in a shallow clone
+only the history-independent fields are compared) and `check-all.sh
+currency-selftest`. `check-signoff.sh` rejects a manifest evidence entry whose
+path lies under `sim/**/records/` unless that record is freshly `current` (and
+the committed index is not stale), independently of the rendered-report
+comparison; unknown, superseded, missing and unmappable citations fail.
+`record_currency.py cite PATH...` runs the same check by hand.
+
 ## Measurement-method CI (PDK-free)
 
 `.github/workflows/method-check.yml` runs the known-answer checks of the
