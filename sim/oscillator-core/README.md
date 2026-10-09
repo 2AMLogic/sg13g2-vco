@@ -35,6 +35,7 @@ graded grid is a fleet job" below, and #50.
 | 2 — tuning range `f_max/f_min ≥ 1.15` (stretch 1.20) over the full 0.0–3.3 V `Vctrl` domain | the fractional ratio per corner, with its quantization floor stated alongside the verdict | a ratio landing inside the floor of the bound is recorded as `WITHIN QUANTIZATION FLOOR OF BOUND`, never as a bare pass |
 | 3 — `Kvco` slope **and its linearity** | `Kvco(Vctrl)` as first differences of the measured `f_osc(Vctrl)` curve, plus a linearity number | **row 3 is OPEN.** This is the evidence it waits on. *Measuring a row is not ratifying it* — ratification is a `spec/decision-records/` PR and is out of scope here |
 | 6 — startup / negative-g<sub>m</sub> margin `≥ 3.0`, at every bound corner of the row-10 set | the **tail-current-scaling threshold proxy**, bracketed | see "Row 6: what is actually measured" — "it oscillated" is *not* reported as a row-6 pass |
+| 7 — output swing `Vpp_diff ≥ 0.40 V` (stretch 0.65 V) in `W`, no buffer, plus the HBT compliance `(VDD + Vpp_diff/4) − V(TAIL)_min ≤ 2.2 V` (RATIFIED, DR-004) | `vpp_diff_v` at the tank nodes per window point; per point, the **sampled cycle minimum** of `V(TAIL)`, the actual rail and `VCE_max` with its sampling bound | see "Row 7: swing and cycle-minimum compliance" — a compliance value inside its sampling bound of the limit is `WITHIN SAMPLING BOUND`, never a pass; the global verdict is stage-1 (nominal rail) only until the DR-004 supply sub-corners run |
 | 8 — core power `≤ 10 mW` at nominal rail, band centre, nominal temperature | the **large-signal** average supply current over the settled window, reported separately from the DC operating point's current | both are recorded, in distinct columns, and never conflated |
 | 10 / 11 — PVT corner set and −40 … +125 °C | the grid `run_pvt_sweep.sh` declares and that every graded number must span | **not yet run** — see below |
 
@@ -191,6 +192,73 @@ they are not interior to `ss`/`ff` for the device that does the tuning.
 **Those 32 corners have not been run** (see below); what has been measured is
 the nominal corner, which establishes that the proxy behaves as its derivation
 says it should but grades nothing.
+
+### Row 7: swing and cycle-minimum compliance
+
+Row 7 is ratified by DR-004 (d)/(e) and graded by `osc_emit_row7` /
+`osc_row7_summary` in `osc_bench.sh` (issue #112). Nothing here relaxes it.
+
+- **Swing**: `vpp_diff_v` (`v(OUTP) − v(OUTN)` at the tank nodes, no buffer,
+  no added load) must be ≥ 0.40 V (stretch ≥ 0.65 V) at **every** expected
+  `Vctrl` in `W` = [1.65, 3.30] V — at least 5 window points including both
+  endpoints. A window point that did not oscillate (`NOSC`) is a measured
+  swing failure.
+- **Compliance**: `VCE_max = (VDD + Vpp_diff/4) − V(TAIL)_min ≤ 2.2 V` at
+  **every** expected `Vctrl` of the full 0.0–3.3 V domain (DR-004 (e) states
+  it per bound corner with no window, and the largest swing sits at 0.0 V,
+  outside `W`). Each point uses its **own** quantities: `vdd_v` is the sampled
+  maximum of `V(VDD)` over the settled window (the actual rail, so a supply
+  sub-corner needs no code change), and `v_tail_min_v` is the **sampled
+  instantaneous minimum** of `V(TAIL)` over that window
+  (`sim/lib.sh` `osc_trace_extrema`). `v_tail_dc_op_v` and `v_tail_mean_v`
+  stay in the CSV but grade nothing — DR-004 names both as stand-ins.
+- **Sampling limit, stated with every number.** Both extremes are samples of an
+  adaptive-timestep trace: the sampled tail minimum can only read **high** and
+  the sampled `vpp_diff` only **low**, and both understate `VCE_max`. Each is
+  bounded as `A·(1 − cos(π·f·dt_max))` — the same peak-sampling bound
+  `run_method_check.sh` already validates for amplitude — assuming the
+  extremum is locally sinusoidal: the tail at `f = max(f_tail, 2·f_osc)` with
+  `A` = half its ripple peak-to-peak, the output at `f_osc` with
+  `A = vpp_diff/2` per extreme. At the 2 ps ceiling and ~5 GHz these are
+  sub-millivolt. Compliance is `MET` only when `vce_max_upper_v` (both bounds
+  applied) is ≤ 2.2 V; a measured value under the limit whose upper value is
+  not is `WITHIN SAMPLING BOUND` — **not a pass**. An extremum sharper than a
+  sinusoid at that `f` (a cusp) can exceed the bound: a stated limit, not a
+  guarantee. For swing the error is in the safe direction, so the measured
+  `vpp_diff_v` is used directly.
+- **Inequality assumptions** (DR-004 (e), not tested here): each tank node
+  swings ±`Vpp_diff/4` about `VDD` (rail-centred differential swing; the
+  per-point `vpp_cm_over_diff` is the evidence); the pair emitters sit on
+  `TAIL` (true in `design/vco.spice`, no degeneration); collector peak and
+  tail minimum are combined as if simultaneous (over-states VCE —
+  conservative); BVCEO is the base-open rating (conservative). The tail
+  device XQ3's own VCE is **not** covered by this inequality.
+- **Completeness**: a corner is `INCOMPLETE` (never a pass) when any expected
+  `Vctrl` is missing, duplicated, at status `FAIL`/`NODATA`, has an `INVALID`
+  measurement (any of the five traces vdiff/vcm/vtail/isup/vdd missing, empty,
+  malformed, non-finite or truncated — #83's gate), comes from a pre-#112
+  29-column record, or lacks a numeric swing/tail-minimum/rail; or when the
+  `Vctrl` list lacks a window endpoint or has fewer than 5 window samples.
+- **Aggregation**: `run_pvt_sweep.sh` requires one complete line for every
+  row-10 **bound corner** (the same MOS `{ss,ff,sf,fs}` × MIM `{bcs,wcs}` ×
+  HBT `{bcs,wcs}` × T `{−40,125}` set as row 6); a missing, duplicated or
+  incomplete bound corner leaves row 7 `NOT GRADED`, and non-bound grid
+  corners are reported as descriptors that never stand in for a missing one.
+  Even a complete pass reads **`STAGE-1 MET`**: DR-004's stage-2 ±10 % supply
+  sub-corners are part of row 7's coverage and no bench runs them yet.
+- **Records**: per point, columns 30–37 of `records/<id>.csv`
+  (`v_tail_min_v, t_tail_min_s, v_tail_pp_v, v_tail_min_err_v,
+  vpp_diff_err_v, vdd_v, vce_max_v, vce_max_upper_v`, appended so columns
+  1–29 keep their meaning); per corner, `records/<id>-row7.csv`. Records made
+  before #112 are unchanged and are not re-graded.
+- **Known-answer checks** (PDK-free, in the CI `method-check` job):
+  `tests/test_row7.sh` — an asymmetric tail ripple whose minimum differs from
+  both its mean and `mean − amplitude`, a coarse-sampled minimum inside its
+  stated bound, the exact compliance boundary with and without a sampling
+  bound, the actual-rail dependence, insufficient swing, and missing, invalid,
+  truncated, duplicated and legacy-layout data; and
+  `run_validity_check.sh` — the real `osc_simulate_point` over stubbed traces
+  writing the closed-form tail minimum, rail and `VCE_max`.
 
 ### The extractors are checked, not trusted
 

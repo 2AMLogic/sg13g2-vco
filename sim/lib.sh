@@ -393,6 +393,47 @@ osc_metrics() {
     }' "$1"
 }
 
+# osc_trace_extrema <datafile> <t_start_s> [t_end_s]
+# The SAMPLED instantaneous minimum and maximum of a trace over the window
+# t_start <= t <= t_end (t_end omitted or <= 0 means "to the end of the run"),
+# and when each occurs. Prints ONE space-separated line:
+#
+#   vmin_v t_at_vmin_s vmax_v t_at_vmax_s dt_max_s n_samples
+#
+# Added for the ratified row-7 HBT compliance inequality (DR-004 (e), issue
+# #112), which needs the cycle MINIMUM of V(TAIL), not its DC operating point
+# or its time average -- DR-004 names both of those as stand-ins.
+#
+# Method and its limit, stated: the value is the extreme SAMPLE, never an
+# interpolated or fitted peak. ngspice's adaptive timestep can step over the
+# true extremum, so a sampled minimum is >= the true minimum and a sampled
+# maximum is <= the true maximum. For a waveform that is locally sinusoidal at
+# frequency f with half peak-to-peak A near the extremum, the shortfall is at
+# most A * (1 - cos(pi * f * dt_max)) (the true extremum lies within dt_max/2
+# of a sample); the caller owns that bound because only it knows f and A.
+# dt_max_s is the largest sample spacing in the window -- conservative against
+# the local spacing at the extremum. A sharper-than-sinusoidal extremum (a
+# cusp) can hide more than this bound; that is a stated limit, not a guarantee.
+#
+# Fewer than 1 sample in the window prints "nan nan nan nan nan 0".
+osc_trace_extrema() {
+  awk -v ts="${2:-0}" -v te="${3:-0}" '
+    NF >= 2 {
+      t = $1 + 0; v = $2 + 0
+      if (t < ts) next
+      if (te > 0 && t > te) next
+      n++
+      if (n == 1 || v < lo) { lo = v; tlo = t }
+      if (n == 1 || v > hi) { hi = v; thi = t }
+      if (n > 1 && t - pt > dtmax) dtmax = t - pt
+      pt = t
+    }
+    END {
+      if (n < 1) { print "nan nan nan nan nan 0"; exit }
+      printf "%.9e %.6e %.9e %.6e %.6e %d\n", lo, tlo, hi, thi, dtmax + 0, n
+    }' "$1"
+}
+
 # osc_settle <datafile> <frac> <t_final_start_s>
 # Startup settling time: when the oscillation envelope first reaches <frac>
 # of its FINAL peak-to-peak amplitude and stays there. Prints ONE line:
