@@ -159,8 +159,15 @@ the schema, that `record_id` equals the id in the filename, 64-hex digests,
 unique `(role, bundle_path)` identities, and that each non-null
 `retained_snapshot` is a safe relative path (no absolute, `.`/`..`, backslash or
 symlink) equal to `<experiment>/netlist-snapshots/<id>/model-inputs/<bundle_path>`,
-exists, and hashes to the declared `sha256`. `retained_snapshot: null` (PDK
-libraries, `mosvar.osdi`) is accepted and never demanded. Only the manifest and
+exists, and hashes to the declared `sha256`. It also enforces the writer's role
+policy (`osc_model_inputs_json` / `osc_retain_model_inputs` in
+`sim/oscillator-core/osc_bench.sh`): the repo-owned roles `inductor-model` and
+`simulator-init` must have a non-null `retained_snapshot`, the external roles
+`pdk-model` (PDK libraries) and `osdi-binary` (`mosvar.osdi`) must have
+`retained_snapshot: null` (digest only, never demanded), any other role is
+rejected, and at least one `inductor-model` and one `simulator-init` entry must
+be present -- so a manifest whose repo-owned inputs were not committed cannot
+pass as verified. Only the manifest and
 the retained snapshot bytes are read -- never live models -- so editing today's
 inductor model cannot invalidate a historical capture. Records with no
 manifest (everything before #133) are listed as `legacy / not checked`, not

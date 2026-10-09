@@ -39,8 +39,11 @@ def good_doc(rid=RID):
     return {
         "schema": mic.SCHEMA, "record_id": rid, "note": "n",
         "inputs": [
-            {"role": "pdk-library", "bundle_path": "models/cornerHBT.lib",
+            {"role": "pdk-model", "bundle_path": "models/cornerHBT.lib",
              "sha256": "a" * 64, "original_path": "/opt/pdk/cornerHBT.lib",
+             "retained_snapshot": None},
+            {"role": "osdi-binary", "bundle_path": "osdi/mosvar.osdi",
+             "sha256": "b" * 64, "original_path": "/opt/osdi/mosvar.osdi",
              "retained_snapshot": None},
             {"role": "inductor-model",
              "bundle_path": "inductor/sg13g2_inductor_em.spice",
@@ -97,14 +100,87 @@ class TestValid(Base):
         rc, out, err = self.run_gate()
         self.assertEqual((rc, err), (0, ""))
         self.assertIn("1 manifest(s) verified (2 retained snapshot(s) "
-                      "hash-checked, 1 external role(s) digest-only)", out)
+                      "hash-checked, 2 external role(s) digest-only)", out)
 
-    def test_all_external_manifest_ok(self):
+    def test_fixture_roles_are_the_writers_roles(self):
+        roles = {e["role"] for e in good_doc()["inputs"]}
+        self.assertEqual(roles, set(mic.RETAINED_ROLES) | set(mic.EXTERNAL_ROLES))
+
+    def test_nested_inductor_reference_retained_ok(self):
+        nested = b"* nested include of the inductor model\n"
+
+        def f(d):
+            d["inputs"].append(
+                {"role": "inductor-model", "bundle_path": "inductor/sub.inc",
+                 "sha256": sha(nested), "original_path": "sim/x/sub.inc",
+                 "retained_snapshot": NS + "inductor/sub.inc"})
         doc = good_doc()
-        for e in doc["inputs"]:
-            e["retained_snapshot"] = None
+        f(doc)
         write_valid(self.root, doc=doc)
-        self.assertEqual(self.run_gate()[0], 0)
+        put(self.root, NS + "inductor/sub.inc", nested)
+        rc, out, err = self.run_gate()
+        self.assertEqual((rc, err), (0, ""))
+        self.assertIn("3 retained snapshot(s) hash-checked", out)
+
+
+class TestRolePolicy(Base):
+    """Writer rule (osc_bench.sh): inductor-model and simulator-init are always
+    retained; pdk-model and osdi-binary are always null; nothing else."""
+
+    def test_all_null_manifest_rejected(self):
+        def f(d):
+            for e in d["inputs"]:
+                e["retained_snapshot"] = None
+        err = self.assertRejected(f, "must be retained")
+        self.assertIn("'inductor-model'", err)
+        self.assertIn("'simulator-init'", err)
+
+    def test_null_inductor_snapshot_rejected(self):
+        err = self.assertRejected(
+            lambda d: d["inputs"][2].update(retained_snapshot=None),
+            "inputs[2] role 'inductor-model' is repo-owned and must be "
+            "retained, but retained_snapshot is null")
+        self.assertIn(NS + "inductor/sg13g2_inductor_em.spice", err)
+
+    def test_null_init_snapshot_rejected(self):
+        self.assertRejected(
+            lambda d: d["inputs"][3].update(retained_snapshot=None),
+            "inputs[3] role 'simulator-init' is repo-owned and must be "
+            "retained")
+
+    def test_external_pdk_model_with_snapshot_rejected(self):
+        self.assertRejected(
+            lambda d: d["inputs"][0].update(
+                retained_snapshot=NS + "models/cornerHBT.lib"),
+            "inputs[0] role 'pdk-model' is external")
+
+    def test_external_osdi_with_snapshot_rejected(self):
+        self.assertRejected(
+            lambda d: d["inputs"][1].update(
+                retained_snapshot=NS + "osdi/mosvar.osdi"),
+            "it must be null")
+
+    def test_unknown_role_rejected(self):
+        self.assertRejected(lambda d: d["inputs"][0].update(role="pdk-library"),
+                            "inputs[0] unknown role 'pdk-library'")
+
+    def test_unknown_role_with_snapshot_rejected(self):
+        self.assertRejected(lambda d: d["inputs"][2].update(role="extra-model"),
+                            "unknown role 'extra-model'")
+
+    def test_missing_inductor_entry_rejected(self):
+        self.assertRejected(lambda d: d["inputs"].pop(2),
+                            "no 'inductor-model' entry")
+
+    def test_missing_init_entry_rejected(self):
+        self.assertRejected(lambda d: d["inputs"].pop(3),
+                            "no 'simulator-init' entry")
+
+    def test_external_only_manifest_rejected(self):
+        def f(d):
+            del d["inputs"][2:]
+        err = self.assertRejected(f, "no 'inductor-model' entry")
+        self.assertIn("no 'simulator-init' entry", err)
 
     def test_no_records_at_all(self):
         os.makedirs(os.path.join(self.root, "sim"))
@@ -206,7 +282,7 @@ class TestMalformed(Base):
 
     def test_entry_not_object(self):
         self.assertRejected(lambda d: d["inputs"].append("str"),
-                            "inputs[3] must be an object")
+                            "inputs[4] must be an object")
 
     def test_snapshot_wrong_type(self):
         self.assertRejected(
@@ -231,15 +307,14 @@ class TestIdentity(Base):
     def test_duplicate_bundle_path_other_role(self):
         def f(d):
             e = dict(d["inputs"][0])
-            e["role"] = "other"
+            e["role"] = "osdi-binary"
             d["inputs"].append(e)
         self.assertRejected(f, "duplicate bundle_path")
 
     def test_duplicate_retained_snapshot(self):
         def f(d):
-            e = dict(d["inputs"][1])
-            e["role"] = "dup"
-            e["bundle_path"] = "inductor/sg13g2_inductor_em.spice"
+            e = dict(d["inputs"][2])
+            e["role"] = "simulator-init"
             d["inputs"].append(e)
         err = self.assertRejected(f, "duplicate")
         self.assertIn("duplicate bundle_path", err)
@@ -247,7 +322,7 @@ class TestIdentity(Base):
 
 class TestPaths(Base):
     def snap(self, value):
-        return lambda d: d["inputs"][1].update(retained_snapshot=value)
+        return lambda d: d["inputs"][2].update(retained_snapshot=value)
 
     def test_absolute(self):
         self.assertRejected(self.snap("/etc/passwd"), "absolute")

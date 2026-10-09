@@ -15,8 +15,13 @@ issue #133) this verifies the *committed* bytes:
         sim/<experiment>/netlist-snapshots/<id>/model-inputs/<bundle_path>
     (no absolute path, backslash, '.'/'..' segment or symlink), exists as a
     regular file, and hashes to the declared sha256;
-  * retained_snapshot null (external roles: PDK libraries, built OSDI binary)
-    is accepted -- identified by digest only, never demanded.
+  * the role policy of the writer (osc_model_inputs_json /
+    osc_retain_model_inputs) holds: repo-owned roles (RETAINED_ROLES:
+    inductor-model, simulator-init) must carry a non-null retained_snapshot,
+    external roles (EXTERNAL_ROLES: pdk-model, osdi-binary -- identified by
+    digest only) must carry null, any other role is rejected, and at least
+    one entry of every retained role is present (the writer always captures
+    the inductor model and .spiceinit).
 
 Only the manifest and the retained snapshot files are ever read. Live model
 files (the inductor model, PDK, `original_path`) are never opened, so editing
@@ -48,6 +53,11 @@ TOP_KEYS = {"schema", "record_id", "note", "inputs"}
 TOP_REQUIRED = {"schema", "record_id", "inputs"}
 INPUT_KEYS = {"role", "bundle_path", "sha256", "original_path",
               "retained_snapshot"}
+# Role policy, mirroring sim/oscillator-core/osc_bench.sh: for a reserved
+# record (the only case that writes records/<id>-model-inputs.json) the
+# repo-owned inputs are always retained and the external ones never are.
+RETAINED_ROLES = ("inductor-model", "simulator-init")
+EXTERNAL_ROLES = ("pdk-model", "osdi-binary")
 
 
 def _reject_dup(pairs):
@@ -161,7 +171,7 @@ def check_manifest(root, rel, rdir, rid):
 
     exp = posixpath.dirname(rdir)
     ns = "%s/netlist-snapshots/%s/model-inputs/" % (exp, rid)
-    seen_id, seen_bp, seen_snap = set(), set(), set()
+    seen_id, seen_bp, seen_snap, seen_roles = set(), set(), set(), set()
     verified = external = 0
     for i, ent in enumerate(inputs):
         w = "inputs[%d]" % i
@@ -198,8 +208,26 @@ def check_manifest(root, rel, rdir, rid):
         if bp in seen_bp:
             err("%s duplicate bundle_path %r" % (w, bp))
         seen_bp.add(bp)
-        if snap is None:
+        if role in EXTERNAL_ROLES:
+            if snap is not None:
+                err("%s role %r is external (identified by digest only) but "
+                    "retained_snapshot is %r; it must be null -- external "
+                    "inputs are not committed as snapshots"
+                    % (w, role, snap))
+                continue
             external += 1
+            continue
+        if role not in RETAINED_ROLES:
+            err("%s unknown role %r; expected one of %s (retained) or %s "
+                "(external) -- regenerate the manifest with osc_bench.sh"
+                % (w, role, ", ".join(RETAINED_ROLES),
+                   ", ".join(EXTERNAL_ROLES)))
+            continue
+        seen_roles.add(role)
+        if snap is None:
+            err("%s role %r is repo-owned and must be retained, but "
+                "retained_snapshot is null; commit the snapshot under %s "
+                "and reference it from the manifest" % (w, role, ns + bp))
             continue
         if not safe_rel(snap):
             err("%s retained_snapshot %r is absolute, contains '.', '..', "
@@ -236,6 +264,11 @@ def check_manifest(root, rel, rdir, rid):
             continue
         if HEX64.match(sha):
             verified += 1
+    for role in RETAINED_ROLES:
+        if role not in seen_roles:
+            err("no %r entry; the writer always captures and retains it, so "
+                "this capture is incomplete -- regenerate the manifest with "
+                "osc_bench.sh" % role)
     return errs, verified, external
 
 
