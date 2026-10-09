@@ -40,6 +40,9 @@
 #   records/<id>.csv                        per-point scalars (+ vsup_v)
 #   records/<id>-tuning.csv / -kvco.csv     row 1/2/3 curves per (corner, rail)
 #   records/<id>-margin.csv / -margin-summary.csv   row-6 ladder (+ vsup_v)
+#   records/<id>-row7.csv                   row-7 grade per (corner, rail) (+ vsup_v):
+#                                           complete-window swing and full-domain
+#                                           compliance, kept as separate columns
 #   records/<id>.md                         the narrative record + provenance
 #   records/<id>-report-supply-stage2.{csv,md}   (only with --baseline-osc)
 set -euo pipefail
@@ -96,6 +99,8 @@ KVCO_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-kvco.csv"
 MARGIN_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-margin.csv"
 # shellcheck disable=SC2034  # read by osc_bench.sh's osc_margin_corner
 MARGIN_SUM_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-margin-summary.csv"
+# shellcheck disable=SC2034  # read by osc_bench.sh's osc_emit_row7 (issue #119)
+ROW7_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-row7.csv"
 MD_OUT="${EXPERIMENT_DIR}/records/${RECORD_ID}.md"
 mkdir -p "${NETLIST_DIR}" "${LOG_DIR}" "${EXPERIMENT_DIR}/records"
 
@@ -141,6 +146,9 @@ while read -r proc rail temp mos cap hbt; do
     fi
   done
   osc_emit_tuning "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${S2_VCTRL_LIST}" "${rail}"
+  # Row 7 (issue #119): the SAME grader stage 1 uses (osc_bench.sh,
+  # issue #112), restricted to this rail's rows of the rail-tagged points CSV.
+  osc_emit_row7 "${mos}" "${cap}" "${hbt}" "${temp}" "${OSC_TMAX}" "${S2_VCTRL_LIST}" "${rail}"
 done < <(s2_enumerate)
 
 margin_total=0
@@ -176,6 +184,17 @@ OSC_VSUP_V=""
   echo "  \`${OSC_TMAX}\`, window ${OSC_TMEAS_START} .. ${OSC_TSTOP_S} s, row-6"
   echo "  tail-current-scaling proxy ladder); see that record's method section."
   echo "  Every CSV row carries \`vsup_v\`."
+  echo "- **Row 7** (issue #119): graded per (sub-corner, rail) by"
+  echo "  \`osc_emit_row7\` -- the stage-1 grader of issue #112, unchanged --"
+  echo "  into \`records/${RECORD_ID}-row7.csv\`: swing = Vpp_diff >="
+  echo "  ${OSC_ROW7_VPP_MIN_V} V (stretch ${OSC_ROW7_VPP_MIN_STRETCH_V} V) at every Vctrl of the"
+  echo "  window [${OSC_ROW3_V_LO}, ${OSC_ROW3_V_HI}] V; compliance = (VDD + Vpp_diff/4) -"
+  echo "  V(TAIL)_min <= ${OSC_ROW7_BVCEO_MIN_V} V at every Vctrl of the full domain, VDD the"
+  echo "  point's sampled rail. Both extremes are samples of an adaptive-timestep"
+  echo "  trace; the compliance pass uses the sinusoidal sampling-bound upper"
+  echo "  value, and a measured value under the limit whose bound is not is"
+  echo "  WITHIN SAMPLING BOUND (not a pass). A cusp sharper than a sinusoid can"
+  echo "  hide more than the bound: a stated limit."
   echo "- **Non-PDK model**: \`sim/inductor-model/sg13g2_inductor_em.spice\`"
   echo "  sha256 \`$(sha256_of "${OSC_IND_MODEL}")\`. The PDK ships no spiral-inductor"
   echo "  ngspice model; every frequency inherits that model's stated error bars."
