@@ -4,6 +4,39 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-09
+
+- **Issue #79** (closed): design: varactor bn (p-substrate) is tied to the tank node in design/vco.sch -- physically unrealizable; correct the schematic and re-run the evidence it moves (blocks #62 LVS match)
+- **Issue #88** (closed): ci: enforce append-only sim/ evidence (records, netlist-snapshots, corners) at PR time
+- **Issue #89** (closed): ci: require a decision record in the same PR as any spec/target-spec.md edit
+- **PR #91**: ci: enforce append-only sim/ evidence at PR time
+- **PR #92**: ci: require a decision record with any spec/target-spec.md edit
+- **PR #97**: design: tie varactor bn to the substrate (0), correct LVS bn difference, measure tank effect (#79)
+- **Issue #98** (closed): ci: shellcheck gate for repo-owned shell scripts
+- **PR #100**: ci: shellcheck warning+ gate over tracked scripts (#98)
+- **PR #101**: layout: re-run LVS after #79 and re-check the klt gap at 0.7.0 (still mismatch; Part of #62)
+- **Issue #102** (closed): sim: reserve unique record namespaces before writing append-only evidence
+- **Issue #103** (closed): ci: run PDK-free known-answer measurement checks
+- **PR #104**: sim: reserve unique record namespaces before writing append-only evidence
+- **PR #105**: ci: run PDK-free known-answer measurement checks
+- **Issue #107** (closed): ci: single-source the pinned klayout-tools version
+- **PR #109**: ci: single-source the pinned klayout-tools version
+- **Issue #110** (closed): Guard telemetry: preserve worktree write confinement
+- **Issue #111** (closed): sim: grade ratified row-3 window coverage, slope and chord linearity
+- **Issue #112** (closed): sim: grade row-7 swing and cycle-minimum HBT compliance
+- **Issue #113** (closed): sim: implement DR-004 stage-2 supply sub-corners and escalation report
+- **PR #114**: sim: grade ratified row-3 window coverage, slope and chord linearity
+- **PR #115**: sim: grade row-7 swing and cycle-minimum HBT compliance (#112)
+- **PR #116**: sim: DR-004 stage-2 supply sub-corners and escalation report
+- **Issue #117** (closed): ci: replace package.json test/check:ci/check:all placeholders with the real PDK-free gates
+- **Issue #118** (closed): ci: gate the layout and sim Python with py_compile and PDK-free known-answer tests
+- **Issue #119** (closed): sim: integrate landed row-7 compliance grading into stage-2 supply comparisons
+- **PR #120**: ci: route npm test/check:ci/check:all and CI steps through one gate runner
+- **PR #121**: sim: grade row 7 per rail in DR-004 stage-2 supply comparisons
+- **PR #123**: ci: python workflow with py_compile, stdlib and klayout known-answer tests (#118)
+- **Issue #124** (closed): docs: mark pre-#79 simulation numbers in sim/README.md, design/README.md and README.md
+- **PR #125**: docs: mark pre-#79 simulation numbers in READMEs (#124)
+
 ### 2026-10-08
 
 - **Issue #82** (closed): sim: require complete voltage coverage before grading tuning curves
