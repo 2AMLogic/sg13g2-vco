@@ -52,6 +52,13 @@ gen() {
     short) printf '0.0\n1e-12\n' > "${path}" ;;
     nan) awk 'BEGIN { for (i = 0; i <= 5000; i++) printf "%.6e %s\n", i*1e-12, (i == 4000 ? "-nan(0x8000000000000)" : "1.0") }' > "${path}" ;;
     inf) awk 'BEGIN { for (i = 0; i <= 5000; i++) printf "%.6e %s\n", i*1e-12, (i == 4000 ? "inf" : "1.0") }' > "${path}" ;;
+    ovf-val-pos|ovf-val-neg|ovf-time-pos|ovf-time-neg|sci-ok)
+      awk -v k="${kind}" 'BEGIN { for (i = 0; i <= 5000; i++) { t = sprintf("%.6e", i*1e-12); v = "1.0"
+        if (i == 4000) { if (k == "ovf-val-pos") v = "1e999"; else if (k == "ovf-val-neg") v = "-1e999"
+          else if (k == "ovf-time-pos") t = "1e999"; else if (k == "ovf-time-neg") t = "-1e999" }
+        if (k == "sci-ok" && i == 4000) v = "1.5e3"
+        if (k == "sci-ok" && i == 4001) v = "1e-9"
+        print t, v } }' > "${path}" ;;
     truncated) awk 'BEGIN { for (i = 0; i <= 3000; i++) printf "%.6e %.6e\n", i*1e-12, 1.0 + 0.2*sin(6.283185307179586*5e9*i*1e-12) }' > "${path}" ;;
   esac
 }
@@ -127,6 +134,32 @@ run_case vdiff-missing-clean-run  missing ok ok ok   0 NODATA INVALID vdiff:miss
 run_case vdiff-truncated          truncated ok ok ok 0 NODATA INVALID vdiff:truncated
 run_case honest-nosc-valid-traces flat flat flat ok  0 NOSC   VALID   ""
 run_case simulator-failure        ok ok ok ok        1 FAIL   VALID   ""
+
+# Overflowing decimal literals are nonfinite in either column (issue #151);
+# finite scientific notation stays valid.
+run_case isup-ovf-val-pos          ok ok ok ovf-val-pos  0 PASS   INVALID isup:nonfinite
+run_case isup-ovf-val-neg          ok ok ok ovf-val-neg  0 PASS   INVALID isup:nonfinite
+run_case isup-ovf-time-pos         ok ok ok ovf-time-pos 0 PASS   INVALID isup:nonfinite
+run_case isup-ovf-time-neg         ok ok ok ovf-time-neg 0 PASS   INVALID isup:nonfinite
+run_case vtail-ovf-val-pos         ok ok ovf-val-pos ok  0 PASS   INVALID vtail:nonfinite
+run_case vdiff-ovf-val-neg         ovf-val-neg ok ok ok  0 NODATA INVALID vdiff:nonfinite
+run_case vdd-ovf-time-pos          ok ok ok ok           0 PASS   INVALID vdd:nonfinite ovf-time-pos
+run_case isup-sci-finite           ok ok ok sci-ok       0 PASS   VALID   ""
+
+# Direct reason-token checks of osc_trace_validity (the issue #151 repro).
+check_tok() {
+  local label="$1" want="$2"; shift 2
+  printf '%s\n' "$@" > "${T}/tok"
+  local got; got="$(osc_trace_validity "${T}/tok" 0 3e-9)"
+  if [[ "${got}" == "${want}" ]]; then echo "ok   ${label}"
+  else echo "FAIL ${label}: got ${got} (want ${want})"; fails=$((fails + 1)); fi
+}
+check_tok tok-ovf-repro   nonfinite "0 0" "1e-9 1e999" "2e-9 0" "3e-9 0"
+check_tok tok-ovf-val-neg nonfinite "0 0" "1e-9 -1e999" "2e-9 0" "3e-9 0"
+check_tok tok-ovf-time    nonfinite "0 0" "1e999 0" "2e-9 0" "3e-9 0"
+check_tok tok-ovf-time-neg nonfinite "-1e999 0" "1e-9 0" "2e-9 0" "3e-9 0"
+check_tok tok-sci-finite  ok "0 1e-9" "1e-9 1.5e3" "2e-9 -2.5E-3" "3e-9 0"
+check_tok tok-malformed   malformed "0 0" "1e-9 1e" "2e-9 0" "3e-9 0"
 
 if [[ "${fails}" -ne 0 ]]; then echo "${fails} case(s) failed" >&2; exit 1; fi
 echo "all cases passed"
