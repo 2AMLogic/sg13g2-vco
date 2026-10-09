@@ -67,6 +67,15 @@ jobs:
       - name: Record-currency index is fresh
         run: .github/scripts/check-all.sh currency
 
+      # Model-input integrity (issue #139): separate from currency. Retained
+      # model-input manifests must match their committed snapshots; PDK/OSDI
+      # roles stay external. Stdlib python3 only, no PDK.
+      - name: Model-input integrity self-test
+        run: .github/scripts/check-all.sh model-inputs-selftest
+
+      - name: Committed model-input manifests match retained snapshots
+        run: .github/scripts/check-all.sh model-inputs
+
   # Append-only sim/ evidence gate (issue #88). Pure bash + git: no klt, no
   # PDK. Needs full history so the PR merge-base is resolvable.
   sim-append-only:
