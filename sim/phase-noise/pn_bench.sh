@@ -263,8 +263,10 @@ pn_ind_bar_db() {
 # a miss: this experiment measures the row, it does not ratify or relax it.
 # --------------------------------------------------------------------------
 pn_verdict() {
-  awk -v l="$1" -v t="$2" -v s="$3" 'BEGIN {
-    if (l == "nan" || l == "") { print "UNDETERMINED"; exit }
+  # Every input must be a finite number: NaN/inf in any case, empty or
+  # malformed values are UNDETERMINED, never "met" (issue #137).
+  awk -v l="${1-}" -v t="${2-}" -v s="${3-}" "${PN_AWK_FINITE}"' BEGIN {
+    if (!pn_fin(l) || !pn_fin(t) || !pn_fin(s)) { print "UNDETERMINED"; exit }
     if (l + 0 <= s + 0) { print "TARGET AND STRETCH BOTH MET"; exit }
     if (l + 0 <= t + 0) { print "TARGET MET / STRETCH NOT MET"; exit }
     print "TARGET NOT MET"

@@ -270,7 +270,7 @@ if [ "$RC" -eq 2 ]; then ok "no target -> exit 2"; else bad "no target: rc=$RC";
 #     of stub fixtures: success, injected failure (nonzero + fixture name),
 #     missing PASS lines, the stage-2 floor, and an untouched source tree.
 G="$T/gsrc"
-mkdir -p "$G/sim/oscillator-core/tests" "$G/.github/scripts"
+mkdir -p "$G/sim/oscillator-core/tests" "$G/sim/phase-noise/tests" "$G/.github/scripts"
 mkfix() { # <path> <body-line>
   printf '#!/usr/bin/env bash\n%s\n' "$2" > "$G/$1"; chmod +x "$G/$1"
 }
@@ -280,6 +280,7 @@ mkfix sim/oscillator-core/tests/test_row3.sh "$PASSL"
 mkfix sim/oscillator-core/tests/test_row7.sh "$PASSL"
 mkfix sim/oscillator-core/run_validity_check.sh 'echo "all cases passed"'
 mkfix sim/oscillator-core/tests/test_supply_stage2.sh 'echo "PASS a"; echo "PASS b"; touch sim/scribble'
+mkfix sim/phase-noise/tests/test_validity.sh 'echo "PASS a"; echo "all cases passed"'
 cp "$HERE/run-grading-fixtures.sh" "$G/.github/scripts/"
 git -C "$G" init -q -b main
 git -C "$G" config user.email t@t; git -C "$G" config user.name t
@@ -310,6 +311,11 @@ sed -i 's/PASS b"; touch/PASS b"; echo "FAIL x"; touch/' "$G/sim/oscillator-core
 grun
 if [ "$RC" -eq 1 ] && grep -q 'supply-stage2: 2 PASS lines (minimum 2) or a FAIL line' "$OUT"; then
   ok "dispatcher: FAIL line in stage-2 -> exit 1"; else bad "dispatcher s2 fail: rc=$RC"; fi
+
+mkfix sim/phase-noise/tests/test_validity.sh 'echo "PASS a"; echo "FAIL pn"; echo "all cases passed"'
+grun
+if [ "$RC" -eq 1 ] && grep -q 'pn-validity: no PASS lines or a FAIL line' "$OUT"; then
+  ok "dispatcher: FAIL line in pn-validity -> exit 1"; else bad "dispatcher pn fail: rc=$RC"; fi
 
 echo "check-all self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
