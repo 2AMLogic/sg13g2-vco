@@ -79,6 +79,23 @@ deck paired by name (`reports/<n>.json` <-> `decks/<n>.spice`) and shown as
 `deck_integrity`. A deck/source mismatch alone proves neither supersession nor
 invalidity.
 
+**Source currency vs report/deck integrity (issue #143).** These are two
+independent verdicts. *Currency* asks whether the consumed `design/vco.spice`
+bytes equal today's; it never changes with deck diagnostics. *Report/deck
+integrity* asks whether a report's `netlist_sha256` equals the sha256 of its
+paired deck. A record can be `current` and still fail integrity. A known
+mismatch (a) makes `record_currency.py cite` / `validate_citations` reject
+the record when it is cited as evidence, naming the report and its paired deck,
+and (b) fails the standalone gate `check-all.sh deck-integrity`
+(`record_currency.py integrity`). Regenerating `record-currency.json` does not
+clear it: the verdict is recomputed from the record bytes. Reports with no
+paired deck (legacy/unpaired) are listed as **unchecked** -- neither verified
+nor a failure, and no provenance is invented for them. Frozen historical
+evidence is never edited; a known historical mismatch can only be accepted by
+an entry with a written justification in `INTEGRITY_ALLOWLIST`
+(`.github/scripts/record_currency.py`). Disposition on the tree at introduction:
+no mismatches and no unpaired reports, so the allowlist is empty.
+
 **Provenance schema** (`sg13g2-vco/source-provenance/1`): for new
 `osc_derive_body()`-based runs (`run_pilot_grid.sh`, `run_pvt_sweep.sh`,
 `run_supply_stage2.sh`, `phase-noise/run_isf_pilot.sh`), the bench copies

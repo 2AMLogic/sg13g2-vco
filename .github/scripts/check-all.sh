@@ -40,6 +40,11 @@
 #                         (issue #139: committed model-input manifests ==
 #                         their retained snapshots; separate from currency,
 #                         never reads live model files)
+#   deck-integrity-selftest .github/scripts/test-record-deck-integrity.sh python3
+#   deck-integrity        .github/scripts/check-record-deck-integrity.sh git python3
+#                         (issue #143: no paired report/deck sha256 mismatch
+#                         in sim/**/records/ except the justified allowlist;
+#                         separate from source currency; unpaired = unchecked)
 #   friction-selftest     .github/scripts/test-check-klt-friction.sh python3
 #   friction              .github/scripts/check-klt-friction.sh     python3
 #                         (issue #146: every cited upstream tool-tracker issue
@@ -60,7 +65,8 @@
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest local-grid-guard-selftest spec-dr-selftest runner-selftest
 #           grader-spec-selftest grader-spec currency-selftest currency
-#           model-inputs-selftest model-inputs friction-selftest friction
+#           model-inputs-selftest model-inputs
+#           deck-integrity-selftest deck-integrity friction-selftest friction
 #           grading-fixtures py-selftest py-compile py-tests
 #   ci    = lint + test
 #   all   = ci + signoff + py-numeric (only with numpy+scipy importable)
@@ -255,6 +261,10 @@ gate() {
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-model-inputs.sh" "$@" ;;
     model-inputs)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-model-inputs.sh" "$@" ;;
+    deck-integrity-selftest)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-record-deck-integrity.sh" "$@" ;;
+    deck-integrity)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-record-deck-integrity.sh" "$@" ;;
     friction-selftest)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-check-klt-friction.sh" "$@" ;;
     friction)
@@ -316,6 +326,8 @@ agg_test() {
   gate currency
   gate model-inputs-selftest
   gate model-inputs
+  gate deck-integrity-selftest
+  gate deck-integrity
   gate friction-selftest
   gate friction
   gate grading-fixtures

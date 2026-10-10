@@ -76,6 +76,15 @@ jobs:
       - name: Committed model-input manifests match retained snapshots
         run: .github/scripts/check-all.sh model-inputs
 
+      # Report/deck integrity (issue #143): separate from source currency. A
+      # known paired report/deck sha256 mismatch fails unless explicitly
+      # allowlisted with a justification; unpaired reports are "unchecked".
+      - name: Report/deck integrity self-test
+        run: .github/scripts/check-all.sh deck-integrity-selftest
+
+      - name: No paired report/deck digest mismatch in sim records
+        run: .github/scripts/check-all.sh deck-integrity
+
       # Friction ledger (issue #146): every cited klayout-tools issue has an
       # entry in .github/klt-friction-ledger.json, workaround paths exist and
       # entries are verified against .github/klt-version. Offline.
