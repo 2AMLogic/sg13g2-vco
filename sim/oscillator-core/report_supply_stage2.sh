@@ -296,7 +296,8 @@ prov_digests() {
       grab("hbtmod",    "sg13g2_hbt_mod\\.lib` sha256 `[0-9a-f]+`")
       grab("osdi",      "mosvar\\.osdi` \\(this run.s build\\) sha256 `[0-9a-f]+`") }'
 }
-PROV_KEYS="body inductor cornerHBT cornerMOShv cornerCAP svaricap hbtmod osdi"   # readability only
+# prov_digests keys (body, inductor, corner*/svaricap/hbtmod/osdi) are kept for
+# readability; only "body" is compared -- the manifest below is the proof.
 
 # prov_inputs <record-prefix> -- the canonical consumed-input set of a record,
 # from its model-input sidecar <prefix>-model-inputs.json (schema
