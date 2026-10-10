@@ -119,7 +119,7 @@ check "no temp files left behind" '[ -z "$(find "$LOG_DIR" -name "*.tmp.*")" ]'
 check "checkpoint ends with its digest trailer and complete=1" \
   '[ "$(tail -n 1 "$LOG_DIR/$P1.ckpt" | cut -d= -f1)" = ckpt_sha256 ] && grep -q "^complete=1\$" "$LOG_DIR/$P1.ckpt"'
 check "checkpoint records point, inputs and artifact digests" \
-  'for k in corner_id vctrl_v status design_body_sha256 tran_template_sha256 model_inputs_sha256 simulator extractor_sha256 settings netlist_sha256 log_sha256 row_sha256; do grep -q "^$k=" "$LOG_DIR/$P1.ckpt" || exit 1; done'
+  '( for k in corner_id vctrl_v status design_body_sha256 tran_template_sha256 model_inputs_sha256 simulator extractor_sha256 settings netlist_sha256 log_sha256 row_sha256; do grep -q "^$k=" "$LOG_DIR/$P1.ckpt" || exit 1; done )'
 check "P2 is NOSC in the source" '[ "$(row_of "$SRC" "$P2" | cut -d, -f8)" = NOSC ]'
 check "P3 is a failure in the source" '[ "$(row_of "$SRC" "$P3" | cut -d, -f8)" = FAIL ]'
 SRC_SUM="$(tree_sum "$SRC")"; execd >/dev/null
