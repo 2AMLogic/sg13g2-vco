@@ -119,12 +119,17 @@ s2_check_enumeration() {
 # or scientific notation: optional sign, digits, optional fraction, optional
 # exponent. NaN/inf/Infinity spellings, empty strings, hex and text are
 # rejected by the grammar; an exponent that overflows a double ("1e999") is
-# rejected because the awk-coerced value x then has x - x != 0. Every number
-# the stage-2 grader does arithmetic on, or matches an identity by, passes
-# this first, so awk's silent coercion of text to 0 never reaches a margin.
+# rejected because the awk-coerced value x then lies outside [-DBL_MAX,
+# DBL_MAX] (it became +/-inf). The bound comparison is used rather than the
+# NaN-arithmetic idiom "x - x == 0", which is awk-implementation dependent:
+# mawk 1.3.4 evaluates (inf - inf == 0) as true. The grammar admits no NaN
+# spelling, so x is never NaN here. Every number the stage-2 grader does
+# arithmetic on, or matches an identity by, passes this first, so awk's silent
+# coercion of text to 0 never reaches a margin.
+S2_DBL_MAX=1.7976931348623157e308
 s2_finite() {
   [[ "$1" =~ ^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?$ ]] || return 1
-  awk -v v="$1" 'BEGIN { x = v + 0; exit (x - x == 0) ? 0 : 1 }'
+  awk -v v="$1" -v m="${S2_DBL_MAX}" 'BEGIN { x = v + 0; m = m + 0; exit (x >= -m && x <= m) ? 0 : 1 }'
 }
 
 # The same test for awk programs (the report getters read CSV fields in awk):
@@ -134,7 +139,7 @@ S2_AWK_FINITE='
 function s2_fin(s,  x) {
   if (s !~ /^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?$/) return 0
   x = s + 0
-  return (x - x == 0)
+  return (x >= -1.7976931348623157e308 && x <= 1.7976931348623157e308)
 }
 '
 

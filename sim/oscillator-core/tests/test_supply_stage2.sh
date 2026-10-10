@@ -108,6 +108,39 @@ eq status-reason-m2 "$(s2_status_reason 1 garbage)" "m2 'garbage' is not a finit
 eq status-reason-m1 "$(s2_status_reason 1e999 1)"   "m1 '1e999' is not a finite number"
 eq status-reason-unavailable-marker "$(s2_status_reason nan 1)" "-"
 
+# --- 2c. overflow rejection is awk-implementation independent -------------
+# The finite guard once used "x - x == 0", which mawk 1.3.4 evaluates as TRUE
+# for x = inf (gawk: false), so under mawk "1e999" was graded as a margin. Each
+# awk is exercised EXPLICITLY through a PATH shim (s2_finite / s2_status call
+# plain "awk") and by direct invocation of the S2_AWK_FINITE getter helper. A
+# missing implementation FAILS: an unexercised awk must not read as a pass.
+AWK_SHIM="${W}/awk-shim"; mkdir -p "${AWK_SHIM}"
+for impl in gawk mawk; do
+  impl_bin="$(command -v "${impl}" || true)"
+  if [[ -z "${impl_bin}" ]]; then check "awk-impl-present[${impl}]" bad "${impl} not on PATH; overflow checks not exercised"; continue; fi
+  check "awk-impl-present[${impl}]" ok
+  ln -sf "${impl_bin}" "${AWK_SHIM}/awk"
+  eq "awk-shim-is[${impl}]" "$(PATH="${AWK_SHIM}:${PATH}" bash -c 'readlink -f "$(command -v awk)"')" "$(readlink -f "${impl_bin}")"
+  for bv in 1e999 -1e999 +1e999 2e308 1.7976931348623159e308 -1.8e308 1e99999; do
+    PATH="${AWK_SHIM}:${PATH}" s2_finite "${bv}" && check "${impl}-finite-rejected[${bv}]" bad || check "${impl}-finite-rejected[${bv}]" ok
+    eq "${impl}-fin-rejected[${bv}]" "$("${impl_bin}" -v v="${bv}" "${S2_AWK_FINITE}"' BEGIN { print s2_fin(v) }')" 0
+    eq "${impl}-status-overflow-m2[${bv}]" "$(PATH="${AWK_SHIM}:${PATH}" s2_status 1 "${bv}")" INSUFFICIENT
+    eq "${impl}-status-overflow-m1[${bv}]" "$(PATH="${AWK_SHIM}:${PATH}" s2_status "${bv}" 1)" INSUFFICIENT
+  done
+  eq "${impl}-status-reason-overflow" "$(PATH="${AWK_SHIM}:${PATH}" s2_status_reason 1 -1e999)" "m2 '-1e999' is not a finite number"
+  # large-but-finite and ordinary values (incl. scientific notation) stay finite
+  for fv in 1e308 1.79e308 1.7976931348623157e308 -1.7976931348623157e308 0 -0 0.5 -3e-12 1e-400 2.5E+1 -3e10 .5 5.; do
+    PATH="${AWK_SHIM}:${PATH}" s2_finite "${fv}" && check "${impl}-finite-accepted[${fv}]" ok || check "${impl}-finite-accepted[${fv}]" bad
+    eq "${impl}-fin-accepted[${fv}]" "$("${impl_bin}" -v v="${fv}" "${S2_AWK_FINITE}"' BEGIN { print s2_fin(v) }')" 1
+  done
+  # DR-004 arithmetic unchanged under this awk
+  eq "${impl}-status-esc"       "$(PATH="${AWK_SHIM}:${PATH}" s2_status 1 -0.5)"        ESCALATION_REQUIRED
+  eq "${impl}-status-equal"     "$(PATH="${AWK_SHIM}:${PATH}" s2_status 1 2)"           NO_ESCALATION
+  eq "${impl}-status-sci-esc"   "$(PATH="${AWK_SHIM}:${PATH}" s2_status 1e-3 2.5E+1)"   ESCALATION_REQUIRED
+  eq "${impl}-status-sci-no-esc" "$(PATH="${AWK_SHIM}:${PATH}" s2_status 2.5E+1 2.6E+1)" NO_ESCALATION
+  eq "${impl}-status-big-finite" "$(PATH="${AWK_SHIM}:${PATH}" s2_status 1e308 1.5e308)" NO_ESCALATION
+done
+
 # ------------------------------------------------------ 3. rendered decks
 WORKDIR="${W}/work"; mkdir -p "${WORKDIR}"
 RECORD_ID=testrec
@@ -643,6 +676,22 @@ for bv in garbage 1e999; do
   expect_one "itm-${bv}" 8 FAST 3.630 125 temp_c
   corrupt "irl-${bv}" .csv "\$2==\"ff\" && \$5==125 && \$6==1.65 && \$NF==\"3.630\" { \$NF=\"${bv}\" } { print }"
   expect_one "irl-${bv}" 8 FAST 3.630 125 vsup_v
+done
+# the report getters' overflow rejection under each awk explicitly (PATH shim,
+# section 2c): mawk once accepted 1e999 / -1e999 as finite and graded them
+for impl in gawk mawk; do
+  impl_bin="$(command -v "${impl}" || true)"
+  if [[ -z "${impl_bin}" ]]; then check "report-awk-impl-present[${impl}]" bad "${impl} not on PATH"; continue; fi
+  ln -sf "${impl_bin}" "${AWK_SHIM}/awk"
+  SAVED_PATH="${PATH}"; PATH="${AWK_SHIM}:${PATH}"
+  eq "report-awk-shim-is[${impl}]" "$(readlink -f "$(command -v awk)")" "$(readlink -f "${impl_bin}")"
+  corrupt "${impl}-ifq-1e999" -tuning.csv '$1=="ff" && $4==125 && $NF=="3.630" { $7="1e999" } { print }'
+  expect_one "${impl}-ifq-1e999" 1 FAST 3.630 125 f_max_hz
+  corrupt "${impl}-ipw-m1e999" .csv '$2=="ff" && $5==125 && $6==1.65 && $NF=="3.630" { $27="-1e999" } { print }'
+  expect_one "${impl}-ipw-m1e999" 8 FAST 3.630 125 p_core_ls_w
+  corrupt "${impl}-img-1e999" -margin-summary.csv '$2=="ff" && $5==125 && $NF=="3.630" { $9="1e999" } { print }'
+  expect_one "${impl}-img-1e999" 6 FAST 3.630 125 margin_lower_bound
+  PATH="${SAVED_PATH}"
 done
 # a malformed identity must not match through awk's coercion: "27abc" is not 27
 corrupt itm-27abc -tuning.csv '$1=="tt" && $4==27 && $NF=="2.970" { $4="27abc" } { print }'
