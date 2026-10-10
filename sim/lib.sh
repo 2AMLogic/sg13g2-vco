@@ -26,6 +26,45 @@
 # that silently needs a newer bash. No `declare -A`, no bash-4+ builtins or
 # parameter expansions.
 
+# require_local_grid_ok <point-count>
+# Guard for the multi-point grid scripts that run every point as a serial
+# local `ngspice -b` (issue #160). On a fleet-dispatched worker
+# KLT_SIM_BACKEND is exported (batch) and hand-launched local grids are
+# disallowed; the grid belongs in a `klt sim` request. Refuses (status 1,
+# message on stderr) when KLT_SIM_BACKEND is set, is not "local", and
+# <point-count> > 1. Single-unit runs always pass. SIM_ALLOW_LOCAL_GRID=1
+# is the explicit opt-in; the caller records it with local_grid_record_note.
+# Needs only env vars (PDK-free).
+require_local_grid_ok() {
+  local n="${1:-}" backend="${KLT_SIM_BACKEND:-}"
+  case "${n}" in ''|*[!0-9]*) echo "require_local_grid_ok: point-count must be a non-negative integer, got '${n}'" >&2; return 2 ;; esac
+  [ "${n}" -gt 1 ] || return 0
+  case "${backend}" in ''|local) return 0 ;; esac
+  [ "${SIM_ALLOW_LOCAL_GRID:-}" != 1 ] || return 0
+  echo "error: refusing a local ${n}-point grid: KLT_SIM_BACKEND='${backend}' says grids go to the fleet." >&2
+  echo "       Express the grid as a \`klt sim\` request; see sim/oscillator-core/klt-sim/README.md" >&2
+  echo "       for the request path and its known gaps. To run locally anyway, set SIM_ALLOW_LOCAL_GRID=1" >&2
+  echo "       (recorded in the narrative record header)." >&2
+  return 1
+}
+
+# local_grid_record_note
+# Print a markdown bullet for the narrative record header naming the backend
+# context, and flagging an explicit SIM_ALLOW_LOCAL_GRID=1 override. Always
+# prints one line so every record states where it was produced.
+local_grid_record_note() {
+  local backend="${KLT_SIM_BACKEND:-}"
+  case "${backend}" in
+    ''|local) echo "- **Execution backend**: local serial \`ngspice -b\` (KLT_SIM_BACKEND=${backend:-unset})" ;;
+    *)
+      if [ "${SIM_ALLOW_LOCAL_GRID:-}" = 1 ]; then
+        echo "- **Execution backend**: local serial \`ngspice -b\`, **OVERRIDE**: SIM_ALLOW_LOCAL_GRID=1 with KLT_SIM_BACKEND=${backend} exported (the fleet backend was bypassed on purpose)"
+      else
+        echo "- **Execution backend**: local serial \`ngspice -b\` (KLT_SIM_BACKEND=${backend})"
+      fi ;;
+  esac
+}
+
 # sha256_of <file>
 # Print the sha256 digest of a file, or "unavailable" if neither shasum nor
 # sha256sum is on PATH.

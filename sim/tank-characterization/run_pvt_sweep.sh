@@ -77,6 +77,11 @@ NGSPICE_VERSION="$(detect_ngspice_version)"
 CORNERCAP_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib")"
 CAPMOD_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/capacitors_mod.lib")"
 
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #160). The grid is multi-point by construction, so a floor count suffices;
+# this runs before any record id is reserved or any ngspice call.
+require_local_grid_ok 2 || exit 1
+
 # Reserve the id (atomic mkdir) before any output path is created or opened.
 RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 
@@ -374,6 +379,7 @@ done
   echo "  - \`cornerCAP.lib\` sha256 \`${CORNERCAP_SHA}\`"
   echo "  - \`capacitors_mod.lib\` sha256 \`${CAPMOD_SHA}\`"
   echo "- **ngspice**: \`${NGSPICE_VERSION}\`"
+  local_grid_record_note
   echo "- **Corner matrix run**: MIM process section {cap_typ, cap_bcs, cap_wcs}"
   echo "  x temperature {${TEMPS[*]}} C x bias {${VBIASES[*]}} V = ${total}"
   echo "  simulation points, each covering 6 device instances = $((total * 6))"

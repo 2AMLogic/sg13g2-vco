@@ -89,6 +89,11 @@ DIODES_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/diodes.lib")"
 MOSVAR_VA_SHA="$(sha256_of "${PDK_ROOT}/${PDK}/libs.tech/verilog-a/mosvar/mosvar.va")"
 MOSVAR_OSDI_SHA="$(sha256_of "${OSDI_MOSVAR}")"
 
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #160). The grid is multi-point by construction, so a floor count suffices;
+# this runs before any record id is reserved or any ngspice call.
+require_local_grid_ok 2 || exit 1
+
 # Reserve the id (atomic mkdir) before any output path is created or opened.
 RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 
@@ -448,6 +453,7 @@ sweep_family diode svaricap_dio tb_diode_varactor_vscan.spice.tmpl \
   echo "  - \`libs.tech/verilog-a/mosvar/mosvar.va\` (source) sha256 \`${MOSVAR_VA_SHA}\`"
   echo "  - \`libs.tech/ngspice/osdi/mosvar.osdi\` (this run's build) sha256 \`${MOSVAR_OSDI_SHA}\`"
   echo "- **ngspice**: \`${NGSPICE_VERSION}\`"
+  local_grid_record_note
   echo "- **OSDI toolchain**: OpenVAF-Reloaded, pinned in"
   echo "  \`sim/tools/build-osdi.sh\` -- see \`sim/pdk.json\`'s"
   echo "  \`osdi_toolchain\` block for the compiler tag and sha256."
