@@ -13,6 +13,10 @@
 #   5. no tracked *.py                      -> compile FAILS (empty != green)
 #   6. klayout absent / version mismatch    -> klayout FAILS (never a skip)
 #   7. klayout at the pinned version        -> klayout runs tests/klayout, PASSES
+#   7c. empty discovery (no files, or a matching module with zero cases) FAILS
+#       with the suite named, in stdlib, numeric and klayout modes, with the
+#       numpy/scipy and klayout prerequisites faked as satisfied; a passing
+#       test passes and an import error fails
 #   8. real tree: compile covers every tracked *.py (count matches git)
 set -u
 
@@ -147,6 +151,50 @@ else
 fi
 rm "$t/tests/numeric/test_ok.py"
 run_case "numeric with zero tests fails" 1 numeric "$t" "PYTHON=python3"
+
+# 7c. Empty-discovery rejection (issue #202). A wrapper interpreter fakes the
+#     numpy/scipy import probe and the klayout version probe, then defers to
+#     the real python3, so a missing dependency cannot stand in for the
+#     rejection: the failure must be the empty-suite diagnostic.
+REALPY="$(command -v python3)"
+mkdir -p "$T/stub-prereq"
+cat > "$T/stub-prereq/python3" <<STUB
+#!/usr/bin/env bash
+case "\$*" in
+  *"import numpy, scipy"*) exit 0 ;;
+  *'m.version("klayout")'*) echo 1.2.3; exit 0 ;;
+esac
+exec "$REALPY" "\$@"
+STUB
+chmod +x "$T/stub-prereq/python3"
+PREREQ="PYTHON=$T/stub-prereq/python3"
+
+expect_empty_rejection() {
+  # expect_empty_rejection <label> <mode> <suite-dir> <tree>
+  run_case "$1: fails" 1 "$2" "$4" "$PREREQ"
+  if grep -q "suite $3 discovered zero tests" "$T/err" && ! grep -q "MISSING TOOL" "$T/err"; then
+    echo "PASS: $1: rejected as empty, suite named"; pass=$((pass + 1))
+  else
+    echo "FAIL: $1: wrong failure reason" >&2; cat "$T/err" >&2; fail=$((fail + 1))
+  fi
+}
+
+for spec in "tests:tests/stdlib" "numeric:tests/numeric" "klayout:tests/klayout"; do
+  mode="${spec%%:*}"; sdir="${spec#*:}"
+  t="$(fresh_tree)"
+  mkdir -p "$t/tests/numeric"
+  echo numpy > "$t/.github/numeric-requirements.txt"
+  find "$t/$sdir" -name '*.py' -delete
+  expect_empty_rejection "$mode empty dir" "$mode" "$sdir" "$t"
+  printf 'import unittest\n\n\nclass Helper:\n    pass\n' > "$t/$sdir/test_nocases.py"
+  expect_empty_rejection "$mode module with zero cases" "$mode" "$sdir" "$t"
+  printf 'import unittest\n\n\nclass T(unittest.TestCase):\n    def test_ok(self):\n        pass\n' > "$t/$sdir/test_ok.py"
+  run_case "$mode with a passing test passes" 0 "$mode" "$t" "$PREREQ"
+done
+
+t="$(fresh_tree)"
+printf 'import not_a_real_module_xyz\n' > "$t/tests/stdlib/test_importerr.py"
+run_case "import error in test module fails tests" 1 tests "$t"
 
 # 8. The real tree's compile gate sees every tracked *.py.
 want="$(git -C "$REAL_ROOT" ls-files '*.py' | wc -l | tr -d ' ')"
