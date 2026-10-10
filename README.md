@@ -11,9 +11,12 @@ open-source xschem + ngspice flow.
 [reproducible layout](layout/README.md) are committed, with native DRC
 evidence and coverage limits documented in
 [layout provenance](layout/PROVENANCE.md). LVS closure and the graded PVT
-simulation grids remain outstanding. A device-aware LVS has run and reports
-`mismatch`, with one remaining isolated difference (#80; provenance §14) now
-that #79 corrected the varactor `bn` tie. Simulation numbers in the tree
+simulation grids remain outstanding. A device-aware LVS has run: IHP's runset as shipped
+still reports `mismatch`, but after the reviewed spiral label-order step (#80)
+the cross-reference compare reaches `match`, while its strict top-port check
+still logs three port-name findings (#162; provenance §14.6). That is not LVS
+closure: no `klt lvs` report exists (klayout-tools#2849) and the acceptable
+signoff envelope is still owed (#62; [signoff notes](signoff/README.md)). Simulation numbers in the tree
 predate #79 and are not current; #93 and #94 track re-tuning and regeneration. The
 [signoff report](signoff/t1-report.json) is the verdict of record.
 

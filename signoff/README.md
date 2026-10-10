@@ -99,9 +99,16 @@ not actually support an item just to make a row go green.
     `t1_item_count: 11` and item 11 carries `graded_by_build: true`, so
     the running build has rules for every row the vendored checklist
     renders. The row still renders `unmet`/`no_evidence`, and now for the
-    only remaining reason: **there is no evidence to cite.** No layout,
-    no supply routing and no `klt erc` supply-spec run exist in this repo
-    yet, so item 11 has nothing to point at — the same "has a row, even
+    only remaining reason: **there is no evidence to cite.** A
+    reproducible layout is committed (item 2; `layout/README.md` lists all 9
+    nets, including `VDD`, as routed and labelled), and the device-aware LVS
+    cross-reference pairs `VDD`, `0` and the substrate 1:1
+    (`layout/PROVENANCE.md` §14, "Supply pairing"). But that is an existing
+    artifact, not passing item-11 evidence: no `klt erc` supply-spec run
+    exists, and no `klt lvs` report (hence no `power_connectivity` block) can
+    exist at klt 0.6.0 or 0.7.0 (klayout-tools#2849; `layout/PROVENANCE.md`
+    §14.5). Strict top-port LVS findings remain open (#162). So item 11 has
+    nothing to point at — the same "has a row, even
     if unmet" state issue #34 requires. Cite it when a real `klt erc`
     envelope exists, not before. Item 11's blocking work is tracked in
     the companion issue; its known upstream friction for full-custom
