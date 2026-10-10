@@ -216,6 +216,14 @@ sim/bn-substrate-tank/run_tank_ab.sh      # needs network + the fleet; uvx klayo
 python3 -I sim/bn-substrate-tank/analyze.py sim/bn-substrate-tank/records/<stamp>
 ```
 
+Exit status (#210): `run_tank_ab.sh` exits nonzero after the whole batch if any
+unit failed collection (retained-input copy failed -- that unit is not
+submitted --, the fleet client exited nonzero with empty or nonempty stdout, or
+the report is empty) or if the request inventory is empty. Raw stdout/stderr
+stay in `reports/`, other units are still attempted, and there is no local
+fallback. A successful report containing device-model errors is not a
+collection failure; `analyze.py` judges report content.
+
 `make_requests.py` documents the circuit in its docstring; the frozen decks and
 requests of each unit are under `records/<stamp>/decks/`, the klt reports
 (job ids, ngspice 46 runner) under `reports/`.

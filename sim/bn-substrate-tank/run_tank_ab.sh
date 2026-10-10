@@ -45,16 +45,42 @@ mkdir "${REC}/reports" "${REC}/decks" || exit 1
 python3 -I "${TANK_AB_MAKE_REQUESTS:-${HERE}/make_requests.py}" "${WORK}" ${TANK_AB_ARGS:-} >/dev/null || { echo "request generation failed" >&2; exit 1; }
 read -ra KLT <<< "${TANK_AB_KLT:-uvx --from klayout-tools==0.6.0 klt}"
 export KLT_SIM_BACKEND=batch
-fails=0
-for req in "${WORK}"/*/*/request.json; do
+fails=0; units=0
+# Issue #210: collection health is tracked per unit and exposed as the exit
+# status AFTER the whole batch ran (partial evidence is kept, other units are
+# still attempted).  A unit fails collection if a retained-input copy fails
+# (it is then NOT submitted), the client exits nonzero (empty or nonempty
+# stdout; raw stdout/.err are kept), or the report is missing/empty.  A
+# successful report that carries device-model failures is NOT a collection
+# failure here; the analyzers judge report content.
+shopt -s nullglob
+reqs=("${WORK}"/*/*/request.json)
+shopt -u nullglob
+for req in "${reqs[@]}"; do
+  units=$((units+1))
   d="$(dirname "${req}")"; v="$(basename "$(dirname "${d}")")"; p="$(basename "${d}")"
   echo "== ${v}/${p}"
-  cp "${d}/tank.spice" "${REC}/decks/${v}__${p}.spice"
-  cp "${d}/request.json" "${REC}/decks/${v}__${p}.request.json"
-  cp "${d}/cell.json" "${REC}/decks/${v}__${p}.cell.json"
+  copied=1
+  for pair in "tank.spice:spice" "request.json:request.json" "cell.json:cell.json"; do
+    cp "${d}/${pair%%:*}" "${REC}/decks/${v}__${p}.${pair#*:}" || copied=0
+  done
+  if [[ "${copied}" -ne 1 ]]; then
+    echo "   INPUT COPY FAILED: not submitted" >&2; fails=$((fails+1)); continue
+  fi
   (cd "${d}" && "${KLT[@]}" sim request.json --backend batch \
-      --format json -o out > "${REC}/reports/${v}__${p}.json" 2> "${REC}/reports/${v}__${p}.err") || true
-  [[ -s "${REC}/reports/${v}__${p}.json" ]] || { echo "   NO REPORT"; fails=$((fails+1)); }
+      --format json -o out > "${REC}/reports/${v}__${p}.json" 2> "${REC}/reports/${v}__${p}.err")
+  rc=$?
+  if [[ "${rc}" -ne 0 ]]; then
+    echo "   CLIENT FAILED (exit ${rc}); diagnostics kept in reports/${v}__${p}.{json,err}" >&2
+    fails=$((fails+1))
+  elif [[ ! -s "${REC}/reports/${v}__${p}.json" ]]; then
+    echo "   NO REPORT" >&2; fails=$((fails+1))
+  fi
 done
 echo "${REC}"
-echo "submit failures (no report): ${fails}"
+echo "units: ${units}"
+echo "collection failures: ${fails}"
+if [[ "${units}" -eq 0 ]]; then
+  echo "run_tank_ab: empty request inventory; nothing collected" >&2; exit 1
+fi
+[[ "${fails}" -eq 0 ]] || exit 1
