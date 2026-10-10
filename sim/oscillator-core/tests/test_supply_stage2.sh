@@ -83,6 +83,31 @@ eq status-m1-neg-better "$(s2_status -1 0)"   NO_ESCALATION
 eq status-m1-neg-worse  "$(s2_status -1 -2)"  ESCALATION_REQUIRED
 eq status-nan "$(s2_status nan 1)" INSUFFICIENT
 
+# --- 2b. finite-number validation (issue #175) ---------------------------
+# Non-numeric, NaN/inf-spelled and overflowing margins used to be coerced by
+# awk (text -> 0, nan/inf -> numbers) and graded; they are now INSUFFICIENT.
+for bv in garbage NaN nan inf Inf -inf Infinity -Infinity 1e999 -1e999 0x10 1e 1.2.3 "1 2" "" "5abc" "--1" "+"; do
+  eq "status-invalid-m2[${bv}]" "$(s2_status 1 "${bv}")" INSUFFICIENT
+  eq "status-invalid-m1[${bv}]" "$(s2_status "${bv}" 1)" INSUFFICIENT
+done
+eq status-both-invalid "$(s2_status garbage NaN)" INSUFFICIENT
+# finite scientific notation keeps its existing results
+eq status-sci-small-m1   "$(s2_status 1e-3 2.5E+1)"  ESCALATION_REQUIRED
+eq status-sci-no-esc     "$(s2_status 2.5E+1 2.6E+1)" NO_ESCALATION
+eq status-sci-m2-neg     "$(s2_status 1e-3 -2.5e-3)" ESCALATION_REQUIRED
+eq status-leading-dot    "$(s2_status .5 .6)"        NO_ESCALATION
+eq status-plus-sign      "$(s2_status +1 +1.5)"      NO_ESCALATION
+eq status-trailing-dot   "$(s2_status 1. 1.5)"       NO_ESCALATION
+for fv in 0 -0 1 -1.5 +2 .5 5. 1e-3 2.5E+1 -3e10 1E5 0.0e0; do
+  s2_finite "${fv}" && check "finite-accepted[${fv}]" ok || check "finite-accepted[${fv}]" bad
+done
+for bv in "" garbage nan NaN inf -Infinity 1e999 -1e999 0x1 1e 1e+ . - "1 " " 1" "1,2"; do
+  s2_finite "${bv}" && check "finite-rejected[${bv}]" bad || check "finite-rejected[${bv}]" ok
+done
+eq status-reason-m2 "$(s2_status_reason 1 garbage)" "m2 'garbage' is not a finite number"
+eq status-reason-m1 "$(s2_status_reason 1e999 1)"   "m1 '1e999' is not a finite number"
+eq status-reason-unavailable-marker "$(s2_status_reason nan 1)" "-"
+
 # ------------------------------------------------------ 3. rendered decks
 WORKDIR="${W}/work"; mkdir -p "${WORKDIR}"
 RECORD_ID=testrec
@@ -578,6 +603,87 @@ for f in "${FU}"/pnwrong*-pilot-summary.csv; do sed 's/^vsup_v,.*/vsup_v,3.3,V,x
 ARR=(); mapfile_lines < <(pn_args "${FU}" pnwrong --stage2-pn)
 run_report "${FU}" pnrail "${FU}/s2a" --baseline-osc "${FU}/base_full" "${ARR[@]}"
 eq pn-rail-mismatch-not-matched "$(cnt "${C}" 4 INSUFFICIENT)" 18
+
+# --- 7d. corrupt numeric fields never grade (issue #175) ------------------
+# Each case copies a complete, passing stage-2 record, corrupts ONE numeric
+# field of ONE corner (FAST / 3.630 V / 125 C unless noted) and requires that
+# exactly that (row, point) turns INSUFFICIENT naming the field, every other
+# comparison is untouched, and the overall status is not NO_ESCALATION.
+FV="${W}/fx-invalid"; mk_osc "${FV}" base1 base ok; mk_osc "${FV}" s2a s2 ok
+corrupt() { # tag file-suffix awk-condition-and-assignment
+  local f
+  for f in .csv -tuning.csv -margin-summary.csv -row7.csv .md; do cp "${FV}/s2a${f}" "${FV}/$1${f}"; done
+  awk -F, -v OFS=, "$3" "${FV}/s2a$2" > "${FV}/$1$2.n" && mv "${FV}/$1$2.n" "${FV}/$1$2"
+}
+# expect_one tag row process rail temp field-word
+expect_one() {
+  local tag="$1" row="$2" proc="$3" rail="$4" temp="$5" word="$6" n
+  run_report "${FV}" "${tag}" "${FV}/${tag}" --baseline-osc "${FV}/base1"
+  n="$(awk -F, -v r="${row}" -v p="${proc}" -v v="${rail}" -v t="${temp}" \
+        'NR>1 && $1==r && $2==p && $3==v && $4==t && $13=="INSUFFICIENT" {n++} END{print n+0}' "${C}")"
+  eq "${tag}-point-insufficient" "${n}" 1
+  eq "${tag}-reason-names-field" "$(awk -F, -v r="${row}" -v p="${proc}" -v v="${rail}" -v t="${temp}" -v w="${word}" \
+        'NR>1 && $1==r && $2==p && $3==v && $4==t && $13=="INSUFFICIENT" && index($14, w) {n++} END{print n+0}' "${C}")" 1
+  eq "${tag}-no-escalation-claimed" "$(awk -F, -v r="${row}" -v p="${proc}" -v v="${rail}" -v t="${temp}" \
+        'NR>1 && $1==r && $2==p && $3==v && $4==t && $13!="INSUFFICIENT"' "${C}" | wc -l | tr -d ' ')" 0
+  # (row 4 has no phase-noise records in this fixture: 18 INSUFFICIENT by design)
+  eq "${tag}-others-untouched" "$(awk -F, 'NR>1 && $1!=4 && $13!="NO_ESCALATION"' "${C}" | wc -l | tr -d ' ')" 1
+  eq "${tag}-overall" "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
+}
+for bv in garbage NaN inf -Infinity 1e999; do
+  corrupt "ipw-${bv}" .csv "\$2==\"ff\" && \$5==125 && \$6==1.65 && \$NF==\"3.630\" { \$27=\"${bv}\" } { print }"
+  expect_one "ipw-${bv}" 8 FAST 3.630 125 p_core_ls_w
+done
+for bv in garbage 1e999; do
+  corrupt "ifq-${bv}" -tuning.csv "\$1==\"ff\" && \$4==125 && \$NF==\"3.630\" { \$7=\"${bv}\" } { print }"
+  expect_one "ifq-${bv}" 1 FAST 3.630 125 f_max_hz
+  corrupt "img-${bv}" -margin-summary.csv "\$2==\"ff\" && \$5==125 && \$NF==\"3.630\" { \$9=\"${bv}\" } { print }"
+  expect_one "img-${bv}" 6 FAST 3.630 125 margin_lower_bound
+  corrupt "itm-${bv}" .csv "\$2==\"ff\" && \$5==125 && \$6==1.65 && \$NF==\"3.630\" { \$5=\"${bv}\" } { print }"
+  expect_one "itm-${bv}" 8 FAST 3.630 125 temp_c
+  corrupt "irl-${bv}" .csv "\$2==\"ff\" && \$5==125 && \$6==1.65 && \$NF==\"3.630\" { \$NF=\"${bv}\" } { print }"
+  expect_one "irl-${bv}" 8 FAST 3.630 125 vsup_v
+done
+# a malformed identity must not match through awk's coercion: "27abc" is not 27
+corrupt itm-27abc -tuning.csv '$1=="tt" && $4==27 && $NF=="2.970" { $4="27abc" } { print }'
+expect_one itm-27abc 1 TYP 2.970 27 temp_c
+corrupt irl-3.630x -tuning.csv '$1=="tt" && $4==27 && $NF=="3.630" { $NF="3.630x" } { print }'
+expect_one irl-3.630x 1 TYP 3.630 27 vsup_v
+# row 6 and row 7 identities
+corrupt irl6 -margin-summary.csv '$2=="ss" && $5==-40 && $NF=="2.970" { $NF="garbage" } { print }'
+expect_one irl6 6 SLOW 2.970 -40 vsup_v
+corrupt itm6 -margin-summary.csv '$2=="ss" && $5==-40 && $NF=="2.970" { $5="NaN" } { print }'
+expect_one itm6 6 SLOW 2.970 -40 temp_c
+# row 7 (both metrics of the point read the same corrupt grade line)
+for bv in garbage 1e999; do
+  corrupt "irl7-${bv}" -row7.csv "\$1==\"ff\" && \$4==-40 && \$NF==\"2.970\" { \$NF=\"${bv}\" } { print }"
+  run_report "${FV}" "irl7-${bv}" "${FV}/irl7-${bv}" --baseline-osc "${FV}/base1"
+  eq "irl7-${bv}-both-metrics-insufficient" "$(awk -F, 'NR>1 && $1==7 && $2=="FAST" && $3=="2.970" && $4==-40 && $13=="INSUFFICIENT" && index($14,"vsup_v")' "${C}" | wc -l | tr -d ' ')" 2
+  eq "irl7-${bv}-others-untouched" "$(awk -F, 'NR>1 && $1!=4 && $13!="NO_ESCALATION"' "${C}" | wc -l | tr -d ' ')" 2
+done
+# phase-noise record with a corrupt rail / margin input (row 4)
+mk_pn_set "${FV}" pnbase base -110.0 -130.0; mk_pn_set "${FV}" pns2 s2 -108.0 -128.0
+for f in "${FV}"/pns2*-pilot-summary.csv; do
+  if grep -q '^mos,ff' "${f}" && grep -q '^temp_c,125,' "${f}" && grep -q '^vsup_v,3.630,' "${f}"; then PNT="${f}"; fi
+done
+sed 's/^vsup_v,3.630,/vsup_v,garbage,/' "${PNT}" > "${PNT}.n" && mv "${PNT}.n" "${PNT}"
+ARR=(); mapfile_lines < <(pn_args "${FV}" pnbase --baseline-pn; pn_args "${FV}" pns2 --stage2-pn)
+run_report "${FV}" ipnrail "${FV}/s2a" --baseline-osc "${FV}/base1" "${ARR[@]}"
+eq ipnrail-point-insufficient "$(awk -F, 'NR>1 && $1==4 && $2=="FAST" && $3=="3.630" && $4==125 && $13=="INSUFFICIENT" && index($14,"vsup_v")' "${C}" | wc -l | tr -d ' ')" 1
+eq ipnrail-others-compared "$(cnt "${C}" 4 NO_ESCALATION)" 17
+sed 's/^vsup_v,garbage,/vsup_v,3.630,/; s/^l_10mhz_mean,.*/l_10mhz_mean,1e999,dBc\/Hz,x/' "${PNT}" > "${PNT}.n" && mv "${PNT}.n" "${PNT}"
+run_report "${FV}" ipnl "${FV}/s2a" --baseline-osc "${FV}/base1" "${ARR[@]}"
+eq ipnl-point-insufficient "$(awk -F, 'NR>1 && $1==4 && $13=="INSUFFICIENT" && index($14,"l_10mhz_mean")' "${C}" | wc -l | tr -d ' ')" 1
+eq ipnl-no-escalation-claimed "$(cnt "${C}" 4 NO_ESCALATION)" 17
+# regression: finite values in scientific notation keep their results
+for f in .csv -tuning.csv -margin-summary.csv -row7.csv .md; do cp "${FV}/s2a${f}" "${FV}/sci${f}"; done
+sed -E 's/(^[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,)4\.68e9,5\.33e9/\14.68E+9,5.33E+9/' "${FV}/s2a-tuning.csv" > "${FV}/sci-tuning.csv"
+sed -E 's/,5\.5e-3,/,5.5E-3,/' "${FV}/s2a.csv" > "${FV}/sci.csv"
+run_report "${FV}" sci "${FV}/sci" --baseline-osc "${FV}/base1"
+eq sci-notation-row1-still-compared "$(cnt "${C}" 1 NO_ESCALATION)" 18
+eq sci-notation-row8-still-compared "$(cnt "${C}" 8 NO_ESCALATION)" 18
+eq sci-notation-same-statuses-as-clean "$(awk -F, 'NR>1{print $1,$2,$3,$4,$5,$13}' "${C}" | sort | md5sum)" \
+   "$(run_report "${FV}" clean "${FV}/s2a" --baseline-osc "${FV}/base1"; awk -F, 'NR>1{print $1,$2,$3,$4,$5,$13}' "${C}" | sort | md5sum)"
 
 if [[ ${FAIL} == 0 ]]; then echo "all stage-2 supply checks passed"; fi
 exit ${FAIL}

@@ -115,6 +115,42 @@ s2_check_enumeration() {
   return 0
 }
 
+# s2_finite <value> -- rc 0 iff <value> is a finite real number in plain decimal
+# or scientific notation: optional sign, digits, optional fraction, optional
+# exponent. NaN/inf/Infinity spellings, empty strings, hex and text are
+# rejected by the grammar; an exponent that overflows a double ("1e999") is
+# rejected because the awk-coerced value x then has x - x != 0. Every number
+# the stage-2 grader does arithmetic on, or matches an identity by, passes
+# this first, so awk's silent coercion of text to 0 never reaches a margin.
+s2_finite() {
+  [[ "$1" =~ ^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?$ ]] || return 1
+  awk -v v="$1" 'BEGIN { x = v + 0; exit (x - x == 0) ? 0 : 1 }'
+}
+
+# The same test for awk programs (the report getters read CSV fields in awk):
+# prepend this to a program that calls s2_fin(field).
+# shellcheck disable=SC2016  # awk source, expanded by awk, not by the shell
+S2_AWK_FINITE='
+function s2_fin(s,  x) {
+  if (s !~ /^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?$/) return 0
+  x = s + 0
+  return (x - x == 0)
+}
+'
+
+# s2_status_reason <m1> <m2> -- prints "-" when both margins are usable or are
+# the legitimate "unavailable" markers (nan / empty: the getter has already said
+# why); otherwise the field and reason a margin was rejected as invalid.
+s2_status_reason() {
+  local f v
+  for f in m1 m2; do
+    if [[ "${f}" == m1 ]]; then v="$1"; else v="$2"; fi
+    [[ "${v}" == "nan" || -z "${v}" ]] && continue
+    s2_finite "${v}" || { echo "${f} '${v}' is not a finite number"; return 0; }
+  done
+  echo "-"
+}
+
 # s2_status <m1> <m2> -- the escalation criterion for ONE (row, point), pure
 # arithmetic on the two margins (both in the row's own unit, positive = inside
 # the bound, "nan" = unavailable). Prints one status token:
@@ -132,7 +168,16 @@ s2_check_enumeration() {
 # the rail is not a small perturbation of stage 1). Where stage 1 left no
 # margin (m1 <= 0) there is nothing for a favourable movement to exceed, so
 # only an adverse movement counts. Equality is NOT a trigger ("more than").
+#
+# Both margins are validated (s2_finite) BEFORE any arithmetic: text, NaN/inf
+# spellings and overflowing exponents are INSUFFICIENT, never coerced to 0
+# (s2_status 1 garbage used to read NO_ESCALATION). The thresholds and the
+# comparison below are unchanged.
 s2_status() {
+  local v
+  for v in "$1" "$2"; do
+    if [[ "${v}" == "nan" || -z "${v}" ]] || ! s2_finite "${v}"; then echo INSUFFICIENT; return 0; fi
+  done
   awk -v m1="$1" -v m2="$2" 'BEGIN {
     if (m1 == "nan" || m2 == "nan" || m1 == "" || m2 == "") { print "INSUFFICIENT"; exit }
     d = m2 - m1; ad = (d < 0) ? -d : d

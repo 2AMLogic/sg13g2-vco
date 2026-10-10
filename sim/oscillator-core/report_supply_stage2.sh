@@ -120,23 +120,40 @@ TAB="$(printf '\t')"
 # unavailable; reason says why, or is "-").
 res() { printf '%s\t%s\t%s\n' "$1" "$2" "$3"; }
 
+# Finite-number validation (issue #175). A temperature, rail or measured
+# value that is not a finite number is INSUFFICIENT with the field named, never
+# coerced by awk to 0 (which would match a corner or feed arithmetic).
+# arg_check <temp> <rail> -- rc 1 after printing an unavailable result line.
+arg_check() {
+  s2_finite "$1" || { res nan - "invalid temp_c '$1' (not a finite number)"; return 1; }
+  s2_finite "$2" || { res nan - "invalid vsup_v '$2' (not a finite number)"; return 1; }
+  return 0
+}
+
 get_row1() { # prefix mos cap hbt temp rail
   local f="$1-tuning.csv"
   [[ -f "${f}" ]] || { res nan - "no tuning CSV ${f##*/}"; return; }
+  arg_check "$5" "$6" || return
   awk -F, -v mos="$2" -v cap="$3" -v hbt="$4" -v temp="$5" -v rail="$6" -v nom="${S2_NOMINAL_RAIL}" \
-      -v lo="${OSC_ROW1_F_MIN_HZ}" -v hi="${OSC_ROW1_F_MAX_HZ}" '
+      -v lo="${OSC_ROW1_F_MIN_HZ}" -v hi="${OSC_ROW1_F_MAX_HZ}" "${S2_AWK_FINITE}"'
     function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
     NR == 1 { hasrail = ($21 == "vsup_v"); next }
-    $1 == mos && $2 == cap && $3 == hbt && ($4 + 0) == (temp + 0) {
+    $1 == mos && $2 == cap && $3 == hbt {
+      if (!s2_fin($4)) { bad = "temp_c"; badv = $4; next }
+      if (hasrail && !s2_fin($21)) { bad = "vsup_v"; badv = $21; next }
+      if (($4 + 0) != (temp + 0)) next
       if (hasrail) { if (!near($21, rail)) next }
       else if (!near(rail, nom)) next
       n++; fmin = $6; fmax = $7; v = $18
     }
     END {
+      if (n == 0 && bad != "") { printf "nan\t-\tinvalid %s \047%s\047 in a tuning row of this process (not a finite number)\n", bad, badv; exit }
       if (n == 0) { printf "nan\t-\tno matching tuning row\n"; exit }
       if (n > 1)  { printf "nan\t-\t%d matching tuning rows (ambiguous)\n", n; exit }
       if (v == "INCOMPLETE" || v == "INSUFFICIENT" || fmin == "nan" || fmax == "nan") {
         printf "nan\t-\tVctrl curve %s\n", v; exit }
+      if (!s2_fin(fmin)) { printf "nan\t-\tinvalid f_min_hz \047%s\047 (not a finite number)\n", fmin; exit }
+      if (!s2_fin(fmax)) { printf "nan\t-\tinvalid f_max_hz \047%s\047 (not a finite number)\n", fmax; exit }
       m1 = fmin - lo; m2 = hi - fmax; m = (m1 < m2) ? m1 : m2
       printf "%.6e\tf_min=%s;f_max=%s\t-\n", m, fmin, fmax
     }' "${f}"
@@ -145,20 +162,27 @@ get_row1() { # prefix mos cap hbt temp rail
 get_row8() { # prefix mos cap hbt temp rail
   local f="$1.csv"
   [[ -f "${f}" ]] || { res nan - "no points CSV ${f##*/}"; return; }
+  arg_check "$5" "$6" || return
   awk -F, -v mos="$2" -v cap="$3" -v hbt="$4" -v temp="$5" -v rail="$6" -v nom="${S2_NOMINAL_RAIL}" \
-      -v vc="${S2_BAND_CENTRE_VCTRL}" -v tmax="${OSC_TMAX}" -v pmax="${OSC_ROW8_P_MAX_W}" '
+      -v vc="${S2_BAND_CENTRE_VCTRL}" -v tmax="${OSC_TMAX}" -v pmax="${OSC_ROW8_P_MAX_W}" "${S2_AWK_FINITE}"'
     function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
     NR == 1 { rc = 0; for (i = 1; i <= NF; i++) if ($i == "vsup_v") rc = i; hasrail = (rc > 0); next }
-    $2 == mos && $3 == cap && $4 == hbt && ($5 + 0) == (temp + 0) && near($6, vc) && $7 == tmax {
+    $2 == mos && $3 == cap && $4 == hbt && $7 == tmax {
+      if (!s2_fin($5)) { bad = "temp_c"; badv = $5; next }
+      if (!s2_fin($6)) { bad = "vctrl_v"; badv = $6; next }
+      if (hasrail && !s2_fin($rc)) { bad = "vsup_v"; badv = $rc; next }
+      if (($5 + 0) != (temp + 0) || !near($6, vc)) next
       if (hasrail) { if (!near($rc, rail)) next }
       else if (!near(rail, nom)) next
       n++; st = $8; p = $27; ms = $28; mr = $29
     }
     END {
+      if (n == 0 && bad != "") { printf "nan\t-\tinvalid %s \047%s\047 in a point row of this process (not a finite number)\n", bad, badv; exit }
       if (n == 0) { printf "nan\t-\tno matching band-centre point\n"; exit }
       if (n > 1)  { printf "nan\t-\t%d matching points (ambiguous)\n", n; exit }
       if (st != "PASS") { printf "nan\t-\tpoint status %s\n", st; exit }
       if (ms != "VALID" || p == "nan" || p == "") { printf "nan\t-\tINVALID measurement (%s)\n", mr; exit }
+      if (!s2_fin(p)) { printf "nan\t-\tinvalid p_core_ls_w \047%s\047 (not a finite number)\n", p; exit }
       printf "%.6e\tp_core_ls_w=%s\t-\n", pmax - p, p
     }' "${f}"
 }
@@ -166,20 +190,27 @@ get_row8() { # prefix mos cap hbt temp rail
 get_row6() { # prefix mos cap hbt temp rail
   local f="$1-margin-summary.csv"
   [[ -f "${f}" ]] || { res nan - "no margin-summary CSV ${f##*/}"; return; }
+  arg_check "$5" "$6" || return
   awk -F, -v mos="$2" -v cap="$3" -v hbt="$4" -v temp="$5" -v rail="$6" -v nom="${S2_NOMINAL_RAIL}" \
-      -v bound="${OSC_ROW6_MARGIN}" '
+      -v bound="${OSC_ROW6_MARGIN}" "${S2_AWK_FINITE}"'
     function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
     NR == 1 { hasrail = ($15 == "vsup_v"); next }
-    $2 == mos && $3 == cap && $4 == hbt && ($5 + 0) == (temp + 0) {
+    $2 == mos && $3 == cap && $4 == hbt {
+      if (!s2_fin($5)) { bad = "temp_c"; badv = $5; next }
+      if (hasrail && !s2_fin($15)) { bad = "vsup_v"; badv = $15; next }
+      if (($5 + 0) != (temp + 0)) next
       if (hasrail) { if (!near($15, rail)) next }
       else if (!near(rail, nom)) next
       n++; lo = $9; hi = $10; v = $11; rc = $13; me = $14
     }
     END {
+      if (n == 0 && bad != "") { printf "nan\t-\tinvalid %s \047%s\047 in a margin row of this process (not a finite number)\n", bad, badv; exit }
       if (n == 0) { printf "nan\t-\tno matching margin corner\n"; exit }
       if (n > 1)  { printf "nan\t-\t%d matching margin corners (ambiguous)\n", n; exit }
       if (rc != "rc=0" || me != "model_error=0") { printf "nan\t-\tmargin run failed (%s %s)\n", rc, me; exit }
       if (lo == "nan" || lo == "") { printf "nan\t-\tmargin %s (no oscillating rung)\n", v; exit }
+      if (!s2_fin(lo)) { printf "nan\t-\tinvalid margin_lower_bound \047%s\047 (not a finite number)\n", lo; exit }
+      if (hi != "nan" && hi != "" && !s2_fin(hi)) { printf "nan\t-\tinvalid margin_upper_bound \047%s\047 (not a finite number)\n", hi; exit }
       note = (v ~ /STRADDLES/) ? "bracket straddles the bound; lower end used" : "-"
       printf "%.6e\tmargin_lo=%s;margin_hi=%s\t%s\n", lo - bound, lo, hi, note
     }' "${f}"
@@ -190,7 +221,7 @@ get_row6() { # prefix mos cap hbt temp rail
 # cannot be matched to a point and is reported as unidentifiable, not guessed.
 pn_summary_value() { awk -F, -v q="$2" 'NR > 1 && $1 == q { print $2; exit }' "$1-pilot-summary.csv" 2>/dev/null; }
 pn_find() { # rail mos cap hbt temp prefix...
-  local rail="$1" mos="$2" cap="$3" hbt="$4" temp="$5" p hits="" n=0 vm vc vh vt vr
+  local rail="$1" mos="$2" cap="$3" hbt="$4" temp="$5" p hits="" n=0 vm vc vh vt vr bad=""
   shift 5
   for p in "$@"; do
     [[ -f "${p}-pilot-summary.csv" ]] || continue
@@ -198,18 +229,32 @@ pn_find() { # rail mos cap hbt temp prefix...
     vh="$(pn_summary_value "${p}" hbt)"; vt="$(pn_summary_value "${p}" temp_c)"
     vr="$(pn_summary_value "${p}" vsup_v)"
     [[ -n "${vr}" ]] || continue
+    if [[ "${vm}" == "${mos}" && "${vc}" == "${cap}" && "${vh}" == "${hbt}" ]]; then
+      # identity numbers must be finite BEFORE they are compared (awk would
+      # coerce text to 0 and could match a corner)
+      s2_finite "${vt}" || { bad="temp_c '${vt}'"; continue; }
+      s2_finite "${vr}" || { bad="vsup_v '${vr}'"; continue; }
+    fi
     if [[ "${vm}" == "${mos}" && "${vc}" == "${cap}" && "${vh}" == "${hbt}" ]] \
        && awk -v a="${vt}" -v b="${temp}" -v r1="${vr}" -v r2="${rail}" \
             'BEGIN { d = r1 - r2; if (d < 0) d = -d; e = a - b; if (e < 0) e = -e; exit (d < 1e-9 && e < 1e-9) ? 0 : 1 }'; then
       hits="${p}"; n=$((n + 1))
     fi
   done
-  if [[ "${n}" == 0 ]]; then echo ""; elif [[ "${n}" == 1 ]]; then echo "${hits}"; else echo "AMBIGUOUS"; fi
+  if [[ "${n}" == 0 && -n "${bad}" ]]; then echo "INVALID:${bad}"
+  elif [[ "${n}" == 0 ]]; then echo ""; elif [[ "${n}" == 1 ]]; then echo "${hits}"; else echo "AMBIGUOUS"; fi
 }
 get_row4_from() { # prefix  -> margin<TAB>value<TAB>reason<TAB>sd1<TAB>sd10
-  local p="$1" l1 l10 s1 s10
+  local p="$1" l1 l10 s1 s10 f v
   l1="$(pn_summary_value "${p}" l_1mhz_mean)"; l10="$(pn_summary_value "${p}" l_10mhz_mean)"
   s1="$(pn_summary_value "${p}" l_1mhz_sd)";   s10="$(pn_summary_value "${p}" l_10mhz_sd)"
+  # finite-number validation before any arithmetic (issue #175); "nan"/empty
+  # means unavailable and is handled below, anything else must be finite
+  for f in l_1mhz_mean:"${l1}" l_10mhz_mean:"${l10}" l_1mhz_sd:"${s1}" l_10mhz_sd:"${s10}"; do
+    v="${f#*:}"
+    [[ "${v}" == "nan" || -z "${v}" ]] && continue
+    s2_finite "${v}" || { printf 'nan\t-\tinvalid %s \047%s\047 (not a finite number) in the phase-noise record\tnan\tnan\n' "${f%%:*}" "${v}"; return; }
+  done
   awk -v l1="${l1}" -v l10="${l10}" -v s1="${s1}" -v s10="${s10}" \
       -v t1="${PN_ROW4_1M_TARGET}" -v t10="${PN_ROW4_10M_TARGET}" 'BEGIN {
     if (l1 == "" || l1 == "nan" || l10 == "" || l10 == "nan") {
@@ -230,18 +275,23 @@ r7_line() { # kind(swing|compliance) prefix mos cap hbt temp rail
   if [[ "${h}" == "${R7_HEADER},vsup_v" ]]; then hasrail=1
   elif [[ "${h}" != "${R7_HEADER}" ]]; then res nan - "row-7 CSV ${f##*/} has an unrecognised (legacy or foreign) header"; return
   fi
+  arg_check "$6" "$7" || return
   awk -F, -v kind="${kind}" -v mos="$3" -v cap="$4" -v hbt="$5" -v temp="$6" -v rail="$7" \
       -v hasrail="${hasrail}" -v nom="${S2_NOMINAL_RAIL}" \
-      -v vt="${OSC_ROW7_VPP_MIN_V}" -v bv="${OSC_ROW7_BVCEO_MIN_V}" "${OSC_ROW7_AWK_LIB}"'
+      -v vt="${OSC_ROW7_VPP_MIN_V}" -v bv="${OSC_ROW7_BVCEO_MIN_V}" "${S2_AWK_FINITE}${OSC_ROW7_AWK_LIB}"'
     function near(a, b,  d) { d = a - b; if (d < 0) d = -d; return d < 1e-9 }
     NR == 1 { next }
-    $1 == mos && $2 == cap && $3 == hbt && ($4 + 0) == (temp + 0) {
+    $1 == mos && $2 == cap && $3 == hbt {
+      if (!s2_fin($4)) { bad = "temp_c"; badv = $4; next }
+      if (hasrail && NF == 25 && !s2_fin($25)) { bad = "vsup_v"; badv = $25; next }
+      if (($4 + 0) != (temp + 0)) next
       if (hasrail) { if (NF != 25 || !near($25, rail)) next }
       else if (!near(rail, nom)) next
       n++; vmin = $9; vmat = $10; vce = $11; vup = $12; vupat = $13
       sw = $19; ss = $20; cp = $21; why = $24
     }
     END {
+      if (n == 0 && bad != "") { printf "nan\t-\tinvalid %s \047%s\047 in a row-7 grade of this process (not a finite number)\n", bad, badv; exit }
       if (n == 0) { printf "nan\t-\tno matching row-7 grade\n"; exit }
       if (n > 1)  { printf "nan\t-\t%d matching row-7 grades (ambiguous)\n", n; exit }
       if (kind == "swing") {
@@ -323,8 +373,18 @@ if [[ -n "${BASE_OSC}" ]]; then OSC_PROV="$(prov_compare "${S2_OSC}.md" "${BASE_
 emit() { # row process rail temp metric unit v2 v1 m2 m1 status reason [extra]
   local row="$1" proc="$2" rail="$3" temp="$4" metric="$5" unit="$6" v2="$7" v1="$8" m2="$9" m1="${10}" st="${11}" reason="${12}"
   local mv left
-  mv="$(awk -v a="${m2}" -v b="${m1}" 'BEGIN { if (a=="nan"||b=="nan"||a==""||b=="") print "nan"; else printf "%.6e", a-b }')"
-  left="$(awk -v b="${m1}" 'BEGIN { if (b=="nan"||b=="") print "nan"; else printf "%.6e", (b > 0) ? b : 0 }')"
+  mv=nan left=nan
+  if s2_finite "${m2}" && s2_finite "${m1}"; then
+    mv="$(awk -v a="${m2}" -v b="${m1}" 'BEGIN { printf "%.6e", a-b }')"
+  fi
+  if s2_finite "${m1}"; then
+    left="$(awk -v b="${m1}" 'BEGIN { printf "%.6e", (b > 0) ? b : 0 }')"
+  fi
+  # a margin that is neither a number nor the "unavailable" marker is named
+  if [[ "${st}" == INSUFFICIENT ]]; then
+    local ir; ir="$(s2_status_reason "${m1}" "${m2}")"
+    [[ "${ir}" != "-" ]] && reason="${ir}; ${reason}"
+  fi
   # commas would break the CSV
   reason="${reason//,/;}"
   echo "${row},${proc},${rail},${temp},${metric},${unit},${v2},${v1},${m2},${m1},${mv},${left},${st},${reason}" >> "${CSV}"
@@ -365,10 +425,12 @@ while read -r proc rail temp mos cap hbt; do
   m2=nan v2=- r2="no phase-noise record for this point"; sd2_1=""; sd2_10=""
   m1=nan v1=- r1="no baseline phase-noise record for the matching nominal point"; sd1_1=""; sd1_10=""
   if [[ "${p2}" == AMBIGUOUS ]]; then r2="several phase-noise records match this point (ambiguous)"
+  elif [[ "${p2}" == INVALID:* ]]; then r2="invalid ${p2#INVALID:} in a phase-noise record of this process (not a finite number)"; p2=""
   elif [[ -n "${p2}" ]]; then
     IFS="${TAB}" read -r m2 v2 r2 sd2_1 sd2_10 <<<"$(get_row4_from "${p2}")"
   fi
   if [[ "${pb}" == AMBIGUOUS ]]; then r1="several baseline phase-noise records match (ambiguous)"
+  elif [[ "${pb}" == INVALID:* ]]; then r1="invalid ${pb#INVALID:} in a baseline phase-noise record of this process (not a finite number)"; pb=""
   elif [[ -n "${pb}" ]]; then
     pv="$(prov_compare "${p2}.md" "${pb}.md")"
     if [[ -z "${p2}" || "${p2}" == AMBIGUOUS ]]; then :
