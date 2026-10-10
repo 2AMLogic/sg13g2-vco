@@ -632,6 +632,27 @@ bad_manifest upperhash '0,/"sha256": "[0-9a-f]\{64\}"/s/\("sha256": "[0-9a-f]\{6
 bad_manifest noschema 's/sg13g2-vco\/model-inputs\/1/other\/9/'
 bad_manifest noinputs '/"role"/d'
 bad_manifest truncated '$d'
+# not-JSON / misplaced-entry defects (#187 review): the whole document is
+# parsed as strict JSON, so none of these can yield an identity
+bad_manifest junk '0,/"role"/s/},$/} GARBAGE,/'
+grep -q 'base_junk-model-inputs.json malformed (not valid JSON' "${C}" && check manifest-junk-reason ok || check manifest-junk-reason bad
+bad_manifest nocomma '0,/"role"/s/},$/}/'
+bad_manifest extracomma '/"role".*}$/s/}$/},/'
+bad_manifest nobrace '0,/"role"/s/},$/,/'
+bad_manifest dupkey '0,/"role"/s/{"role": \("[^"]*"\),/{"role": \1, "role": \1,/'
+grep -q "duplicate JSON key 'role'" "${C}" && check manifest-dupkey-reason ok || check manifest-dupkey-reason bad
+# a role-bearing object outside inputs[] (valid JSON, unknown top-level key)
+cp_rec "${FU}" base_full base_outside
+awk -v d="$(grep -m1 '"role"' "${M}" | sed -e 's/,$//' -e 's/^ *//')" \
+  '/"inputs": \[/ { print "  \"extra\": " d "," } { print }' "${M}" > "${FU}/base_outside-model-inputs.json"
+run_report "${FU}" m_outside "${FU}/s2a" --baseline-osc "${FU}/base_outside"
+eq manifest-outside-never-verified "$(cnt "${C}" 1 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "0 18"
+grep -q 'base_outside-model-inputs.json malformed (top-level keys' "${C}" && check manifest-outside-reason ok || check manifest-outside-reason bad
+# the same valid manifest, re-laid-out as single-line JSON, is still compatible
+cp_rec "${FU}" base_full base_relaid
+python3 -I -c 'import json, sys; print(json.dumps(json.load(open(sys.argv[1]))))' "${M}" > "${FU}/base_relaid-model-inputs.json"
+run_report "${FU}" m_relaid "${FU}/s2a" --baseline-osc "${FU}/base_relaid"
+eq manifest-relaid-compatible "$(cnt "${C}" 1 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "18 0"
 # duplicate entry: the first input line repeated
 dupline="$(grep -m1 '"role"' "${M}" | sed 's/,$//')"
 cp_rec "${FU}" base_full base_dup

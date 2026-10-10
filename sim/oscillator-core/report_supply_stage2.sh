@@ -304,43 +304,95 @@ prov_digests() {
 # sg13g2-vco/model-inputs/1, written by osc_model_inputs_json in osc_bench.sh):
 # sorted "role<TAB>bundle_path<TAB>sha256" lines. Record ids, original_path and
 # retained_snapshot are deliberately ignored (they differ between hosts and
-# records without changing what was consumed). On any defect it prints
-# a single 'ERR<TAB>reason' line and returns 1: a missing file, a
-# wrong/absent schema, an inputs array that is not exactly the writer's
-# one-entry-per-line shape, a sha256 that is not 64 lowercase hex, an empty
-# role/path, or a duplicate (role, bundle_path) or bundle_path. Any such
-# record is unverifiable, never a match.
+# records without changing what was consumed).
+#
+# The whole document is parsed as strict JSON (python3 stdlib, the same
+# structural rules as .github/scripts/model_inputs_check.py): duplicate JSON
+# keys and NaN/Infinity are rejected, the top level must be an object with
+# exactly the keys schema/record_id/inputs (+ optional note), the schema must
+# match, inputs must be a non-empty array of objects each with exactly the keys
+# role/bundle_path/sha256/original_path/retained_snapshot of the right types,
+# sha256 must be 64 lowercase hex, bundle_path a safe normalised relative path,
+# and (role, bundle_path) and bundle_path unique. Only entries inside the
+# inputs array count. On any defect -- including trailing junk, missing commas
+# or braces, or no python3 to parse with -- it prints a single 'ERR<TAB>reason'
+# line and returns 1: the record is unverifiable, never a match.
+PROV_INPUTS_PY='
+import json, posixpath, re, sys
+SCHEMA = "sg13g2-vco/model-inputs/1"
+HEX64 = re.compile(r"^[0-9a-f]{64}$")
+TOP_KEYS = {"schema", "record_id", "note", "inputs"}
+TOP_REQUIRED = {"schema", "record_id", "inputs"}
+INPUT_KEYS = {"role", "bundle_path", "sha256", "original_path", "retained_snapshot"}
+def fail(msg):
+    print("ERR\t" + " ".join(str(msg).split()))
+    sys.exit(1)
+def dup(pairs):
+    d = {}
+    for k, v in pairs:
+        if k in d:
+            raise ValueError("duplicate JSON key %r" % k)
+        d[k] = v
+    return d
+def const(c):
+    raise ValueError("non-standard JSON constant %s" % c)
+def safe_rel(p):
+    if "\\" in p or "\x00" in p or p.startswith("/") or re.match(r"^[A-Za-z]:", p):
+        return False
+    if any(x in ("", ".", "..") for x in p.split("/")):
+        return False
+    return posixpath.normpath(p) == p
+try:
+    with open(sys.argv[1], "rb") as fh:
+        doc = json.loads(fh.read().decode("utf-8"), object_pairs_hook=dup, parse_constant=const)
+except (OSError, UnicodeDecodeError, ValueError) as e:
+    fail("not valid JSON: %s" % e)
+if not isinstance(doc, dict):
+    fail("top level is not a JSON object")
+if TOP_REQUIRED - set(doc) or set(doc) - TOP_KEYS:
+    fail("top-level keys %s, expected schema/record_id/inputs[/note]" % sorted(doc))
+if doc["schema"] != SCHEMA:
+    fail("wrong schema %r" % (doc["schema"],))
+if not isinstance(doc["record_id"], str) or ("note" in doc and not isinstance(doc["note"], str)):
+    fail("record_id/note must be strings")
+inputs = doc["inputs"]
+if not isinstance(inputs, list) or not inputs:
+    fail("no inputs")
+seen_id, seen_bp, out = set(), set(), []
+for i, e in enumerate(inputs):
+    w = "inputs[%d]" % i
+    if not isinstance(e, dict) or set(e) != INPUT_KEYS:
+        fail("%s is not an object with exactly the keys %s" % (w, "/".join(sorted(INPUT_KEYS))))
+    for k in ("role", "bundle_path", "sha256", "original_path"):
+        if not isinstance(e[k], str) or not e[k]:
+            fail("%s.%s must be a non-empty string" % (w, k))
+    if e["retained_snapshot"] is not None and not isinstance(e["retained_snapshot"], str):
+        fail("%s.retained_snapshot must be a string or null" % w)
+    role, bp, sha = e["role"], e["bundle_path"], e["sha256"]
+    if not HEX64.match(sha):
+        fail("%s sha256 is not 64 lowercase hex" % w)
+    if not safe_rel(bp) or any(c in role + bp for c in "\t\r\n"):
+        fail("%s role/bundle_path unsafe" % w)
+    if (role, bp) in seen_id:
+        fail("duplicate entry %s:%s" % (role, bp))
+    if bp in seen_bp:
+        fail("duplicate bundle_path %s" % bp)
+    seen_id.add((role, bp)); seen_bp.add(bp)
+    out.append("%s\t%s\t%s" % (role, bp, sha))
+sys.stdout.write("".join(l + "\n" for l in out))
+'
 prov_inputs() {
   local f="$1-model-inputs.json" out err
   if [[ ! -f "${f}" ]]; then printf "ERR\tmodel-input manifest %s missing\n" "$(basename "${f}")"; return 1; fi
-  out="$(awk '
-    /^[[:space:]]*"schema"[[:space:]]*:/ { sc++; if ($0 ~ /"sg13g2-vco\/model-inputs\/1"/) ok_schema = 1 }
-    /^[[:space:]]*"inputs"[[:space:]]*:[[:space:]]*\[[[:space:]]*$/ { opened++ }
-    /^[[:space:]]*\][[:space:]]*$/ { closed++ }
-    { last = $0 }
-    /"role"[[:space:]]*:/ {
-      seen++
-      line = $0
-      if (!match(line, /"role": "[^"\\]+", "bundle_path": "[^"\\]+", "sha256": "[0-9a-f]{64}"/)) { if (bad == "") bad = "malformed entry " seen; next }
-      e = substr(line, RSTART, RLENGTH)
-      split(e, q, "\"")           # q[4]=role q[8]=bundle_path q[12]=sha256
-      k = q[4] "\t" q[8]
-      if (k in K) { if (bad == "") bad = "duplicate entry " q[4] ":" q[8]; next }
-      if (q[8] in P) { if (bad == "") bad = "duplicate bundle_path " q[8]; next }
-      K[k] = 1; P[q[8]] = 1
-      print q[4] "\t" q[8] "\t" q[12]
-    }
-    END {
-      if (sc != 1 || !ok_schema) { print "ERR\twrong or missing schema"; exit }
-      if (opened != 1 || closed != 1 || last !~ /^}[[:space:]]*$/) { print "ERR\ttruncated or misshapen document"; exit }
-      if (seen == 0) { print "ERR\tno inputs"; exit }
-      if (bad != "") print "ERR\t" bad
-    }' "${f}")" || { printf "ERR\tmodel-input manifest unreadable\n"; return 1; }
-  err="$(awk -F'\t' '$1 == "ERR" { print $2; exit }' <<<"${out}")"
-  if [[ -n "${err}" ]]; then
-    printf "ERR\tmodel-input manifest %s malformed (%s)\n" "$(basename "${f}")" "${err}"
+  if ! command -v python3 >/dev/null 2>&1; then
+    printf "ERR\tmodel-input manifest %s unverifiable (python3 not available to parse it)\n" "$(basename "${f}")"; return 1
+  fi
+  if ! out="$(python3 -I -c "${PROV_INPUTS_PY}" "${f}" 2>/dev/null)"; then
+    err="$(awk -F'\t' '$1 == "ERR" { print $2; exit }' <<<"${out}")"
+    printf "ERR\tmodel-input manifest %s malformed (%s)\n" "$(basename "${f}")" "${err:-unreadable}"
     return 1
   fi
+  [[ -n "${out}" ]] || { printf "ERR\tmodel-input manifest %s malformed (no inputs)\n" "$(basename "${f}")"; return 1; }
   LC_ALL=C sort <<<"${out}"
 }
 
