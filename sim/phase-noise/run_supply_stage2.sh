@@ -41,6 +41,14 @@ case "${1:-}" in
   *) echo "error: unknown argument '$1'" >&2; exit 2 ;;
 esac
 
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #176, extending #160). A single-point child cannot enforce this parent's
+# multi-corner policy, so the check lives here, after the read-only --list and
+# before any child is invoked. The count comes from the stage-2 enumeration.
+# shellcheck source=../lib.sh
+source "${SIM_DIR}/lib.sh"
+require_local_grid_ok "$(s2_enumerate | wc -l | tr -d ' ')" || exit 1
+
 fail=0
 while read -r proc rail temp mos cap hbt; do
   echo "== phase-noise stage 2: ${proc} ${rail} V ${temp} C"

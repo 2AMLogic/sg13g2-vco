@@ -82,10 +82,18 @@ if [[ "${MODE}" == list ]]; then
   exit 0
 fi
 
-# shellcheck source=../env.sh
-source "${SIM_DIR}/env.sh"
 # shellcheck source=../lib.sh
 source "${SIM_DIR}/lib.sh"
+
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #176, extending #160). The count comes from the stage-2 enumeration. This
+# runs after the read-only --list/--check modes and before the PDK is
+# resolved, any record id is reserved, or any simulator/model setup happens
+# (sim/tests/test-local-grid-guard.sh pins the ordering).
+require_local_grid_ok "$(s2_enumerate | wc -l | tr -d ' ')" || exit 1
+
+# shellcheck source=../env.sh
+source "${SIM_DIR}/env.sh"
 
 RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 NETLIST_DIR="${EXPERIMENT_DIR}/netlist-snapshots/${RECORD_ID}"
@@ -200,6 +208,7 @@ OSC_VSUP_V=""
   echo "  ngspice model; every frequency inherits that model's stated error bars."
   osc_provenance_md
   echo "- **ngspice**: \`${OSC_NGSPICE_VERSION}\`"
+  local_grid_record_note
   echo "- **Result**: ${passed}/${total} transient points reached a countable"
   echo "  oscillation; non-oscillating ${#nosc_points[@]}; simulation failures"
   echo "  ${#failed_points[@]}; margin corners completed"
