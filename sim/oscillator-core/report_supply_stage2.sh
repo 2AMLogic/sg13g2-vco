@@ -22,7 +22,9 @@
 #   INSUFFICIENT         a margin is unavailable: no baseline supplied, the
 #                        baseline point is missing/invalid/incomplete, the
 #                        stage-2 point was not run or is invalid, or the two
-#                        records' design/model provenance differ
+#                        records' device body or full captured model-input
+#                        set (the -model-inputs.json sidecars) differ or are
+#                        missing/malformed (issue #177)
 #
 # and an OVERALL status: ESCALATION_REQUIRED if any (row, point) says so;
 # otherwise INSUFFICIENT_EVIDENCE if any is INSUFFICIENT; otherwise
@@ -344,19 +346,128 @@ prov_digests() {
       grab("hbtmod",    "sg13g2_hbt_mod\\.lib` sha256 `[0-9a-f]+`")
       grab("osdi",      "mosvar\\.osdi` \\(this run.s build\\) sha256 `[0-9a-f]+`") }'
 }
-PROV_KEYS="body inductor cornerHBT cornerMOShv cornerCAP svaricap hbtmod osdi"
-# prov_compare <a.md> <b.md> -- prints "OK" or a one-line reason.
+# prov_digests keys (body, inductor, corner*/svaricap/hbtmod/osdi) are kept for
+# readability; only "body" is compared -- the manifest below is the proof.
+
+# prov_inputs <record-prefix> -- the canonical consumed-input set of a record,
+# from its model-input sidecar <prefix>-model-inputs.json (schema
+# sg13g2-vco/model-inputs/1, written by osc_model_inputs_json in osc_bench.sh):
+# sorted "role<TAB>bundle_path<TAB>sha256" lines. Record ids, original_path and
+# retained_snapshot are deliberately ignored (they differ between hosts and
+# records without changing what was consumed).
+#
+# The whole document is parsed as strict JSON (python3 stdlib, the same
+# structural rules as .github/scripts/model_inputs_check.py): duplicate JSON
+# keys and NaN/Infinity are rejected, the top level must be an object with
+# exactly the keys schema/record_id/inputs (+ optional note), the schema must
+# match, inputs must be a non-empty array of objects each with exactly the keys
+# role/bundle_path/sha256/original_path/retained_snapshot of the right types,
+# sha256 must be 64 lowercase hex, bundle_path a safe normalised relative path,
+# and (role, bundle_path) and bundle_path unique. Only entries inside the
+# inputs array count. On any defect -- including trailing junk, missing commas
+# or braces, or no python3 to parse with -- it prints a single 'ERR<TAB>reason'
+# line and returns 1: the record is unverifiable, never a match.
+PROV_INPUTS_PY='
+import json, posixpath, re, sys
+SCHEMA = "sg13g2-vco/model-inputs/1"
+HEX64 = re.compile(r"^[0-9a-f]{64}$")
+TOP_KEYS = {"schema", "record_id", "note", "inputs"}
+TOP_REQUIRED = {"schema", "record_id", "inputs"}
+INPUT_KEYS = {"role", "bundle_path", "sha256", "original_path", "retained_snapshot"}
+def fail(msg):
+    print("ERR\t" + " ".join(str(msg).split()))
+    sys.exit(1)
+def dup(pairs):
+    d = {}
+    for k, v in pairs:
+        if k in d:
+            raise ValueError("duplicate JSON key %r" % k)
+        d[k] = v
+    return d
+def const(c):
+    raise ValueError("non-standard JSON constant %s" % c)
+def safe_rel(p):
+    if "\\" in p or "\x00" in p or p.startswith("/") or re.match(r"^[A-Za-z]:", p):
+        return False
+    if any(x in ("", ".", "..") for x in p.split("/")):
+        return False
+    return posixpath.normpath(p) == p
+try:
+    with open(sys.argv[1], "rb") as fh:
+        doc = json.loads(fh.read().decode("utf-8"), object_pairs_hook=dup, parse_constant=const)
+except (OSError, UnicodeDecodeError, ValueError) as e:
+    fail("not valid JSON: %s" % e)
+if not isinstance(doc, dict):
+    fail("top level is not a JSON object")
+if TOP_REQUIRED - set(doc) or set(doc) - TOP_KEYS:
+    fail("top-level keys %s, expected schema/record_id/inputs[/note]" % sorted(doc))
+if doc["schema"] != SCHEMA:
+    fail("wrong schema %r" % (doc["schema"],))
+if not isinstance(doc["record_id"], str) or ("note" in doc and not isinstance(doc["note"], str)):
+    fail("record_id/note must be strings")
+inputs = doc["inputs"]
+if not isinstance(inputs, list) or not inputs:
+    fail("no inputs")
+seen_id, seen_bp, out = set(), set(), []
+for i, e in enumerate(inputs):
+    w = "inputs[%d]" % i
+    if not isinstance(e, dict) or set(e) != INPUT_KEYS:
+        fail("%s is not an object with exactly the keys %s" % (w, "/".join(sorted(INPUT_KEYS))))
+    for k in ("role", "bundle_path", "sha256", "original_path"):
+        if not isinstance(e[k], str) or not e[k]:
+            fail("%s.%s must be a non-empty string" % (w, k))
+    if e["retained_snapshot"] is not None and not isinstance(e["retained_snapshot"], str):
+        fail("%s.retained_snapshot must be a string or null" % w)
+    role, bp, sha = e["role"], e["bundle_path"], e["sha256"]
+    if not HEX64.match(sha):
+        fail("%s sha256 is not 64 lowercase hex" % w)
+    if not safe_rel(bp) or any(c in role + bp for c in "\t\r\n"):
+        fail("%s role/bundle_path unsafe" % w)
+    if (role, bp) in seen_id:
+        fail("duplicate entry %s:%s" % (role, bp))
+    if bp in seen_bp:
+        fail("duplicate bundle_path %s" % bp)
+    seen_id.add((role, bp)); seen_bp.add(bp)
+    out.append("%s\t%s\t%s" % (role, bp, sha))
+sys.stdout.write("".join(l + "\n" for l in out))
+'
+prov_inputs() {
+  local f="$1-model-inputs.json" out err
+  if [[ ! -f "${f}" ]]; then printf "ERR\tmodel-input manifest %s missing\n" "$(basename "${f}")"; return 1; fi
+  if ! command -v python3 >/dev/null 2>&1; then
+    printf "ERR\tmodel-input manifest %s unverifiable (python3 not available to parse it)\n" "$(basename "${f}")"; return 1
+  fi
+  if ! out="$(python3 -I -c "${PROV_INPUTS_PY}" "${f}" 2>/dev/null)"; then
+    err="$(awk -F'\t' '$1 == "ERR" { print $2; exit }' <<<"${out}")"
+    printf "ERR\tmodel-input manifest %s malformed (%s)\n" "$(basename "${f}")" "${err:-unreadable}"
+    return 1
+  fi
+  [[ -n "${out}" ]] || { printf "ERR\tmodel-input manifest %s malformed (no inputs)\n" "$(basename "${f}")"; return 1; }
+  LC_ALL=C sort <<<"${out}"
+}
+
+# prov_compare <a.md> <b.md> -- prints "OK" or a one-line reason. Verified
+# compatibility needs (1) the same device-body digest and (2) valid manifests
+# whose (role, bundle_path, sha256) sets are equal -- the full captured closure,
+# not the prose digests. The records are <prefix>.md with <prefix>-model-inputs.json.
 prov_compare() {
-  local a b k va vb bad=""
+  local a b ia ib body_a body_b diff pa="${1%.md}" pb="${2%.md}"
   a="$(prov_digests "$1")" || { echo "record $1 not found (provenance unverifiable)"; return; }
   b="$(prov_digests "$2")" || { echo "record $2 not found (provenance unverifiable)"; return; }
-  for k in ${PROV_KEYS}; do
-    va="$(echo "${a}" | awk -F= -v k="${k}" '$1 == k { print $2 }')"
-    vb="$(echo "${b}" | awk -F= -v k="${k}" '$1 == k { print $2 }')"
-    if [[ -z "${va}" || -z "${vb}" ]]; then bad="${bad} ${k}(missing)"
-    elif [[ "${va}" != "${vb}" ]]; then bad="${bad} ${k}(differs)"; fi
-  done
-  if [[ -n "${bad}" ]]; then echo "provenance mismatch:${bad}"; else echo OK; fi
+  body_a="$(echo "${a}" | awk -F= '$1 == "body" { print $2 }')"
+  body_b="$(echo "${b}" | awk -F= '$1 == "body" { print $2 }')"
+  if [[ -z "${body_a}" || -z "${body_b}" ]]; then echo "provenance mismatch: body(missing)"; return; fi
+  if [[ "${body_a}" != "${body_b}" ]]; then echo "provenance mismatch: body(differs)"; return; fi
+  ia="$(prov_inputs "${pa}")" || { echo "provenance unverifiable: stage-2 side: ${ia#ERR$'\t'}"; return; }
+  ib="$(prov_inputs "${pb}")" || { echo "provenance unverifiable: baseline side: ${ib#ERR$'\t'}"; return; }
+  if [[ "${ia}" == "${ib}" ]]; then echo OK; return; fi
+  diff="$(awk -F'\t' '
+    FNR == NR { A[$1 ":" $2] = $3; next }
+    { B[$1 ":" $2] = $3 }
+    END {
+      for (k in A) { if (!(k in B)) print k "(only in stage-2)"; else if (A[k] != B[k]) print k "(differs)" }
+      for (k in B) if (!(k in A)) print k "(only in baseline)" }' <(echo "${ia}") <(echo "${ib}") | LC_ALL=C sort | tr '\n' ' ')"
+  echo "provenance mismatch: model inputs ${diff% }"
 }
 
 # ------------------------------------------------------------------- report
