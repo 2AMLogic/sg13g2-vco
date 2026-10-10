@@ -28,14 +28,16 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#80**: lvs: IHP sg13g2.lvs orders inductor terminals by x position, so mirrored spiral L1 compares with its windings reversed (blocks #62 LVS match)
+- **#95**: sim: PDK dsubw junction model (vj=0.1) goes NaN above ~52 C once bn is on the substrate -- row 11's +125 C cannot be simulated with the card as shipped
 - **#143**: ci: reject paired simulation report/deck digest mismatches at evidence consumption
+- **#167**: sim: preserve EM post/fit outputs when geometry inputs are incomplete
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-_None._
+- **#169**: sim: run-local svaricap dsubw vj overlay (IHP-Open-PDK PR #1102), retire tnom workaround
+- **#170**: sim: EM post/fit preflight all geometries and publish staged outputs
 
 ## Approved (Awaiting Merge)
 
@@ -50,14 +52,15 @@ Issues carrying `loom:curated`.
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
-- **#80**: lvs: IHP sg13g2.lvs orders inductor terminals by x position, so mirrored spiral L1 compares with its windings reversed (blocks #62 LVS match) *(curated)*
+- **#95**: sim: PDK dsubw junction model (vj=0.1) goes NaN above ~52 C once bn is on the substrate -- row 11's +125 C cannot be simulated with the card as shipped *(curated)*
 - **#106**: ci: gate layout records' GDS digests against the committed layout/vco.gds (PDK-free) *(curated)*
+- **#143**: ci: reject paired simulation report/deck digest mismatches at evidence consumption *(curated)*
+- **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 
 ## Proposed (Architect / Hermit)
 
 - **#143**: ci: reject paired simulation report/deck digest mismatches at evidence consumption *(architect)*
-- **#153**: sim: require exact corner identities for the global row-3 verdict *(architect)*
-- **#154**: sim: reuse validated completed points when restarting the long PVT sweep *(architect)*
+- **#167**: sim: preserve EM post/fit outputs when geometry inputs are incomplete *(architect)*
 
 ## Epics
 
@@ -70,10 +73,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 2 |
-| PRs awaiting review | 0 |
+| In Progress (`loom:building`) | 3 |
+| PRs awaiting review | 2 |
 | Approved PRs awaiting merge | 1 |
-| Curated | 5 |
-| Architect / Hermit proposals | 3 |
+| Curated | 7 |
+| Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
