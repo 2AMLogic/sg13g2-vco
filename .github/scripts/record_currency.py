@@ -18,6 +18,8 @@ Usage (all take --root DIR, default: the repository containing this script):
   record_currency.py cite PATH...     validate citations of record files
   record_currency.py cite --manifest signoff/manifest.json
   record_currency.py show             print the fresh index on stdout
+  record_currency.py integrity        fail on any known paired report/deck
+                                      sha256 mismatch (issue #143)
 
 See sim/README.md "Record currency" for states, limits and the schema.
 """
@@ -235,8 +237,7 @@ def deck_integrity(root, files):
                             if isinstance(x, str)))
         if not hashes:
             continue
-        deck = posixpath.join(posixpath.dirname(d), "decks",
-                              base[:-len(".json")] + ".spice")
+        deck = paired_deck(rel)
         if deck not in fileset:
             unpaired += 1
             continue
@@ -249,6 +250,61 @@ def deck_integrity(root, files):
         return None
     return {"checked": checked, "matched": matched,
             "mismatched": sorted(mismatched), "unpaired": unpaired}
+
+
+# Known paired report/deck mismatches in frozen historical evidence that are
+# accepted by the integrity gate and by citation validation (issue #143).
+# Maps the mismatched report path -> justification. Records are append-only
+# and never edited, so a historical hit is dispositioned here, explicitly;
+# an unjustified entry is itself an error. Empty: today's tree has no hits.
+INTEGRITY_ALLOWLIST = {}
+
+
+def paired_deck(report):
+    d = posixpath.dirname(report)
+    base = posixpath.basename(report)
+    return posixpath.join(posixpath.dirname(d), "decks",
+                          base[:-len(".json")] + ".spice")
+
+
+def integrity_errors(entry, allowlist=None):
+    """Error strings for known paired report/deck mismatches of an index
+    entry, independent of its currency state. Unpaired reports are
+    'unchecked', never an error."""
+    allow = INTEGRITY_ALLOWLIST if allowlist is None else allowlist
+    di = entry.get("deck_integrity")
+    if not di:
+        return []
+    return ["record %s: report %s netlist_sha256 does not match its paired "
+            "deck %s (report/deck integrity mismatch)"
+            % (entry["record_id"], rep, paired_deck(rep))
+            for rep in di["mismatched"] if not allow.get(rep)]
+
+
+def integrity_scan(index, allowlist=None):
+    """(errors, notes) over all index entries: errors are non-allowlisted
+    mismatches; notes list verified/unchecked/allowlisted counts."""
+    allow = INTEGRITY_ALLOWLIST if allowlist is None else allowlist
+    errors, notes = [], []
+    verified = unchecked = 0
+    for e in index["records"]:
+        errors.extend(integrity_errors(e, allow))
+        di = e.get("deck_integrity")
+        if not di:
+            continue
+        verified += di["matched"]
+        if di["unpaired"]:
+            unchecked += di["unpaired"]
+            notes.append("UNCHECKED: record %s: %d report(s) carry "
+                         "netlist_sha256 but have no paired deck "
+                         "(legacy/unpaired; not verified, not a failure)"
+                         % (e["record_id"], di["unpaired"]))
+        for rep in di["mismatched"]:
+            if allow.get(rep):
+                notes.append("ALLOWLISTED: %s: %s" % (rep, allow[rep]))
+    notes.append("verified pairs: %d; unchecked unpaired reports: %d"
+                 % (verified, unchecked))
+    return errors, notes
 
 
 def primary_path(rdir, rid, name, files):
@@ -482,6 +538,8 @@ def validate_citations(root, paths, index=None):
             errors.append("%s: record %s is %s (basis %s): %s"
                           % (n, e["record_id"], e["state"], e["basis"],
                              e["reason"]))
+        # Report/deck integrity is independent of source currency.
+        errors.extend("%s: %s" % (n, m) for m in integrity_errors(e))
     return errors
 
 
@@ -527,6 +585,15 @@ def main(argv):
         print(("OK: " if ok else "FAIL: ") + msg,
               file=sys.stdout if ok else sys.stderr)
         return 0 if ok else 1
+    if cmd == "integrity":
+        errors, notes = integrity_scan(build_index(root))
+        for n in notes:
+            print(n)
+        for e in errors:
+            print("FAIL: deck integrity: " + e, file=sys.stderr)
+        if not errors:
+            print("OK: no known report/deck integrity mismatches")
+        return 1 if errors else 0
     if cmd == "cite":
         if len(rest) == 2 and rest[0] == "--manifest":
             try:

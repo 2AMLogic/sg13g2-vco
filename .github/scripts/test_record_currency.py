@@ -358,6 +358,76 @@ class TestCitations(Fixture):
         self.assertEqual(run("bogus"), 2)
 
 
+class TestDeckIntegrity(Fixture):
+    """Issue #143: report/deck integrity is independent of source currency."""
+
+    def pair(self, r, stem, report_hash, deck="deck"):
+        self.j("%s/%s/reports/%s.json" % (BN, r, stem),
+               {"environment": {"netlist_sha256": report_hash}})
+        self.write("%s/%s/decks/%s.spice" % (BN, r, stem), deck)
+
+    def mismatched(self):
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        self.pair(r, "c", "a" * 64)
+        self.write(rc.INDEX, rc.render(self.idx()))
+        return r
+
+    def cite(self, r):
+        return rc.validate_citations(
+            self.d, ["%s/%s.md" % (BN, r)])
+
+    def test_matching_pair_passes(self):
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        self.pair(r, "c", hashlib.sha256(b"deck").hexdigest())
+        self.write(rc.INDEX, rc.render(self.idx()))
+        self.assertEqual(self.cite(r), [])
+        errs, notes = rc.integrity_scan(self.idx())
+        self.assertEqual(errs, [])
+        self.assertIn("verified pairs: 1; unchecked unpaired reports: 0", notes)
+
+    def test_mismatch_stays_current_but_fails(self):
+        r = self.mismatched()
+        self.assertEqual(self.get(r)["state"], "current")
+        errs = self.cite(r)
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn("reports/c.json", errs[0])
+        self.assertIn("decks/c.spice", errs[0])
+        self.assertTrue(rc.integrity_scan(self.idx())[0])
+
+    def test_regenerating_index_does_not_clear_it(self):
+        r = self.mismatched()
+        self.write(rc.INDEX, rc.render(self.idx()))  # regenerate
+        self.assertEqual(len(self.cite(r)), 1)
+        self.assertTrue(rc.integrity_scan(self.idx())[0])
+
+    def test_unpaired_is_unchecked_not_failure(self):
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        self.j("%s/%s/reports/c.json" % (BN, r),
+               {"environment": {"netlist_sha256": "a" * 64}})
+        self.write(rc.INDEX, rc.render(self.idx()))
+        self.assertEqual(self.cite(r), [])
+        errs, notes = rc.integrity_scan(self.idx())
+        self.assertEqual(errs, [])
+        self.assertTrue(any(n.startswith("UNCHECKED") for n in notes))
+        self.assertIn("verified pairs: 0; unchecked unpaired reports: 1", notes)
+
+    def test_justified_allowlist_only(self):
+        r = self.mismatched()
+        rep = self.get(r)["deck_integrity"]["mismatched"][0]
+        idx = self.idx()
+        self.assertEqual(rc.integrity_scan(idx, {rep: "historical, frozen"})[0], [])
+        self.assertTrue(rc.integrity_scan(idx, {rep: ""})[0])
+
+    def test_cli_integrity(self):
+        script = os.path.join(HERE, "record_currency.py")
+        run = lambda: subprocess.run(
+            [sys.executable, "-I", script, "--root", self.d, "integrity"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode
+        self.assertEqual(run(), 0)
+        self.mismatched()
+        self.assertEqual(run(), 1)
+
+
 class TestRealTreeIndex(unittest.TestCase):
     def test_committed_index_is_wellformed(self):
         root = os.path.abspath(os.path.join(HERE, "..", ".."))

@@ -41,6 +41,8 @@ for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/check-record-currency.sh \
          .github/scripts/test-model-inputs.sh \
          .github/scripts/check-model-inputs.sh \
+         .github/scripts/test-record-deck-integrity.sh \
+         .github/scripts/check-record-deck-integrity.sh \
          .github/scripts/test-check-klt-friction.sh \
          .github/scripts/check-klt-friction.sh \
          sim/tests/test-reserve-record-id.sh sim/tests/test-local-grid-guard.sh; do
@@ -100,11 +102,11 @@ for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; d
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-local-grid-guard.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-check-klt-friction.sh|check-klt-friction.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-local-grid-guard.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-record-deck-integrity.sh|check-record-deck-integrity.sh|test-check-klt-friction.sh|check-klt-friction.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
-# 1. test aggregate: nineteen gates in workflow order, exit 0
+# 1. test aggregate: twenty-one gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '19 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '21 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -114,7 +116,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '18 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '20 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -153,7 +155,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-grader-spec-agreement.sh|" ]; then
 reset; touch "$FAILDIR/check-grader-spec-agreement.sh"; run_case "$BIN" grader-spec
 if [ "$RC" -eq 1 ]; then ok "grader-spec failure -> exit 1"; else bad "grader-spec failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-record-currency.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q '18 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
+if [ "$RC" -eq 1 ] && grep -q '20 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
   ok "currency self-test failure fails test, later gates still run"; else bad "currency selftest fail: rc=$RC"; fi
 
 # 4b2. model-inputs targets (issue #139)
@@ -166,12 +168,22 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-model-inputs.sh|" ]; then
 reset; touch "$FAILDIR/check-model-inputs.sh"; run_case "$BIN" model-inputs
 if [ "$RC" -eq 1 ]; then ok "model-inputs failure -> exit 1"; else bad "model-inputs failure: rc=$RC"; fi
 
+# 4b4. deck-integrity targets (issue #143)
+reset; run_case "$BIN" deck-integrity-selftest
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "test-record-deck-integrity.sh|" ]; then
+  ok "deck-integrity-selftest target dispatches the fixture self-test"; else bad "deck-integrity-selftest: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" deck-integrity
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-record-deck-integrity.sh|" ]; then
+  ok "deck-integrity target dispatches the integrity gate"; else bad "deck-integrity: rc=$RC $(calls)"; fi
+reset; touch "$FAILDIR/check-record-deck-integrity.sh"; run_case "$BIN" deck-integrity
+if [ "$RC" -eq 1 ]; then ok "deck-integrity failure -> exit 1"; else bad "deck-integrity failure: rc=$RC"; fi
+
 # 4c. grading-fixtures target: dispatch, failure propagation, no ngspice needed
 reset; run_case "$NONG" grading-fixtures
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-grading-fixtures.sh|" ]; then
   ok "grading-fixtures target dispatches without ngspice"; else bad "grading-fixtures: rc=$RC $(calls)"; fi
 reset; touch "$FAILDIR/run-grading-fixtures.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '18 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '20 passed, 1 failed' "$OUT" \
    && grep -q '^check-python.sh tests$' "$CALLS"; then
   ok "grading-fixtures failure fails test, later gates still run"; else bad "grading-fixtures fail: rc=$RC"; fi
 
