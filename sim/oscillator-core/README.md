@@ -621,6 +621,7 @@ are historical evidence and are not rewritten. PDK-free check:
 |---|---|
 | `records/20260926-002254-9c26531*` and `records/20260926-010713-e391693*` from `run_method_check.sh` | the extractor validation, 56/56 quantities within their derived tolerances at both tree states. Grades no spec row and says nothing about `design/vco.sch`. |
 | `records/20260926-010627-e391693*` from `run_pilot_grid.sh` | the measured pilot subset above: the typical process corner over the three row-11 temperatures, the timestep-convergence delta, and the nominal-corner row-6 margin ladder. **Grades no spec row** — one process corner is not row 10's PVT set, and one margin corner is not row 6's "every bound corner". |
+| `records/*-surrogate-pre79*`, `records/*-surrogate-corrected*` from `surrogate_bench.py` (issue #179) | **SCREENING ONLY — grades no specification row.** Single-point runs of an OSDI-free charge-based varactor surrogate (`sim/tools/svaricap_surrogate.py`, tests in `tests/stdlib/test_svaricap_surrogate.py`) while #94 blocks OSDI: a pre-#79-topology known-answer comparison with the pilot row, and one corrected-topology startup smoke point. OSDI device noise is omitted; #94 stays the only route to graded evidence. No fleet grid, tuning sweep or ISF work is implemented. |
 
 ## What this does **not** show
 
