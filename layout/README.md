@@ -12,9 +12,9 @@ Layout (klayout-tools driven) and DRC/LVS signoff artifacts.
 | `generate.sh` | Regenerates both artifacts from the PDK, end to end, headless |
 | `drc.sh` | Re-runs the design-rule evidence on **two engines** (IHP's own runset, which produces the report of record, and klt's curated deck as a diagnostic) plus the guard-ring checks. Fails on any verdict drift |
 | `drc/` | The committed `klt drc` / `klt ring-check` reports and the native run's assertion record (`PROVENANCE.md` §12–§13) |
-| `lvs.sh` | Re-runs the LVS evidence: derives the reference from `design/vco.spice`, runs IHP's own LVS runset plus two single-variable controls and three negative controls, and records why `klt lvs` (0.6.0, the CI pin, and 0.7.0, the newest release) cannot run this compare. Fails on any verdict drift |
+| `lvs.sh` | Re-runs the LVS evidence: derives the reference from `design/vco.spice`, runs IHP's own LVS runset as shipped (with control C1 and three negative controls) and with the reviewed label-order inductor terminal step (#80; with the fidelity control R0 and seven negative controls), and records why `klt lvs` (0.6.0, the CI pin, and 0.7.0, the newest release) cannot run this compare. Fails on any verdict drift |
 | `lvs/` | The derived LVS reference and its per-line trace, the runset's device-aware extraction, the compare of record and the run record (`PROVENANCE.md` §14) |
-| `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s controls, the static rule-category review (`ihp_deck_categories.py`, `ihp_deck_facts.py`), the pinned native-DRC environment (`native_drc_env.sh`), and `lvs.sh`'s reference derivation (`lvs_reference.py`), `.lvsdb` reader (`lvsdb_summary.py`) and negative-control helper (`lvs_break.py`) |
+| `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s controls, the static rule-category review (`ihp_deck_categories.py`, `ihp_deck_facts.py`), the pinned native-DRC environment (`native_drc_env.sh`), and `lvs.sh`'s reference derivation (`lvs_reference.py`), `.lvsdb` reader (`lvsdb_summary.py`), label-order step (`lvs_label_order.rb`, #80) and negative-control helpers (`lvs_break.py`, `lvs_inductor_ctl.py`) |
 | `build/` | Scratch (gitignored, like `sim/build/` and `design/build/`) |
 
 ## The layout
@@ -88,8 +88,24 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     `klayout-tools#2688`), not from the layout.
 - **Guard-ring continuity is verified on all three of its layers** (Activ,
   pSD, Metal1), each against a negative control that breaks it (§12).
-- **LVS (issue #62): run, device-aware, and the verdict is `mismatch`**
-  (`PROVENANCE.md` §14). Read §14 before citing anything about LVS.
+- **LVS (issues #62, #80): run, device-aware. The compare of record is
+  `match` on the cross-reference, with three strict-port NAME findings
+  recorded; IHP's runset as shipped gives `mismatch`** (`PROVENANCE.md` §14,
+  §14.6). Read §14 and §14.6 before citing anything about LVS.
+  - *Compare of record (#80, §14.6)*: the same hash-pinned runset plus one
+    reviewed, removable step (`scripts/lvs_label_order.rb`) that orders each
+    spiral's two winding terminals by the `LA`/`LB` labels the runset itself
+    uses to find them, instead of by x. It reorders L1 (mirrored) and leaves
+    L2 alone, keyed on labels, not instance names. The reference is not
+    edited. Result: 43/43 device pairs, 10/10 nets, 9/9 pins. The runset's
+    strict top-port check still logs three port-name findings (`'LA,VDD'` vs
+    `'VDD'`, ...: the spiral PCell's label text names the pin net), and
+    `run_lvs.py`'s summary therefore says FAIL; they are recorded, not
+    suppressed. A fidelity control (R0) shows the wrapper alone reproduces
+    the runset-as-shipped compare exactly. Seven negative controls through
+    the step are all rejected: L1 genuinely wired the other way round, `LA`
+    on the wrong net (three variants), and the three breaks below. An
+    upstream report to IHP is drafted in §14.6, **not yet filed**.
   - *Engine*: IHP's own KLayout LVS runset (`sg13g2.lvs`, KLayout 0.30.12).
     It recognizes **all 42 devices** (plus the guard-ring `ptap1` tie), with
     the same per-class census on both sides. `klt lvs` at the pinned 0.6.0
@@ -118,8 +134,8 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     the post-#79 netlist and agrees on all 39 cards. The tagged klt **0.7.0**
     behaves as 0.6.0 does: it refuses the reference, recognizes 1 of 42
     devices, and cannot read the runset's extraction as `layout.netlist`. So
-    #2849 is still open at the newest release. #80 (L1 order) still needs a
-    decision.
+    #2849 is still open at the newest release. #80 (L1 order) is resolved
+    by the label-order step above.
 
 No electrical, EM or phase-noise claim is made or implied by this layout.
 Read `PROVENANCE.md` §11 before citing any of it as evidence.
@@ -159,7 +175,9 @@ layout/lvs.sh
 missing. Both live under
 the gitignored `layout/build/`. If `xschem` is on `PATH`, the script also
 cross-checks the derived reference against xschem's own LVS-mode netlist. It
-writes `lvs/` only after every expectation holds: the record `mismatch`, the
-C1/C2 controls, the three negative controls, the supply pairing, and klt's
-refusal (at both 0.6.0 and 0.7.0). Any drift fails the run and leaves the record untouched. Two
+writes `lvs/` only after every expectation holds: the runset-as-shipped
+`mismatch` (L1 only) and control C1, the label-order compare of record
+`match` with exactly the three known port-name findings, the fidelity control
+R0, every negative control (as shipped and through the step), the supply
+pairing, and klt's refusal (at both 0.6.0 and 0.7.0). Any drift fails the run and leaves the record untouched. Two
 consecutive runs produce byte-identical files.

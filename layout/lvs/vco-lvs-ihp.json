@@ -1,10 +1,97 @@
 {
-  "schema_version": 1,
-  "engine": "KLayout 0.30.12 LVS (NetlistComparer), IHP-Open-PDK sg13g2.lvs runset",
+  "schema_version": 2,
+  "engine": "KLayout 0.30.12 LVS (NetlistComparer), IHP-Open-PDK sg13g2.lvs runset + the label-order step (issue #80)",
   "deck": {
     "pdk_relative_path": "libs.tech/klayout/tech/lvs/sg13g2.lvs",
     "content_hash": "sha256:fd11fced5b0bd5ee0bb66b700acbe359f23c30c5900b16e5f647ed9a430dcc09",
     "hash_scope": "sha256 over '<sha256>  <path>' lines of sg13g2.lvs, run_lvs.py and rule_decks/*.lvs, sorted"
+  },
+  "label_order_step": {
+    "script": "layout/scripts/lvs_label_order.rb",
+    "content_hash": "sha256:eaae5d1267265dfbc006b86ba765f3adf6eaf685a5a153807644f63eb6e26a8f",
+    "issue": "#80",
+    "rule": "for every extracted device of class `inductor`: the winding terminal whose port carries the LA text (27/25) becomes terminal 1, the one carrying LB terminal 2 (the PDK's own convention: its LVS unit testcase names every pattern's nodes `la_N lb_N`); applied identically to every inductor, keyed on the labels at each device's own terminals, never on instance or cell names; a device without exactly one LA and one LB on different terminals is left as extracted and reported unresolved (fails the record)",
+    "not_changed": "the runset files (hash-pinned), every run_lvs.py switch, every other device class, every net, every parameter, the substrate terminal, and the reference netlist",
+    "devices": [
+      {
+        "device": "$41",
+        "class": "inductor",
+        "circuit": "vco",
+        "terminals": {
+          "inductor_1": {
+            "net": "LB,OUTP",
+            "labels": [
+              "LB"
+            ],
+            "port_centre_um": [
+              -185.315,
+              0.5
+            ]
+          },
+          "inductor_2": {
+            "net": "LA,VDD",
+            "labels": [
+              "LA"
+            ],
+            "port_centre_um": [
+              -134.685,
+              0.5
+            ]
+          }
+        },
+        "extracted_order": [
+          "LB,OUTP",
+          "LA,VDD"
+        ],
+        "resolved": true,
+        "label_order": [
+          "LA,VDD",
+          "LB,OUTP"
+        ],
+        "reordered": true,
+        "order_after_step": [
+          "LA,VDD",
+          "LB,OUTP"
+        ]
+      },
+      {
+        "device": "$42",
+        "class": "inductor",
+        "circuit": "vco",
+        "terminals": {
+          "inductor_1": {
+            "net": "LA,VDD",
+            "labels": [
+              "LA"
+            ],
+            "port_centre_um": [
+              134.685,
+              0.5
+            ]
+          },
+          "inductor_2": {
+            "net": "LB,OUTN",
+            "labels": [
+              "LB"
+            ],
+            "port_centre_um": [
+              185.315,
+              0.5
+            ]
+          }
+        },
+        "extracted_order": [
+          "LA,VDD",
+          "LB,OUTN"
+        ],
+        "resolved": true,
+        "label_order": [
+          "LA,VDD",
+          "LB,OUTN"
+        ],
+        "reordered": false
+      }
+    ]
   },
   "input": {
     "file": "layout/vco.gds",
@@ -18,11 +105,11 @@
       "sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
     }
   },
-  "status": "mismatch",
+  "status": "match",
   "compare": {
     "layout": "vco",
     "reference": "VCO",
-    "status": "nomatch",
+    "status": "match",
     "devices": {
       "layout": {
         "cap_cmim": 1,
@@ -42,15 +129,27 @@
       }
     },
     "nets": {
-      "matched": 7,
+      "matched": 10,
       "pairs": [
+        {
+          "layout": "$1",
+          "reference": "SUB"
+        },
         {
           "layout": "0",
           "reference": "0"
         },
         {
+          "layout": "LA,VDD",
+          "reference": "VDD"
+        },
+        {
           "layout": "LB,OUTN",
           "reference": "OUTN"
+        },
+        {
+          "layout": "LB,OUTP",
+          "reference": "OUTP"
         },
         {
           "layout": "NBIAS",
@@ -73,65 +172,148 @@
           "reference": "VCTRL"
         }
       ],
-      "not_matched": [
-        {
-          "status": "mismatch",
-          "layout": "$1",
-          "reference": "SUB"
-        },
-        {
-          "status": "mismatch",
-          "layout": "LA,VDD",
-          "reference": "VDD"
-        },
-        {
-          "status": "mismatch",
-          "layout": "LB,OUTP",
-          "reference": "OUTP"
-        }
-      ]
+      "not_matched": []
     },
     "device_pairs": {
-      "matched": 42,
-      "not_matched": [
-        {
-          "status": "mismatch",
-          "layout": {
-            "name": "$41",
-            "class": "inductor",
-            "terminals": {
-              "inductor_1": "LB,OUTP",
-              "inductor_2": "LA,VDD",
-              "inductor_sub": "$1"
-            },
-            "parameters": {
-              "w": 8.215,
-              "s": 3.734,
-              "d": 142.106,
-              "nr_r": 4.0
-            }
-          },
-          "reference": {
-            "name": "L1",
-            "class": "INDUCTOR",
-            "terminals": {
-              "INDUCTOR_1": "VDD",
-              "INDUCTOR_2": "OUTP",
-              "INDUCTOR_sub": "SUB"
-            },
-            "parameters": {
-              "w": 8.22,
-              "s": 3.74,
-              "d": 141.975,
-              "nr_r": 4.0
-            }
-          }
-        }
-      ]
+      "matched": 43,
+      "not_matched": []
     },
     "pins": {
       "matched": 9,
       "not_matched": []
     }
+  },
+  "compare_log": [
+    {
+      "severity": "error",
+      "message": "Port mismatch 'LA,VDD' vs. 'VDD'"
+    },
+    {
+      "severity": "error",
+      "message": "Port mismatch 'LB,OUTN' vs. 'OUTN'"
+    },
+    {
+      "severity": "error",
+      "message": "Port mismatch 'LB,OUTP' vs. 'OUTP'"
+    }
+  ],
+  "runset_as_shipped": {
+    "status": "mismatch",
+    "compare": {
+      "layout": "vco",
+      "reference": "VCO",
+      "status": "nomatch",
+      "devices": {
+        "layout": {
+          "cap_cmim": 1,
+          "inductor": 2,
+          "npn13G2v": 4,
+          "ptap1": 1,
+          "rppd": 3,
+          "sg13_hv_svaricap": 32
+        },
+        "reference": {
+          "CAP_CMIM": 1,
+          "INDUCTOR": 2,
+          "NPN13G2V": 4,
+          "PTAP1": 1,
+          "RPPD": 3,
+          "SG13_HV_SVARICAP": 32
+        }
+      },
+      "nets": {
+        "matched": 7,
+        "pairs": [
+          {
+            "layout": "0",
+            "reference": "0"
+          },
+          {
+            "layout": "LB,OUTN",
+            "reference": "OUTN"
+          },
+          {
+            "layout": "NBIAS",
+            "reference": "NBIAS"
+          },
+          {
+            "layout": "RE",
+            "reference": "RE"
+          },
+          {
+            "layout": "TAIL",
+            "reference": "TAIL"
+          },
+          {
+            "layout": "TE",
+            "reference": "TE"
+          },
+          {
+            "layout": "VCTRL",
+            "reference": "VCTRL"
+          }
+        ],
+        "not_matched": [
+          {
+            "status": "mismatch",
+            "layout": "$1",
+            "reference": "SUB"
+          },
+          {
+            "status": "mismatch",
+            "layout": "LA,VDD",
+            "reference": "VDD"
+          },
+          {
+            "status": "mismatch",
+            "layout": "LB,OUTP",
+            "reference": "OUTP"
+          }
+        ]
+      },
+      "device_pairs": {
+        "matched": 42,
+        "not_matched": [
+          {
+            "status": "mismatch",
+            "layout": {
+              "name": "$41",
+              "class": "inductor",
+              "terminals": {
+                "inductor_1": "LB,OUTP",
+                "inductor_2": "LA,VDD",
+                "inductor_sub": "$1"
+              },
+              "parameters": {
+                "w": 8.215,
+                "s": 3.734,
+                "d": 142.106,
+                "nr_r": 4.0
+              }
+            },
+            "reference": {
+              "name": "L1",
+              "class": "INDUCTOR",
+              "terminals": {
+                "INDUCTOR_1": "VDD",
+                "INDUCTOR_2": "OUTP",
+                "INDUCTOR_sub": "SUB"
+              },
+              "parameters": {
+                "w": 8.22,
+                "s": 3.74,
+                "d": 141.975,
+                "nr_r": 4.0
+              }
+            }
+          }
+        ]
+      },
+      "pins": {
+        "matched": 9,
+        "not_matched": []
+      }
+    },
+    "compare_log": []
   }
 }

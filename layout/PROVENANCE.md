@@ -1058,6 +1058,17 @@ honest device-aware compare. It does not report LVS closure.
 > pair is L1. The layout and the runset are unchanged (`layout/vco.gds` and
 > the runset hash are byte-for-byte what they were); only the reference moved.
 
+> **Update (issue #80, 2026-10-10). The compare of record is now `match` on
+> the cross-reference. Read §14.6.** The text of §14 below still describes
+> correctly the IHP runset *as shipped*: it gives `mismatch`, and L1's
+> terminal order is its only difference. The record now adds one reviewed,
+> removable step in front of the runset's `compare`. The step orders each
+> spiral's winding terminals by its `LA`/`LB` labels. It does not edit the
+> reference or the runset. The record keeps the as-shipped compare next to
+> the new one (`vco-lvs-ihp.json` → `runset_as_shipped`). The runset's
+> strict top-port check still logs three port-*name* findings. They are
+> recorded, not suppressed (§14.6, #162).
+
 | | |
 |---|---|
 | Runner | `layout/lvs.sh` (fails on any verdict drift; two consecutive runs write byte-identical files) |
@@ -1340,3 +1351,273 @@ Item 1 still has no `klt`-native envelope pinned to `design/vco.spice`
 (klayout-tools#2887 tracks the missing evidence form). Item 2's citation is
 unchanged, because the stream did not change. DRC was not re-run, because
 the stream did not change (§13 still applies to `sha256:937e5b16…`).
+
+### 14.6 The label-order step: L1's terminal order accommodated (2026-10-10, issue #80)
+
+*Appended. The text above still describes the IHP runset as shipped. This
+section records the compare of record that replaces it. Nothing in the
+layout, the schematic, the runset or the derived reference changed:
+`layout/vco.gds` is still `sha256:937e5b16…`, `vco-reference.cir`
+`sha256:f047a24b…`, and the runset hash is still `fd11fced…`.*
+
+**Decision (#80, Curator recommendation, Champion-approved): option 2 now,
+with option 1 drafted for a human to file.** Option 3 (draw L1 unmirrored)
+is rejected. It would give up the tank's mirror symmetry (§7) to work around
+a tool artefact.
+
+#### The artefact, re-confirmed for this section
+
+Read directly from the pinned runset (hash `fd11fced…`), and checked against
+IHP-Open-PDK's `dev` branch at `f7bca326` (2026-10-09) through the GitHub
+API:
+
+- `ind_derivations.lvs` finds the two ports of a 2-terminal `inductor` by
+  their texts: `ind_port_la = ind_ports_.interacting(ind_text.texts("LA"))`,
+  and the same for `LB` (`ind_text = labels(27, 25)`). It then **joins** them
+  into one region, `ind2_ports = ind_port_la.join(ind_port_lb)`, so the
+  labels' identity is lost before extraction.
+- `custom_extractor.lvs`, `GeneralNTerminalExtractor#define_and_sort_terminals`,
+  sets `sorted_ports ||= sort_polygons(ports)` for every class except the
+  varicap. `sort_polygons` collects each merged port polygon's vertices and
+  orders the ports by `sort_by(&:first)`, which is the polygon's first
+  vertex `[x, y]`, so in effect by x. `inductor_1` and `inductor_2` are then
+  assigned in that order.
+- `custom_devices.lvs`, `DeviceCustomInd#initialize`, calls
+  `clear_equivalent_terminal_ids`, so the comparer treats the two windings
+  as distinct.
+- The PDK's own convention is LA = terminal 1. Its LVS unit testcase
+  (`testing/testcases/unit/ind_devices/netlist/inductor.cdl`) names every
+  pattern's nodes `la_N lb_N`, in that order. In every pattern of the
+  matching `inductor.gds`, LA lies to the left of LB. The testcase therefore
+  never exercises a mirrored spiral, and that is why it passes.
+- On `dev` @ `f7bca326`, `sort_polygons`, the `ind2_ports` join and
+  `DeviceCustomInd` are unchanged. (`dev` changed the turn count and the
+  winding layers, which is unrelated.) **An upstream fix is therefore not
+  available to pin.** A search of the upstream tracker for an existing
+  report found none.
+
+In this block, both spiral sub-cells have `LA` at local x = −25.315 µm and
+`LB` at +25.315 µm. L2 is placed `r0`, so its `LA` (on `VDD`) is left and
+sorts first. L1 is placed `m90`, so its `LA` (on `VDD`) lands at
+x = −134.685 µm, to the right of its `LB` (on `OUTP`, at −185.315 µm), and
+sorts second.
+
+#### The step
+
+`layout/scripts/lvs_label_order.rb` is a Ruby fragment that runs inside the
+runset's own KLayout LVS engine. Its sha256 is recorded in
+`vco-lvs-record.json` → `tools.label_order_step`. Just before the runset's
+`compare`, it does the following for every extracted device whose class
+name starts with `ind`:
+
+1. It handles class `inductor` only; `inductor3` is refused, not guessed. It
+   also handles only devices in the top circuit. This run is flat, so the
+   terminal shapes are in top-cell coordinates.
+2. It reads each winding terminal's shapes from the runset's own
+   LayoutToNetlist database (`shapes_of_terminal`). It reads the `LA`/`LB`
+   texts from the stream (27/25, case-insensitive, like the runset's glob).
+3. A device is **resolved** only if exactly one terminal carries `LA`,
+   exactly one carries `LB`, and they are different terminals. If the `LA`
+   terminal is `inductor_2`, the step swaps the device's two winding nets.
+   Nothing else is touched: no other device, net, parameter or substrate
+   terminal, and nothing on the schematic side.
+4. Any other case is **unresolved**. The device is left as extracted, the
+   step's report says so, and `lvs.sh` fails the record. The step fails
+   closed.
+
+It keys on the labels at each device's own terminals, never on an instance
+or cell name, so L1 and L2 run through the same code.
+
+**How it is run without touching the runset.** `lvs.sh` runs the same
+`run_lvs.py` with the same switches. A generated wrapper deck
+`# %include`s the step and then the unmodified `sg13g2.lvs` by absolute
+path. A `klayout` shim, first on `run_lvs.py`'s `PATH`, replaces exactly the
+`-r <runset>/sg13g2.lvs` argument with that wrapper. It also adds
+`-rd label_order_report=…` and `-rd label_order_mode=apply|report`. The shim
+refuses any other `-r`. `lvs.sh` fails if the step did not write its report.
+The runset's hash check still runs first. (A route through the runset's own
+`--layout_netlist` mode was tried and rejected. The runset's writer does not
+round-trip through its own reader: the `Q` and `L` cards lose their prefix,
+and multi-label nets become single `|`-joined names. Even unmodified, that
+re-read gives a different compare from the extraction, so it cannot carry a
+reorder faithfully.)
+
+#### Result
+
+| Run | Compare | Verdict | Cross-reference |
+|---|---|---|---|
+| runset as shipped | runset, reference of record | `mismatch` | 42/43 device pairs, 7/10 nets, 9/9 pins; only L1 unpaired |
+| C1 (unchanged) | runset, L1-swapped scratch reference | `match` | 43/43, 10/10, 9/9 |
+| **R0 (fidelity)** | runset + wrapper + shim, step in `report` mode (computes, changes nothing), reference of record | `mismatch` | **every field identical** to the runset-as-shipped compare |
+| **record** | **runset + step, reference of record** | **`match`** | **43/43, 10/10, 9/9** |
+
+The step's report for the record run (`vco-lvs-record.json` →
+`verdict_of_record.label_order_step.devices`):
+
+| Extracted device | Port at x (µm) → labels | Extracted order | Label order | Reordered |
+|---|---|---|---|---|
+| `$41` (pairs with reference L1) | −185.315 → `LB`; −134.685 → `LA` | `LB,OUTP` / `LA,VDD` | `LA,VDD` / `LB,OUTP` | **yes** |
+| `$42` (pairs with reference L2) | +134.685 → `LA`; +185.315 → `LB` | `LA,VDD` / `LB,OUTN` | `LA,VDD` / `LB,OUTN` | no (no-op) |
+
+`VDD`, `0` and the substrate each pair 1:1 with the reference, as they did
+under C1. `layout/lvs/vco-extracted-label-ordered.cir` is the netlist that
+was compared. `vco-extracted.cir` remains the runset's own extraction.
+
+**Strict top-port findings: recorded, not resolved (#162).** The runset runs
+`flag_missing_ports` (strict top-port mode) only after a matching compare,
+so these findings were first visible under C1. Before this section nobody
+read them, because `lvsdb_summary.py` did not read the comparer log; it now
+does (`compare_log`). The check logs three errors:
+`Port mismatch 'LA,VDD' vs. 'VDD'`, `'LB,OUTN' vs. 'OUTN'` and
+`'LB,OUTP' vs. 'OUTP'`. Each of these pin nets also carries a spiral
+PCell's `LA`/`LB` text. The runset uses that text as a net name
+(`ind_connections.lvs`: `connect(ind_pin, ind_text)`). `lvs.sh` checks that
+each of these nets is the one the cross-reference pairs with the named
+reference net. So these are **name** findings, not connectivity findings.
+`run_lvs.py`'s summary still says FAIL for this run, and the record says so
+(`verdict_of_record.strict_port_check`). The findings are not suppressed:
+there is no `--ignore_top_ports_mismatch`. **The `match` above is therefore
+the cross-reference's, not the runset's overall success flag.** Whether to
+report this upstream or to accept it is a decision for #162.
+
+#### Controls: each must be rejected (all are)
+
+All of these go through the step and are compared against the **reference
+of record**. A `match`, or an unresolved device, would count as a failure to
+reject. The stream variants come from `scripts/lvs_inductor_ctl.py`. They
+are scratch copies, never committed.
+
+| Control | Change to a scratch copy of the stream | Step's behaviour (gated) | Verdict |
+|---|---|---|---|
+| (a) L1 genuinely swapped | L1's instance re-placed mirrored about its own axis (`m90` → `r0`). Every wire is unchanged, but the port carrying `LA` now lands on the `OUTP` wire and `LB` on `VDD` | L1 resolved, `LA` on `OUTP`, **not** reordered | **`mismatch`** |
+| (b1) `LA` on the wrong net, L2 | L2's `LA`/`LB` texts swapped (`LA` now on `OUTN`) | **both** spirals reordered: L2 because its labels say so. The step follows labels, not instances | **`mismatch`** |
+| (b2) `LA` on the wrong net, L1 | L1's `LA`/`LB` texts swapped (`LA` now on `OUTP`) | L1 not reordered | **`mismatch`** |
+| (b3) `LA` moved, L1 | L1's `LA` text moved onto its `LB` port | the runset itself drops L1 (one labelled port) | **`mismatch`** |
+| N1 / N2 / N3 through the step | the §14 breaks (supply via, signal via, missing MIM) | L1 reordered as on the intact stream | **`mismatch`** ×3 |
+
+The §14 negative controls N1–N3 against the C1 reference, using the runset
+as shipped, are kept and still rejected.
+
+**Why the step may not be a reference-side swap (measured).** Control (a)'s
+stream, run through the runset as shipped against the C1 (L1-swapped)
+reference, gives **`match`** (`reference_side_swap_check`). A swapped
+reference would accept an L1 that really is wired the other way round. The
+step reads the extraction's own labels instead, and it rejects (a).
+
+**Mutation-tested.** Throwaway copies of `layout/` and `design/` were run
+with one change each, and the committed record was left untouched each
+time. Every mutant failed:
+
+| Mutation | What failed |
+|---|---|
+| step never reorders | R0 and the record gate |
+| step swaps every inductor | the record gate: L2 now unpaired |
+| shim passes the runset through without the wrapper | "the label-order step did not run" |
+| step orders by x | R0 and the record gate |
+
+**The draft's minimal reproduction below was run here**, on the pinned
+runset (scratch files only, nothing committed). The single unmirrored
+pattern passes, and the mirrored one fails with the two port findings.
+
+**Re-run.** `lvs.sh` was run twice on this Linux host, and both runs wrote
+byte-identical files. The xschem 3.4.7 T3 cross-check was re-run and still
+agrees on all 39 cards. The klt legs are unchanged: 0.6.0 and 0.7.0 both
+refuse, and #2849 is still open. No klayout-tools friction is new here. The
+step runs inside the PDK runset's own engine, which is the gap #2849
+already tracks.
+
+#### Removal
+
+The step is an accommodation, not a feature. **Drop it** (delete
+`scripts/lvs_label_order.rb`, the wrapper and shim block in `lvs.sh`, and
+the `lo-*` runs) at the first PDK bump whose runset meets either condition:
+
+- it orders inductor terminals by their `LA`/`LB` labels, or
+- it declares the two windings equivalent.
+
+Then:
+
+1. Update `IHP_LVS_DECK_SHA`.
+2. Re-check that the runset **as shipped** gives the verdict of record on
+   its own. The `record` run must reach `match`. C1 then becomes the
+   control that must be rejected.
+3. Keep controls (a) and (b1)–(b3) as plain-runset negative controls. An
+   x-order fix that declares the windings equivalent would accept (a), so
+   that kind of fix also needs a decision on whether (a) is still a
+   difference worth catching.
+
+`lvs.sh` fails at the new runset hash until this is done, so the step
+cannot outlive its reason silently.
+
+#### Upstream report: DRAFT, NOT YET FILED
+
+Filing at `IHP-GmbH/IHP-Open-PDK` is outward-facing, so it is left to a
+human. This is the text to file. It is generic and describes the runset,
+not this block.
+
+> **Title:** KLayout LVS: 2-terminal `inductor` terminals are ordered by x
+> position, not by their LA/LB labels, so a mirrored inductor always
+> compares with reversed windings
+>
+> **Runset:** `libs.tech/klayout/tech/lvs` (`sg13g2.lvs`), confirmed on
+> `dev` @ `f7bca326` (2026-10-09). KLayout 0.30.12.
+>
+> **What happens.** `ind_derivations.lvs` identifies the two ports of an
+> `inductor2` by their `LA`/`LB` texts on `IND:text` (27/25), then joins
+> them (`ind2_ports = ind_port_la.join(ind_port_lb)`).
+> `GeneralNTerminalExtractor#define_and_sort_terminals`
+> (`custom_extractor.lvs`) assigns `inductor_1`/`inductor_2` from
+> `sort_polygons(ports)`, which orders the port polygons by their first
+> vertex, i.e. by x. `DeviceCustomInd` calls `clear_equivalent_terminal_ids`,
+> so the order is compared. For any inductor instance placed with a mirror
+> (`m90`, or `r180`/`m0`, anything that puts `LA` right of `LB`), the
+> extracted `inductor_1` is the **LB** port. A correctly wired mirrored
+> inductor therefore fails LVS against a CDL that lists its nodes in
+> LA, LB order. That is the order the runset's own unit testcase uses
+> (`testing/testcases/unit/ind_devices/netlist/inductor.cdl`, `la_N lb_N`).
+> The unit testcase does not catch this. Every pattern in its layout has LA
+> left of LB, and its inductor nets are not anchored by name: mirroring a
+> pattern in place still gives a match there.
+>
+> **Minimal reproduction** (measured with KLayout 0.30.12 on a runset
+> snapshot whose terminal-ordering code, quoted above, is identical to
+> `dev` @ `f7bca326`).
+> Take only the 1-turn, d = 25.35 µm `inductor2` pattern from the unit
+> testcase layout (`ind_devices/layout/inductor.gds`, the shapes inside its
+> IND marker at (−44.68, 0; 44.68, 89.36) µm) as top cell `indtest`. The
+> PCell's own `LA`/`LB` texts name its two port nets `LA` and `LB`. Use this
+> CDL:
+>
+> ```
+> .SUBCKT indtest LA LB
+> L1 LA LB sub inductor w=2u s=2.1u d=25.35u nr_r=1
+> .ENDS
+> ```
+>
+> As drawn, `run_lvs.py --topcell=indtest` reports "Congratulations!
+> Netlists match." Now mirror the same shapes about the marker's vertical
+> centre line (`M90`). The labels move with their ports, so the device is
+> still wired LA→`LA` and LB→`LB`. The run now fails: the comparer can pair
+> the device only by pairing layout net `LA` with reference `LB`, and the
+> strict top-port check logs `Port mismatch 'LA' vs. 'LB'` and
+> `Port mismatch 'LB' vs. 'LA'`. In a larger circuit, where the nets are
+> anchored by other devices, the same thing shows up as an unpaired
+> inductor with its terminals reversed. Any layout that mirrors an inductor,
+> for example for a symmetric differential tank, hits this.
+>
+> **Proposed fix (either).**
+> (1) Order by label: keep `ind_port_la` and `ind_port_lb` as separate
+> extractor layers, or pass the label-to-polygon mapping to the extractor.
+> Define `inductor_1` on the LA port and `inductor_2` on the LB port, and
+> apply the same rule to `inductor3` (LA, LB, LC).
+> (2) If the model is symmetric in its two windings, declare them
+> equivalent (`equivalent_terminal_id`) so that the order does not matter.
+> Option (1) keeps the LA/LB distinction the CDL carries.
+> Add a mirrored pattern to the unit testcase in either case.
+>
+> **Related observation (separate).** The `LA`/`LB` PCell texts are also
+> connected as net names (`ind_connections.lvs`:
+> `connect(ind_pin, ind_text)`). An inductor port on a top-level pin net
+> therefore names that net, e.g. `LA,VDD`. Strict top-port mode
+> (`flag_missing_ports`) then logs `Port mismatch 'LA,VDD' vs. 'VDD'` even
+> when the cross-reference pairs the nets.

@@ -1,8 +1,14 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "verdict_of_record": {
-    "status": "mismatch",
+    "status": "match",
+    "compare": "IHP's runset (unmodified, hash-pinned) + the label-order step, against the reference of record (unedited)",
     "report": "layout/lvs/vco-lvs-ihp.json",
+    "cross_reference": {
+      "device_pairs": "43/43",
+      "nets": "10/10",
+      "pins": "9/9"
+    },
     "device_census": {
       "layout": {
         "cap_cmim": 1,
@@ -23,17 +29,143 @@
       "devices_in_design": 42,
       "extra": "ptap1 = the guard-ring substrate tie (T5b)"
     },
+    "label_order_step": {
+      "script": "layout/scripts/lvs_label_order.rb",
+      "content_hash": "sha256:eaae5d1267265dfbc006b86ba765f3adf6eaf685a5a153807644f63eb6e26a8f",
+      "issue": "#80",
+      "rule": "for every extracted device of class `inductor`: the winding terminal whose port carries the LA text (27/25) becomes terminal 1, the one carrying LB terminal 2 (the PDK's own convention: its LVS unit testcase names every pattern's nodes `la_N lb_N`); applied identically to every inductor, keyed on the labels at each device's own terminals, never on instance or cell names; a device without exactly one LA and one LB on different terminals is left as extracted and reported unresolved (fails the record)",
+      "not_changed": "the runset files (hash-pinned), every run_lvs.py switch, every other device class, every net, every parameter, the substrate terminal, and the reference netlist",
+      "inductor_devices": 2,
+      "reordered": 1,
+      "unresolved": 0,
+      "devices": [
+        {
+          "device": "$41",
+          "class": "inductor",
+          "circuit": "vco",
+          "terminals": {
+            "inductor_1": {
+              "net": "LB,OUTP",
+              "labels": [
+                "LB"
+              ],
+              "port_centre_um": [
+                -185.315,
+                0.5
+              ]
+            },
+            "inductor_2": {
+              "net": "LA,VDD",
+              "labels": [
+                "LA"
+              ],
+              "port_centre_um": [
+                -134.685,
+                0.5
+              ]
+            }
+          },
+          "extracted_order": [
+            "LB,OUTP",
+            "LA,VDD"
+          ],
+          "resolved": true,
+          "label_order": [
+            "LA,VDD",
+            "LB,OUTP"
+          ],
+          "reordered": true,
+          "order_after_step": [
+            "LA,VDD",
+            "LB,OUTP"
+          ]
+        },
+        {
+          "device": "$42",
+          "class": "inductor",
+          "circuit": "vco",
+          "terminals": {
+            "inductor_1": {
+              "net": "LA,VDD",
+              "labels": [
+                "LA"
+              ],
+              "port_centre_um": [
+                134.685,
+                0.5
+              ]
+            },
+            "inductor_2": {
+              "net": "LB,OUTN",
+              "labels": [
+                "LB"
+              ],
+              "port_centre_um": [
+                185.315,
+                0.5
+              ]
+            }
+          },
+          "extracted_order": [
+            "LA,VDD",
+            "LB,OUTN"
+          ],
+          "resolved": true,
+          "label_order": [
+            "LA,VDD",
+            "LB,OUTN"
+          ],
+          "reordered": false
+        }
+      ],
+      "reading": "the step reordered exactly one device, the mirrored spiral whose ports carry LA on VDD and LB on OUTP (the reference's L1: VDD OUTP); it left the unmirrored spiral (LA on VDD, LB on OUTN: the reference's L2) as extracted"
+    },
+    "strict_port_check": {
+      "findings": [
+        {
+          "severity": "error",
+          "message": "Port mismatch 'LA,VDD' vs. 'VDD'"
+        },
+        {
+          "severity": "error",
+          "message": "Port mismatch 'LB,OUTN' vs. 'OUTN'"
+        },
+        {
+          "severity": "error",
+          "message": "Port mismatch 'LB,OUTP' vs. 'OUTP'"
+        }
+      ],
+      "runset_log_outcome": "Netlists don't match",
+      "reading": "IHP's runset runs flag_missing_ports (strict top-port mode) only after a matching compare. It logs one error per top-level pin net whose layout name is not exactly the reference port name. The three findings are the three pin nets that also carry a spiral's LA/LB PCell text, which the runset connects as a net name (ind_connections.lvs: connect(ind_pin, ind_text)), so the layout net is named e.g. 'LA,VDD'. Each of those nets IS paired with the named reference net by the cross-reference (gated by lvs.sh), so these are name findings, not connectivity findings; run_lvs.py's own summary nevertheless reports FAIL for this run. The same three findings were present, unread, under control C1 before issue #80 (PROVENANCE.md section 14.6). They are not addressed by the label-order step and are not suppressed (no --ignore_top_ports_mismatch)."
+    },
     "explained_differences": [
       {
         "id": "L1-terminal-order",
         "devices": 1,
         "kind": "extractor artefact",
-        "detail": "IHP's GeneralNTerminalExtractor sorts inductor ports by x position; L1 is placed mirrored (m90), so its LA (on VDD) sorts second, while the inductor class declares its two winding terminals non-equivalent. The LA/LB labels in the stream put LA on VDD for both spirals, as the schematic says. Isolated by control C1.",
-        "resolution": "upstream runset fix or a reviewed accommodation: issue #80"
+        "detail": "IHP's GeneralNTerminalExtractor sorts inductor ports by x position (custom_extractor.lvs: define_and_sort_terminals -> sort_polygons); L1 is placed mirrored (m90), so its LA (on VDD) sorts second, while the inductor class declares its two winding terminals non-equivalent. The LA/LB labels in the stream put LA on VDD for both spirals, as the schematic says. Isolated by control C1.",
+        "resolution": "the label-order step (this record, issue #80); upstream report drafted, not filed (PROVENANCE.md section 14.6)"
       }
     ],
     "supply_pairing": {
       "record": {
+        "paired": [
+          {
+            "layout": "$1",
+            "reference": "SUB"
+          },
+          {
+            "layout": "0",
+            "reference": "0"
+          },
+          {
+            "layout": "LA,VDD",
+            "reference": "VDD"
+          }
+        ],
+        "not_paired": []
+      },
+      "runset_as_shipped": {
         "paired": [
           {
             "layout": "0",
@@ -70,12 +202,57 @@
         ],
         "not_paired": []
       },
-      "reading": "in the record compare the supply nets do not pair cleanly because the L1 terminal-order artefact perturbs VDD/OUTP; with it isolated (C1), VDD, 0 and the substrate each pair 1:1 with the reference"
+      "reading": "in the compare of record VDD, 0 and the substrate each pair 1:1 with the reference, as under C1; in the runset-as-shipped compare VDD and the substrate do not pair cleanly because the L1 terminal-order artefact perturbs VDD/OUTP"
     },
     "power_connectivity": {
       "status": "not_produced",
       "why": "klt lvs's power_connectivity block exists only in a klt lvs report, and klt 0.6.0 cannot produce one for this design (klt_leg below). Supply pairing in the device-aware compare is reported per net in vco-lvs-ihp.json -> compare.nets."
-    }
+    },
+    "removal": "drop the label-order step (layout/scripts/lvs_label_order.rb and the wrapper/shim in lvs.sh) once the pinned IHP-Open-PDK runset orders inductor terminals by their LA/LB labels or declares the two windings equivalent; bump IHP_LVS_DECK_SHA to that runset and re-check that the runset as shipped gives the verdict of record on its own (PROVENANCE.md section 14.6)"
+  },
+  "runset_as_shipped": {
+    "status": "mismatch",
+    "cross_reference": {
+      "device_pairs": "42/43",
+      "nets": "7/10",
+      "pins": "9/9"
+    },
+    "device_pairs_not_matched": [
+      {
+        "status": "mismatch",
+        "layout": {
+          "name": "$41",
+          "class": "inductor",
+          "terminals": {
+            "inductor_1": "LB,OUTP",
+            "inductor_2": "LA,VDD",
+            "inductor_sub": "$1"
+          },
+          "parameters": {
+            "w": 8.215,
+            "s": 3.734,
+            "d": 142.106,
+            "nr_r": 4.0
+          }
+        },
+        "reference": {
+          "name": "L1",
+          "class": "INDUCTOR",
+          "terminals": {
+            "INDUCTOR_1": "VDD",
+            "INDUCTOR_2": "OUTP",
+            "INDUCTOR_sub": "SUB"
+          },
+          "parameters": {
+            "w": 8.22,
+            "s": 3.74,
+            "d": 141.975,
+            "nr_r": 4.0
+          }
+        }
+      }
+    ],
+    "reading": "the same runset without the step: exactly one unpaired device pair, spiral L1 with its windings in x order (OUTP, VDD) against the reference's (VDD, OUTP); kept as evidence of what the step accommodates"
   },
   "tools": {
     "runset_engine": {
@@ -86,6 +263,10 @@
     "runset": {
       "path": "$IHP_PDK_ROOT/libs.tech/klayout/tech/lvs/run_lvs.py",
       "content_hash": "sha256:fd11fced5b0bd5ee0bb66b700acbe359f23c30c5900b16e5f647ed9a430dcc09"
+    },
+    "label_order_step": {
+      "path": "layout/scripts/lvs_label_order.rb",
+      "content_hash": "sha256:eaae5d1267265dfbc006b86ba765f3adf6eaf685a5a153807644f63eb6e26a8f"
     },
     "klt_leg": "klayout-tools==0.6.0 (tagged wheel, the CI pin)"
   },
@@ -111,7 +292,7 @@
     "--topcell=vco",
     "--run_dir=<scratch>"
   ],
-  "invocation_notes": "run_lvs.py defaults: flat mode, simplify on, strict top-port mode (flag_missing_ports); run_lvs.py exits 0 on a mismatch, so the verdict is read from the .lvsdb",
+  "invocation_notes": "run_lvs.py defaults: flat mode, simplify on, strict top-port mode (flag_missing_ports); run_lvs.py exits 0 on a mismatch, so the verdict is read from the .lvsdb. The compare of record runs this same command with a `klayout` shim first on PATH that replaces only the `-r <runset>/sg13g2.lvs` argument by a generated wrapper deck (`# %include` of the step, then of the unmodified sg13g2.lvs) and adds -rd label_order_report and -rd label_order_mode=apply; every other switch passes through (fidelity control R0)",
   "reference_crosscheck_xschem": {
     "status": "agree",
     "devices_compared": 39,
@@ -122,13 +303,36 @@
     {
       "control": "C1",
       "reference_change": "L1 winding terminals swapped",
+      "compare": "runset as shipped (no step)",
       "verdict": "match",
       "device_pairs_matched": 43,
       "nets_matched": 10,
-      "pins_matched": 9
+      "pins_matched": 9,
+      "compare_log": [
+        {
+          "severity": "error",
+          "message": "Port mismatch 'LA,VDD' vs. 'VDD'"
+        },
+        {
+          "severity": "error",
+          "message": "Port mismatch 'LB,OUTN' vs. 'OUTN'"
+        },
+        {
+          "severity": "error",
+          "message": "Port mismatch 'LB,OUTP' vs. 'OUTP'"
+        }
+      ],
+      "reading": "still the explanation of the runset-as-shipped mismatch: with only L1's terminal order changed, the runset pairs everything"
     }
   ],
   "control_scope": "C1 reference is a scratch diagnostic produced by lvs_reference.py's --swap-inductor switch; it is never committed and is not a reference of record. It establishes that L1's terminal order is the ONLY difference, not that the layout matches.",
+  "fidelity_control": {
+    "control": "R0",
+    "compare": "runset + wrapper + shim, step in `report` mode (computes, changes nothing)",
+    "verdict": "mismatch",
+    "identical_to_runset_as_shipped": true,
+    "reading": "every field of the R0 compare equals the runset-as-shipped compare, so the wrapper deck and the shim do not move the result; only the step's reordering does"
+  },
   "negative_controls": [
     {
       "control": "n1-supply",
@@ -181,6 +385,359 @@
       }
     }
   ],
+  "negative_controls_label_order": [
+    {
+      "control": "lo-n1-supply",
+      "change": "N1 (VS_VDD_REF via ladder removed), through the step",
+      "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 3,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "label_order_step": {
+        "inductor_devices": 2,
+        "unresolved": 0,
+        "reordered": 1,
+        "devices": [
+          {
+            "device": "$41",
+            "resolved": true,
+            "extracted_order": [
+              "LB,OUTP",
+              "LA,VDD"
+            ],
+            "label_order": [
+              "LA,VDD",
+              "LB,OUTP"
+            ],
+            "reordered": true
+          },
+          {
+            "device": "$42",
+            "resolved": true,
+            "extracted_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "label_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "reordered": false
+          }
+        ]
+      }
+    },
+    {
+      "control": "lo-n2-signal",
+      "change": "N2 (VS_Q1B via ladder removed), through the step",
+      "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 7,
+      "device_pairs_not_matched": 37,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "label_order_step": {
+        "inductor_devices": 2,
+        "unresolved": 0,
+        "reordered": 1,
+        "devices": [
+          {
+            "device": "$41",
+            "resolved": true,
+            "extracted_order": [
+              "LB,OUTP",
+              "LA,VDD"
+            ],
+            "label_order": [
+              "LA,VDD",
+              "LB,OUTP"
+            ],
+            "reordered": true
+          },
+          {
+            "device": "$42",
+            "resolved": true,
+            "extracted_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "label_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "reordered": false
+          }
+        ]
+      }
+    },
+    {
+      "control": "lo-n3-device",
+      "change": "N3 (C1 MIM instance removed), through the step",
+      "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 4,
+      "device_pairs_not_matched": 37,
+      "layout_census": {
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "label_order_step": {
+        "inductor_devices": 2,
+        "unresolved": 0,
+        "reordered": 1,
+        "devices": [
+          {
+            "device": "$40",
+            "resolved": true,
+            "extracted_order": [
+              "LB,OUTP",
+              "LA,VDD"
+            ],
+            "label_order": [
+              "LA,VDD",
+              "LB,OUTP"
+            ],
+            "reordered": true
+          },
+          {
+            "device": "$41",
+            "resolved": true,
+            "extracted_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "label_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "reordered": false
+          }
+        ]
+      }
+    },
+    {
+      "control": "lo-a-l1-flipped",
+      "change": "(a) L1 GENUINELY wired the other way round: its instance re-placed mirrored about its own axis (m90 -> r0), so the port carrying LA lands on the OUTP wire and LB on VDD; every wire is unchanged",
+      "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 3,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "label_order_step": {
+        "inductor_devices": 2,
+        "unresolved": 0,
+        "reordered": 0,
+        "devices": [
+          {
+            "device": "$41",
+            "resolved": true,
+            "extracted_order": [
+              "LA,OUTP",
+              "LA,LB,VDD"
+            ],
+            "label_order": [
+              "LA,OUTP",
+              "LA,LB,VDD"
+            ],
+            "reordered": false
+          },
+          {
+            "device": "$42",
+            "resolved": true,
+            "extracted_order": [
+              "LA,LB,VDD",
+              "LB,OUTN"
+            ],
+            "label_order": [
+              "LA,LB,VDD",
+              "LB,OUTN"
+            ],
+            "reordered": false
+          }
+        ]
+      },
+      "expected_step_behaviour": "the step must find L1's LA on OUTP and leave it there (nothing reordered)",
+      "step_behaved_as_expected": true
+    },
+    {
+      "control": "lo-b1-l2-labels-swapped",
+      "change": "(b) L2's LA and LB texts swapped: L2's LA label on the wrong net (OUTN). L2 is the unmirrored spiral the step leaves alone on the intact stream",
+      "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 3,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "label_order_step": {
+        "inductor_devices": 2,
+        "unresolved": 0,
+        "reordered": 2,
+        "devices": [
+          {
+            "device": "$41",
+            "resolved": true,
+            "extracted_order": [
+              "LB,OUTP",
+              "LA,LB,VDD"
+            ],
+            "label_order": [
+              "LA,LB,VDD",
+              "LB,OUTP"
+            ],
+            "reordered": true
+          },
+          {
+            "device": "$42",
+            "resolved": true,
+            "extracted_order": [
+              "LA,LB,VDD",
+              "LA,OUTN"
+            ],
+            "label_order": [
+              "LA,OUTN",
+              "LA,LB,VDD"
+            ],
+            "reordered": true
+          }
+        ]
+      },
+      "expected_step_behaviour": "the step must follow L2's labels and reorder it too (2 reordered)",
+      "step_behaved_as_expected": true
+    },
+    {
+      "control": "lo-b2-l1-labels-swapped",
+      "change": "(b) L1's LA and LB texts swapped: L1's LA label on the wrong net (OUTP)",
+      "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 3,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 2,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "label_order_step": {
+        "inductor_devices": 2,
+        "unresolved": 0,
+        "reordered": 0,
+        "devices": [
+          {
+            "device": "$41",
+            "resolved": true,
+            "extracted_order": [
+              "LA,OUTP",
+              "LA,LB,VDD"
+            ],
+            "label_order": [
+              "LA,OUTP",
+              "LA,LB,VDD"
+            ],
+            "reordered": false
+          },
+          {
+            "device": "$42",
+            "resolved": true,
+            "extracted_order": [
+              "LA,LB,VDD",
+              "LB,OUTN"
+            ],
+            "label_order": [
+              "LA,LB,VDD",
+              "LB,OUTN"
+            ],
+            "reordered": false
+          }
+        ]
+      },
+      "expected_step_behaviour": "the step must follow L1's labels and not reorder it",
+      "step_behaved_as_expected": true
+    },
+    {
+      "control": "lo-b3-l1-la-moved",
+      "change": "(b) L1's LA text moved onto its LB port: LA on the wrong net (OUTP), both labels on one port",
+      "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+      "verdict": "mismatch",
+      "rejected": true,
+      "nets_not_matched": 3,
+      "device_pairs_not_matched": 1,
+      "layout_census": {
+        "cap_cmim": 1,
+        "inductor": 1,
+        "npn13g2v": 4,
+        "ptap1": 1,
+        "rppd": 3,
+        "sg13_hv_svaricap": 32
+      },
+      "label_order_step": {
+        "inductor_devices": 1,
+        "unresolved": 0,
+        "reordered": 0,
+        "devices": [
+          {
+            "device": "$41",
+            "resolved": true,
+            "extracted_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "label_order": [
+              "LA,VDD",
+              "LB,OUTN"
+            ],
+            "reordered": false
+          }
+        ]
+      },
+      "expected_step_behaviour": "the runset itself must drop L1 (one labelled port only)",
+      "step_behaved_as_expected": true
+    }
+  ],
+  "negative_controls_scope": "negative_controls: the runset as shipped against the C1 diagnostic (unchanged from #62). negative_controls_label_order: the compare of record's own path (runset + step) against the reference of record; a `match` (or an unresolved device counted as a pass) would mean the step hides the break",
+  "reference_side_swap_check": {
+    "control": "a-plain-vs-c1",
+    "compare": "runset as shipped, stream of control (a) (L1 genuinely wired the other way round), against the C1 diagnostic reference",
+    "verdict": "match",
+    "reading": "a reference-side swap would accept a genuinely reversed L1: the x-ordered extraction of control (a) matches the swapped reference. That is why the accommodation reorders the extraction by its own labels and never edits the reference"
+  },
   "klt_leg": {
     "lvs": {
       "request": {
@@ -259,7 +816,9 @@
     "reading": "the newest release behaves as the pin does: it refuses the reference, recognizes 1 of 42 devices on inline extraction, and cannot read the runset's device-aware extraction as a pre-extracted layout netlist -- the gap tracked by 2AMLogic/klayout-tools#2849 is open in 0.7.0 too (PROVENANCE.md section 14.5)"
   },
   "limits": [
-    "the verdict is IHP's runset's; klt lvs could not run it, so no klt-native LVS envelope (and no klt power_connectivity block) exists",
+    "the verdict is IHP's runset's plus one repo-local step; klt lvs could not run it, so no klt-native LVS envelope (and no klt power_connectivity block) exists",
+    "the `match` is the cross-reference's; the runset's strict top-port check still logs three port-name findings and run_lvs.py's summary says FAIL (verdict_of_record.strict_port_check)",
+    "the label-order step is this repo's accommodation of a runset artefact, not IHP's; it is reviewed and controlled here, and removable (verdict_of_record.removal)",
     "one engine only: no second, independent extractor recognizes this block's HBT/varactor/inductor devices",
     "the reference is DERIVED (T1..T6); T4 (rppd for ideal R) and T5 (substrate net + guard-ring tie) are the layout phase's own physical choices restated, so their parameters are checked against the generator's intent, not against the schematic",
     "a topological + parameter compare; no parasitic, matching or geometric check"
