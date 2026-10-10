@@ -22,7 +22,9 @@
 #   INSUFFICIENT         a margin is unavailable: no baseline supplied, the
 #                        baseline point is missing/invalid/incomplete, the
 #                        stage-2 point was not run or is invalid, or the two
-#                        records' design/model provenance differ
+#                        records' device body or full captured model-input
+#                        set (the -model-inputs.json sidecars) differ or are
+#                        missing/malformed (issue #177)
 #
 # and an OVERALL status: ESCALATION_REQUIRED if any (row, point) says so;
 # otherwise INSUFFICIENT_EVIDENCE if any is INSUFFICIENT; otherwise
@@ -294,19 +296,75 @@ prov_digests() {
       grab("hbtmod",    "sg13g2_hbt_mod\\.lib` sha256 `[0-9a-f]+`")
       grab("osdi",      "mosvar\\.osdi` \\(this run.s build\\) sha256 `[0-9a-f]+`") }'
 }
-PROV_KEYS="body inductor cornerHBT cornerMOShv cornerCAP svaricap hbtmod osdi"
-# prov_compare <a.md> <b.md> -- prints "OK" or a one-line reason.
+PROV_KEYS="body inductor cornerHBT cornerMOShv cornerCAP svaricap hbtmod osdi"   # readability only
+
+# prov_inputs <record-prefix> -- the canonical consumed-input set of a record,
+# from its model-input sidecar <prefix>-model-inputs.json (schema
+# sg13g2-vco/model-inputs/1, written by osc_model_inputs_json in osc_bench.sh):
+# sorted "role<TAB>bundle_path<TAB>sha256" lines. Record ids, original_path and
+# retained_snapshot are deliberately ignored (they differ between hosts and
+# records without changing what was consumed). On any defect it prints
+# a single 'ERR<TAB>reason' line and returns 1: a missing file, a
+# wrong/absent schema, an inputs array that is not exactly the writer's
+# one-entry-per-line shape, a sha256 that is not 64 lowercase hex, an empty
+# role/path, or a duplicate (role, bundle_path) or bundle_path. Any such
+# record is unverifiable, never a match.
+prov_inputs() {
+  local f="$1-model-inputs.json" out err
+  if [[ ! -f "${f}" ]]; then printf "ERR\tmodel-input manifest %s missing\n" "$(basename "${f}")"; return 1; fi
+  out="$(awk '
+    /^[[:space:]]*"schema"[[:space:]]*:/ { sc++; if ($0 ~ /"sg13g2-vco\/model-inputs\/1"/) ok_schema = 1 }
+    /^[[:space:]]*"inputs"[[:space:]]*:[[:space:]]*\[[[:space:]]*$/ { opened++ }
+    /^[[:space:]]*\][[:space:]]*$/ { closed++ }
+    { last = $0 }
+    /"role"[[:space:]]*:/ {
+      seen++
+      line = $0
+      if (!match(line, /"role": "[^"\\]+", "bundle_path": "[^"\\]+", "sha256": "[0-9a-f]{64}"/)) { if (bad == "") bad = "malformed entry " seen; next }
+      e = substr(line, RSTART, RLENGTH)
+      split(e, q, "\"")           # q[4]=role q[8]=bundle_path q[12]=sha256
+      k = q[4] "\t" q[8]
+      if (k in K) { if (bad == "") bad = "duplicate entry " q[4] ":" q[8]; next }
+      if (q[8] in P) { if (bad == "") bad = "duplicate bundle_path " q[8]; next }
+      K[k] = 1; P[q[8]] = 1
+      print q[4] "\t" q[8] "\t" q[12]
+    }
+    END {
+      if (sc != 1 || !ok_schema) { print "ERR\twrong or missing schema"; exit }
+      if (opened != 1 || closed != 1 || last !~ /^}[[:space:]]*$/) { print "ERR\ttruncated or misshapen document"; exit }
+      if (seen == 0) { print "ERR\tno inputs"; exit }
+      if (bad != "") print "ERR\t" bad
+    }' "${f}")" || { printf "ERR\tmodel-input manifest unreadable\n"; return 1; }
+  err="$(awk -F'\t' '$1 == "ERR" { print $2; exit }' <<<"${out}")"
+  if [[ -n "${err}" ]]; then
+    printf "ERR\tmodel-input manifest %s malformed (%s)\n" "$(basename "${f}")" "${err}"
+    return 1
+  fi
+  LC_ALL=C sort <<<"${out}"
+}
+
+# prov_compare <a.md> <b.md> -- prints "OK" or a one-line reason. Verified
+# compatibility needs (1) the same device-body digest and (2) valid manifests
+# whose (role, bundle_path, sha256) sets are equal -- the full captured closure,
+# not the prose digests. The records are <prefix>.md with <prefix>-model-inputs.json.
 prov_compare() {
-  local a b k va vb bad=""
+  local a b ia ib body_a body_b diff pa="${1%.md}" pb="${2%.md}"
   a="$(prov_digests "$1")" || { echo "record $1 not found (provenance unverifiable)"; return; }
   b="$(prov_digests "$2")" || { echo "record $2 not found (provenance unverifiable)"; return; }
-  for k in ${PROV_KEYS}; do
-    va="$(echo "${a}" | awk -F= -v k="${k}" '$1 == k { print $2 }')"
-    vb="$(echo "${b}" | awk -F= -v k="${k}" '$1 == k { print $2 }')"
-    if [[ -z "${va}" || -z "${vb}" ]]; then bad="${bad} ${k}(missing)"
-    elif [[ "${va}" != "${vb}" ]]; then bad="${bad} ${k}(differs)"; fi
-  done
-  if [[ -n "${bad}" ]]; then echo "provenance mismatch:${bad}"; else echo OK; fi
+  body_a="$(echo "${a}" | awk -F= '$1 == "body" { print $2 }')"
+  body_b="$(echo "${b}" | awk -F= '$1 == "body" { print $2 }')"
+  if [[ -z "${body_a}" || -z "${body_b}" ]]; then echo "provenance mismatch: body(missing)"; return; fi
+  if [[ "${body_a}" != "${body_b}" ]]; then echo "provenance mismatch: body(differs)"; return; fi
+  ia="$(prov_inputs "${pa}")" || { echo "provenance unverifiable: stage-2 side: ${ia#ERR$'\t'}"; return; }
+  ib="$(prov_inputs "${pb}")" || { echo "provenance unverifiable: baseline side: ${ib#ERR$'\t'}"; return; }
+  if [[ "${ia}" == "${ib}" ]]; then echo OK; return; fi
+  diff="$(awk -F'\t' '
+    FNR == NR { A[$1 ":" $2] = $3; next }
+    { B[$1 ":" $2] = $3 }
+    END {
+      for (k in A) { if (!(k in B)) print k "(only in stage-2)"; else if (A[k] != B[k]) print k "(differs)" }
+      for (k in B) if (!(k in A)) print k "(only in baseline)" }' <(echo "${ia}") <(echo "${ib}") | LC_ALL=C sort | tr '\n' ' ')"
+  echo "provenance mismatch: model inputs ${diff% }"
 }
 
 # ------------------------------------------------------------------- report

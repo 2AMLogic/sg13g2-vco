@@ -280,6 +280,9 @@ write_md() { # file
     echo "  sha256 \`$(printf 'ind' | sha256sum | cut -d' ' -f1)\`. The PDK ships none"
     osc_provenance_md
   } > "$1"
+  # the model-input sidecar next to the record (issue #177), the very writer
+  # osc_bench.sh uses; the record id is the file's own
+  osc_model_inputs_json | sed "s|\"record_id\": \"\"|\"record_id\": \"$(basename "${1%.md}")\"|" > "${1%.md}-model-inputs.json"
 }
 fixture_points() { # kind -> "<proc> <rail> <temp> <mos> <cap> <hbt>" lines
   local proc temp mos cap hbt
@@ -436,7 +439,7 @@ grep -q 'Row 7 is two comparisons per point' "${FX}/ok-supply-stage2.md" && grep
 grep -q 'Row 7 is MISSING' "${FX}/ok-supply-stage2.md" && check md-no-stale-row7-text bad || check md-no-stale-row7-text ok
 # a missing row-7 measurement can never read NO_ESCALATION
 grep -v '^tt,cap_typ,hbt_typ,125,.*,3.630$' "${FX}/s2a-row7.csv" > "${FX}/s2miss-row7.csv"
-for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FX}/s2a${f}" "${FX}/s2miss${f}"; done
+for f in .csv -tuning.csv -margin-summary.csv -model-inputs.json .md; do cp "${FX}/s2a${f}" "${FX}/s2miss${f}"; done
 run_report "${FX}" miss "${FX}/s2miss" --baseline-osc "${FX}/base1" "${ARR[@]}"
 eq row7-missing-grade-insufficient "$(awk -F, 'NR>1 && $1==7 && $13=="INSUFFICIENT" {print $2","$3","$4}' "${C}" | sort -u)" "TYP,3.630,125"
 eq row7-missing-grade-two-metrics "$(cnt "${C}" 7 INSUFFICIENT)" 2
@@ -444,13 +447,13 @@ grep -q 'no matching row-7 grade' "${C}" && check row7-missing-grade-reason ok |
 eq overall-row7-missing-not-no-escalation "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
 # a duplicated grade line is ambiguous, never picked
 { cat "${FX}/s2a-row7.csv"; grep '^ff,cap_bcs,hbt_bcs,-40,.*,2.970$' "${FX}/s2a-row7.csv"; } > "${FX}/s2dup-row7.csv"
-for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FX}/s2a${f}" "${FX}/s2dup${f}"; done
+for f in .csv -tuning.csv -margin-summary.csv -model-inputs.json .md; do cp "${FX}/s2a${f}" "${FX}/s2dup${f}"; done
 run_report "${FX}" dup "${FX}/s2dup" --baseline-osc "${FX}/base1"
 eq row7-duplicate-insufficient "$(awk -F, 'NR>1 && $1==7 && $13=="INSUFFICIENT" {print $2","$3","$4}' "${C}" | sort -u)" "FAST,2.970,-40"
 grep -q '2 matching row-7 grades (ambiguous)' "${C}" && check row7-duplicate-reason ok || check row7-duplicate-reason bad
 # a stage-2 row-7 CSV without its rail column is never compared
 cut -d, -f1-24 "${FX}/s2a-row7.csv" > "${FX}/s2nr-row7.csv"
-for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FX}/s2a${f}" "${FX}/s2nr${f}"; done
+for f in .csv -tuning.csv -margin-summary.csv -model-inputs.json .md; do cp "${FX}/s2a${f}" "${FX}/s2nr${f}"; done
 run_report "${FX}" nr "${FX}/s2nr" --baseline-osc "${FX}/base1"
 eq row7-railless-stage2-insufficient "$(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 7 NO_ESCALATION)" "36 0"
 # every point of every row carries the rail and nothing is aggregated across rails
@@ -544,13 +547,13 @@ eq legacy-baseline-row7-insufficient "$(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 
 grep -q 'no row-7 CSV base_legacy-row7.csv' "${C}" && check legacy-baseline-reason ok || check legacy-baseline-reason bad
 eq legacy-baseline-overall "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
 # legacy/foreign row-7 header (a column missing) -> never misread
-for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FU}/base_full${f}" "${FU}/base_oldhdr${f}"; done
+for f in .csv -tuning.csv -margin-summary.csv -model-inputs.json .md; do cp "${FU}/base_full${f}" "${FU}/base_oldhdr${f}"; done
 { head -1 "${FU}/base_full-row7.csv" | sed 's/,vce_max_upper_v//'; tail -n +2 "${FU}/base_full-row7.csv"; } > "${FU}/base_oldhdr-row7.csv"
 run_report "${FU}" oldhdr "${FU}/s2a" --baseline-osc "${FU}/base_oldhdr"
 eq legacy-header-row7-insufficient "$(cnt "${C}" 7 INSUFFICIENT)" 36
 grep -q 'unrecognised (legacy or foreign) header' "${C}" && check legacy-header-reason ok || check legacy-header-reason bad
 # a baseline grade whose verdict contradicts its value is an invalid grade line
-for f in .csv -tuning.csv -margin-summary.csv .md; do cp "${FU}/base_full${f}" "${FU}/base_contra${f}"; done
+for f in .csv -tuning.csv -margin-summary.csv -model-inputs.json .md; do cp "${FU}/base_full${f}" "${FU}/base_contra${f}"; done
 sed '2s/,MET,MET,MET,MET,MET,-$/,MET,MET,NOT MET,NOT MET,NOT MET,-/' "${FU}/base_full-row7.csv" > "${FU}/base_contra-row7.csv"
 run_report "${FU}" contra "${FU}/s2a" --baseline-osc "${FU}/base_contra"
 eq contradictory-grade-insufficient "$(cnt "${C}" 7 INSUFFICIENT)" 2
@@ -559,7 +562,7 @@ grep -q 'contradicts' "${C}" && check contradictory-grade-reason ok || check con
 mk_osc "${FU}" base_prov base badprov
 run_report "${FU}" prov "${FU}/s2a" --baseline-osc "${FU}/base_prov"
 eq provenance-mismatch-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 6 INSUFFICIENT) $(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 8 INSUFFICIENT)" "18 8 36 18"
-grep -q 'provenance mismatch: cornerCAP(differs)' "${C}" && check provenance-mismatch-names-key ok || check provenance-mismatch-names-key bad
+grep -q 'provenance mismatch: model inputs pdk-model:models/cornerCAP.lib(differs)' "${C}" && check provenance-mismatch-names-key ok || check provenance-mismatch-names-key bad
 
 mk_osc "${FU}" s2_norail s2 norailcol
 run_report "${FU}" norail "${FU}/s2_norail" --baseline-osc "${FU}/base_full"
@@ -578,6 +581,111 @@ for f in "${FU}"/pnwrong*-pilot-summary.csv; do sed 's/^vsup_v,.*/vsup_v,3.3,V,x
 ARR=(); mapfile_lines < <(pn_args "${FU}" pnwrong --stage2-pn)
 run_report "${FU}" pnrail "${FU}/s2a" --baseline-osc "${FU}/base_full" "${ARR[@]}"
 eq pn-rail-mismatch-not-matched "$(cnt "${C}" 4 INSUFFICIENT)" 18
+
+# --- 7d. full captured model identity (issue #177) -----------------------
+# The sidecar <record>-model-inputs.json is the proof; prose digests are not.
+# cp_rec <dir> <from> <to> : copy every file of record <from> to record <to>
+cp_rec() { local f; for f in "$1/$2"*; do cp "${f}" "$1/$3${f#"$1/$2"}"; done; }
+M="${FU}/base_full-model-inputs.json"
+grep -q '"role": "simulator-init"' "${M}" && grep -q '"role": "pdk-model"' "${M}" && check manifest-fixture-shape ok || check manifest-fixture-shape bad
+H64A="$(printf 'a%.0s' {1..64})"; H64B="$(printf 'b%.0s' {1..64})"; H64C="$(printf 'c%.0s' {1..64})"
+# (a) identical inputs, different record id / host path / snapshot prefix
+cp_rec "${FU}" base_full base_ids
+sed -e 's|"record_id": "[^"]*"|"record_id": "20991231-235959-abcdef0"|' \
+    -e 's|"original_path": "[^"]*"|"original_path": "/other/host/x"|' \
+    -e 's|"retained_snapshot": null|"retained_snapshot": "sim/x/netlist-snapshots/other/model-inputs/y"|' \
+    "${M}" > "${FU}/base_ids-model-inputs.json"
+run_report "${FU}" ids "${FU}/s2a" --baseline-osc "${FU}/base_ids"
+eq ids-paths-ignored-compatible "$(cnt "${C}" 1 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "18 0"
+# (b) only the simulator-init digest changes; all prose digests still match
+cp_rec "${FU}" base_full base_init
+sed "/\"role\": \"simulator-init\"/s/\"sha256\": \"[0-9a-f]\{64\}\"/\"sha256\": \"${H64A}\"/" "${M}" > "${FU}/base_init-model-inputs.json"
+cmp -s "${FU}/base_full.md" "${FU}/base_init.md" && check init-prose-identical ok || check init-prose-identical bad
+run_report "${FU}" init "${FU}/s2a" --baseline-osc "${FU}/base_init"
+eq init-digest-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 6 INSUFFICIENT) $(cnt "${C}" 7 INSUFFICIENT) $(cnt "${C}" 8 INSUFFICIENT) $(cnt "${C}" 1 NO_ESCALATION)" "18 8 36 18 0"
+grep -q 'model inputs simulator-init:.*(differs)' "${C}" && check init-digest-names-input ok || check init-digest-names-input bad
+eq init-digest-overall "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
+# (c) a nested (non-root) PDK dependency changes: first pdk-model entry whose
+# path is not one of the prose-digested roots
+nested="$(awk -F'"' '/"role": "pdk-model"/ && $8 !~ /(cornerHBT|cornerMOShv|cornerCAP|sg13g2_svaricaphv_mod|sg13g2_hbt_mod)\.lib$/ { print $8; exit }' "${M}")"
+if [[ -n "${nested}" ]]; then
+  cp_rec "${FU}" base_full base_nest
+  sed "\|\"bundle_path\": \"${nested}\"|s/\"sha256\": \"[0-9a-f]\{64\}\"/\"sha256\": \"${H64B}\"/" "${M}" > "${FU}/base_nest-model-inputs.json"
+  run_report "${FU}" nest "${FU}/s2a" --baseline-osc "${FU}/base_nest"
+  eq nested-dependency-insufficient "$(cnt "${C}" 1 INSUFFICIENT) $(cnt "${C}" 1 NO_ESCALATION)" "18 0"
+  grep -q "${nested}(differs)" "${C}" && check nested-dependency-named ok || check nested-dependency-named bad
+else echo "NOTE no nested pdk-model entry in the fixture bundle; nested case covered by the init case"; fi
+# (d) missing / malformed / duplicate / unequal manifests never verify
+bad_manifest() { # name sed-script|REMOVE
+  cp_rec "${FU}" base_full "base_$1"
+  if [[ "$2" == REMOVE ]]; then unlink "${FU}/base_$1-model-inputs.json"
+  else sed -e "$2" "${M}" > "${FU}/base_$1-model-inputs.json"; fi
+  run_report "${FU}" "m_$1" "${FU}/s2a" --baseline-osc "${FU}/base_$1"
+  eq "manifest-$1-never-verified" "$(cnt "${C}" 1 NO_ESCALATION)$(cnt "${C}" 8 NO_ESCALATION)$(cnt "${C}" 6 NO_ESCALATION)$(cnt "${C}" 7 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "0000 18"
+  eq "manifest-$1-overall" "$(overall "${OUTTXT}")" "OVERALL: INSUFFICIENT_EVIDENCE"
+}
+bad_manifest missing REMOVE
+grep -q 'model-input manifest base_missing-model-inputs.json missing' "${C}" && check manifest-missing-reason ok || check manifest-missing-reason bad
+bad_manifest badhash '0,/"sha256": "[0-9a-f]*"/s//"sha256": "XYZ"/'
+grep -q 'malformed' "${C}" && check manifest-badhash-reason ok || check manifest-badhash-reason bad
+bad_manifest upperhash '0,/"sha256": "[0-9a-f]\{64\}"/s/\("sha256": "[0-9a-f]\{63\}\)[0-9a-f]/\1A/'
+bad_manifest noschema 's/sg13g2-vco\/model-inputs\/1/other\/9/'
+bad_manifest noinputs '/"role"/d'
+bad_manifest truncated '$d'
+# duplicate entry: the first input line repeated
+dupline="$(grep -m1 '"role"' "${M}" | sed 's/,$//')"
+cp_rec "${FU}" base_full base_dup
+awk -v d="${dupline}" '{ print } /"role"/ && !done { print d ","; done = 1 }' "${M}" > "${FU}/base_dup-model-inputs.json"
+run_report "${FU}" m_dup "${FU}/s2a" --baseline-osc "${FU}/base_dup"
+eq manifest-dup-never-verified "$(cnt "${C}" 1 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "0 18"
+grep -q 'duplicate' "${C}" && check manifest-dup-reason ok || check manifest-dup-reason bad
+# unequal input sets: one entry dropped / one extra entry added
+cp_rec "${FU}" base_full base_less
+awk '/"role"/ { n++; if (n == 1) next } { print }' "${M}" > "${FU}/base_less-model-inputs.json"
+run_report "${FU}" m_less "${FU}/s2a" --baseline-osc "${FU}/base_less"
+eq manifest-fewer-inputs-insufficient "$(cnt "${C}" 1 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "0 18"
+grep -q 'only in stage-2' "${C}" && check manifest-fewer-names-input ok || check manifest-fewer-names-input bad
+cp_rec "${FU}" base_full base_more
+awk -v d="$(grep -m1 '"role"' "${M}" | sed -e 's/,$//' -e 's|"bundle_path": "[^"]*"|"bundle_path": "extra/new.lib"|')" \
+  '{ print } /"role"/ && !done { print d ","; done = 1 }' "${M}" > "${FU}/base_more-model-inputs.json"
+run_report "${FU}" m_more "${FU}/s2a" --baseline-osc "${FU}/base_more"
+eq manifest-extra-input-insufficient "$(cnt "${C}" 1 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "0 18"
+grep -q 'extra/new.lib(only in baseline)' "${C}" && check manifest-extra-names-input ok || check manifest-extra-names-input bad
+# a stage-2 side without a manifest is equally unverifiable
+cp_rec "${FU}" s2a s2_nomanifest; unlink "${FU}/s2_nomanifest-model-inputs.json"
+run_report "${FU}" s2nm "${FU}/s2_nomanifest" --baseline-osc "${FU}/base_full"
+eq stage2-missing-manifest-insufficient "$(cnt "${C}" 1 NO_ESCALATION) $(cnt "${C}" 1 INSUFFICIENT)" "0 18"
+
+# --- phase-noise comparisons (row 4) --------------------------------------
+FP="${W}/fx-pn"; mk_osc "${FP}" base1 base ok; mk_osc "${FP}" s2a s2 ok
+mk_pn_set "${FP}" pnbase base -110.0 -130.0; mk_pn_set "${FP}" pns2 s2 -108.0 -128.0
+ARR=(); mapfile_lines < <(pn_args "${FP}" pnbase --baseline-pn; pn_args "${FP}" pns2 --stage2-pn)
+run_report "${FP}" pnok "${FP}/s2a" --baseline-osc "${FP}/base1" "${ARR[@]}"
+eq pn-manifest-baseline-compatible "$(cnt "${C}" 4 NO_ESCALATION)" 18
+# identical inputs under other ids/paths stay compatible
+PM="${FP}/pnbase1-model-inputs.json"
+sed -e 's|"record_id": "[^"]*"|"record_id": "20991231-235959-abcdef0"|' -e 's|"original_path": "[^"]*"|"original_path": "/other/x"|' "${PM}" > "${PM}.n" && mv "${PM}.n" "${PM}"
+run_report "${FP}" pnids "${FP}/s2a" --baseline-osc "${FP}/base1" "${ARR[@]}"
+eq pn-ids-paths-ignored "$(cnt "${C}" 4 NO_ESCALATION)" 18
+# one baseline PN record with a changed init digest, prose untouched
+sed "/\"role\": \"simulator-init\"/s/\"sha256\": \"[0-9a-f]\{64\}\"/\"sha256\": \"${H64C}\"/" "${PM}" > "${PM}.n" && mv "${PM}.n" "${PM}"
+run_report "${FP}" pninit "${FP}/s2a" --baseline-osc "${FP}/base1" "${ARR[@]}"
+ni="$(cnt "${C}" 4 INSUFFICIENT)"; nn="$(cnt "${C}" 4 NO_ESCALATION)"
+[[ "${ni}" -ge 1 && $((ni + nn)) -eq 18 ]] && check pn-init-digest-insufficient ok || check pn-init-digest-insufficient bad "insufficient=${ni} no_escalation=${nn}"
+grep -q 'model inputs simulator-init:.*(differs)' "${C}" && check pn-init-digest-named ok || check pn-init-digest-named bad
+eq pn-osc-rows-unaffected "$(cnt "${C}" 1 NO_ESCALATION)" 18
+# a PN stage-2 record that lost its manifest, and a duplicate-entry one
+unlink "${FP}/pns21-model-inputs.json"
+run_report "${FP}" pnmiss "${FP}/s2a" --baseline-osc "${FP}/base1" "${ARR[@]}"
+grep -q 'pns21-model-inputs.json missing' "${C}" && check pn-missing-manifest-named ok || check pn-missing-manifest-named bad
+dl="$(grep -m1 '"role"' "${FP}/pns22-model-inputs.json" | sed 's/,$//')"
+awk -v d="${dl}" '{ print } /"role"/ && !done { print d ","; done = 1 }' "${FP}/pns22-model-inputs.json" > "${FP}/x" && mv "${FP}/x" "${FP}/pns22-model-inputs.json"
+run_report "${FP}" pndup "${FP}/s2a" --baseline-osc "${FP}/base1" "${ARR[@]}"
+grep -q 'pns22-model-inputs.json malformed (duplicate' "${C}" && check pn-duplicate-manifest-named ok || check pn-duplicate-manifest-named bad
+# every baseline PN manifest unequal (first input dropped) -> no PN row verifies
+for f in "${FP}"/pnbase*-model-inputs.json; do awk '/"role"/ { n++; if (n == 1) next } { print }' "${f}" > "${f}.n" && mv "${f}.n" "${f}"; done
+run_report "${FP}" pnall "${FP}/s2a" --baseline-osc "${FP}/base1" "${ARR[@]}"
+eq pn-all-unequal-no-escalation-claimed "$(cnt "${C}" 4 NO_ESCALATION) $(cnt "${C}" 4 INSUFFICIENT)" "0 18"
 
 if [[ ${FAIL} == 0 ]]; then echo "all stage-2 supply checks passed"; fi
 exit ${FAIL}
