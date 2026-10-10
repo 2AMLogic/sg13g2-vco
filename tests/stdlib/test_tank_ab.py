@@ -41,9 +41,8 @@ class MakeRequestsTests(unittest.TestCase):
     def test_variant_and_point_inventory(self):
         self.assertEqual(
             sorted(os.listdir(self.out)),
-            ["bn-sub", "bn-sub-tnom125", "bn-sub-tnom85", "bn-tank"])
-        for v, n in (("bn-tank", 5), ("bn-sub", 5), ("bn-sub-tnom125", 5),
-                     ("bn-sub-tnom85", 1)):
+            ["bn-sub", "bn-tank"])
+        for v, n in (("bn-tank", 5), ("bn-sub", 5)):
             self.assertEqual(len(os.listdir(os.path.join(self.out, v))), n, v)
         self.assertEqual(
             sorted(os.listdir(os.path.join(self.out, "bn-tank"))),
@@ -72,15 +71,28 @@ class MakeRequestsTests(unittest.TestCase):
         self.assertIn("XCVN16 VCTRL OUTN 0 svar", sub)
         self.assertEqual(tank.count("\nXCV"), 32)
         self.assertEqual(sub.count("\nXCV"), 32)
-        self.assertNotIn("tnom", tank)
+        self.assertNotIn(" tnom", tank)
 
-    def test_tnom_workaround_variants(self):
-        with open(os.path.join(self.out, "bn-sub-tnom125", "tt_v1.5", "tank.spice")) as fh:
-            self.assertIn("tnom = 125", fh.read())
-        req = read_json(self.out, "bn-sub-tnom85", "tt_v1.5", "request.json")
-        self.assertEqual(req["corners"]["temperature_c"], [85])
-        req = read_json(self.out, "bn-sub-tnom125", "ss_v1.5", "request.json")
-        self.assertEqual(req["corners"]["temperature_c"], [125])
+    def test_dsubw_overlay_and_tnom_retired(self):
+        # Issue #95: every new deck carries the upstream-corrected card
+        # (vj 0.1 -> 0.3357, IHP-Open-PDK PR #1102) and nothing else changed;
+        # the tnom workaround variants are no longer generated.
+        v030 = (".model dsubw d is = 2.45E-17 jsw = 5.959E-10 n = 4 ns = 1.029 cjo = 1.444E-15 "
+                "vj = 0.1 m = 0.1052 cjp = 1.117E-09 php = 0.457 mjsw = 0.2595 fc = 0.95 cta = 1E-06")
+        for v in ("bn-tank", "bn-sub"):
+            with open(os.path.join(self.out, v, "tt_v1.5", "tank.spice")) as fh:
+                deck = fh.read()
+            cards = [ln for ln in deck.splitlines() if ln.startswith(".model dsubw")]
+            self.assertEqual(cards, [v030.replace("vj = 0.1 ", "vj = 0.3357 ")])
+            self.assertNotIn("tnom", [t for ln in cards for t in ln.split()])
+            self.assertIn("0243d867c6b7493526b141d2e4d74afa027e5b8e", deck)
+            cell = read_json(self.out, v, "tt_v1.5", "cell.json")
+            self.assertNotIn("dsubw_tnom", cell)
+            self.assertEqual(cell["dsubw_overlay"]["upstream_pull_request"],
+                             "IHP-GmbH/IHP-Open-PDK#1102")
+            self.assertEqual(cell["dsubw_overlay"]["v030_card"], v030)
+        self.assertFalse(os.path.exists(os.path.join(self.out, "bn-sub-tnom125")))
+        self.assertFalse(os.path.exists(os.path.join(self.out, "bn-sub-tnom85")))
 
     def test_request_shape(self):
         req = read_json(self.out, "bn-tank", "tt_v1.5", "request.json")

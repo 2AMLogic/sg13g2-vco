@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 21
+    "unknown": 22
   },
   "records": [
     {
@@ -74,6 +74,16 @@
       "family": "sim/bn-substrate-tank",
       "file_count": 6,
       "path": "sim/bn-substrate-tank/records/20261009-2100-2eb3659-candidate-screen",
+      "reason": "entry name carries no record id (YYYYMMDD-HHMMSS-<commit>); cannot group or date it",
+      "record_id": null,
+      "state": "unknown"
+    },
+    {
+      "basis": "none",
+      "design_netlist_sha256": null,
+      "family": "sim/bn-substrate-tank",
+      "file_count": 5,
+      "path": "sim/bn-substrate-tank/records/20261010-overlay-smoke-b233273",
       "reason": "entry name carries no record id (YYYYMMDD-HHMMSS-<commit>); cannot group or date it",
       "record_id": null,
       "state": "unknown"

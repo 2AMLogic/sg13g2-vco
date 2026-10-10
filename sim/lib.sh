@@ -256,6 +256,59 @@ verify_input_bundle() {
   [ "${n}" -gt 0 ] && [ "${bad}" -eq 0 ]
 }
 
+# apply_svaricap_vj_overlay <bundle> <models_subdir> <manifest>
+# The sanctioned run-local PDK model overlay (issue #95; sim/tools/svaricap_overlay.py
+# holds the one implementation, sim/README.md "Model overlay policy" the rationale).
+# Patches ONLY `vj = 0.1` -> `vj = 0.3357` in the two svaricap libraries of the
+# PRIVATE copy at <bundle>/<models_subdir>, exactly as IHP-Open-PDK PR #1102
+# did upstream. Fails closed (status 1, nothing modified) unless both files are
+# present with the v0.3.0 digests and the card text occurs exactly once; a
+# file already carrying the fix is refused, never double-patched. Call it after
+# capture_input_closure and before the bundle is made read-only. It rewrites
+# the patched files' manifest digests to the OVERLAID bytes, and writes
+# <bundle>/overlay/svaricap-vj.json (original + overlaid digests, upstream
+# issue/PR/merge commit), captured in the manifest with role model-overlay.
+# $PDK_ROOT is never touched: only bundle copies are written.
+_SVARICAP_OVERLAY_PY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/tools/svaricap_overlay.py"
+apply_svaricap_vj_overlay() {
+  local bundle="$1" sub="$2" manifest="$3" out newman jsonf
+  local spec_args=()
+  [ -n "${SVARICAP_OVERLAY_SPEC:-}" ] && spec_args=(--spec "${SVARICAP_OVERLAY_SPEC}")  # self-test hook only
+  out="$(python3 -I "${_SVARICAP_OVERLAY_PY}" apply "${bundle}/${sub}" ${spec_args[@]+"${spec_args[@]}"})" || {
+    echo "apply_svaricap_vj_overlay: refused; no simulation may use these svaricap models." >&2
+    return 1
+  }
+  newman="$(awk -F'\t' -v OFS='\t' -v sub_="${sub}/" -v res="${out}" '
+    BEGIN { n = split(res, L, "\n"); for (i = 1; i <= n; i++) { split(L[i], f, "\t"); post[sub_ f[1]] = f[3] } }
+    ($2 in post) { $3 = post[$2]; hit[$2] = 1 }
+    { print }
+    END { for (k in post) if (!(k in hit)) exit 1 }' "${manifest}")" || {
+    echo "apply_svaricap_vj_overlay: a patched model is missing from the manifest" >&2
+    return 1
+  }
+  printf '%s\n' "${newman}" > "${manifest}" || return 1
+  mkdir -p "${bundle}/overlay" || return 1
+  jsonf="${bundle}/overlay/svaricap-vj.json"
+  printf '%s\n' "${out}" | awk -F'\t' '
+    { name[NR] = $1; pre[NR] = $2; post[NR] = $3 }
+    END {
+      print "{"
+      print "  \"schema\": \"sg13g2-vco/model-overlay/1\","
+      print "  \"overlay\": \"svaricap-dsubw-vj\","
+      print "  \"change\": \"dsubw vj = 0.1 -> vj = 0.3357 (nothing else)\","
+      print "  \"pdk_pin\": \"IHP-Open-PDK v0.3.0 (sim/pdk.json)\","
+      print "  \"upstream_issue\": \"IHP-GmbH/IHP-Open-PDK#1098\","
+      print "  \"upstream_pull_request\": \"IHP-GmbH/IHP-Open-PDK#1102\","
+      print "  \"upstream_merge_commit\": \"0243d867c6b7493526b141d2e4d74afa027e5b8e\","
+      print "  \"files\": ["
+      for (i = 1; i <= NR; i++)
+        printf "    {\"name\": \"%s\", \"original_sha256\": \"%s\", \"overlaid_sha256\": \"%s\"}%s\n", name[i], pre[i], post[i], (i < NR ? "," : "")
+      print "  ]"
+      print "}"
+    }' > "${jsonf}" || return 1
+  printf '%s\t%s\t%s\t%s\n' model-overlay overlay/svaricap-vj.json "$(sha256_of "${jsonf}")" "sim/tools/svaricap_overlay.py" >> "${manifest}"
+}
+
 # write_source_provenance <sidecar> <record_id> <src_repo_rel> <sha256> <snapshot_repo_rel>
 # Write the source-provenance sidecar (schema sg13g2-vco/source-provenance/1,
 # documented in sim/README.md "Record currency"). Refuses to overwrite an

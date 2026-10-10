@@ -21,17 +21,24 @@ WHAT THE CIRCUIT IS.  design/vco.spice's passive tank, small-signal:
   sg13g2_svaricaphv_mod.lib: the well-to-substrate diode `dsubw`, its
   series `rsubw`, and its `.model dsubw d` card.  Only the `bn` connection
   differs between the two variants -- exactly the edit #79 makes.
+  ISSUE #95 -- THE DSUBW CARD IS OVERLAID.  The v0.3.0 card (vj = 0.1) is NaN in
+  ngspice above ~52 C once bn is on the substrate.  New decks carry the card
+  with ONLY vj = 0.3357, the change merged upstream as IHP-Open-PDK PR #1102
+  (issue #1098, merge 0243d867c6b7493526b141d2e4d74afa027e5b8e), produced by
+  sim/tools/svaricap_overlay.py (fail-closed on the exact v0.3.0 card text).
+  The old `bn-sub-tnom125/85` `tnom = T` supplements are retired: historical
+  records keep them as SENSITIVITY-ONLY evidence, never as the upstream fix.
   The record's own measurement tied W and bn together, so its C and Q are the
   cell WITHOUT the junction; the junction branch is therefore added by the
   native diode, not double counted.
 """
-import argparse, json, os, shutil, sys
+import argparse, importlib.util, json, os, shutil, sys
 
 # Defaults are the design/vco.spice sizing (16 cells/side, 3.65 um MIM) and
 # reproduce the original #79 decks byte-for-byte (cell.json gains the two
 # sizing keys; the decks themselves are identical).  --cells/--mim-um/--candidate
 # (issue #93) emit ONE bn=substrate variant named NAME at the given sizing and
-# skip the bn-tank and tnom supplements.  The cell R-C is the same mos_small
+# skip the bn-tank variant.  The cell R-C is the same mos_small
 # record value per cell, so cell scaling is an ASSUMPTION (see README).
 _ap = argparse.ArgumentParser()
 _ap.add_argument("outdir")
@@ -46,6 +53,11 @@ if _args.candidate and "__" in _args.candidate:
 if _args.candidate is None and (_args.cells, _args.mim_um) != (16, 3.65):
     sys.exit("non-default sizing requires --candidate NAME")
 out = _args.outdir
+_spec = importlib.util.spec_from_file_location(
+    "svaricap_overlay", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools", "svaricap_overlay.py"))
+overlay = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(overlay)
+DSUBW_CARD = overlay.overlaid_card()   # raises if the inline v0.3.0 text is not the expected card
 NCELLS = _args.cells
 MIM_STR = "%ge-6" % _args.mim_um
 repo = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -70,8 +82,7 @@ POINTS = [("tt", 0.0), ("tt", 1.5), ("tt", 3.3), ("ss", 1.5), ("ff", 1.5)]
 
 IND = open(os.path.join(repo, "sim/inductor-model/sg13g2_inductor_em.spice")).read()
 
-def deck(variant, c, r, vc, tnom=None):
-    TNOM = f" tnom = {tnom}  $ WORKAROUND, NOT the PDK card: stops vj(T) scaling" if tnom is not None else ""
+def deck(variant, c, r, vc):
     bn = "W" if variant == "bn-tank" else "0"
     cells = []
     for side, node in (("P", "OUTP"), ("N", "OUTN")):
@@ -85,7 +96,9 @@ def deck(variant, c, r, vc, tnom=None):
 {IND}
 * PDK svaricap well parasitics, verbatim from sg13g2_svaricaphv_mod.lib,
 * around a lumped R-C standing in for the OSDI MOS core (see make_requests.py)
-.model dsubw d is = 2.45E-17 jsw = 5.959E-10 n = 4 ns = 1.029 cjo = 1.444E-15 vj = 0.1 m = 0.1052 cjp = 1.117E-09 php = 0.457 mjsw = 0.2595 fc = 0.95 cta = 1E-06{TNOM}
+* OVERLAID card (issue #95): v0.3.0 text with only vj 0.1 -> 0.3357 (IHP-Open-PDK
+* PR #1102, merge 0243d867c6b7493526b141d2e4d74afa027e5b8e); v0.3.0 is NaN above ~52 C
+{DSUBW_CARD}
 .subckt svar G W bn
 .param l=0.3e-6 w=3.74e-6 Nx=1 Ny=1
 .param rsubw0=0.2596 rsubwf=0.0009212 rsubwexp=0.6952
@@ -122,15 +135,19 @@ def request(vc, temps=(-40, 27, 125)):
             "options": {"timeout_s": 900, "keep_artifacts": True,
                         "ngspice_init": ["set ngbehavior=hsa"]}}
 
-def emit(name, variant, mos, vc, temps, tnom=None):
+def emit(name, variant, mos, vc, temps):
     c, q = rows[(mos, VCTRL_TO_VREC[vc])]
     r = 1.0 / (W5 * c * q)
     d = os.path.join(out, name, f"{mos}_v{vc}")
     os.makedirs(d, exist_ok=True)
-    open(os.path.join(d, "tank.spice"), "w").write(deck(variant, c, r, vc, tnom))
+    open(os.path.join(d, "tank.spice"), "w").write(deck(variant, c, r, vc))
     json.dump(request(vc, temps), open(os.path.join(d, "request.json"), "w"), indent=2)
     json.dump({"variant": name, "mos": mos, "vctrl": vc, "c_cell_f": c, "q5": q,
-               "r_cell_ohm": r, "dsubw_tnom": tnom,
+               "r_cell_ohm": r, "dsubw_overlay": {"change": "vj 0.1 -> 0.3357", "tool": "sim/tools/svaricap_overlay.py",
+                                 "upstream_issue": "IHP-GmbH/IHP-Open-PDK#1098",
+                                 "upstream_pull_request": "IHP-GmbH/IHP-Open-PDK#1102",
+                                 "upstream_merge_commit": overlay.UPSTREAM["merge_commit"],
+                                 "v030_card": overlay.V030_DSUBW_CARD, "card": DSUBW_CARD},
                "cells_per_side": NCELLS, "mim_side_um": _args.mim_um,
                "source": "sim/varactor-characterization/records/20260927-081226-f88eb89.csv mos small 27C"},
               open(os.path.join(d, "cell.json"), "w"), indent=2)
@@ -143,9 +160,4 @@ if _args.candidate:
 for variant in ("bn-tank", "bn-sub"):
     for mos, vc in POINTS:
         emit(variant, variant, mos, vc, (-40, 27, 125))
-# flagged workaround supplement (bn-sub only): the shipped dsubw card goes NaN
-# above ~52 C (vj = 0.1 V scales negative); tnom pinned to the run temperature
-for mos, vc in POINTS:
-    emit("bn-sub-tnom125", "bn-sub", mos, vc, (125,), 125)
-emit("bn-sub-tnom85", "bn-sub", "tt", 1.5, (85,), 85)
 print("ok", out)

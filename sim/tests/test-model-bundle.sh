@@ -54,9 +54,19 @@ cat > "$MODELS/sub/nested.lib" <<'EOF'
 .ENDL
 EOF
 echo "* deep v1" > "$MODELS/deep.lib"
-printf '.LIB mos_tt\n  .include sg13g2_svaricaphv_mod.lib\n.ENDL\n' > "$MODELS/cornerMOShv.lib"
+printf '.LIB mos_tt\n  .include sg13g2_svaricaphv_mod.lib\n.ENDL\n.LIB mos_mm\n  .include sg13g2_svaricaphv_mod_mismatch.lib\n.ENDL\n' > "$MODELS/cornerMOShv.lib"
 printf '.LIB cap_typ\n.INC "capacitors_mod.lib"\n.ENDL\n' > "$MODELS/cornerCAP.lib"
-for f in sg13g2_hbt_mod sg13g2_svaricaphv_mod capacitors_mod; do echo "* $f" > "$MODELS/$f.lib"; done
+for f in sg13g2_hbt_mod capacitors_mod; do echo "* $f" > "$MODELS/$f.lib"; done
+# svaricap fixtures: the one card line the overlay edits, plus unrelated bytes
+# that must survive untouched. The overlay's expected-digest table is swapped
+# for the fixtures' digests through the self-test hook SVARICAP_OVERLAY_SPEC.
+mk_svar() { printf '* %s fixture\n.subckt svar G W bn\n.ends\n.model dsubw d is = 2.45E-17 n = 4 vj = 0.1 m = 0.1052 cjp = 1.117E-09\n* trailer vj = 0.1 mentioned elsewhere\n' "$1" > "$MODELS/$1.lib"; }
+mk_svar sg13g2_svaricaphv_mod; mk_svar sg13g2_svaricaphv_mod_mismatch
+write_spec() { printf '{"sg13g2_svaricaphv_mod.lib": "%s", "sg13g2_svaricaphv_mod_mismatch.lib": "%s"}\n' \
+  "$(sha256_of "$MODELS/sg13g2_svaricaphv_mod.lib")" "$(sha256_of "$MODELS/sg13g2_svaricaphv_mod_mismatch.lib")" > "$T/spec.json"; }
+write_spec
+export SVARICAP_OVERLAY_SPEC="$T/spec.json"
+SRC_SVAR_SHA="$(sha256_of "$MODELS/sg13g2_svaricaphv_mod.lib")"; SRC_SVARM_SHA="$(sha256_of "$MODELS/sg13g2_svaricaphv_mod_mismatch.lib")"
 echo "* unrelated, never referenced" > "$MODELS/unreferenced.lib"
 printf '.subckt ind_fixture a b\nL1 a b 1n\n.ends\n' > "$REPO_ROOT/sim/inductor-model/sg13g2_inductor_em.spice"
 printf 'OSDI-v1\x00\x01binary' > "$T/osdi/mosvar.osdi"
@@ -137,7 +147,7 @@ check "WORKDIR .spiceinit served from the bundle" 'cmp -s "$WORKDIR/.spiceinit" 
 JSON="$EXPERIMENT_DIR/records/${RECORD_ID}-model-inputs.json"
 check "manifest retained under the reserved record" '[ -f "$JSON" ]'
 check "retained manifest parses, schema and record id" \
-  'python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); assert d[\"schema\"]==\"sg13g2-vco/model-inputs/1\" and d[\"record_id\"]==sys.argv[2] and len(d[\"inputs\"])==11" "$JSON" "$RECORD_ID"'
+  'python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); assert d[\"schema\"]==\"sg13g2-vco/model-inputs/1\" and d[\"record_id\"]==sys.argv[2] and len(d[\"inputs\"])==13" "$JSON" "$RECORD_ID"'
 check "PDK libraries and OSDI are external (not retained)" \
   'python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); assert all((e[\"retained_snapshot\"] is None)==(e[\"role\"] in (\"pdk-model\",\"osdi-binary\")) for e in d[\"inputs\"])" "$JSON"'
 SNAPDIR="$EXPERIMENT_DIR/netlist-snapshots/$RECORD_ID/model-inputs"
@@ -238,6 +248,77 @@ printf '.lib @@MODELS_DIR@@/cornerDIO.lib dio_tt\n@@VCO_BODY@@\n' > "$T/uncaptur
   osc_render "$T/uncaptured.tmpl" "$T/uncaptured.spice" c1 2>/dev/null && exit 1; [ ! -e "$T/uncaptured.spice" ] ) \
   && ok "template naming an uncaptured library refused before any deck" \
   || bad "template naming an uncaptured library refused before any deck"
+
+# --------------------------- 5b. svaricap vj overlay (issue #95)
+OVL="$SIM_DIR/tools/svaricap_overlay.py"
+tree_sum() { (cd "$1" && find . -type f | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1); }
+for f in sg13g2_svaricaphv_mod sg13g2_svaricaphv_mod_mismatch; do
+  B="$OSC_BUNDLE_DIR/models/$f.lib"
+  check "overlay: $f bundle copy carries vj = 0.3357 exactly once" \
+    '[ "$(grep -c "vj = 0.3357 m = 0.1052" "$B")" = 1 ] && [ "$(grep -c "model dsubw.* vj = 0.1 " "$B")" = 0 ]'
+  check "overlay: $f differs from the source in exactly one line" \
+    '[ "$(diff "$MODELS/$f.lib" "$B" | grep -c "^>")" = 1 ] && [ "$(diff "$MODELS/$f.lib" "$B" | grep -c "^<")" = 1 ]'
+  check "overlay: $f unrelated bytes (incl. a comment mentioning vj = 0.1) unchanged" \
+    'grep -q "^\* trailer vj = 0.1 mentioned elsewhere\$" "$B" && [ "$(sed "s/vj = 0.3357/vj = 0.1/" "$B" | sha256sum | cut -d" " -f1)" = "$(sha256_of "$MODELS/$f.lib")" ]'
+done
+check "overlay: source fixtures untouched (PDK tree never written)" \
+  '[ "$(sha256_of "$MODELS/sg13g2_svaricaphv_mod.lib")" = "$SRC_SVAR_SHA" ] && [ "$(sha256_of "$MODELS/sg13g2_svaricaphv_mod_mismatch.lib")" = "$SRC_SVARM_SHA" ] && [ ! -e "$MODELS/overlay" ]'
+check "overlay: manifest digest is of the overlaid bytes" \
+  '[ "$(osc_bundle_sha models/sg13g2_svaricaphv_mod.lib)" = "$(sha256_of "$OSC_BUNDLE_DIR/models/sg13g2_svaricaphv_mod.lib")" ] && [ "$(osc_bundle_sha models/sg13g2_svaricaphv_mod.lib)" != "$SRC_SVAR_SHA" ]'
+OJ="$OSC_BUNDLE_DIR/overlay/svaricap-vj.json"
+check "overlay: provenance holds original + overlaid digests and upstream refs" \
+  'python3 -I -c "
+import json,sys
+d=json.load(open(sys.argv[1])); f={e[\"name\"]:e for e in d[\"files\"]}
+assert d[\"upstream_issue\"].endswith(\"#1098\") and d[\"upstream_pull_request\"].endswith(\"#1102\")
+assert d[\"upstream_merge_commit\"]==\"0243d867c6b7493526b141d2e4d74afa027e5b8e\"
+assert f[\"sg13g2_svaricaphv_mod.lib\"][\"original_sha256\"]==sys.argv[2] and f[\"sg13g2_svaricaphv_mod_mismatch.lib\"][\"original_sha256\"]==sys.argv[3]
+assert f[\"sg13g2_svaricaphv_mod.lib\"][\"overlaid_sha256\"]!=sys.argv[2]" "$OJ" "$SRC_SVAR_SHA" "$SRC_SVARM_SHA"'
+check "overlay: provenance md names original digests, PR and merge commit" \
+  'osc_provenance_md | grep -q "$SRC_SVAR_SHA" && osc_provenance_md | grep -q "0243d867c6b7493526b141d2e4d74afa027e5b8e"'
+check "overlay: the supply-stage-2 svaricap digest bullet still matches exactly once" \
+  '[ "$(osc_provenance_md | grep -cE "sg13g2_svaricaphv_mod\.lib. sha256 .[0-9a-f]+")" = 1 ]'
+check "overlay: provenance retained under the record" \
+  'cmp -s "$OJ" "$SNAPDIR/overlay/svaricap-vj.json"'
+check "overlay: the default (v0.3.0) digest table refuses the fixtures" \
+  'mkdir -p "$T/ovl-default" && cp "$MODELS/sg13g2_svaricaphv_mod.lib" "$MODELS/sg13g2_svaricaphv_mod_mismatch.lib" "$T/ovl-default/" && ! python3 -I "$OVL" apply "$T/ovl-default" 2>/dev/null &&
+   [ "$(sha256_of "$T/ovl-default/sg13g2_svaricaphv_mod.lib")" = "$SRC_SVAR_SHA" ]'
+check "overlay: symlinked or hardlinked model copy refused" \
+  'mkdir -p "$T/ovl-link" && cp "$MODELS/sg13g2_svaricaphv_mod_mismatch.lib" "$T/ovl-link/" && ln -s "$MODELS/sg13g2_svaricaphv_mod.lib" "$T/ovl-link/sg13g2_svaricaphv_mod.lib" &&
+   ! python3 -I "$OVL" apply "$T/ovl-link" --spec "$T/spec.json" 2>/dev/null && [ "$(sha256_of "$MODELS/sg13g2_svaricaphv_mod.lib")" = "$SRC_SVAR_SHA" ]'
+
+# overlay_refused <label> <expected-stderr-fragment> <n>: the source fixtures have
+# been altered by the caller; capture must fail before any deck or retained manifest.
+overlay_refused() {
+  local label="$1" want="$2" id="20261009-0001$3-abc1234"
+  ( new_run "$id"; osc_capture_model_bundle >/dev/null 2>"$T/err.$label" ) && { bad "overlay: $label refused"; return; }
+  ok "overlay: $label refused"
+  check "overlay: $label: message names the problem" 'grep -q -- "$want" "$T/err.$label"'
+  check "overlay: $label: no manifest retained, no summary" \
+    '[ ! -e "$EXPERIMENT_DIR/records/${id}-model-inputs.json" ] && [ ! -e "$EXPERIMENT_DIR/records/${id}.md" ]'
+}
+cp "$MODELS/sg13g2_svaricaphv_mod.lib" "$T/svar.saved"
+# (a) unexpected source: bytes differ from the digest table
+echo "* edited upstream" >> "$MODELS/sg13g2_svaricaphv_mod.lib"
+overlay_refused unexpected-source "not the expected v0.3.0 digest" 01
+# (b) already fixed (a pin that includes PR #1102)
+sed "s/vj = 0.1 m/vj = 0.3357 m/" "$T/svar.saved" > "$MODELS/sg13g2_svaricaphv_mod.lib"; write_spec
+overlay_refused already-fixed "already carries the upstream fix" 02
+# (c) card text occurs twice although the digest matches the table
+{ cat "$T/svar.saved"; echo ".model dsubw2 d vj = 0.1 m = 0.1052 x"; } > "$MODELS/sg13g2_svaricaphv_mod.lib"; write_spec
+overlay_refused duplicate-card "expected exactly one" 03
+# (d) card text absent although the digest matches the table
+sed "s/vj = 0.1 m/vj = 0.2 m/" "$T/svar.saved" > "$MODELS/sg13g2_svaricaphv_mod.lib"; write_spec
+overlay_refused card-absent "expected exactly one" 04
+# (e) a covered file missing from the closure (cornerMOShv no longer reaches the mismatch library)
+cp "$T/svar.saved" "$MODELS/sg13g2_svaricaphv_mod.lib"; write_spec
+cp "$MODELS/cornerMOShv.lib" "$T/mos.saved"
+printf '.LIB mos_tt\n  .include sg13g2_svaricaphv_mod.lib\n.ENDL\n' > "$MODELS/cornerMOShv.lib"
+overlay_refused covered-file-not-in-closure "is missing or a symlink" 05
+cp "$T/mos.saved" "$MODELS/cornerMOShv.lib"
+cp "$T/svar.saved" "$MODELS/sg13g2_svaricaphv_mod.lib"; write_spec
+check "overlay: fixtures restored, a clean capture works again" \
+  '( new_run 20261009-000199-abc1234; osc_capture_model_bundle >/dev/null 2>&1 )'
 
 # --------------------------- 6. append-only and design-currency semantics
 check "old record untouched" '[ "$(old_sum)" = "$OLD_SUM" ]'
