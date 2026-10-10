@@ -60,6 +60,14 @@ source "${SIM_DIR}/env.sh"
 # shellcheck source=../lib.sh
 source "${SIM_DIR}/lib.sh"
 
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #160). The grid is multi-point by construction, so a floor count suffices.
+# This must stay the first thing after sourcing lib.sh: it needs only env
+# vars, so it runs before any PDK/ngspice preflight, OSDI build, ngspice
+# --version probe or record id reservation (sim/tests/test-local-grid-guard.sh
+# checks the ordering).
+require_local_grid_ok 2 || exit 1
+
 # ------------------------------------------------------------------ preflight
 if ! command -v ngspice >/dev/null 2>&1; then
   echo "error: ngspice not found on PATH." >&2
@@ -76,11 +84,6 @@ NGSPICE_VERSION="$(detect_ngspice_version)"
 
 CORNERCAP_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/cornerCAP.lib")"
 CAPMOD_SHA="$(sha256_of "${SG13G2_NGSPICE_MODELS}/capacitors_mod.lib")"
-
-# Refuse a local multi-point grid when the fleet backend is exported (issue
-# #160). The grid is multi-point by construction, so a floor count suffices;
-# this runs before any record id is reserved or any ngspice call.
-require_local_grid_ok 2 || exit 1
 
 # Reserve the id (atomic mkdir) before any output path is created or opened.
 RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
