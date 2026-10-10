@@ -37,9 +37,9 @@
 #   currency-selftest     .github/scripts/test-record-currency.sh   python3
 #   currency              .github/scripts/check-record-currency.sh  python3
 #                         (sim/record-currency.json == fresh classification)
-#   grading-fixtures      .github/scripts/run-grading-fixtures.sh   git awk
-#                         (emit-tuning, row3, row7, waveform-validity and
-#                         stage-2 supply fixtures from a disposable copy of the
+#   grading-fixtures      .github/scripts/run-grading-fixtures.sh   git awk grep python3
+#                         (emit-tuning, row3, row7, waveform-validity,
+#                         stage-2 supply, pn-validity and pn-trace-gate fixtures from a disposable copy of the
 #                         tracked tree; no ngspice/PDK; source-capture stays
 #                         in currency-selftest)
 #   model-inputs-selftest .github/scripts/test-model-inputs.sh      python3
@@ -282,7 +282,7 @@ gate() {
     friction)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-klt-friction.sh" "$@" ;;
     grading-fixtures)
-      need_tools "$g" git awk grep && run_gate "$g" "$SCRIPTS/run-grading-fixtures.sh" "$@" ;;
+      need_tools "$g" git awk grep python3 && run_gate "$g" "$SCRIPTS/run-grading-fixtures.sh" "$@" ;;
     py-selftest)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-check-python.sh" "$@" ;;
     py-compile)
