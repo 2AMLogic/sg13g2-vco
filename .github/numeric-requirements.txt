@@ -1,0 +1,7 @@
+# numpy/scipy for the tests/numeric known-answer tests (issue #167) and for the
+# EM-extraction post/fit stages they exercise. Install into a venv (never
+# host-wide): python3 -m venv V && V/bin/python -m pip install -r this-file
+# Versions are the ones the tests were developed against; the code uses only
+# long-stable numpy/scipy APIs.
+numpy>=1.26,<3
+scipy>=1.11,<2

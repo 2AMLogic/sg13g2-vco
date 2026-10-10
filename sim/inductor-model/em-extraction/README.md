@@ -83,6 +83,65 @@ Stages, each skippable via `EM_STAGES` (default: all of them):
 EM_STAGES="post fit compare" sim/inductor-model/em-extraction/run_extraction.sh   # re-fit without re-solving
 ```
 
+### Post/fit stage coverage, failure contract and recovery
+
+Coverage. `post` and `fit` always cover all three geometries (`p1`, `p13`,
+`p11`); there is no partial mode. For each one they require, before computing
+anything:
+
+- `results/inductor_<g>.s2p` -- non-empty, parseable 2-port Touchstone with
+  finite data and a strictly increasing frequency grid;
+- `results/inductor_<g>/port_information.json` -- ports 1 and 2, each with a
+  positive `length` and `width`;
+- `gds/inductor_<g>.json` -- positive numeric `w_um`, `s_um`, `d_um`, `nr_r`.
+
+`post` additionally validates the optional convergence variants
+(`results/convergence/p1_mesh0p5`, `p1_margin400`): a variant directory that is
+present must have its `.s2p`, `port_information.json` and `run_meta.json`
+(and the baseline `results/inductor_p1/run_meta.json` must exist then too).
+Without any variant directory, `convergence.csv` is simply not regenerated.
+
+Failure contract. If any input of any geometry is missing, empty or
+malformed, the stage prints one diagnostic per problem (geometry, file, reason),
+writes nothing and exits nonzero. Any other failure during computation also
+exits nonzero. Because `run_extraction.sh` runs under `set -e` with `pipefail`,
+the final `done.` is reached only if every requested stage succeeded, and a
+failed stage does not replace its `run_log/*.txt` (the log is written to
+`<log>.new` and moved into place only on success). `EM_STAGES="post fit compare"`
+re-processing needs the three geometries' solver outputs already in `results/`.
+
+Staging and publication. Each stage computes every output into a disposable
+`.stage-<post|fit>-*` directory under this directory and copies the finished
+set to its final locations only after all geometries succeeded.
+`post` publishes `results/em_summary.csv`, `inductor_<g>_deembedded.s2p`,
+`inductor_<g>_lq.csv` and (when variants exist) `convergence.csv`; `fit`
+publishes `fit/fit_parameters.json`, `fit/fit_summary.csv`,
+`fit/fit_residual_<g>.csv` and the SPICE model, so a successful fit updates the
+summaries and the model from the same complete geometry set. A failure before
+publication leaves every previously published file byte-for-byte unchanged and
+removes the staging directory.
+
+Publication itself is **not** a crash-atomic multi-file transaction: each file
+is copied beside its destination and moved with an atomic `rename`, one file at
+a time. If publication is interrupted or a rename fails part-way (disk full,
+permissions, process killed), the files already replaced are new and the rest
+are still the previous ones, i.e. a mixed set. The error message lists the
+files already replaced and the staging directory is kept (a killed process may
+also leave it, or a `*.tmp-<pid>` file next to a destination). Recovery: re-run
+the same stage; it deletes stale `.stage-<stage>-*` directories, regenerates the
+whole set from the unchanged inputs and republishes it. Treat the outputs of a
+stage whose last run failed in publication as unverified until that re-run
+succeeds. Frozen records under `records/` are never touched by either stage.
+
+Tests (solver-free, no PDK/ngspice/openEMS; need numpy and scipy, declared in
+`.github/numeric-requirements.txt`): `.github/scripts/check-all.sh py-numeric`
+(`tests/numeric/test_em_extraction.py`) -- empty input, each omitted input of
+each geometry, empty and malformed files, a failure after the first geometry
+was processed, an injected publication failure with recovery, and a complete
+synthetic known-answer set. The known answer is generated from the fit
+topology itself, so these tests establish the I/O and publication contract, not
+the EM physics.
+
 **Geometry-export note (the one `klayout-tools` friction point hit while
 building this pipeline)**: `klt gen --pdk-pcell` cannot yet reach
 `ihp-sg13g2`'s own `sg13g2_pycell_lib` (it needs a `cni` compat shim that

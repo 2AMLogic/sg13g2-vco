@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 # Python gates (issue #118): the repo's tracked *.py had no CI gate at all.
 #
-# Usage: check-python.sh [--root DIR] <compile|tests|klayout>
+# Usage: check-python.sh [--root DIR] <compile|tests|numeric|klayout>
 #
 #   compile   py_compile over EVERY tracked *.py (git ls-files, so the list
 #             cannot go stale). Syntax only: nothing is imported or run, so
 #             scripts that need numpy/openEMS/klayout/the PDK are covered too.
 #   tests     stdlib unittest known-answer tests in tests/stdlib. Pure
 #             python3 standard library; no klayout, klt or PDK.
+#   numeric   unittest tests in tests/numeric for scripts that need numpy and
+#             scipy (the EM-extraction post/fit stages, issue #167). The
+#             requirements are declared in .github/numeric-requirements.txt;
+#             missing numpy/scipy is a FAILURE, never a skip. No klayout, PDK,
+#             ngspice or openEMS. Kept apart from `tests` so that target stays
+#             stdlib-only.
 #   klayout   unittest tests in tests/klayout for the klayout-needing scripts
 #             (snap_grid / break_ring / prune_spirals macros, lvsdb_summary).
 #             Needs the klayout pip wheel at the version in
@@ -84,6 +90,18 @@ run_unittest() {
   (cd "$dir" && "$PY" -I -B -m unittest discover -v -s "$dir" -p 'test_*.py')
 }
 
+run_numeric() {
+  if [ ! -s "$ROOT/.github/numeric-requirements.txt" ]; then
+    echo "check-python: .github/numeric-requirements.txt missing or empty" >&2
+    return 1
+  fi
+  if ! "$PY" -I -c 'import numpy, scipy' >/dev/null 2>&1; then
+    echo "MISSING TOOL: numpy and scipy for $PY (see .github/numeric-requirements.txt; use a venv, e.g. PYTHON=/path/to/venv/bin/python)" >&2
+    return 1
+  fi
+  run_unittest tests/numeric
+}
+
 run_klayout() {
   local want have
   want="$(tr -d '[:space:]' < "$ROOT/.github/klayout-pip-version" 2>/dev/null)"
@@ -106,6 +124,7 @@ run_klayout() {
 case "$MODE" in
   compile) run_compile ;;
   tests) run_unittest tests/stdlib ;;
+  numeric) run_numeric ;;
   klayout) run_klayout ;;
   *) echo "check-python: unknown mode '$MODE'" >&2; usage ;;
 esac

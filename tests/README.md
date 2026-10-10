@@ -9,6 +9,13 @@ shared runner: `.github/scripts/check-all.sh py-tests` (stdlib) and
   `sim/bn-substrate-tank/{analyze,make_requests}.py`. The two sim scripts run
   at import time, so they are driven as `python3 -I` subprocesses on synthetic
   or temp-dir inputs and never write under `sim/`.
+- `numeric/` -- stdlib `unittest` plus numpy and scipy (declared in
+  `.github/numeric-requirements.txt`; use a venv, e.g.
+  `PYTHON=/path/to/venv/bin/python`): the `sim/inductor-model/em-extraction`
+  post/fit stages on synthetic solver-free fixtures (issue #167) -- failure
+  contract, preserved outputs and a known-answer publish. Runs through
+  `check-all.sh py-numeric` (missing numpy/scipy is a failure there; in `all` it
+  is counted as a skip). Not part of `py-tests`/`test`, which stay stdlib-only.
 - `klayout/` -- `snap_grid.py`, `break_ring.py`, `prune_spirals.py` (klayout
   macros: executed with `pya` and the `-rd` variables injected),
   `lvsdb_summary.py` (run against a tiny real `.lvsdb`), `lvs_inductor_ctl.py`,
@@ -33,4 +40,6 @@ Not covered, by design (only syntax-checked by `py-compile` where Python):
   ahead of IHP's runset; exercised by `layout/lvs.sh`, not here.
 - `layout/scripts/native_drc_env.sh`, `pdk_env.sh` -- shell environment
   helpers, covered by shell lint.
-- the `sim/inductor-model/em-extraction` scripts (numpy/scipy/openEMS).
+- the openEMS solve scripts of `sim/inductor-model/em-extraction`
+  (`run_openems.py`, `gen_geometry.py`, `compare_analytic.py`); its post/fit
+  stages are covered by `numeric/`.

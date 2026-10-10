@@ -30,6 +30,11 @@ a reader can see where that happens.
 """
 
 import hashlib
+import json
+import math
+import os
+import shutil
+import tempfile
 
 import numpy as np
 
@@ -248,3 +253,135 @@ def measured_series_shunt(Y):
     yh = ((Y[:, 0, 0] + Y[:, 0, 1]) + (Y[:, 1, 1] + Y[:, 1, 0])) / 2.0
     return ys, yh
 
+
+
+# ------------------------------------------------- input preflight + publishing
+# The post and fit stages must not report success unless every geometry of the
+# three-geometry study was processed, and must not leave a mixture of old and
+# new derived files behind when they fail.  See README "Failure contract".
+GEOMS = ["p1", "p13", "p11"]
+
+
+class InputError(Exception):
+    """A required extraction input is missing, empty or malformed."""
+
+
+def _num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def load_geometry_inputs(root, g):
+    """Preflight and load the three inputs of geometry `g`.
+
+    Required: results/inductor_<g>.s2p (2-port Touchstone),
+    results/inductor_<g>/port_information.json (two ports with length/width)
+    and gds/inductor_<g>.json (w_um, s_um, d_um, nr_r).  Raises InputError
+    naming the geometry and the offending file.  Returns a dict with keys
+    f, S, z0, pinfo, gj.
+    """
+    res = os.path.join(root, "results")
+    s2p = os.path.join(res, "inductor_%s.s2p" % g)
+    pjson = os.path.join(res, "inductor_%s" % g, "port_information.json")
+    gjson = os.path.join(root, "gds", "inductor_%s.json" % g)
+
+    def bad(path, why):
+        return InputError("geometry %s: %s: %s" % (g, path, why))
+
+    for path in (s2p, pjson, gjson):
+        if not os.path.isfile(path):
+            raise bad(path, "missing")
+        if os.path.getsize(path) == 0:
+            raise bad(path, "empty")
+    try:
+        f, S, z0 = read_snp(s2p)
+    except Exception as e:  # noqa: BLE001 - any parse failure is an input error
+        raise bad(s2p, "cannot parse Touchstone (%s: %s)" % (type(e).__name__, e))
+    if S.ndim != 3 or S.shape[1:] != (2, 2) or len(f) < 2:
+        raise bad(s2p, "expected a 2-port with >= 2 frequency points")
+    if not (np.all(np.isfinite(f)) and np.all(np.isfinite(S)) and np.all(np.diff(f) > 0)):
+        raise bad(s2p, "non-finite data or non-increasing frequency grid")
+    if not (_num(z0) and z0 > 0):
+        raise bad(s2p, "invalid reference impedance")
+    try:
+        with open(pjson) as fh:
+            pinfo = json.load(fh)
+        ports = pinfo["ports"]
+        nums = sorted(p["portnumber"] for p in ports)
+        if nums != [1, 2]:
+            raise ValueError("ports must be numbered 1 and 2")
+        for p in ports:
+            if not (_num(p["length"]) and _num(p["width"]) and p["length"] > 0 and p["width"] > 0):
+                raise ValueError("port length/width must be positive numbers")
+        if not _num(pinfo.get("unit", 1e-6)):
+            raise ValueError("unit must be a number")
+    except (ValueError, KeyError, TypeError, AttributeError) as e:
+        raise bad(pjson, "malformed port information (%s: %s)" % (type(e).__name__, e))
+    try:
+        with open(gjson) as fh:
+            gj = json.load(fh)
+        for k in ("w_um", "s_um", "d_um", "nr_r"):
+            if not _num(gj[k]) or gj[k] <= 0:
+                raise ValueError("%s must be a positive number" % k)
+    except (ValueError, KeyError, TypeError) as e:
+        raise bad(gjson, "malformed geometry metadata (%s: %s)" % (type(e).__name__, e))
+    return {"f": f, "S": S, "z0": z0, "pinfo": pinfo, "gj": gj}
+
+
+class Stage:
+    """Disposable staging directory plus a publish step.
+
+    Outputs are written under `stage.path` (mirroring nothing: `add` names the
+    final destination) and copied to their destinations only by `publish()`,
+    which is called after every geometry succeeded.  Publication is a
+    sequence of per-file atomic renames (copy to a temp name beside the
+    destination, then os.replace); it is NOT a crash-atomic multi-file
+    transaction.  If publication itself fails part-way, the staging directory
+    is kept and the failure message says which files were already replaced;
+    re-running the stage regenerates and republishes the whole set.
+    """
+
+    def __init__(self, root, name):
+        for old in os.listdir(root):  # leftovers from an interrupted publish
+            if old.startswith(".stage-%s-" % name):
+                shutil.rmtree(os.path.join(root, old), ignore_errors=True)
+        self.path = tempfile.mkdtemp(prefix=".stage-%s-" % name, dir=root)
+        self._items = []  # (staged path, destination)
+
+    def add(self, dest, basename=None):
+        """Return the staged path to write for final destination `dest`."""
+        staged = os.path.join(self.path, "%02d-%s" % (len(self._items), basename or os.path.basename(dest)))
+        self._items.append((staged, dest))
+        return staged
+
+    def discard(self):
+        shutil.rmtree(self.path, ignore_errors=True)
+
+    def publish(self):
+        for staged, dest in self._items:
+            if not os.path.isfile(staged):
+                raise RuntimeError("internal error: staged output missing: %s" % staged)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+        done = []
+        try:
+            for staged, dest in self._items:
+                tmp = "%s.tmp-%d" % (dest, os.getpid())
+                try:
+                    shutil.copyfile(staged, tmp)
+                    os.replace(tmp, dest)
+                finally:
+                    if os.path.exists(tmp):
+                        os.unlink(tmp)
+                done.append(dest)
+        except Exception as e:
+            raise PublishError(
+                "publication failed after replacing %d of %d file(s): %s: %s\n"
+                "  already replaced: %s\n"
+                "  staged set kept in %s; re-run this stage to regenerate and "
+                "republish the complete set"
+                % (len(done), len(self._items), type(e).__name__, e,
+                   ", ".join(done) or "(none)", self.path)) from e
+        self.discard()
+
+
+class PublishError(Exception):
+    """Publication failed part-way; the staging directory was kept."""
