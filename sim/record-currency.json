@@ -17,9 +17,7 @@
       "family": "sim/bn-substrate-tank",
       "file_count": 83,
       "filename_commit": {
-        "id": "383f22e",
-        "resolution": "resolved",
-        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+        "id": "383f22e"
       },
       "path": "sim/bn-substrate-tank/records/20261009-002323-383f22e",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -38,9 +36,7 @@
       "family": "sim/bn-substrate-tank",
       "file_count": 28,
       "filename_commit": {
-        "id": "2eb3659",
-        "resolution": "resolved",
-        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+        "id": "2eb3659"
       },
       "path": "sim/bn-substrate-tank/records/20261009-205236-2eb3659-cand-n14-m1p14",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -59,9 +55,7 @@
       "family": "sim/bn-substrate-tank",
       "file_count": 28,
       "filename_commit": {
-        "id": "2eb3659",
-        "resolution": "resolved",
-        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+        "id": "2eb3659"
       },
       "path": "sim/bn-substrate-tank/records/20261009-205834-2eb3659-cand-n12-m1p14",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -94,9 +88,7 @@
       "family": "sim/inductor-model/em-extraction",
       "file_count": 5,
       "filename_commit": {
-        "id": "3896421",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "3896421"
       },
       "path": "sim/inductor-model/em-extraction/records/20260910-052657-3896421.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -109,9 +101,7 @@
       "family": "sim/inductor-model",
       "file_count": 31,
       "filename_commit": {
-        "id": "a73c3c7",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "a73c3c7"
       },
       "path": "sim/inductor-model/records/20260906-160637-a73c3c7.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -124,9 +114,7 @@
       "family": "sim/inductor-model",
       "file_count": 31,
       "filename_commit": {
-        "id": "b61674c",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "b61674c"
       },
       "path": "sim/inductor-model/records/20260909-132712-b61674c.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -139,9 +127,7 @@
       "family": "sim/inductor-model",
       "file_count": 31,
       "filename_commit": {
-        "id": "3896421",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "3896421"
       },
       "path": "sim/inductor-model/records/20260910-052743-3896421.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -154,12 +140,10 @@
       "family": "sim/oscillator-core",
       "file_count": 2,
       "filename_commit": {
-        "id": "9c26531",
-        "resolution": "resolved",
-        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+        "id": "9c26531"
       },
       "path": "sim/oscillator-core/records/20260926-002254-9c26531.md",
-      "reason": "filename-only provenance: the commit 9c26531 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "reason": "filename-only provenance: the commit 9c26531 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20260926-002254-9c26531",
       "state": "unknown"
     },
@@ -169,12 +153,10 @@
       "family": "sim/oscillator-core",
       "file_count": 6,
       "filename_commit": {
-        "id": "e391693",
-        "resolution": "unresolved",
-        "source_sha256": null
+        "id": "e391693"
       },
       "path": "sim/oscillator-core/records/20260926-010627-e391693.md",
-      "reason": "no explicit source hash; filename commit e391693 is unresolved",
+      "reason": "filename-only provenance: the commit e391693 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20260926-010627-e391693",
       "state": "unknown"
     },
@@ -184,12 +166,10 @@
       "family": "sim/oscillator-core",
       "file_count": 2,
       "filename_commit": {
-        "id": "e391693",
-        "resolution": "unresolved",
-        "source_sha256": null
+        "id": "e391693"
       },
       "path": "sim/oscillator-core/records/20260926-010713-e391693.md",
-      "reason": "no explicit source hash; filename commit e391693 is unresolved",
+      "reason": "filename-only provenance: the commit e391693 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20260926-010713-e391693",
       "state": "unknown"
     },
@@ -199,12 +179,10 @@
       "family": "sim/oscillator-core",
       "file_count": 2,
       "filename_commit": {
-        "id": "762fc8e",
-        "resolution": "resolved",
-        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+        "id": "762fc8e"
       },
       "path": "sim/oscillator-core/records/20261001-231538-762fc8e.md",
-      "reason": "filename-only provenance: the commit 762fc8e proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "reason": "filename-only provenance: the commit 762fc8e named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261001-231538-762fc8e",
       "state": "unknown"
     },
@@ -214,12 +192,10 @@
       "family": "sim/oscillator-core",
       "file_count": 2,
       "filename_commit": {
-        "id": "edf5eb5",
-        "resolution": "resolved",
-        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+        "id": "edf5eb5"
       },
       "path": "sim/oscillator-core/records/20261010-060505-edf5eb5-surrogate-pre79.csv",
-      "reason": "filename-only provenance: the commit edf5eb5 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to 090983d6ee9e (context, not currency).",
+      "reason": "filename-only provenance: the commit edf5eb5 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261010-060505-edf5eb5",
       "state": "unknown"
     },
@@ -229,12 +205,10 @@
       "family": "sim/oscillator-core",
       "file_count": 2,
       "filename_commit": {
-        "id": "edf5eb5",
-        "resolution": "resolved",
-        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+        "id": "edf5eb5"
       },
       "path": "sim/oscillator-core/records/20261010-060510-edf5eb5-surrogate-corrected.csv",
-      "reason": "filename-only provenance: the commit edf5eb5 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to 090983d6ee9e (context, not currency).",
+      "reason": "filename-only provenance: the commit edf5eb5 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261010-060510-edf5eb5",
       "state": "unknown"
     },
@@ -244,12 +218,10 @@
       "family": "sim/phase-noise",
       "file_count": 3,
       "filename_commit": {
-        "id": "7a02483",
-        "resolution": "resolved",
-        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+        "id": "7a02483"
       },
       "path": "sim/phase-noise/records/20260926-071150-7a02483.md",
-      "reason": "filename-only provenance: the commit 7a02483 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "reason": "filename-only provenance: the commit 7a02483 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20260926-071150-7a02483",
       "state": "unknown"
     },
@@ -259,12 +231,10 @@
       "family": "sim/phase-noise",
       "file_count": 5,
       "filename_commit": {
-        "id": "7a02483",
-        "resolution": "resolved",
-        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+        "id": "7a02483"
       },
       "path": "sim/phase-noise/records/20260926-071903-7a02483.md",
-      "reason": "filename-only provenance: the commit 7a02483 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
+      "reason": "filename-only provenance: the commit 7a02483 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20260926-071903-7a02483",
       "state": "unknown"
     },
@@ -274,9 +244,7 @@
       "family": "sim/tank-characterization",
       "file_count": 22,
       "filename_commit": {
-        "id": "d3410d1",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "d3410d1"
       },
       "path": "sim/tank-characterization/records/20260906-135025-d3410d1.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -289,9 +257,7 @@
       "family": "sim/tank-characterization",
       "file_count": 23,
       "filename_commit": {
-        "id": "a73c3c7",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "a73c3c7"
       },
       "path": "sim/tank-characterization/records/20260906-160246-a73c3c7.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -304,9 +270,7 @@
       "family": "sim/tank-characterization",
       "file_count": 23,
       "filename_commit": {
-        "id": "b61674c",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "b61674c"
       },
       "path": "sim/tank-characterization/records/20260909-132835-b61674c.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -319,9 +283,7 @@
       "family": "sim/tank-characterization",
       "file_count": 23,
       "filename_commit": {
-        "id": "3896421",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "3896421"
       },
       "path": "sim/tank-characterization/records/20260910-052245-3896421.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -334,9 +296,7 @@
       "family": "sim/tank-characterization",
       "file_count": 23,
       "filename_commit": {
-        "id": "f88eb89",
-        "resolution": "resolved",
-        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+        "id": "f88eb89"
       },
       "path": "sim/tank-characterization/records/20260927-081110-f88eb89.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -349,9 +309,7 @@
       "family": "sim/varactor-characterization",
       "file_count": 220,
       "filename_commit": {
-        "id": "de50891",
-        "resolution": "resolved-no-source",
-        "source_sha256": null
+        "id": "de50891"
       },
       "path": "sim/varactor-characterization/records/20260909-231619-de50891.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
@@ -364,9 +322,7 @@
       "family": "sim/varactor-characterization",
       "file_count": 220,
       "filename_commit": {
-        "id": "f88eb89",
-        "resolution": "resolved",
-        "source_sha256": "f185c71437e01e8df94923a0068ac80e499482b248324eb0ffea0dbfb32dfdf4"
+        "id": "f88eb89"
       },
       "path": "sim/varactor-characterization/records/20260927-081226-f88eb89.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",

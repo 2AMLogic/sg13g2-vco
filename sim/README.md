@@ -60,9 +60,10 @@ simulation validity, grading completeness, or PDK/model currency.
 
 `unknown` covers: filename-only provenance (the commit id in the name proves at
 most the checkout the writer named -- not a clean tree nor the inputs consumed;
-the index reports that commit's `design/vco.spice` blob hash as context only and
-never upgrades it); unresolvable, ambiguous, shallow-history-missing or absent
-commit ids; malformed or mutually conflicting explicit hashes; an explicit hash
+the committed index records only the parsed commit id and never upgrades it;
+whether that id resolves in a clone, and its `design/vco.spice` blob hash, are
+live context printed by `record_currency.py show`, not part of the gated index
+-- issue #213); absent commit ids; malformed or mutually conflicting explicit hashes; an explicit hash
 that conflicts with (or whose declared snapshot is missing from) the captured
 source snapshot -- filename inference is never used to hide bad explicit
 provenance; and component/model characterization or synthetic comparison
@@ -70,8 +71,8 @@ records (`tank-characterization`, `inductor-model`, `varactor-characterization`,
 `bn-substrate-tank`), which are not derived from `design/vco.spice` and so
 are `unknown` ("not-applicable") unless they carry documented explicit source
 provenance. A dirty run (explicit hash differs from the filename commit's blob)
-is accepted when the consumed source is identified by the explicit hash; the
-reason says so.
+is accepted when the consumed source is identified by the explicit hash (the
+live `show` reason says so).
 
 **Deck integrity is a separate diagnostic.** A klt report's `netlist_sha256`
 hashes the *generated deck*, not `design/vco.spice`; it is compared only to the
@@ -210,8 +211,9 @@ concerns `design/vco.spice` only. Fixture self-test:
 
 **Refresh** after any `design/vco.spice` change or new record:
 `python3 .github/scripts/record_currency.py write`, commit the index. CI gates:
-`check-all.sh currency` (index equals fresh classification; in a shallow clone
-only the history-independent fields are compared) and `check-all.sh
+`check-all.sh currency` (index equals fresh classification; the index is
+history-independent, so full, single-branch and shallow clones agree byte for
+byte) and `check-all.sh
 currency-selftest`. `check-signoff.sh` rejects a manifest evidence entry whose
 path lies under `sim/**/records/` unless that record is freshly `current` (and
 the committed index is not stale), independently of the rendered-report

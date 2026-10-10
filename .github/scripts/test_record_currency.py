@@ -68,8 +68,12 @@ class Fixture(unittest.TestCase):
     def idx(self):
         return rc.build_index(self.d)
 
-    def get(self, rid, rdir=None):
-        hits = [e for e in self.idx()["records"] if e["record_id"] == rid
+    def live(self):
+        return rc.build_index(self.d, live=True)
+
+    def get(self, rid, rdir=None, live=False):
+        idx = self.live() if live else self.idx()
+        hits = [e for e in idx["records"] if e["record_id"] == rid
                 and (rdir is None or e["path"].startswith(rdir))]
         self.assertEqual(len(hits), 1, hits)
         return hits[0]
@@ -120,6 +124,9 @@ class TestStates(Fixture):
         r = self.rid(); self.rec(OSC, r)
         e = self.get(r)
         self.assertEqual((e["state"], e["basis"]), ("unknown", "filename-commit"))
+        self.assertEqual(e["filename_commit"], {"id": self.c1})
+        e = self.get(r, live=True)
+        self.assertEqual((e["state"], e["basis"]), ("unknown", "filename-commit"))
         self.assertEqual(e["filename_commit"]["source_sha256"], H1)
         # even when the commit's blob equals the current source
         self.assertNotEqual(e["state"], "current")
@@ -132,10 +139,13 @@ class TestStates(Fixture):
 
     def test_unresolvable_commit(self):
         r = "20261001-000000-abcdef1"; self.rec(OSC, r)
-        e = self.get(r)
+        e = self.get(r, live=True)
         self.assertEqual(e["state"], "unknown")
         self.assertEqual(e["filename_commit"]["resolution"], "unresolved")
         self.assertIn("unresolved", e["reason"])
+        g = self.get(r)
+        self.assertEqual((g["state"], g["basis"]), ("unknown", "filename-commit"))
+        self.assertNotIn("unresolved", g["reason"])
 
     def test_ambiguous_commit(self):
         # Two objects sharing a 7-char prefix cannot be forged, so stub git.
@@ -148,7 +158,7 @@ class TestStates(Fixture):
         rc._git = fake
         self.addCleanup(setattr, rc, "_git", orig)
         r = "20261001-000000-abcdef1"; self.rec(OSC, r)
-        e = self.get(r)
+        e = self.get(r, live=True)
         self.assertEqual(e["filename_commit"]["resolution"], "ambiguous")
         self.assertEqual(e["state"], "unknown")
 
@@ -164,9 +174,13 @@ class TestStates(Fixture):
         rc._git = fake
         self.addCleanup(setattr, rc, "_git", orig)
         r = "20261001-000000-abcdef1"; self.rec(OSC, r)
-        self.assertEqual(self.get(r)["filename_commit"]["resolution"],
+        self.assertEqual(self.get(r, live=True)["filename_commit"]["resolution"],
                          "unresolved-shallow-history")
-        self.assertEqual(self.get(r)["state"], "unknown")
+        self.assertEqual(self.get(r, live=True)["state"], "unknown")
+        # the gated index is unaffected by the shallow simulation
+        shallow = rc.render(self.idx())
+        rc._git = orig
+        self.assertEqual(shallow, rc.render(self.idx()))
 
     def test_commit_without_source(self):
         git(self.d, "rm", "-q", "design/vco.spice")
@@ -174,7 +188,7 @@ class TestStates(Fixture):
         c = git(self.d, "rev-parse", "--short", "HEAD")
         self.write("design/vco.spice", SRC_V1)
         r = self.rid(c); self.rec(OSC, r)
-        self.assertEqual(self.get(r)["filename_commit"]["resolution"],
+        self.assertEqual(self.get(r, live=True)["filename_commit"]["resolution"],
                          "resolved-no-source")
 
     def test_malformed_explicit(self):
@@ -213,12 +227,13 @@ class TestStates(Fixture):
         e = self.get(r)
         self.assertEqual(e["basis"], "explicit-source-hash+snapshot")
         self.assertEqual(e["state"], "superseded")  # source is still V1
-        self.assertIn("dirty", e["reason"])
+        self.assertNotIn("dirty", e["reason"])  # history note is live-only
+        self.assertIn("dirty", self.get(r, live=True)["reason"])
         # once the working source is the dirty one, the record is current
         self.write("design/vco.spice", SRC_V2)
         e = self.get(r)
         self.assertEqual(e["state"], "current")
-        self.assertIn("dirty", e["reason"])
+        self.assertIn("dirty", self.get(r, live=True)["reason"])
 
     def test_snapshot_conflict_and_missing(self):
         snap = "sim/oscillator-core/netlist-snapshots/r/design-vco.spice"
@@ -285,6 +300,79 @@ class TestEnumeration(Fixture):
         git(self.d, "add", "-A"); git(self.d, "commit", "-qm", "unrelated")
         self.assertEqual(a, rc.render(self.idx()))
         self.assertNotIn("timestamp", a)
+
+    def _named(self):
+        """Records naming (a) a real commit, (b) one absent from this repo."""
+        a = self.rid(); b = "20261001-000001-abcdef1"
+        for r in (a, b):
+            self.rec(OSC, r)
+        return a, b
+
+    def test_render_independent_of_side_branch_with_named_commit(self):
+        a, b = self._named()
+        before = rc.render(self.idx())
+        git(self.d, "add", "-A"); git(self.d, "commit", "-qm", "records")
+        # (1) an unrelated side branch holding a commit a record names
+        git(self.d, "checkout", "-q", "-b", "side")
+        self.write("side.txt", "x")
+        git(self.d, "add", "-A"); git(self.d, "commit", "-qm", "side")
+        sc = git(self.d, "rev-parse", "--short", "HEAD")
+        git(self.d, "checkout", "-q", "main")
+        side_rec = self.rid(sc, ts="20261001-000003")
+        self.rec(OSC, side_rec)
+        with_rec = rc.render(self.idx())
+        # (2) same tree, commit absent: drop the branch and prune
+        git(self.d, "branch", "-q", "-D", "side")
+        git(self.d, "reflog", "expire", "--expire=now", "--all")
+        git(self.d, "gc", "-q", "--prune=now")
+        self.assertEqual(with_rec, rc.render(self.idx()))
+        self.assertIn(sc, with_rec)
+        self.assertNotEqual(before, with_rec)
+        self.assertEqual(
+            json.loads(before)["records"],
+            [e for e in json.loads(with_rec)["records"]
+             if e["record_id"] != side_rec])
+
+    def test_render_independent_of_shallow_simulation(self):
+        self._named()
+        want = rc.render(self.idx())
+        orig = rc._git
+
+        def fake(root, *a):
+            if a[:2] == ("rev-parse", "--verify"):
+                return 128, b"", b"fatal: bad revision"
+            if a[:1] == ("rev-parse",) and "--is-shallow-repository" in a:
+                return 0, b"true\n", b""
+            return orig(root, *a)
+        rc._git = fake
+        self.addCleanup(setattr, rc, "_git", orig)
+        self.assertEqual(want, rc.render(self.idx()))
+
+    def test_gated_index_never_calls_git_for_filename_commits(self):
+        self._named()
+        orig = rc._git
+        calls = []
+
+        def spy(root, *a):
+            calls.append(a)
+            return orig(root, *a)
+        rc._git = spy
+        self.addCleanup(setattr, rc, "_git", orig)
+        self.idx()
+        self.assertEqual(calls, [])
+
+    def test_filename_only_statuses_unchanged_by_gating(self):
+        a, b = self._named()
+        gated = {e["record_id"]: e for e in self.idx()["records"]}
+        live = {e["record_id"]: e for e in self.live()["records"]}
+        self.assertEqual(set(gated), set(live))
+        for rid in gated:
+            for k in ("state", "basis"):
+                self.assertEqual(gated[rid][k], live[rid][k], (rid, k))
+        self.assertEqual((gated[a]["state"], gated[a]["basis"]),
+                         ("unknown", "filename-commit"))
+        self.assertEqual((gated[b]["state"], gated[b]["basis"]),
+                         ("unknown", "filename-commit"))
 
 
 class TestCitations(Fixture):
