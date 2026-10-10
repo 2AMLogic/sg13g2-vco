@@ -358,6 +358,77 @@ class TestCitations(Fixture):
         self.assertEqual(run("bogus"), 2)
 
 
+class TestSuffixedDirectories(Fixture):
+    """Issue #195: a suffixed directory keeps its own identity and path."""
+
+    def mk(self, name, h=None, ts="20261001-000000", rdir=OSC):
+        rid = self.rid(ts=ts)
+        d = "%s/%s" % (rdir, name % rid)
+        self.write(d + "/run.csv", "x")
+        self.write(d + "/reports/a.json", "{}")
+        if h:
+            self.j(d + "/" + rc.SIDECAR_NAME,
+                   {"schema": rc.PROVENANCE_SCHEMA, "record_id": rid,
+                    "design_netlist_path": "design/vco.spice",
+                    "design_netlist_sha256": h})
+        return rid, d
+
+    def publish(self):
+        self.write(rc.INDEX, rc.render(self.idx()))
+
+    def test_index_shows_directory_path(self):
+        rid, d = self.mk("%s-cand-a", H1)
+        e = self.get(rid)
+        self.assertEqual(e["path"], d)
+        self.assertEqual(e["state"], "current")
+        self.assertEqual(e["file_count"], 3)
+
+    def test_citations_to_csv_and_nested_artifact_accepted(self):
+        rid, d = self.mk("%s-cand-a", H1)
+        self.publish()
+        self.assertEqual(rc.validate_citations(
+            self.d, [d + "/run.csv", d + "/reports/a.json"]), [])
+
+    def test_unknown_and_superseded_still_fail(self):
+        _, ds = self.mk("%s-cand-s", H2, ts="20261002-000000")
+        _, du = self.mk("%s-cand-u", None, ts="20261003-000000")
+        self.publish()
+        for d in (ds, du):
+            errs = rc.validate_citations(self.d, [d + "/run.csv"])
+            self.assertEqual(len(errs), 1, errs)
+        self.assertIn("superseded", rc.validate_citations(
+            self.d, [ds + "/run.csv"])[0])
+
+    def test_flat_family_with_companion_dir_unchanged(self):
+        r = self.rid()
+        for n in ("%s.md", "%s-x.csv", "%s-curves/a.csv"):
+            self.write("%s/%s" % (OSC, n % r), "x")
+        e = self.get(r)
+        self.assertEqual(e["path"], "%s/%s.md" % (OSC, r))
+        self.assertEqual(e["file_count"], 3)
+
+    def test_ambiguous_directories_not_merged_and_fail(self):
+        r = self.rid()
+        for suffix in ("-cand-a", "-cand-b"):
+            d = "%s/%s%s" % (OSC, r, suffix)
+            self.write(d + "/run.csv", "x")
+            self.j(d + "/" + rc.SIDECAR_NAME,
+                   {"schema": rc.PROVENANCE_SCHEMA, "record_id": r,
+                    "design_netlist_path": "design/vco.spice",
+                    "design_netlist_sha256": H1})
+        self.publish()
+        recs = [e for e in self.idx()["records"] if e["record_id"] == r]
+        self.assertEqual(sorted(e["path"] for e in recs),
+                         ["%s/%s-cand-a" % (OSC, r), "%s/%s-cand-b" % (OSC, r)])
+        for e in recs:
+            self.assertEqual(e["state"], "unknown")
+            self.assertEqual(e["basis"], "ambiguous-directory-identity")
+        errs = rc.validate_citations(
+            self.d, ["%s/%s-cand-a/run.csv" % (OSC, r)])
+        self.assertEqual(len(errs), 1)
+        self.assertIn("ambiguous directory identity", errs[0])
+
+
 class TestDeckIntegrity(Fixture):
     """Issue #143: report/deck integrity is independent of source currency."""
 
