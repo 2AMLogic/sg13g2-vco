@@ -160,7 +160,8 @@ n=0
 fault() {
   local label="$1" want="$2" mut="$3" id
   n=$((n + 1)); id="20261102-0000$(printf %02d $n)-ddddddd"
-  local fs="20261102-9000$(printf %02d $n)-eeeeeee"
+  local fs
+  fs="20261102-9000$(printf %02d $n)-eeeeeee"
   mkdir -p "$EXPERIMENT_DIR/corners/$fs" "$EXPERIMENT_DIR/netlist-snapshots/$fs"
   cp "$EXPERIMENT_DIR/corners/$SRC/"* "$EXPERIMENT_DIR/corners/$fs/"
   cp "$EXPERIMENT_DIR/netlist-snapshots/$SRC/"* "$EXPERIMENT_DIR/netlist-snapshots/$fs/"
