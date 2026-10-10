@@ -195,9 +195,15 @@ records reproduce byte-identically) and a new `tank-ab-coverage.csv`
 - **Exit status.** 0 whenever the analysis completes; a coverage summary goes
   to stderr. With `--strict`, exit 2 if there is any `NO-REPORT`,
   `MISSING-CORNER`, `DUPLICATE-CORNER`, `UNEXPECTED-CORNER`,
-  `COVERAGE-UNCHECKED`, `REQUEST-UNREADABLE` or `INVALID` outcome. Model failures
+  `COVERAGE-UNCHECKED`, `REQUEST-UNREADABLE`, `INVALID` or `EMPTY-INVENTORY`
+  outcome. Model failures
   (`status != pass`) never change the exit status: that is spec evidence, not
   tool health, and no target is relaxed.
+- **Empty inventory.** A record directory with no `reports/*.json` and no
+  `decks/*.request.json` is absence of evidence, not a clean pass: one
+  `EMPTY-INVENTORY` row is written to `tank-ab-coverage.csv` and a diagnostic
+  goes to stderr. Without `--strict` the analysis still finishes (exit 0, header-only
+  CSVs, gap visible); with `--strict` it exits 2.
 - **Exploratory subsets.** A deliberately partial run (fewer corners in its
   request) is complete relative to its own request; run it without `--strict`
   and cite the declared subset. The expected inventory is always the record's
