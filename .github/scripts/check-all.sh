@@ -48,6 +48,8 @@
 #   py-selftest           .github/scripts/test-check-python.sh      python3
 #   py-compile            check-python.sh compile (py_compile, all tracked *.py)
 #   py-tests              check-python.sh tests (stdlib unittest, tests/stdlib)
+#   py-numeric            check-python.sh numeric (tests/numeric; needs numpy
+#                         and scipy per .github/numeric-requirements.txt)
 #   py-klayout            check-python.sh klayout (tests/klayout; needs the
 #                         klayout pip wheel at .github/klayout-pip-version)
 #   append-only [--base REF]               PR diff gate (git, base ref)
@@ -61,7 +63,8 @@
 #           model-inputs-selftest model-inputs friction-selftest friction
 #           grading-fixtures py-selftest py-compile py-tests
 #   ci    = lint + test
-#   all   = ci + signoff + py-klayout (only with the pinned klayout wheel)
+#   all   = ci + signoff + py-numeric (only with numpy+scipy importable)
+#           + py-klayout (only with the pinned klayout wheel)
 #           + pr-diff (only with --base) + method
 #   pr-diff --base REF [--head REF] = append-only + spec-dr
 # Runner options may also follow an aggregate name (the npm form:
@@ -177,6 +180,16 @@ ngspice_42() {
   esac
 }
 
+# numeric_libs: 0 if numpy and scipy are importable; prints the reason otherwise.
+numeric_libs() {
+  local py="${PYTHON:-python3}"
+  if ! command -v "$py" >/dev/null 2>&1 ||
+     ! "$py" -I -c 'import numpy, scipy' >/dev/null 2>&1; then
+    echo "numpy/scipy not importable (see .github/numeric-requirements.txt)"
+    return 1
+  fi
+}
+
 # klayout_wheel: 0 if the klayout pip wheel is importable; prints the reason
 # otherwise. (The py-klayout gate itself also verifies the pinned version.)
 klayout_wheel() {
@@ -254,6 +267,8 @@ gate() {
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-python.sh" compile "$@" ;;
     py-tests)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-python.sh" tests "$@" ;;
+    py-numeric)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-python.sh" numeric "$@" ;;
     py-klayout)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-python.sh" klayout "$@" ;;
     append-only)
@@ -337,6 +352,11 @@ case "$TARGET" in
     gate lint
     agg_test
     gate signoff
+    if why="$(numeric_libs)"; then
+      gate py-numeric
+    else
+      skip py-numeric "$why"
+    fi
     if why="$(klayout_wheel)"; then
       gate py-klayout
     else

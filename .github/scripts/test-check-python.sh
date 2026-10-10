@@ -133,6 +133,21 @@ fi
 echo "1.2.3" > "$t/.github/klayout-pip-version"
 run_case "klayout at pinned version passes" 0 klayout "$t" "PYTHON=$T/stub-ver/python3"
 
+# 7b. numeric gate (issue #167): absent numpy/scipy fails with MISSING TOOL
+#     (never a skip); with them importable it runs tests/numeric (empty = fail).
+t="$(fresh_tree)"
+mkdir -p "$t/tests/numeric"
+cp "$t/tests/stdlib/test_ok.py" "$t/tests/numeric/test_ok.py"
+echo "numpy" > "$t/.github/numeric-requirements.txt"
+run_case "absent numpy/scipy fails numeric (not skipped)" 1 numeric "$t" "PYTHON=$T/stub-none/python3"
+if grep -q "MISSING TOOL" "$T/err"; then
+  echo "PASS: absent numpy/scipy reports MISSING TOOL"; pass=$((pass + 1))
+else
+  echo "FAIL: absent numpy/scipy reports MISSING TOOL (wrong reason)" >&2; fail=$((fail + 1))
+fi
+rm "$t/tests/numeric/test_ok.py"
+run_case "numeric with zero tests fails" 1 numeric "$t" "PYTHON=python3"
+
 # 8. The real tree's compile gate sees every tracked *.py.
 want="$(git -C "$REAL_ROOT" ls-files '*.py' | wc -l | tr -d ' ')"
 if "$CHECKER" --root "$REAL_ROOT" compile 2>/dev/null | grep -q "py_compile: $want file(s), 0 failure(s)"; then

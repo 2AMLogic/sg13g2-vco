@@ -146,19 +146,33 @@ if stage convergence; then
   run_em "conv_p1_margin400" p1 "${CELLSIZE}" 400 "${HERE}/results/convergence/p1_margin400"
 fi
 
+# run_logged LOG CMD...: run CMD, teeing to LOG.new, and replace LOG only when
+# CMD succeeded -- a failed stage must not overwrite the previous run's log
+# (the log is evidence of the outputs that are still published).
+run_logged() {
+  local log="$1"; shift
+  "$@" 2>&1 | tee "${log}.new"   # pipefail: a failing stage aborts the script
+  mv -f "${log}.new" "${log}"
+}
+
+# post / fit exit nonzero unless all three geometries (p1 p13 p11) have a
+# Touchstone, port information and geometry metadata, and they publish their
+# outputs only after every geometry succeeded (see README "Failure contract").
+# `set -e` + pipefail therefore makes the final "done." mean full coverage.
+
 # ------------------------------------------------------------------- post --
 if stage post; then
   echo "== post: de-embedding ports and extracting L/Q/SRF =="
-  "${FIT_PYTHON}" "${HERE}/scripts/postprocess.py" --dir "${HERE}" \
-    2>&1 | tee "${HERE}/run_log/postprocess.txt"
+  run_logged "${HERE}/run_log/postprocess.txt" \
+    "${FIT_PYTHON}" "${HERE}/scripts/postprocess.py" --dir "${HERE}"
 fi
 
 # -------------------------------------------------------------------- fit --
 if stage fit; then
   echo "== fit: lumped .subckt inductor fitted to the extraction =="
-  "${FIT_PYTHON}" "${HERE}/scripts/fit_lumped.py" --dir "${HERE}" \
-    --model-out "${INDDIR}/sg13g2_inductor_em.spice" \
-    2>&1 | tee "${HERE}/run_log/fit.txt"
+  run_logged "${HERE}/run_log/fit.txt" \
+    "${FIT_PYTHON}" "${HERE}/scripts/fit_lumped.py" --dir "${HERE}" \
+    --model-out "${INDDIR}/sg13g2_inductor_em.spice"
 fi
 
 # ---------------------------------------------------------------- compare --

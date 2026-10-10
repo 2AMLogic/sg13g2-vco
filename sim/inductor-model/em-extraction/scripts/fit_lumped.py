@@ -25,6 +25,13 @@ symmetric pi, so the fit splits too and each half is small and well-conditioned:
 Residuals are relative-with-a-floor, |Y_model - Y_meas| / (|Y_meas| + 0.05
 max|Y_meas|), so a null in either admittance cannot dominate the objective.
 
+FAILURE CONTRACT.  All three geometries must have complete inputs (see
+emlib.load_geometry_inputs) or the stage exits nonzero before fitting.  The
+residual CSVs, fit_parameters.json, fit_summary.csv and the SPICE model are all
+produced into a staging directory and published together only after every
+geometry fitted and the model emitted; a failure leaves the previous set intact.
+Publication is per-file atomic renames, not a multi-file transaction.
+
 OUTPUT.  `sg13g2_inductor_em.spice`, a drop-in replacement for the analytic
 model on the same SG13G2_IND_MODEL_LIB interface.  It is NOT a pure lookup
 table: it recomputes the analytic model's geometry-driven element values and
@@ -46,9 +53,8 @@ from scipy.optimize import least_squares
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import emlib  # noqa: E402
-from postprocess import load_run  # noqa: E402
 
-GEOMS = ["p1", "p13", "p11"]
+GEOMS = emlib.GEOMS
 
 # Fit band.  Lower edge: below ~0.3 GHz the Gaussian excitation carries little
 # energy and the extracted Z is noisy.  Upper edge: 30 GHz, but never above
@@ -187,22 +193,50 @@ def band_errors(f, Zem, Zfit, flo, fhi):
     }
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--model-out", required=True)
-    args = ap.parse_args()
-    root, res = args.dir, os.path.join(args.dir, "results")
+    args = ap.parse_args(argv)
+    root = args.dir
+    try:
+        run(root, args.model_out)
+    except (emlib.InputError, emlib.PublishError) as e:
+        print("error: %s" % e, file=sys.stderr)
+        return 1
+    print("wrote", args.model_out)
+    return 0
 
+
+def run(root, model_out):
+    inputs, problems = {}, []
+    for g in GEOMS:
+        try:
+            inputs[g] = emlib.load_geometry_inputs(root, g)
+        except emlib.InputError as e:
+            problems.append(str(e))
+    if problems:
+        raise emlib.InputError(
+            "fit stage needs all %d geometries (%s); nothing was written:\n  %s"
+            % (len(GEOMS), " ".join(GEOMS), "\n  ".join(problems))
+        )
+    stage = emlib.Stage(root, "fit")
+    try:
+        _fit_all(root, model_out, inputs, stage)
+    except BaseException:
+        stage.discard()
+        raise
+    stage.publish()
+
+
+def _fit_all(root, model_out, inputs, stage):
     fits = {}
     for g in GEOMS:
-        s2p = os.path.join(res, "inductor_%s.s2p" % g)
-        datadir = os.path.join(res, "inductor_%s" % g)
-        if not os.path.isfile(s2p):
-            print("MISSING %s" % s2p)
-            continue
-        gj = json.load(open(os.path.join(root, "gds", "inductor_%s.json" % g)))
-        f, S, Z, Zd, z0, Lport, _ = load_run(datadir, s2p)
+        inp = inputs[g]
+        gj, f, z0 = inp["gj"], inp["f"], inp["z0"]
+        Lport = emlib.port_inductances(inp["pinfo"])
+        Z = emlib.s2z(inp["S"], z0)
+        Zd = emlib.deembed_series_L(f, Z, Lport)
         Y = emlib.z2y(Zd)
         ys_meas, yh_meas = emlib.measured_series_shunt(Y)
 
@@ -256,7 +290,7 @@ def main():
         zse_fi = emlib.z_single_ended(Zfit)
         Lem, Qem = emlib.lq(f, zse_em)
         Lfi, Qfi = emlib.lq(f, zse_fi)
-        with open(os.path.join(root, "fit", "fit_residual_%s.csv" % g), "w", newline="") as fh:
+        with open(stage.add(os.path.join(root, "fit", "fit_residual_%s.csv" % g)), "w", newline="") as fh:
             wcsv = csv.writer(fh)
             wcsv.writerow(["f_hz", "l_em_h", "l_fit_h", "q_em", "q_fit",
                            "re_zse_em", "re_zse_fit", "im_zse_em", "im_zse_fit"])
@@ -266,11 +300,11 @@ def main():
                                zse_em[i].real, zse_fi[i].real,
                                zse_em[i].imag, zse_fi[i].imag)])
 
-    with open(os.path.join(root, "fit", "fit_parameters.json"), "w") as fh:
+    with open(stage.add(os.path.join(root, "fit", "fit_parameters.json")), "w") as fh:
         json.dump(fits, fh, indent=2, sort_keys=True)
         fh.write("\n")
 
-    with open(os.path.join(root, "fit", "fit_summary.csv"), "w", newline="") as fh:
+    with open(stage.add(os.path.join(root, "fit", "fit_summary.csv")), "w", newline="") as fh:
         wcsv = csv.writer(fh)
         wcsv.writerow(
             ["geometry", "nr_r", "element", "analytic", "em_fitted", "ratio_em_over_analytic"]
@@ -281,8 +315,7 @@ def main():
                 wcsv.writerow([g, e["nr_r"], k, "%.6g" % e["analytic"][k],
                                "%.6g" % v, "%.5g" % (v / e["analytic"][k])])
 
-    emit_spice(args.model_out, fits, root)
-    print("wrote", args.model_out)
+    emit_spice(stage.add(model_out), fits, root)
 
 
 # --------------------------------------------------------------- SPICE output
@@ -498,4 +531,4 @@ Csib    n21   sub  {{em_csi}}
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

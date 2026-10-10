@@ -10,6 +10,14 @@ and one summary:
   results/convergence.csv               mesh/margin sensitivity of those scalars
 
 Needs only numpy; no EM solver, no PDK.
+
+FAILURE CONTRACT.  All three geometries (p1, p13, p11) must have a parseable
+Touchstone, port information and geometry metadata, otherwise the stage exits
+nonzero before computing anything.  Outputs are computed into a disposable
+staging directory under --dir and published only after every geometry
+succeeded; any failure leaves every previously published file untouched.
+Publication is per-file atomic renames, not a multi-file transaction (see
+emlib.Stage).
 """
 
 import argparse
@@ -23,7 +31,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import emlib  # noqa: E402
 
-GEOMS = ["p1", "p13", "p11"]
+GEOMS = emlib.GEOMS
 SPOT_F = [1e9, 5e9, 10e9, 20e9]
 
 
@@ -56,24 +64,68 @@ def scalars(f, Z):
     return out
 
 
-def main():
+def _variant_inputs(name, d, s2p):
+    try:
+        f, S, Z, Zd, z0, Lport, pinfo = load_run(d, s2p)
+        with open(os.path.join(d, "run_meta.json")) as fh:
+            meta = json.load(fh)
+        cell, margin = meta["settings"]["refined_cellsize"], meta["settings"]["margin"]
+    except Exception as e:  # noqa: BLE001
+        raise emlib.InputError(
+            "convergence variant %s: %s: %s: %s" % (name, d, type(e).__name__, e)
+        )
+    return f, Zd, meta, cell, margin
+
+
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     root = args.dir
     res = os.path.join(root, "results")
+    try:
+        run(root, res)
+    except (emlib.InputError, emlib.PublishError) as e:
+        print("error: %s" % e, file=sys.stderr)
+        return 1
+    return 0
 
+
+def run(root, res):
+    # ---- preflight: every geometry's inputs, before any output is computed
+    inputs = {}
+    problems = []
+    for g in GEOMS:
+        try:
+            inputs[g] = emlib.load_geometry_inputs(root, g)
+        except emlib.InputError as e:
+            problems.append(str(e))
+    if problems:
+        raise emlib.InputError(
+            "post stage needs all %d geometries (%s); nothing was written:\n  %s"
+            % (len(GEOMS), " ".join(GEOMS), "\n  ".join(problems))
+        )
+
+    stage = emlib.Stage(root, "post")
+    try:
+        _compute(root, res, inputs, stage)
+    except BaseException:
+        stage.discard()
+        raise
+    stage.publish()
+
+
+def _compute(root, res, inputs, stage):
     summary_rows = []
     for g in GEOMS:
-        datadir = os.path.join(res, "inductor_%s" % g)
-        s2p = os.path.join(res, "inductor_%s.s2p" % g)
-        if not os.path.isfile(s2p):
-            print("MISSING %s -- skipping" % s2p)
-            continue
-        f, S, Z, Zd, z0, Lport, pinfo = load_run(datadir, s2p)
+        inp = inputs[g]
+        f, S, z0, pinfo, gj = inp["f"], inp["S"], inp["z0"], inp["pinfo"], inp["gj"]
+        Lport = emlib.port_inductances(pinfo)
+        Z = emlib.s2z(S, z0)
+        Zd = emlib.deembed_series_L(f, Z, Lport)
         Sd = emlib.z2s(Zd, z0)
         emlib.write_snp(
-            os.path.join(res, "inductor_%s_deembedded.s2p" % g),
+            stage.add(os.path.join(res, "inductor_%s_deembedded.s2p" % g)),
             f,
             Sd,
             z0,
@@ -90,7 +142,7 @@ def main():
         Lse_r, Qse_r = emlib.lq(f, zse_r)
         Lse_d, Qse_d = emlib.lq(f, zse_d)
         Ldi_d, Qdi_d = emlib.lq(f, zdi_d)
-        with open(os.path.join(res, "inductor_%s_lq.csv" % g), "w", newline="") as fh:
+        with open(stage.add(os.path.join(res, "inductor_%s_lq.csv" % g)), "w", newline="") as fh:
             wcsv = csv.writer(fh)
             wcsv.writerow(
                 [
@@ -114,7 +166,6 @@ def main():
 
         row = {"geometry": g}
         row.update({k: "%.6g" % v for k, v in scalars(f, Zd).items()})
-        gj = json.load(open(os.path.join(root, "gds", "inductor_%s.json" % g)))
         row.update(
             {
                 "w_um": gj["w_um"], "s_um": gj["s_um"],
@@ -135,55 +186,54 @@ def main():
             )
         )
 
-    if summary_rows:
-        keys = list(summary_rows[0].keys())
-        with open(os.path.join(res, "em_summary.csv"), "w", newline="") as fh:
-            wcsv = csv.DictWriter(fh, fieldnames=keys)
-            wcsv.writeheader()
-            for r in summary_rows:
-                wcsv.writerow(r)
+
+    keys = list(summary_rows[0].keys())
+    with open(stage.add(os.path.join(res, "em_summary.csv")), "w", newline="") as fh:
+        wcsv = csv.DictWriter(fh, fieldnames=keys)
+        wcsv.writeheader()
+        for r in summary_rows:
+            wcsv.writerow(r)
 
     # ------------------------------------------------------------ convergence
+    # Optional: only when at least one variant run exists next to the baseline.
+    # A variant directory that is present but incomplete is an error.
     conv = os.path.join(res, "convergence")
     variants = [("baseline", os.path.join(res, "inductor_p1"), os.path.join(res, "inductor_p1.s2p"))]
     for name in ("p1_mesh0p5", "p1_margin400"):
         d = os.path.join(conv, name)
         if os.path.isdir(d):
             variants.append((name, d, d + ".s2p"))
+    if len(variants) < 2:
+        return
     rows = []
     for name, d, s2p in variants:
-        if not os.path.isfile(s2p):
-            continue
-        f, S, Z, Zd, z0, Lport, pinfo = load_run(d, s2p)
+        f, Zd, meta, cell, margin = _variant_inputs(name, d, s2p)
         r = {"variant": name}
-        meta = json.load(open(os.path.join(d, "run_meta.json")))
-        r["refined_cellsize_um"] = meta["settings"]["refined_cellsize"]
-        r["margin_um"] = meta["settings"]["margin"]
+        r["refined_cellsize_um"] = cell
+        r["margin_um"] = margin
         r["wall_seconds"] = meta.get("wall_seconds", "")
         r.update({k: "%.6g" % v for k, v in scalars(f, Zd).items()})
         rows.append(r)
-    if len(rows) > 1:
-        base = rows[0]
-        for r in rows:
-            for k in ("l_se_1g", "q_se_10g", "srf_se_hz", "l_se_10g", "q_se_1g"):
-                r["d_%s_pct" % k] = "%.3g" % (
-                    100.0 * (float(r[k]) - float(base[k])) / float(base[k])
-                )
-        keys = list(rows[0].keys())
-        with open(os.path.join(res, "convergence.csv"), "w", newline="") as fh:
-            wcsv = csv.DictWriter(fh, fieldnames=keys)
-            wcsv.writeheader()
-            for r in rows:
-                wcsv.writerow(r)
-        print("\nconvergence (vs baseline mesh %s um / margin %s um):"
-              % (base["refined_cellsize_um"], base["margin_um"]))
-        for r in rows[1:]:
-            print(
-                "  %-14s dL(1G)=%+7s %%  dQ(10G)=%+7s %%  dSRF=%+7s %%"
-                % (r["variant"], r["d_l_se_1g_pct"], r["d_q_se_10g_pct"], r["d_srf_se_hz_pct"])
+    base = rows[0]
+    for r in rows:
+        for k in ("l_se_1g", "q_se_10g", "srf_se_hz", "l_se_10g", "q_se_1g"):
+            r["d_%s_pct" % k] = "%.3g" % (
+                100.0 * (float(r[k]) - float(base[k])) / float(base[k])
             )
+    keys = list(rows[0].keys())
+    with open(stage.add(os.path.join(res, "convergence.csv")), "w", newline="") as fh:
+        wcsv = csv.DictWriter(fh, fieldnames=keys)
+        wcsv.writeheader()
+        for r in rows:
+            wcsv.writerow(r)
+    print("\nconvergence (vs baseline mesh %s um / margin %s um):"
+          % (base["refined_cellsize_um"], base["margin_um"]))
+    for r in rows[1:]:
+        print(
+            "  %-14s dL(1G)=%+7s %%  dQ(10G)=%+7s %%  dSRF=%+7s %%"
+            % (r["variant"], r["d_l_se_1g_pct"], r["d_q_se_10g_pct"], r["d_srf_se_hz_pct"])
+        )
 
 
 if __name__ == "__main__":
-    main()
-
+    sys.exit(main())

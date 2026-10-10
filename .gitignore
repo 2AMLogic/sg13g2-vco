@@ -99,3 +99,6 @@ flow/build/
 .loom/gh-config-by-owner-*/
 .loom-local/
 # <<< loom-managed <<<
+
+# EM-extraction staging directories (removed on completion; see its README)
+sim/inductor-model/em-extraction/.stage-*/
