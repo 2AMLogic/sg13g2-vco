@@ -28,9 +28,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#99**: Install ratification/ee-key and ratification/market-key reviewer trees (product#151)
-- **#182**: ci: run the OSDI staging regression through the shared check runner
-- **#191**: sim: reserve surrogate bench evidence before publication
+_None._
 
 ## PRs Awaiting Review
 
@@ -51,14 +49,13 @@ Issues carrying `loom:curated`.
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
-- **#99**: Install ratification/ee-key and ratification/market-key reviewer trees (product#151) *(curated)*
 - **#106**: ci: gate layout records' GDS digests against the committed layout/vco.gds (PDK-free) *(curated)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#194**: ci: scan paired deck integrity even when a record name is unrecognized *(architect)*
-- **#195**: sim: preserve suffixed directory identities in currency citation lookup *(architect)*
+- **#198**: sim: bounded bn=substrate varactor cell characterization per DR-006 option (b) (gated on ratification) *(architect)*
+- **#217**: ci: run the phase-noise raw-trace regression in the shared grading fixtures *(architect)*
 
 ## Epics
 
@@ -71,10 +68,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 3 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
-| Curated | 6 |
+| Curated | 5 |
 | Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
