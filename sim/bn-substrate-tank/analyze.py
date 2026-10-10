@@ -20,7 +20,9 @@ without request files get one COVERAGE-UNCHECKED row per report; a request file
 that is present but unreadable/malformed gets REQUEST-UNREADABLE instead.
 Nothing is invented.  A corner whose process is not a string or whose
 temperature_c is not a finite real number (not bool/str/NaN/inf) is INVALID
-("NO-VALUE (malformed corner: ...)") and never affects the other corners.  Exit status: 0 whenever the analysis completes (gaps are in the
+("NO-VALUE (malformed corner: ...)") and never affects the other corners.  A record with
+neither report JSON nor request JSON gets one EMPTY-INVENTORY row (a gap, also
+reported on stderr).  Exit status: 0 whenever the analysis completes (gaps are in the
 CSVs and a stderr summary); with --strict, 2 if any coverage gap or invalid
 "pass" corner was found.  Model failures (corner status != pass, e.g. the
 known +125 C dsubw NaN) never affect the exit status: that is spec/evidence,
@@ -101,7 +103,8 @@ def covrow(variant, point, process, temp, outcome, detail=""):
     cov.append(dict(variant=variant, point=point, process=process, temp_c=temp,
                     outcome=outcome, detail=detail))
     if outcome in ("NO-REPORT", "MISSING-CORNER", "DUPLICATE-CORNER", "UNEXPECTED-CORNER",
-                   "COVERAGE-UNCHECKED", "REQUEST-UNREADABLE", "INVALID"):
+                   "COVERAGE-UNCHECKED", "REQUEST-UNREADABLE", "INVALID",
+                   "EMPTY-INVENTORY"):
         state["gap"] = True
 
 
@@ -219,6 +222,10 @@ for p in sorted(glob.glob(os.path.join(rec, "reports", "*.json"))):
     names.add(os.path.basename(p)[:-5])
 for p in sorted(glob.glob(os.path.join(rec, "decks", "*.request.json"))):
     names.add(os.path.basename(p)[:-len(".request.json")])
+if not names:
+    covrow("", "", "", "", "EMPTY-INVENTORY",
+           "no reports/*.json and no decks/*.request.json found in " + rec)
+    print("EMPTY-INVENTORY: no report or request evidence in %s" % rec, file=sys.stderr)
 for name in sorted(names):
     p = os.path.join(rec, "reports", name + ".json")
     if not os.path.exists(p):

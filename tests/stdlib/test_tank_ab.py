@@ -502,6 +502,28 @@ class AnalyzeTests(unittest.TestCase):
     def test_no_arguments_fails(self):
         self.assertNotEqual(run_script(ANALYZE).returncode, 0)
 
+    def _assert_empty_inventory(self):
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertIn("EMPTY-INVENTORY", p.stderr)
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        self.assertEqual([c["outcome"] for c in cov], ["EMPTY-INVENTORY"])
+        s = run_script(ANALYZE, self.rec, "--strict")
+        self.assertEqual(s.returncode, 2, s.stderr)
+        self.assertIn("EMPTY-INVENTORY", s.stderr)
+
+    def test_empty_directory_is_gap(self):
+        self._assert_empty_inventory()
+
+    def test_unrelated_files_only_is_gap(self):
+        for rel in ("notes.txt", os.path.join("reports", "readme.txt"),
+                    os.path.join("decks", "x.cir"), os.path.join("decks", "other.json")):
+            path = os.path.join(self.rec, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
+                f.write("unrelated")
+        self._assert_empty_inventory()
+
 
 if __name__ == "__main__":
     unittest.main()
