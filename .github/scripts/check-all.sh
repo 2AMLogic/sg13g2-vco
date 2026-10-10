@@ -17,6 +17,7 @@
 #   signoff               .github/scripts/check-signoff.sh          pinned klt
 #   append-only-selftest  .github/scripts/test-check-sim-append-only.sh
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
+#                         + sim/tests/test-tank-ab-reserve.sh (tank A/B runner)
 #   local-grid-guard-selftest  sim/tests/test-local-grid-guard.sh
 #   spec-dr-selftest      .github/scripts/test-check-spec-change-has-dr.sh
 #   runner-selftest       .github/scripts/test-check-all.sh
@@ -242,7 +243,8 @@ gate() {
     append-only-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-sim-append-only.sh" "$@" ;;
     record-id-selftest)
-      run_gate "$g" "$ROOT/sim/tests/test-reserve-record-id.sh" "$@" ;;
+      run_gate "$g" bash -c '"$0" && "$1"' \
+        "$ROOT/sim/tests/test-reserve-record-id.sh" "$ROOT/sim/tests/test-tank-ab-reserve.sh" ;;
     local-grid-guard-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-local-grid-guard.sh" "$@" ;;
     spec-dr-selftest)

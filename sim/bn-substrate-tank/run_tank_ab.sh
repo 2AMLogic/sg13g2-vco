@@ -18,12 +18,32 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${HERE}/../.." && pwd)"
 # Issue #93 candidates: TANK_AB_ARGS="--cells 14 --mim-um 1.14 --candidate NAME"
-# TANK_AB_LABEL=NAME adds a suffix to the record id.  Unset = the original #79 run.
-STAMP="$(date -u +%Y%m%d-%H%M%S)-$(git -C "${REPO_ROOT}" rev-parse --short HEAD)${TANK_AB_LABEL:+-${TANK_AB_LABEL}}"
+# TANK_AB_LABEL=NAME is kept as a readable suffix after the reserved id.
+# Issue #203: the record id comes from reserve_record_id (sim/lib.sh), which
+# atomically reserves the id (exclusive mkdir), so two runs at the same
+# second/commit/label never share a record or work namespace.  The label is
+# appended AFTER the reserved id (<ts>-<sha>-<rand>-<label>); the reserved
+# id prefix is unique, so the label cannot cause a collision.
+# Test hooks (simulator-free fixture): TANK_AB_MAKE_REQUESTS (request
+# generator script) and TANK_AB_KLT (fleet client command, word-split).
+# shellcheck source=../lib.sh
+source "${HERE}/../lib.sh"
+LABEL="${TANK_AB_LABEL:-}"
+if [[ -n "${LABEL}" ]] && { [[ ! "${LABEL}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || [[ "${LABEL}" == *..* ]]; }; then
+  echo "run_tank_ab: invalid TANK_AB_LABEL '${LABEL}' (allowed: [A-Za-z0-9._-], no leading . or -, no '..')" >&2
+  exit 2
+fi
+RID="$(reserve_record_id "${REPO_ROOT}" "${HERE}")" || { echo "run_tank_ab: record id reservation failed; nothing written, nothing submitted" >&2; exit 1; }
+STAMP="${RID}${LABEL:+-${LABEL}}"
 REC="${HERE}/records/${STAMP}"
 WORK="${REPO_ROOT}/sim/build/bn-substrate-tank/${STAMP}"
-mkdir -p "${REC}/reports" "${REC}/decks" "${WORK}"
-python3 -I "${HERE}/make_requests.py" "${WORK}" ${TANK_AB_ARGS:-} >/dev/null
+# Exclusive creation: the reserved id makes these paths ours alone; refuse to
+# write into anything that already exists.
+mkdir -p "${HERE}/records" "${REPO_ROOT}/sim/build/bn-substrate-tank" || exit 1
+mkdir "${REC}" "${WORK}" || { echo "run_tank_ab: ${REC} or ${WORK} already exists; refusing to reuse" >&2; exit 1; }
+mkdir "${REC}/reports" "${REC}/decks" || exit 1
+python3 -I "${TANK_AB_MAKE_REQUESTS:-${HERE}/make_requests.py}" "${WORK}" ${TANK_AB_ARGS:-} >/dev/null || { echo "request generation failed" >&2; exit 1; }
+read -ra KLT <<< "${TANK_AB_KLT:-uvx --from klayout-tools==0.6.0 klt}"
 export KLT_SIM_BACKEND=batch
 fails=0
 for req in "${WORK}"/*/*/request.json; do
@@ -32,7 +52,7 @@ for req in "${WORK}"/*/*/request.json; do
   cp "${d}/tank.spice" "${REC}/decks/${v}__${p}.spice"
   cp "${d}/request.json" "${REC}/decks/${v}__${p}.request.json"
   cp "${d}/cell.json" "${REC}/decks/${v}__${p}.cell.json"
-  (cd "${d}" && uvx --from "klayout-tools==0.6.0" klt sim request.json --backend batch \
+  (cd "${d}" && "${KLT[@]}" sim request.json --backend batch \
       --format json -o out > "${REC}/reports/${v}__${p}.json" 2> "${REC}/reports/${v}__${p}.err") || true
   [[ -s "${REC}/reports/${v}__${p}.json" ]] || { echo "   NO REPORT"; fails=$((fails+1)); }
 done
