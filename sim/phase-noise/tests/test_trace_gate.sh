@@ -29,7 +29,22 @@ printf '#!/usr/bin/env bash\nexit 0\n' > "${R}/sim/tools/build-osdi.sh"
 chmod +x "${R}/design/netlist.sh" "${R}/sim/tools/build-osdi.sh"
 PDKR="${T}/pdk"; M="${PDKR}/ihp-sg13g2/libs.tech/ngspice/models"
 mkdir -p "${M}" "${PDKR}/ihp-sg13g2/libs.tech/ngspice/osdi"
-for f in cornerHBT cornerMOShv cornerCAP sg13g2_svaricaphv_mod sg13g2_hbt_mod; do echo "* stub" > "${M}/${f}.lib"; done
+for f in cornerHBT cornerCAP sg13g2_hbt_mod; do echo "* stub" > "${M}/${f}.lib"; done
+# cornerMOShv references both svaricap libraries, as the real one does, so the
+# capture closure brings both into the bundle for the overlay to patch.
+printf '* stub\n.LIB mos_tt\n  .include sg13g2_svaricaphv_mod.lib\n.ENDL\n.LIB mos_mm\n  .include sg13g2_svaricaphv_mod_mismatch.lib\n.ENDL\n' > "${M}/cornerMOShv.lib"
+# svaricap stand-ins (issue #95): the driver's capture applies the fail-closed
+# svaricap vj overlay, which refuses anything but the v0.3.0 bytes. Each
+# stand-in carries the one dsubw card line the overlay edits, and the overlay's
+# expected-digest table is swapped for the stand-ins' digests through the
+# self-test hook SVARICAP_OVERLAY_SPEC (as sim/tests/test-model-bundle.sh does).
+for f in sg13g2_svaricaphv_mod sg13g2_svaricaphv_mod_mismatch; do
+  printf '* %s stub\n.model dsubw d is = 2.45E-17 n = 4 vj = 0.1 m = 0.1052 cjp = 1.117E-09\n' "${f}" > "${M}/${f}.lib"
+done
+printf '{"sg13g2_svaricaphv_mod.lib": "%s", "sg13g2_svaricaphv_mod_mismatch.lib": "%s"}\n' \
+  "$(sha256sum "${M}/sg13g2_svaricaphv_mod.lib" | cut -d' ' -f1)" \
+  "$(sha256sum "${M}/sg13g2_svaricaphv_mod_mismatch.lib" | cut -d' ' -f1)" > "${T}/svaricap-spec.json"
+export SVARICAP_OVERLAY_SPEC="${T}/svaricap-spec.json"
 echo stub > "${PDKR}/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
 
 BIN="${T}/bin"; mkdir -p "${BIN}"

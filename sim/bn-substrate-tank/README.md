@@ -89,6 +89,22 @@ junction capacitance that the model *would* have is small compared with the
 effect itself. What the correct temperature scaling of this junction is, is a
 PDK-model question, not answered here (filed as a follow-up).
 
+### Record currency and the issue #95 overlay
+
+Every record under `records/` describes the **original v0.3.0 `dsubw` bytes**
+(`vj = 0.1`) and stays as written (append-only): the `+125 C` error rows are a
+true measurement of that card, and the `bn-sub-tnom125` / `bn-sub-tnom85`
+results are **sensitivity-only** evidence (`tnom = T` is not the upstream
+correction). The failure is IHP-Open-PDK issue #1098; merged PR #1102
+(`0243d867c6b7493526b141d2e4d74afa027e5b8e`) changed `vj` to `0.3357`. From
+issue #95 on, `make_requests.py` emits the card with exactly that one
+substitution (via `sim/tools/svaricap_overlay.py`, fail-closed on the v0.3.0
+text), records it in each `cell.json` (`dsubw_overlay`), and no longer
+generates the `tnom` variants. New records are therefore **not comparable
+byte-for-byte** with the older ones at hot corners; compare 27 C and below
+only against the old rows, and treat their 125 C rows as the first finite ones.
+See `sim/README.md`, "Model overlay policy".
+
 ## Results (record `records/20261009-002323-383f22e/`)
 
 `tank-ab-delta.csv` pairs each `bn-sub` row with its `bn-tank` row;

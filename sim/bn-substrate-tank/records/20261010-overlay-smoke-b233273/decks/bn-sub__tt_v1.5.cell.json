@@ -1,0 +1,20 @@
+{
+  "variant": "bn-sub",
+  "mos": "tt",
+  "vctrl": 1.5,
+  "c_cell_f": 5.63033e-15,
+  "q5": 83.9788,
+  "r_cell_ohm": 67.32038835418196,
+  "dsubw_overlay": {
+    "change": "vj 0.1 -> 0.3357",
+    "tool": "sim/tools/svaricap_overlay.py",
+    "upstream_issue": "IHP-GmbH/IHP-Open-PDK#1098",
+    "upstream_pull_request": "IHP-GmbH/IHP-Open-PDK#1102",
+    "upstream_merge_commit": "0243d867c6b7493526b141d2e4d74afa027e5b8e",
+    "v030_card": ".model dsubw d is = 2.45E-17 jsw = 5.959E-10 n = 4 ns = 1.029 cjo = 1.444E-15 vj = 0.1 m = 0.1052 cjp = 1.117E-09 php = 0.457 mjsw = 0.2595 fc = 0.95 cta = 1E-06",
+    "card": ".model dsubw d is = 2.45E-17 jsw = 5.959E-10 n = 4 ns = 1.029 cjo = 1.444E-15 vj = 0.3357 m = 0.1052 cjp = 1.117E-09 php = 0.457 mjsw = 0.2595 fc = 0.95 cta = 1E-06"
+  },
+  "cells_per_side": 16,
+  "mim_side_um": 3.65,
+  "source": "sim/varactor-characterization/records/20260927-081226-f88eb89.csv mos small 27C"
+}

@@ -87,7 +87,25 @@ eq status-nan "$(s2_status nan 1)" INSUFFICIENT
 WORKDIR="${W}/work"; mkdir -p "${WORKDIR}"
 RECORD_ID=testrec
 SG13G2_NGSPICE_MODELS="${W}/models"; mkdir -p "${SG13G2_NGSPICE_MODELS}"
-for f in cornerHBT cornerMOShv cornerCAP sg13g2_svaricaphv_mod sg13g2_hbt_mod; do echo "* ${f}" > "${SG13G2_NGSPICE_MODELS}/${f}.lib"; done
+for f in cornerHBT cornerCAP sg13g2_hbt_mod; do echo "* ${f}" > "${SG13G2_NGSPICE_MODELS}/${f}.lib"; done
+# cornerMOShv references both svaricap libraries, as the real one does, so the
+# capture closure brings both into the bundle for the overlay to patch.
+printf '* cornerMOShv\n.LIB mos_tt\n  .include sg13g2_svaricaphv_mod.lib\n.ENDL\n.LIB mos_mm\n  .include sg13g2_svaricaphv_mod_mismatch.lib\n.ENDL\n' \
+  > "${SG13G2_NGSPICE_MODELS}/cornerMOShv.lib"
+# svaricap stand-ins (issue #95): the capture applies the fail-closed svaricap
+# vj overlay, which refuses anything but the v0.3.0 bytes. Each stand-in carries
+# the one dsubw card line the overlay edits, and the overlay's expected-digest
+# table is swapped for the stand-ins' digests through the self-test hook
+# SVARICAP_OVERLAY_SPEC (as sim/tests/test-model-bundle.sh does). The overlay
+# itself is unchanged and still checks digest, card count and file type.
+for f in sg13g2_svaricaphv_mod sg13g2_svaricaphv_mod_mismatch; do
+  printf '* %s\n.model dsubw d is = 2.45E-17 n = 4 vj = 0.1 m = 0.1052 cjp = 1.117E-09\n' "${f}" \
+    > "${SG13G2_NGSPICE_MODELS}/${f}.lib"
+done
+printf '{"sg13g2_svaricaphv_mod.lib": "%s", "sg13g2_svaricaphv_mod_mismatch.lib": "%s"}\n' \
+  "$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_svaricaphv_mod.lib")" \
+  "$(sha256_of "${SG13G2_NGSPICE_MODELS}/sg13g2_svaricaphv_mod_mismatch.lib")" > "${W}/svaricap-spec.json"
+export SVARICAP_OVERLAY_SPEC="${W}/svaricap-spec.json"
 OSC_IND_MODEL="${W}/ind.spice"; echo "* ind" > "${OSC_IND_MODEL}"
 OSC_OSDI_MOSVAR="${W}/mosvar.osdi"; echo "osdi" > "${OSC_OSDI_MOSVAR}"
 PDK=ihp-sg13g2; PDK_ROOT="${W}/pdk"

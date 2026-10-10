@@ -251,6 +251,35 @@ alone.
 ship a simulatable model for is a first-class constraint on what this repo can
 evidence, not a footnote.
 
+## Model overlay policy (svaricap `dsubw`, issue #95)
+
+Three things are kept distinct:
+
+1. **The v0.3.0 defect.** The pinned PDK's `sg13g2_svaricaphv_mod.lib` and
+   `sg13g2_svaricaphv_mod_mismatch.lib` give the `dsubw` card `vj = 0.1`, which
+   is NaN in ngspice above ~52.5 C with `bn` on the substrate (IHP-Open-PDK
+   issue #1098). Existing records describe those bytes and are never rewritten.
+2. **The sanctioned overlay.** IHP-Open-PDK PR #1102 (merge commit
+   `0243d867c6b7493526b141d2e4d74afa027e5b8e`) changed `vj = 0.1` to
+   `vj = 0.3357` in both files. Until the pin moves, runs apply that exact
+   substitution to their **private copy** of the model closure:
+   `sim/tools/svaricap_overlay.py` (logic) via `apply_svaricap_vj_overlay` in
+   `sim/lib.sh` (called by `osc_capture_model_bundle`, so oscillator and
+   phase-noise benches get it; passive-tank decks inline the same card from the
+   same module). It never writes `$PDK_ROOT`, refuses (fail-closed, before any
+   simulation) unless each file has the v0.3.0 sha256 and the card text occurs
+   exactly once, and **refuses a file that already carries the fix** instead of
+   double-patching. Provenance: the bundle's `overlay/svaricap-vj.json`
+   (original and overlaid digests, upstream issue/PR/merge commit) is in the
+   manifest and `-model-inputs.json`, and the record summary prints the
+   pre-overlay digests. `tnom = T` is not a production workaround.
+3. **A future PDK-pin upgrade.** A pin that includes PR #1102 makes the overlay
+   unnecessary: it will refuse ("already carries the upstream fix"), which is
+   the signal to delete the overlay and its calls, not to bypass it. Do not
+   repin just for this; a pin bump changes far more input surface.
+
+No spec bound is relaxed by the overlay; row 11 stays -40 C to +125 C.
+
 ## Environment
 
 `source env.sh` resolves `PDK_ROOT`/`PDK` — an explicit export wins, otherwise

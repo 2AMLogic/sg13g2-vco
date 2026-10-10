@@ -282,6 +282,14 @@ osc_bundle_sha() {
   input_bundle_sha "${OSC_BUNDLE_MANIFEST}" "$1"
 }
 
+# osc_overlay_original_sha <file name> -- the pre-overlay (v0.3.0) digest, from
+# the captured overlay provenance.
+osc_overlay_original_sha() {
+  osc_require_bundle || return 1
+  awk -v n="$1" 'index($0, "\"name\": \"" n "\"") { match($0, /original_sha256": "[0-9a-f]+/); print substr($0, RSTART + 19, RLENGTH - 19); exit }' \
+    "${OSC_BUNDLE_DIR}/overlay/svaricap-vj.json"
+}
+
 # osc_ind_model_sha -- the captured digest of the non-PDK inductor model.
 osc_ind_model_sha() { osc_bundle_sha "inductor/$(basename "${OSC_IND_MODEL}")"; }
 
@@ -315,6 +323,13 @@ osc_capture_model_bundle() {
   # shellcheck disable=SC2086  # OSC_MODEL_LIB_ROOTS is a word list
   capture_input_closure "${SG13G2_NGSPICE_MODELS}" "${b}" models "${m}" pdk-model ${OSC_MODEL_LIB_ROOTS} || {
     echo "error: could not capture the SG13G2 model libraries and their nested references; no simulation was run." >&2
+    return 1
+  }
+  # Issue #95: the pinned v0.3.0 svaricap dsubw card (vj = 0.1) is NaN above
+  # ~52 C; apply the upstream PR #1102 correction to the PRIVATE copies only,
+  # before digests are final. Fail-closed (sim/tools/svaricap_overlay.py).
+  apply_svaricap_vj_overlay "${b}" models "${m}" || {
+    echo "error: the svaricap model overlay was refused; no simulation was run." >&2
     return 1
   }
   capture_input_closure "$(dirname "${OSC_IND_MODEL}")" "${b}" inductor "${m}" inductor-model "$(basename "${OSC_IND_MODEL}")" || {
@@ -357,7 +372,7 @@ osc_model_inputs_json() {
     {
       orig = $4
       if (root != "/" && index(orig, root) == 1) orig = substr(orig, length(root) + 1)
-      kept = (retain && ($1 == "inductor-model" || $1 == "simulator-init")) ? js(sp $2) : "null"
+      kept = (retain && ($1 == "inductor-model" || $1 == "simulator-init" || $1 == "model-overlay")) ? js(sp $2) : "null"
       line[++n] = sprintf("    {\"role\": %s, \"bundle_path\": %s, \"sha256\": %s, \"original_path\": %s, \"retained_snapshot\": %s}", \
                           js($1), js($2), js($3), js(orig), kept)
     }
@@ -394,7 +409,7 @@ osc_retain_model_inputs() {
   json="${REPO_ROOT}/$(osc_model_inputs_rel)"
   while IFS='	' read -r role rel sha _; do
     case "${role}" in
-      inductor-model|simulator-init)
+      inductor-model|simulator-init|model-overlay)
         dest="${REPO_ROOT}/$(osc_retained_rel "${rel}")"
         osc_put_append_only "${OSC_BUNDLE_DIR}/${rel}" "${dest}" || return 1 ;;
     esac
@@ -490,6 +505,12 @@ osc_provenance_md() {
   echo "  - \`sg13g2_svaricaphv_mod.lib\` sha256 \`$(osc_bundle_sha models/sg13g2_svaricaphv_mod.lib)\`"
   echo "  - \`sg13g2_hbt_mod.lib\` sha256 \`$(osc_bundle_sha models/sg13g2_hbt_mod.lib)\`"
   echo "  - \`mosvar.osdi\` (this run's build) sha256 \`$(osc_bundle_sha "osdi/$(basename "${OSC_OSDI_MOSVAR}")")\`"
+  echo "  - **Model overlay** (issue #95): the two svaricap libraries above are the"
+  echo "    PDK v0.3.0 files with ONLY \`dsubw vj = 0.1\` -> \`vj = 0.3357\` applied to the"
+  echo "    private copies (IHP-Open-PDK issue #1098, PR #1102, merge commit"
+  echo "    \`0243d867c6b7493526b141d2e4d74afa027e5b8e\`). Pre-overlay digests:"
+  echo "    \`sg13g2_svaricaphv_mod.lib\`: \`$(osc_overlay_original_sha sg13g2_svaricaphv_mod.lib)\`;"
+  echo "    \`sg13g2_svaricaphv_mod_mismatch.lib\`: \`$(osc_overlay_original_sha sg13g2_svaricaphv_mod_mismatch.lib)\`."
   echo "  - **Captured model inputs** (issue #133): these digests are of private"
   echo "    copies taken after preflight/build and before the first simulation;"
   echo "    every deck was rendered against them. ${n_inputs} files (the transitive"
