@@ -18,7 +18,9 @@ trap cleanup EXIT
 fails=0
 pass() { echo "PASS $1"; }
 fail() { echo "FAIL $1"; fails=$((fails + 1)); }
-check() { local d="$1"; shift; if eval "$@"; then pass "$d"; else fail "$d"; fi; }
+# check DESC BODY: BODY is one single-quoted shell string, evaluated here so
+# its variables expand at check time (hence eval as a string, not an array).
+check() { local d="$1"; shift; if eval "$*"; then pass "$d"; else fail "$d"; fi; }
 sha() { sha256sum "$1" | cut -d' ' -f1; }
 
 # ---- throwaway sim/ copy with the pins rewritten to the stub tarballs -------
@@ -144,6 +146,7 @@ export STUB_TAG=4; run >/dev/null; GOOD_SHA="$(sha "${OUT}/mosvar.osdi")"
 res() { ( cd / && bash -c 'source "$1" >/dev/null 2>&1; printf %s "$SG13G2_OSDI_DIR"' _ "${S}/env.sh" ); }
 check "default env.sh resolution is the cache dir" '[[ "$(res)" == "${OUT}" ]]'
 check "helper --check names the same dir as env.sh" 'run --check && grep -qF "in $(res) " "${T}/out.log"'
+# shellcheck disable=SC2034  # read inside the single-quoted check bodies below (eval'd by check)
 OVR="${T}/override"
 check "explicit override honoured by env.sh" '[[ "$(SG13G2_OSDI_DIR="${OVR}" res)" == "${OVR}" ]]'
 check "override: helper publishes there, not in the default or PDK dir" \
@@ -175,7 +178,8 @@ pids=()
 for i in 1 2 3; do
   ( PATH="${T}/bin:${PATH}" "${BUILD}" --force > "${T}/par$i.log" 2>&1 ) & pids+=($!)
 done
-rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done
+# shellcheck disable=SC2034  # read inside the single-quoted check body below (eval'd by check)
+{ rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done; }
 check "simultaneous builds all succeed" '[[ ${rc} -eq 0 ]]'
 check "simultaneous builds leave one valid library and no staging" 'run --check && ! stage_left "${OUT}"'
 
