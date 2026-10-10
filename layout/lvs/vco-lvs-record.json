@@ -136,7 +136,7 @@
         }
       ],
       "runset_log_outcome": "Netlists don't match",
-      "reading": "IHP's runset runs flag_missing_ports (strict top-port mode) only after a matching compare. It logs one error per top-level pin net whose layout name is not exactly the reference port name. The three findings are the three pin nets that also carry a spiral's LA/LB PCell text, which the runset connects as a net name (ind_connections.lvs: connect(ind_pin, ind_text)), so the layout net is named e.g. 'LA,VDD'. Each of those nets IS paired with the named reference net by the cross-reference (gated by lvs.sh), so these are name findings, not connectivity findings; run_lvs.py's own summary nevertheless reports FAIL for this run. The same three findings were present, unread, under control C1 before issue #80 (PROVENANCE.md section 14.6). They are not addressed by the label-order step and are not suppressed (no --ignore_top_ports_mismatch)."
+      "reading": "IHP's runset runs flag_missing_ports (strict top-port mode) only after a matching compare. It logs one error per top-level pin net whose layout name is not exactly the reference port name. The three findings are the three pin nets that also carry a spiral's LA/LB PCell text, which the runset connects as a net name (ind_connections.lvs: connect(ind_pin, ind_text)), so the layout net is named e.g. 'LA,VDD'. Each of those nets IS paired with the named reference net by the cross-reference (gated by lvs.sh), so these are name findings, not connectivity findings; run_lvs.py's own summary nevertheless reports FAIL for this run. The same three findings were present, unread, under control C1 before issue #80 (PROVENANCE.md section 14.6). They are not addressed by the label-order step and are not suppressed (no --ignore_top_ports_mismatch). Tracked in issue #162."
     },
     "explained_differences": [
       {
@@ -817,7 +817,7 @@
   },
   "limits": [
     "the verdict is IHP's runset's plus one repo-local step; klt lvs could not run it, so no klt-native LVS envelope (and no klt power_connectivity block) exists",
-    "the `match` is the cross-reference's; the runset's strict top-port check still logs three port-name findings and run_lvs.py's summary says FAIL (verdict_of_record.strict_port_check)",
+    "the `match` is the cross-reference's; the runset's strict top-port check still logs three port-name findings and run_lvs.py's summary says FAIL (verdict_of_record.strict_port_check; issue #162)",
     "the label-order step is this repo's accommodation of a runset artefact, not IHP's; it is reviewed and controlled here, and removable (verdict_of_record.removal)",
     "one engine only: no second, independent extractor recognizes this block's HBT/varactor/inductor devices",
     "the reference is DERIVED (T1..T6); T4 (rppd for ideal R) and T5 (substrate net + guard-ring tie) are the layout phase's own physical choices restated, so their parameters are checked against the generator's intent, not against the schematic",
