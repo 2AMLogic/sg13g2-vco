@@ -345,6 +345,7 @@ mkfix sim/oscillator-core/tests/test_row7.sh "$PASSL"
 mkfix sim/oscillator-core/run_validity_check.sh 'echo "all cases passed"'
 mkfix sim/oscillator-core/tests/test_supply_stage2.sh 'echo "PASS a"; echo "PASS b"; touch sim/scribble'
 mkfix sim/phase-noise/tests/test_validity.sh 'echo "PASS a"; echo "all cases passed"'
+mkfix sim/phase-noise/tests/test_trace_gate.sh 'echo "PASS a"; echo "all cases passed"'
 cp "$HERE/run-grading-fixtures.sh" "$G/.github/scripts/"
 git -C "$G" init -q -b main
 git -C "$G" config user.email t@t; git -C "$G" config user.name t
@@ -380,6 +381,31 @@ mkfix sim/phase-noise/tests/test_validity.sh 'echo "PASS a"; echo "FAIL pn"; ech
 grun
 if [ "$RC" -eq 1 ] && grep -q 'pn-validity: no PASS lines or a FAIL line' "$OUT"; then
   ok "dispatcher: FAIL line in pn-validity -> exit 1"; else bad "dispatcher pn fail: rc=$RC"; fi
+
+TG=sim/phase-noise/tests/test_trace_gate.sh
+mkfix $TG 'echo "PASS a"; echo "all cases passed"; exit 3'
+grun
+if [ "$RC" -eq 1 ] && grep -q 'pn-trace-gate exited 3' "$OUT"; then
+  ok "dispatcher: nonzero pn-trace-gate -> exit 1"; else bad "dispatcher tg rc: rc=$RC"; fi
+mkfix $TG 'echo "PASS a"; echo "FAIL tg"; echo "all cases passed"'
+grun
+if [ "$RC" -eq 1 ] && grep -q 'pn-trace-gate: no PASS lines or a FAIL line' "$OUT"; then
+  ok "dispatcher: FAIL line in pn-trace-gate -> exit 1"; else bad "dispatcher tg fail: rc=$RC"; fi
+mkfix $TG 'echo "all cases passed"'
+grun
+if [ "$RC" -eq 1 ] && grep -q 'pn-trace-gate: no PASS lines' "$OUT"; then
+  ok "dispatcher: pn-trace-gate without PASS lines -> exit 1"; else bad "dispatcher tg nopass: rc=$RC"; fi
+mkfix $TG 'echo "PASS a"'
+grun
+if [ "$RC" -eq 1 ] && grep -q "pn-trace-gate: no 'all cases passed'" "$OUT"; then
+  ok "dispatcher: pn-trace-gate without completion marker -> exit 1"; else bad "dispatcher tg marker: rc=$RC"; fi
+mkfix $TG 'echo "PASS a"; echo "all cases passed"'
+# missing python3 -> setup error (exit 2), not a misleading fixture verdict
+NOPY="$T/bin-nopy"; mkdir -p "$NOPY"
+for f in "$NONG"/*; do [ "$(basename "$f")" = python3 ] || ln -s "$(readlink -f "$f")" "$NOPY/"; done
+PATH="$NOPY" GRADING_SRC="$G" METHOD_CHECK_MIN_S2=2 "$GR" > "$OUT" 2>&1; RC=$?
+if [ "$RC" -eq 2 ] && grep -q 'python3 not found' "$OUT"; then
+  ok "dispatcher: missing python3 -> exit 2"; else bad "dispatcher no python3: rc=$RC"; fi
 
 echo "check-all self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

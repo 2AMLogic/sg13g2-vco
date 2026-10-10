@@ -2,14 +2,15 @@
 # Simulator-free grading-fixture dispatcher (issue #132). The single list of
 # the repo's PDK-free, ngspice-free grading/known-answer fixtures: the emit-
 # tuning, row-3, row-7, waveform-validity (stubbed simulator), DR-004
-# stage-2 supply and phase-noise validity (#137) fixtures. Shared by `check-all.sh grading-fixtures` (in the
+# stage-2 supply, phase-noise validity (#137) and raw-trace gate (#157,
+# wired in by #217) fixtures. Shared by `check-all.sh grading-fixtures` (in the
 # `test` / `ci` aggregates) and run-method-checks.sh, so the two cannot drift.
 #
 #   .github/scripts/run-grading-fixtures.sh [log-dir]
 #
 # By default it runs from a DISPOSABLE copy of the git-tracked tree, so the
 # committed append-only sim/ evidence is never touched. It needs only bash,
-# awk, grep and git: no ngspice, xschem, OSDI or PDK_ROOT (those variables
+# awk, grep, git and python3 (the raw-trace gate fixture): no ngspice, xschem, OSDI or PDK_ROOT (those variables
 # are scrubbed from each fixture's environment to prove it).
 # sim/tests/test-source-capture.sh is NOT listed here: it already runs via
 # test-record-currency.sh (the currency-selftest target).
@@ -49,6 +50,11 @@ elif [[ -n "${CLEAN}" ]]; then
   trap "rm -rf ${CLEAN}" EXIT
 fi
 cd "${TREE}" || exit 2
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "error: python3 not found on PATH (needed by the pn-trace-gate fixture)" >&2
+  exit 2
+fi
 
 FAILS=0
 fail() { echo "FAIL: $*" >&2; FAILS=$((FAILS + 1)); }
@@ -110,6 +116,15 @@ run_fixture pn-validity sim/phase-noise/tests/test_validity.sh
 need_pass_lines pn-validity
 if ! grep -q '^all cases passed$' "${LOGS}/pn-validity.log"; then
   fail "pn-validity: no 'all cases passed' line in ${LOGS}/pn-validity.log"
+fi
+
+# Raw-waveform gate at the run_isf_pilot.sh driver boundary (issue #157, run
+# here since #217): stubbed ngspice/xschem/PDK, faulty traces must stop the
+# driver, valid ones proceed. Needs python3.
+run_fixture pn-trace-gate sim/phase-noise/tests/test_trace_gate.sh
+need_pass_lines pn-trace-gate
+if ! grep -q '^all cases passed$' "${LOGS}/pn-trace-gate.log"; then
+  fail "pn-trace-gate: no 'all cases passed' line in ${LOGS}/pn-trace-gate.log"
 fi
 
 if [[ ${FAILS} -gt 0 ]]; then

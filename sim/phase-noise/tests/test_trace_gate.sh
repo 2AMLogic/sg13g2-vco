@@ -22,7 +22,17 @@ fail() { echo "FAIL $1"; fails=$((fails + 1)); }
 
 # ---- throwaway repo copy with stubs ----------------------------------------
 R="${T}/repo"; mkdir -p "${R}"
-( cd "${REAL_REPO}" && git ls-files -z design sim | grep -zv '^sim/.*/records/' \
+# File list: tracked files when run from a git checkout; otherwise (the
+# grading-fixture dispatcher runs from a disposable copy of the tracked tree,
+# which has no .git) every file under design/ and sim/ -- the same set.
+list_files() {
+  if git -C "${REAL_REPO}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git -C "${REAL_REPO}" ls-files -z design sim
+  else
+    ( cd "${REAL_REPO}" && find design sim -type f -print0 )
+  fi
+}
+( cd "${REAL_REPO}" && list_files | grep -zv '^sim/.*/records/' \
     | tar --null -T - -cf - ) | tar -C "${R}" -xf -
 printf '#!/usr/bin/env bash\nexit 0\n' > "${R}/design/netlist.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' > "${R}/sim/tools/build-osdi.sh"
