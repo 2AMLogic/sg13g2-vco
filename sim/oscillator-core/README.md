@@ -299,6 +299,47 @@ solution's* own discretization error with 32 OSDI varactors and four HBTs in
 the loop, so `run_pilot_grid.sh` measures that separately by repeating the
 nominal band-centre point at a coarser ceiling — see the results below.
 
+## Restarting the graded sweep (issue #154)
+
+`run_pvt_sweep.sh` with no argument is the unchanged cold start. After an
+interrupted run, the completed work can be reused under a **new** record:
+
+```bash
+sim/oscillator-core/run_pvt_sweep.sh --resume-from <earlier-record-id>
+```
+
+The earlier record is read-only input; it is never reopened for writing. Every
+run now writes, for each finished transient point (status `PASS` or `NOSC`
+with `meas_status=VALID`), a completion checkpoint `corners/<id>/<point>.ckpt`
+(plus the verbatim CSV row `<point>.row`) **after** the netlist, log and row are
+final, by temp file and rename. It holds the point identity, the sha256 of the
+netlist, log and row, and the run fingerprint: sha256 of the device body,
+transient template and the model-input manifest (digests and bundle paths of
+the captured bundle), the simulator version, the measurement settings
+(`tstep/tstop/tmeas_start/settle`, `.ic`, rail, CSV layout), and the extractor
+code (`sim/lib.sh` and `osc_bench.sh` as a whole), closed by `complete=1` and a
+digest of the checkpoint itself. A restart imports a point only when all of that
+re-verifies against the **current** run; otherwise it prints
+`resume: NOT reusing <point> ...: <reason>` and simulates the point normally.
+The default is to refuse: file existence or a zero exit status is never taken as
+completion, records without checkpoints (everything before #154) are never
+reusable, a failed/`NODATA`/`INVALID` point is never checkpointed, and a retained
+`NOSC` stays a `NOSC` finding. Because the extractor files are hashed whole, any
+edit to `sim/lib.sh` or `osc_bench.sh` makes older checkpoints non-reusable.
+
+Reused artifacts are copied into the new record with their sources named in
+`records/<id>-reuse.csv`; the record's `Execution` bullet and the console report
+the executed, reused and refused counts separately, and the corner/global
+summaries (including the full-grid row-3/row-7 coverage requirement) are
+recomputed over the combined rows of the new record.
+
+**Limitation: only completed transient points are reused.** The row-6 margin
+ladders are always re-run in full, because no whole-ladder checkpoint contract
+exists. Phase noise and the other runners are unaffected. Scratch traces are
+not retained (the scratch workspace is removed on exit); reuse relies on the
+retained CSV, netlist and log only. The fault-injection fixtures are
+`sim/tests/test-resume-checkpoint.sh` (stub simulator, disposable tree).
+
 ## Reproducing it
 
 Three no-argument entry points. The two PDK-dependent ones run their own
