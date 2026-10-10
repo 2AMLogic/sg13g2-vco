@@ -102,15 +102,47 @@ def _files_under(root, rel):
 
 
 def group_records(root):
-    """{(records_dir, id_or_None, entry_name_if_unmapped): [files]}."""
+    """{(records_dir, id_or_None, dir_name_or_entry_name): [files]}.
+
+    Entries sharing a record id group together (flat multi-file families).
+    The third key element is None for flat/bare-ID groups. A top-level
+    directory whose name is not the bare record id (a suffixed directory
+    identity) is kept as its own identity: with no bare-ID path in the group,
+    a single such directory names the group; several such directories are
+    never merged, each becomes its own entry (build_index flags them as
+    ambiguous) and any flat files stay in a separate flat entry.
+    For unmapped names (id None) the third element is the entry name."""
     groups = {}
     for rdir in record_roots(root):
+        by_id = {}
         for name in sorted(os.listdir(os.path.join(root, rdir))):
             m = RECORD_ID.match(name)
             rid = m.group(1) if m else None
-            key = (rdir, rid, None if rid else name)
-            groups.setdefault(key, []).extend(
-                _files_under(root, rdir + "/" + name))
+            if rid is None:
+                groups.setdefault((rdir, None, name), []).extend(
+                    _files_under(root, rdir + "/" + name))
+            else:
+                by_id.setdefault(rid, []).append(name)
+        for rid, names in sorted(by_id.items()):
+            def isdir(n):
+                full = os.path.join(root, rdir, n)
+                return os.path.isdir(full) and not os.path.islink(full)
+            bare = any(n in (rid, rid + ".md") for n in names)
+            dirs = [n for n in names if isdir(n)]
+            flat = [n for n in names if n not in dirs]
+            if bare or not dirs:
+                owners = {None: names}
+            elif len(dirs) == 1:
+                owners = {dirs[0]: names}
+            else:
+                owners = dict((d, [d]) for d in dirs)
+                if flat:
+                    owners[None] = flat
+            for owner, members in owners.items():
+                files = []
+                for n in members:
+                    files.extend(_files_under(root, rdir + "/" + n))
+                groups.setdefault((rdir, rid, owner), []).extend(files)
     return {k: sorted(v) for k, v in groups.items()}
 
 
@@ -378,8 +410,8 @@ def integrity_scan(index, allowlist=None):
 
 
 def primary_path(rdir, rid, name, files):
-    if rid is None:
-        return rdir + "/" + name
+    if rid is None or name is not None:
+        return rdir + "/" + name  # unmapped entry, or suffixed directory
     for cand in (rdir + "/" + rid + ".md", rdir + "/" + rid):
         if cand in files or any(f.startswith(cand + "/") for f in files):
             return cand
@@ -486,6 +518,27 @@ def classify_group(root, key, files, current):
 
 # ------------------------------------------------------------------ index
 
+def _flag_ambiguous(entries):
+    """Distinct entries sharing (records dir, record id) are genuinely
+    ambiguous directory identities: never merged, never picked between."""
+    ids = {}
+    for e in entries:
+        if e["record_id"] is not None:
+            ids.setdefault((sim_record_root(e["path"]), e["record_id"]),
+                           []).append(e)
+    for (rdir, rid), es in sorted(ids.items()):
+        if len(es) < 2:
+            continue
+        paths = ", ".join(sorted(e["path"] for e in es))
+        for e in es:
+            e["state"] = "unknown"
+            e["basis"] = "ambiguous-directory-identity"
+            e["reason"] = ("record id %s maps to %d distinct entries under "
+                           "%s (%s); not merged and none preferred, so no "
+                           "currency can be assigned." % (rid, len(es), rdir,
+                                                          paths))
+
+
 def build_index(root):
     src = os.path.join(root, SOURCE)
     if not os.path.isfile(src):
@@ -495,6 +548,7 @@ def build_index(root):
                for k, f in sorted(group_records(root).items(),
                                   key=lambda kv: (kv[0][0], kv[0][1] or "",
                                                   kv[0][2] or ""))]
+    _flag_ambiguous(entries)
     entries.sort(key=lambda e: e["path"])
     counts = {s: sum(1 for e in entries if e["state"] == s)
               for s in ("current", "superseded", "unknown")}
@@ -589,8 +643,9 @@ def validate_citations(root, paths, index=None):
         errors.append(msg)
     by_key = {}
     for e in index["records"]:
-        rdir = posixpath.dirname(e["path"])
-        by_key[(rdir, e["record_id"])] = e
+        if e["record_id"] is not None:
+            by_key.setdefault((sim_record_root(e["path"]), e["record_id"]),
+                              []).append(e)
     for orig, n in cited:
         if n is None:
             errors.append("%s: not a normalizable repository-relative path" % orig)
@@ -601,7 +656,14 @@ def validate_citations(root, paths, index=None):
             continue
         first = n[len(rdir) + 1:].split("/")[0]
         m = RECORD_ID.match(first)
-        e = by_key.get((rdir, m.group(1))) if m else None
+        es = by_key.get((rdir, m.group(1)), []) if m else []
+        if len(es) > 1:
+            errors.append("%s: ambiguous directory identity: record id %s "
+                          "maps to %d entries under %s (%s)"
+                          % (n, m.group(1), len(es), rdir,
+                             ", ".join(sorted(x["path"] for x in es))))
+            continue
+        e = es[0] if es else None
         if e is None:
             errors.append("%s: ambiguous or unmapped: cannot map to exactly "
                           "one record id under %s" % (n, rdir))

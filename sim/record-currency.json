@@ -42,7 +42,7 @@
         "resolution": "resolved",
         "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
       },
-      "path": "sim/bn-substrate-tank/records/20261009-205236-2eb3659-cand-n14-m1p14/decks/cand-n14-m1p14__ff_v1.5.cell.json",
+      "path": "sim/bn-substrate-tank/records/20261009-205236-2eb3659-cand-n14-m1p14",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
       "record_id": "20261009-205236-2eb3659",
       "state": "unknown"
@@ -63,7 +63,7 @@
         "resolution": "resolved",
         "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
       },
-      "path": "sim/bn-substrate-tank/records/20261009-205834-2eb3659-cand-n12-m1p14/decks/cand-n12-m1p14__ff_v1.5.cell.json",
+      "path": "sim/bn-substrate-tank/records/20261009-205834-2eb3659-cand-n12-m1p14",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
       "record_id": "20261009-205834-2eb3659",
       "state": "unknown"
