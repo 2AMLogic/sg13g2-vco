@@ -6,6 +6,33 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-10
 
+- **PR #216**: sim: validate passive-tank candidate paths and finite sizing
+- **PR #215**: sim: propagate passive-tank fleet collection failures to exit status
+- **PR #214**: fix(sim): reserve surrogate bench evidence before publication
+- **PR #211**: ci: run the OSDI staging regression through the shared check runner
+- **PR #208**: sim: preserve suffixed directory identities in currency citation lookup
+- **PR #207**: sim: reject empty tank evidence inventories in strict analysis
+- **PR #204**: sim: reserve tank A/B record namespaces before fleet submission
+- **PR #205**: ci: fail Python test gates when discovery finds zero tests
+- **PR #201**: Install ratification reviewer trees; correct DR-003/004/005 Status (#99)
+- **PR #200**: docs: README status points to DR-006 gate, not closed #93
+- **PR #197**: ci: scan paired deck integrity for unrecognized record names
+- **Issue #210** (closed): sim: propagate passive-tank fleet collection failures to exit status
+- **Issue #209** (closed): sim: validate passive-tank candidate paths and finite sizing
+- **Issue #206** (closed): sim: reject empty tank evidence inventories in strict analysis
+- **Issue #203** (closed): sim: reserve tank A/B record namespaces before fleet submission
+- **Issue #202** (closed): ci: fail Python test gates when discovery finds zero tests
+- **Issue #199** (closed): docs: README/sim README still describe closed #93 as in-flight; point to DR-006 gate
+- **Issue #195** (closed): sim: preserve suffixed directory identities in currency citation lookup
+- **Issue #194** (closed): ci: scan paired deck integrity even when a record name is unrecognized
+- **Issue #191** (closed): sim: reserve surrogate bench evidence before publication
+- **Issue #190** (closed): Review temporary-fixture write guards
+- **Issue #189** (closed): Review temporary-directory cleanup guards
+- **Issue #182** (closed): ci: run the OSDI staging regression through the shared check runner
+- **Issue #99** (closed): Install ratification/ee-key and ratification/market-key reviewer trees (product#151)
+
+### 2026-10-10
+
 - **PR #193**: sim: validate every surrogate probe sample before domain classification
 - **PR #188**: fix(supply-stage2): validate finite numbers before grading (#175)
 - **PR #187**: sim: compare complete captured model identities in the supply report
