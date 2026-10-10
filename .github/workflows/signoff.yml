@@ -124,6 +124,20 @@ jobs:
         if: github.event_name == 'pull_request'
         run: .github/scripts/check-all.sh append-only
 
+  # Layout evidence/GDS digest gate (issue #106). Pure bash + sha256sum +
+  # python3 stdlib: no klt, no PDK.
+  layout-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Layout-evidence checker self-test
+        run: .github/scripts/test-check-layout-evidence.sh
+
+      - name: Layout records vouch for the committed GDS
+        run: .github/scripts/check-layout-evidence.sh
+
   spec-change-has-dr:
     # Presence check: an edit to spec/target-spec.md needs a
     # spec/decision-records/DR-NNN-slug.md in the same PR (issue #89).
