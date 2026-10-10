@@ -538,6 +538,7 @@ GRID_HOURS="$(awk -v t="${T_WALL_TOTAL}" -v n="${N_RUNS}" 'BEGIN{ printf "%.0f",
   echo "  - Per-realisation scalars: \`records/${RECORD_ID}-pilot-realizations.csv\`"
   echo "  - Port-noise spectra: \`records/${RECORD_ID}-pilot-portnoise.csv\`"
   echo "  - Scalar summary: \`records/${RECORD_ID}-pilot-summary.csv\`"
+  local_grid_record_note
   echo "- **Reproduce**: \`sim/phase-noise/run_isf_pilot.sh\` (no arguments)"
   echo "  against the pinned PDK."
   echo "- **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
