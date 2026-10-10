@@ -505,6 +505,7 @@ osc_provenance_md() {
   echo "  - \`sg13g2_svaricaphv_mod.lib\` sha256 \`$(osc_bundle_sha models/sg13g2_svaricaphv_mod.lib)\`"
   echo "  - \`sg13g2_hbt_mod.lib\` sha256 \`$(osc_bundle_sha models/sg13g2_hbt_mod.lib)\`"
   echo "  - \`mosvar.osdi\` (this run's build) sha256 \`$(osc_bundle_sha "osdi/$(basename "${OSC_OSDI_MOSVAR}")")\`"
+  echo "    (built by \`sim/tools/build-osdi.sh\` into \`${OSC_OSDI_MOSVAR}\`, never the PDK install; decks load the bundle copy of those bytes)"
   echo "  - **Model overlay** (issue #95): the two svaricap libraries above are the"
   echo "    PDK v0.3.0 files with ONLY \`dsubw vj = 0.1\` -> \`vj = 0.3357\` applied to the"
   echo "    private copies (IHP-Open-PDK issue #1098, PR #1102, merge commit"

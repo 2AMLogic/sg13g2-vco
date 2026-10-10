@@ -36,7 +36,7 @@
     "compiler_tag": "v24.0.1mob",
     "compiler_invocation_name": "openvaf-r",
     "models_built": ["mosvar.osdi"],
-    "install_dir": "PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi (PDK-install territory, not tracked in this repo)",
+    "install_dir": "$SG13G2_OSDI_DIR, default ${SG13G2_TOOLS_CACHE:-~/.cache/sg13g2-vco}/osdi (untracked writable cache; resolved by sim/env.sh; the PDK install is never written -- issue #96)",
     "models_this_study_actually_needs": ["mosvar.osdi"],
     "note": "Scoped to mosvar only -- this repo's testbenches do not yet instantiate PSP103 or r3_cmc. Extend build-osdi.sh's MODELS/REQUIRED_OSDI arrays the day one does.",
     "ngspice_actually_used": "ngspice-46"

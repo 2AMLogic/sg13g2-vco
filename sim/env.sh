@@ -15,7 +15,8 @@
 # confusing "unknown subckt" failure several layers down instead of a clear
 # message here.
 #
-# Exports on success: PDK, PDK_ROOT, SG13G2_NGSPICE_MODELS.
+# Exports on success: PDK, PDK_ROOT, SG13G2_NGSPICE_MODELS, SG13G2_OSDI_DIR
+# (override: export SG13G2_OSDI_DIR; default ${SG13G2_TOOLS_CACHE:-~/.cache/sg13g2-vco}/osdi).
 #
 # This file is sourced, not executed, so it has no shebang; the directive
 # below tells shellcheck which dialect to assume.
@@ -60,7 +61,10 @@ fi
 # purpose, per this comment's earlier revision, so this file never carried an
 # untested code path.
 if [[ -n "${PDK_ROOT:-}" && -d "${PDK_ROOT}/${PDK}/libs.tech/ngspice/models" ]]; then
-  export SG13G2_OSDI_DIR="${PDK_ROOT}/${PDK}/libs.tech/ngspice/osdi"
+  # The PDK install is never written (issue #96): the library lives in a
+  # writable cache. An exported SG13G2_OSDI_DIR is the explicit override.
+  # sim/tools/build-osdi.sh sources this file, so helper and parents agree.
+  export SG13G2_OSDI_DIR="${SG13G2_OSDI_DIR:-${SG13G2_TOOLS_CACHE:-${HOME}/.cache/sg13g2-vco}/osdi}"
   if [[ ! -f "${SG13G2_OSDI_DIR}/mosvar.osdi" ]]; then
     echo "sg13g2: mosvar.osdi not built yet in ${SG13G2_OSDI_DIR}" >&2
     echo "sg13g2: sg13_hv_svaricap will not simulate until it is." >&2

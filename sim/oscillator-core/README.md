@@ -346,6 +346,21 @@ Three no-argument entry points. The two PDK-dependent ones run their own
 preflight (`design/netlist.sh --check`, then `sim/tools/build-osdi.sh`), so
 there is no hidden manual step — `sim/README.md` rule 1.
 
+**OSDI library location (issue #96).** `build-osdi.sh` never writes the PDK
+install. `sim/env.sh` resolves one directory for the helper and every
+consumer: `$SG13G2_OSDI_DIR` if exported (explicit override), else
+`${SG13G2_TOOLS_CACHE:-~/.cache/sg13g2-vco}/osdi`. A build compiles into a
+staging directory beside it, loads that exact candidate with the selected
+`ngspice` (AC probe, scratch `HOME`/cwd so no `.spiceinit` can substitute a
+model), and renames it into place only on success; a compiler failure,
+incompatible OSDI ABI, missing `ngspice`, zero-exit load errors or a missing
+AC result exit non-zero and leave any previously published library
+byte-for-byte unchanged. `--force` rebuilds with the same validation.
+`build-osdi.sh --check` only probes the resolved library (no download,
+compile or replace). Publishing into the PDK's own `osdi/` directory is
+refused. Records hash the bytes actually loaded (the bundle copy of the
+library built there). Regression: `sim/tests/test-build-osdi-staging.sh`.
+
 ```bash
 sim/oscillator-core/run_method_check.sh   # ~1 min, no PDK required
 sim/oscillator-core/run_pilot_grid.sh     # ~2 CPU-hours, a DECLARED SUBSET

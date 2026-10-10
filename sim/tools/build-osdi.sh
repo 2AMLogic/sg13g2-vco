@@ -34,13 +34,19 @@
 # not yet instantiate PSP103 or r3_cmc, and this script does not build
 # models nothing here loads.
 #
-# Output goes to $PDK_ROOT/$PDK/libs.tech/ngspice/osdi/ -- the location the
-# PDK's own .spiceinit and install.py use, and where a prebuilt
-# `mosvar.osdi` may already exist (see above: this script OVERWRITES it with
-# a build whose compiler and source are both pinned and verified here,
-# unless --check is given). That is PDK-install territory (generated
-# output), NOT tracked in this repo: .osdi files are platform-specific
-# native shared libraries and are deliberately not committed here.
+# OUTPUT LOCATION (issue #96). The PDK install is NEVER written: it may be
+# shared between users/sweeps, and a prebuilt `mosvar.osdi` there (possibly
+# the only one the host's ngspice can load) must survive this script. The
+# library goes to $SG13G2_OSDI_DIR, resolved by sim/env.sh -- the same policy
+# every consumer uses: $SG13G2_OSDI_DIR if exported (explicit override), else
+# ${SG13G2_TOOLS_CACHE:-~/.cache/sg13g2-vco}/osdi. Untracked: .osdi files are
+# platform-specific native shared libraries and are deliberately not
+# committed. A build compiles into a staging directory beside the destination,
+# loads THAT candidate with the selected ngspice (AC probe), and only then
+# renames it into place; any failure leaves the previously published library
+# byte-for-byte unchanged and exits nonzero. --check only probes the resolved
+# library: it never downloads, compiles or replaces anything. Publishing into
+# the PDK install's own osdi directory is refused.
 set -euo pipefail
 
 # --------------------------------------------------------------------------
@@ -92,7 +98,7 @@ for arg in "$@"; do
   case "${arg}" in
     --check) CHECK_ONLY=1 ;;
     --force) FORCE=1 ;;
-    -h|--help) sed -n '2,45p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    -h|--help) sed -n '2,55p' "${BASH_SOURCE[0]}"; exit 0 ;;
     *) echo "build-osdi.sh: unknown argument '${arg}'" >&2; exit 2 ;;
   esac
 done
@@ -108,7 +114,11 @@ if [[ -z "${PDK_ROOT:-}" || ! -d "${PDK_ROOT}/${PDK}/libs.tech/ngspice" ]]; then
 fi
 
 VA_DIR="${PDK_ROOT}/${PDK}/libs.tech/verilog-a"
-OSDI_DIR="${PDK_ROOT}/${PDK}/libs.tech/ngspice/osdi"
+PDK_OSDI_DIR="${PDK_ROOT}/${PDK}/libs.tech/ngspice/osdi"
+# Same value sim/env.sh exported (single resolution policy); the parent
+# consumers read SG13G2_OSDI_DIR from the same file, so they agree by
+# construction. A subprocess cannot update its parent's shell.
+OSDI_DIR="${SG13G2_OSDI_DIR:?build-osdi.sh: sim/env.sh did not resolve SG13G2_OSDI_DIR}"
 
 if [[ ! -d "${VA_DIR}" ]]; then
   echo "build-osdi.sh: ${VA_DIR} not found -- is PDK_ROOT really an IHP-Open-PDK install?" >&2
@@ -196,10 +206,10 @@ EOF
 # `sg13_hv_svaricap` once, exactly as that experiment does.
 # --------------------------------------------------------------------------
 check_models() {
-  local missing=0 m
+  local dir="${1:-${OSDI_DIR}}" missing=0 m
   for m in "${REQUIRED_OSDI[@]}"; do
-    if [[ ! -f "${OSDI_DIR}/${m}" ]]; then
-      echo "build-osdi.sh: MISSING ${OSDI_DIR}/${m}" >&2
+    if [[ ! -f "${dir}/${m}" ]]; then
+      echo "build-osdi.sh: MISSING ${dir}/${m}" >&2
       missing=1
     fi
   done
@@ -210,9 +220,9 @@ check_models() {
     return 1
   }
 
-  local tmp
+  local tmp rc=0 before after
   tmp="$(mktemp -d)"
-  trap 'rm -rf "${tmp}"' RETURN
+  before="$(sha256_of "${dir}/${REQUIRED_OSDI[0]}")"
   {
     echo "* build-osdi.sh --check: load mosvar.osdi, instantiate sg13_hv_svaricap"
     echo ".lib \"${PDK_ROOT}/${PDK}/libs.tech/ngspice/models/cornerMOShv.lib\" mos_tt"
@@ -221,35 +231,44 @@ check_models() {
     echo "Lhot hot 0 1"
     echo "Xcheck hot ctrl hot ctrl sg13_hv_svaricap l=300n w=3.74u Nx=1 Ny=1"
     echo ".control"
-    for m in "${REQUIRED_OSDI[@]}"; do echo "pre_osdi ${OSDI_DIR}/${m}"; done
+    for m in "${REQUIRED_OSDI[@]}"; do echo "pre_osdi ${dir}/${m}"; done
     echo "ac dec 5 1e9 1e9"
     echo "print v(hot)"
     echo ".endc"
     echo ".end"
   } > "${tmp}/check.cir"
 
-  if ! ngspice -b "${tmp}/check.cir" > "${tmp}/check.log" 2>&1; then
-    echo "build-osdi.sh: ngspice returned non-zero on the model-load check:" >&2
-    cat "${tmp}/check.log" >&2
-    return 1
-  fi
+  # Probe from a scratch cwd with a scratch HOME so no user/cwd .spiceinit
+  # can auto-load some other model and make a bad candidate look good; the
+  # only OSDI this netlist loads is the explicit pre_osdi path above.
   # Deliberately NOT sim/lib.sh's shared ngspice_model_error() (issue #55):
-  # this validates that a FRESHLY COMPILED .osdi loads, and "couldn't be
-  # loaded" / "Unknown model type" are OSDI-load-specific wordings that have
-  # no meaning for the sim/*/run_*.sh benches the shared helper serves.
-  if grep -qiE "Unable to find definition of model|couldn't be loaded|Unknown model type|unknown subckt" "${tmp}/check.log"; then
-    echo "build-osdi.sh: model-load errors in the check run:" >&2
-    grep -iE "Unable to find definition of model|couldn't be loaded|Unknown model type|unknown subckt" "${tmp}/check.log" >&2
-    return 1
-  fi
-  if ! grep -q "^v(hot)" "${tmp}/check.log"; then
-    echo "build-osdi.sh: check netlist produced no AC result:" >&2
+  # these are OSDI-load-specific wordings. ngspice can exit 0 after printing
+  # an ABI/load error, so the log is scanned and an AC result is required.
+  local errpat="Unable to find definition of model|couldn't be loaded|Unknown model type|unknown subckt|only supports OSDI|targets v[0-9]|osdi.*(error|fail)|cannot open shared object"
+  if ! ( cd "${tmp}" && HOME="${tmp}" ngspice -b "${tmp}/check.cir" > "${tmp}/check.log" 2>&1 ); then
+    echo "build-osdi.sh: ngspice returned non-zero on the model-load check of ${dir}:" >&2
     cat "${tmp}/check.log" >&2
-    return 1
+    rc=1
+  elif grep -qiE "${errpat}" "${tmp}/check.log"; then
+    echo "build-osdi.sh: model-load errors in the check run of ${dir}:" >&2
+    grep -iE "${errpat}" "${tmp}/check.log" >&2
+    rc=1
+  elif ! grep -q "^v(hot)" "${tmp}/check.log"; then
+    echo "build-osdi.sh: check netlist produced no AC result for ${dir}:" >&2
+    cat "${tmp}/check.log" >&2
+    rc=1
   fi
-  echo "build-osdi.sh: OK -- ${REQUIRED_OSDI[*]} present and loadable in ${OSDI_DIR}"
-  grep -E "^v\(hot\)" "${tmp}/check.log"
-  return 0
+  after="$(sha256_of "${dir}/${REQUIRED_OSDI[0]}")"
+  if [[ ${rc} -eq 0 && "${before}" != "${after}" ]]; then
+    echo "build-osdi.sh: ${dir}/${REQUIRED_OSDI[0]} changed during the probe -- refusing to trust it." >&2
+    rc=1
+  fi
+  if [[ ${rc} -eq 0 ]]; then
+    echo "build-osdi.sh: OK -- ${REQUIRED_OSDI[*]} present and loadable in ${dir} (sha256 ${after})"
+    grep -E "^v\(hot\)" "${tmp}/check.log"
+  fi
+  rm -rf "${tmp:?}"
+  return "${rc}"
 }
 
 if [[ ${CHECK_ONLY} -eq 1 ]]; then
@@ -261,6 +280,12 @@ if [[ ${FORCE} -eq 0 ]] && check_models >/dev/null 2>&1; then
   echo "build-osdi.sh: models already built and loadable in ${OSDI_DIR} (use --force to rebuild)."
   exit 0
 fi
+
+# Fail before any download when the candidate could not be validated anyway.
+command -v ngspice >/dev/null 2>&1 || {
+  echo "build-osdi.sh: ngspice not on PATH -- a build cannot be validated, so none is attempted." >&2
+  exit 3
+}
 
 # --------------------------------------------------------------------------
 # Resolve the platform asset.
@@ -349,18 +374,49 @@ run_openvaf() {
 
 echo "build-osdi.sh: compiler: $(run_openvaf --version 2>&1 | head -1) (${OPENVAF_REPO} ${OPENVAF_TAG})"
 
+# ---- staged build, validated before publication ---------------------------
 mkdir -p "${OSDI_DIR}"
+# Never publish into the PDK install (shared; may be read-only).
+_real_out="$(cd -P "${OSDI_DIR}" && pwd)"
+_real_pdk="$(cd -P "${PDK_OSDI_DIR}" 2>/dev/null && pwd || echo "${PDK_OSDI_DIR}")"
+if [[ "${_real_out}" == "${_real_pdk}" || "${_real_out}" == "${_real_pdk}"/* ]]; then
+  echo "build-osdi.sh: refusing to publish into the PDK install (${_real_out})." >&2
+  echo "build-osdi.sh: unset SG13G2_OSDI_DIR or point it at a writable scratch/cache directory." >&2
+  exit 3
+fi
+# Staging lives beside the destination (same filesystem => atomic rename) and
+# is removed on success, failure and interruption.
+STAGE="$(mktemp -d "${OSDI_DIR}/.stage.XXXXXX")" || {
+  echo "build-osdi.sh: cannot create a staging directory in ${OSDI_DIR} (not writable?)." >&2
+  exit 3
+}
+cleanup_stage() { if [[ -n "${STAGE:-}" ]]; then rm -rf "${STAGE:?}"; fi; }
+trap cleanup_stage EXIT
+trap 'cleanup_stage; exit 130' INT
+trap 'cleanup_stage; exit 143' TERM
+
 for entry in "${MODELS[@]}"; do
   model="${entry%%:*}"
   subdir="${entry##*:}"
   src="${VA_DIR}/${subdir}/${model}.va"
   [[ -f "${src}" ]] || { echo "build-osdi.sh: missing Verilog-A source ${src}" >&2; exit 4; }
-  echo "build-osdi.sh: compiling ${model}.va -> ${OSDI_DIR}/${model}.osdi"
+  echo "build-osdi.sh: compiling ${model}.va -> ${STAGE}/${model}.osdi (staging)"
   # -D__NGSPICE__ mirrors the PDK's own
   # libs.tech/verilog-a/openvaf-compile-va.sh, so what lands here is what
   # the PDK intends ngspice to load -- not a locally invented build.
-  ( cd "${VA_DIR}/${subdir}" && run_openvaf -D__NGSPICE__ -o "${OSDI_DIR}/${model}.osdi" "${model}.va" )
+  if ! ( cd "${VA_DIR}/${subdir}" && run_openvaf -D__NGSPICE__ -o "${STAGE}/${model}.osdi" "${model}.va" ); then
+    echo "build-osdi.sh: compiler failed for ${model}.va; nothing published (any previous ${OSDI_DIR}/${model}.osdi is untouched)." >&2
+    exit 5
+  fi
 done
 
 echo
-check_models
+if ! check_models "${STAGE}"; then
+  echo "build-osdi.sh: the freshly compiled candidate does not load in this host's ngspice ($(ngspice --version 2>&1 | grep -m1 -i ngspice || echo unknown));" >&2
+  echo "build-osdi.sh: nothing published; any previous ${OSDI_DIR} library is untouched." >&2
+  exit 6
+fi
+for m in "${REQUIRED_OSDI[@]}"; do
+  mv -f "${STAGE}/${m}" "${OSDI_DIR}/${m}"
+done
+echo "build-osdi.sh: published ${REQUIRED_OSDI[*]} to ${OSDI_DIR}"
