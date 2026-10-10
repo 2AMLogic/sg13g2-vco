@@ -102,6 +102,9 @@ jobs:
       - name: Record-reservation self-test (no PDK, no simulator)
         run: .github/scripts/check-all.sh record-id-selftest
 
+      - name: Local-grid guard self-test (no PDK, no simulator)
+        run: .github/scripts/check-all.sh local-grid-guard-selftest
+
       - name: sim/ evidence is append-only
         if: github.event_name == 'pull_request'
         run: .github/scripts/check-all.sh append-only

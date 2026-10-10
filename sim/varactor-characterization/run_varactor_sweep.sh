@@ -56,6 +56,14 @@ source "${SIM_DIR}/env.sh"
 # shellcheck source=../lib.sh
 source "${SIM_DIR}/lib.sh"
 
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #160). The grid is multi-point by construction, so a floor count suffices.
+# This must stay the first thing after sourcing lib.sh: it needs only env
+# vars, so it runs before any PDK/ngspice preflight, OSDI build, ngspice
+# --version probe or record id reservation (sim/tests/test-local-grid-guard.sh
+# checks the ordering).
+require_local_grid_ok 2 || exit 1
+
 # ------------------------------------------------------------------ preflight
 if ! command -v ngspice >/dev/null 2>&1; then
   echo "error: ngspice not found on PATH." >&2
@@ -448,6 +456,7 @@ sweep_family diode svaricap_dio tb_diode_varactor_vscan.spice.tmpl \
   echo "  - \`libs.tech/verilog-a/mosvar/mosvar.va\` (source) sha256 \`${MOSVAR_VA_SHA}\`"
   echo "  - \`libs.tech/ngspice/osdi/mosvar.osdi\` (this run's build) sha256 \`${MOSVAR_OSDI_SHA}\`"
   echo "- **ngspice**: \`${NGSPICE_VERSION}\`"
+  local_grid_record_note
   echo "- **OSDI toolchain**: OpenVAF-Reloaded, pinned in"
   echo "  \`sim/tools/build-osdi.sh\` -- see \`sim/pdk.json\`'s"
   echo "  \`osdi_toolchain\` block for the compiler tag and sha256."

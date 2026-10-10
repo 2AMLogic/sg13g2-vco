@@ -139,6 +139,11 @@ case "${1:-}" in
   *) echo "usage: run_pvt_sweep.sh [--resume-from <record-id>]" >&2; exit 2 ;;
 esac
 
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #160). The grid is multi-point by construction, so a floor count suffices;
+# this runs before any record id is reserved or any ngspice call.
+require_local_grid_ok 2 || exit 1
+
 # Reserve the id (atomic mkdir) before any output path is created or opened.
 RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 # The record paths osc_bench.sh's helpers write to. shellcheck cannot follow a
@@ -476,6 +481,7 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "  model result. See \`sim/inductor-model/README.md\`."
   osc_provenance_md
   echo "- **ngspice**: \`${OSC_NGSPICE_VERSION}\`"
+  local_grid_record_note
   echo "- **Execution**: ${OSC_N_EXECUTED} transient point(s) executed in this"
   echo "  record, ${OSC_N_REUSED} reused from validated checkpoints"
   if [[ -n "${RESUME_FROM}" ]]; then

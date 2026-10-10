@@ -60,6 +60,14 @@ source "${SIM_DIR}/env.sh"
 # shellcheck source=../lib.sh
 source "${SIM_DIR}/lib.sh"
 
+# Refuse a local multi-point grid when the fleet backend is exported (issue
+# #160). The grid is multi-point by construction, so a floor count suffices.
+# This must stay the first thing after sourcing lib.sh: it needs only env
+# vars, so it runs before any PDK/ngspice preflight, OSDI build, ngspice
+# --version probe or record id reservation (sim/tests/test-local-grid-guard.sh
+# checks the ordering).
+require_local_grid_ok 2 || exit 1
+
 # ------------------------------------------------------------------ preflight
 if ! command -v ngspice >/dev/null 2>&1; then
   echo "error: ngspice not found on PATH." >&2
@@ -374,6 +382,7 @@ done
   echo "  - \`cornerCAP.lib\` sha256 \`${CORNERCAP_SHA}\`"
   echo "  - \`capacitors_mod.lib\` sha256 \`${CAPMOD_SHA}\`"
   echo "- **ngspice**: \`${NGSPICE_VERSION}\`"
+  local_grid_record_note
   echo "- **Corner matrix run**: MIM process section {cap_typ, cap_bcs, cap_wcs}"
   echo "  x temperature {${TEMPS[*]}} C x bias {${VBIASES[*]}} V = ${total}"
   echo "  simulation points, each covering 6 device instances = $((total * 6))"
