@@ -147,6 +147,47 @@ class CandidateSizingTests(unittest.TestCase):
         self.assertNotEqual(self._gen("--candidate", "a__b")[1].returncode, 0)
 
 
+class ArgumentContainmentTests(unittest.TestCase):
+    """Issue #209: bad arguments fail before any write, in or outside outdir."""
+
+    def _run(self, *extra):
+        parent = tempfile.TemporaryDirectory()
+        self.addCleanup(parent.cleanup)
+        out = os.path.join(parent.name, "out")
+        os.mkdir(out)
+        p = run_script(MAKE, out, *extra)
+        return parent.name, out, p
+
+    def _rejected(self, *extra):
+        parent, out, p = self._run(*extra)
+        self.assertNotEqual(p.returncode, 0, extra)
+        self.assertEqual(os.listdir(out), [], extra)
+        self.assertEqual(os.listdir(parent), ["out"], extra)
+        self.assertTrue(p.stderr.strip(), extra)
+
+    def test_nonfinite_or_small_mim_rejected(self):
+        for v in ("nan", "inf", "-inf", "1.0", "1.139"):
+            self._rejected("--mim-um", v, "--candidate", "x")
+
+    def test_bad_candidate_names_rejected(self):
+        for name in ("", "/abs", "/tmp/escape", "..", ".", "../up", "a/b", "a\\b",
+                     "a__b", ".hidden", "-x", "a b", "x" * 65):
+            self._rejected("--candidate", name)
+
+    def test_legal_candidate_writes_only_inside_outdir(self):
+        parent, out, p = self._run("--cells", "15", "--mim-um", "2.5",
+                                   "--candidate", "Cand-1.v2_x")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(os.listdir(parent), ["out"])
+        self.assertEqual(os.listdir(out), ["Cand-1.v2_x"])
+
+    def test_default_generation_without_option(self):
+        parent, out, p = self._run()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(sorted(os.listdir(out)), ["bn-sub", "bn-tank"])
+        self.assertEqual(os.listdir(parent), ["out"])
+
+
 def write_json(path, obj):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as fh:

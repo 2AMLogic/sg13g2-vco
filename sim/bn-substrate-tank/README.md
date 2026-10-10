@@ -224,7 +224,10 @@ requests of each unit are under `records/<stamp>/decks/`, the klt reports
 
 `make_requests.py --cells N --mim-um S --candidate NAME` emits one bn=0 variant
 at an explicit sizing (defaults reproduce the #79 decks; decks identical, only
-`cell.json` gains the sizing keys). `run_tank_ab.sh` takes `TANK_AB_ARGS` and
+`cell.json` gains the sizing keys). `NAME` is one path component of 1-64
+characters from `[A-Za-z0-9._-]`, starting with a letter or digit, and must not
+contain `__`; empty, absolute, `..`/slash-bearing names and non-finite or
+below-1.14 um MIM sides are rejected before anything is read or written. `run_tank_ab.sh` takes `TANK_AB_ARGS` and
 `TANK_AB_LABEL`. New records (append-only, the #79 record is untouched):
 
 - `records/20261009-2100-2eb3659-candidate-screen/` -- tank_screen output

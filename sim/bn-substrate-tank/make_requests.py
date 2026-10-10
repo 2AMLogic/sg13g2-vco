@@ -32,7 +32,7 @@ WHAT THE CIRCUIT IS.  design/vco.spice's passive tank, small-signal:
   cell WITHOUT the junction; the junction branch is therefore added by the
   native diode, not double counted.
 """
-import argparse, importlib.util, json, os, shutil, sys
+import argparse, importlib.util, json, math, os, re, shutil, sys
 
 # Defaults are the design/vco.spice sizing (16 cells/side, 3.65 um MIM) and
 # reproduce the original #79 decks byte-for-byte (cell.json gains the two
@@ -46,10 +46,19 @@ _ap.add_argument("--cells", type=int, default=16)
 _ap.add_argument("--mim-um", type=float, default=3.65)
 _ap.add_argument("--candidate", default=None)
 _args = _ap.parse_args()
-if _args.cells < 1 or _args.mim_um < 1.14:
-    sys.exit("illegal sizing: need cells >= 1 and mim side >= 1.14 um (cmim_minLW)")
-if _args.candidate and "__" in _args.candidate:
-    sys.exit("candidate name must not contain '__'")
+# Arguments are validated before any model read or directory creation.
+# Candidate alphabet: one path component, [A-Za-z0-9][A-Za-z0-9._-]{0,63}
+# (starts alphanumeric, so no "." / ".." / hidden names; no separators; no "__").
+_CAND_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
+if _args.cells < 1 or not math.isfinite(_args.mim_um) or _args.mim_um < 1.14:
+    sys.exit("illegal sizing: need cells >= 1 and a finite mim side >= 1.14 um (cmim_minLW)")
+if _args.candidate is not None:
+    if not _CAND_RE.fullmatch(_args.candidate):
+        sys.exit("illegal candidate name %r: need 1-64 characters of [A-Za-z0-9._-], "
+                 "starting with a letter or digit (no separators, absolute or parent paths)"
+                 % _args.candidate)
+    if "__" in _args.candidate:
+        sys.exit("candidate name must not contain '__'")
 if _args.candidate is None and (_args.cells, _args.mim_um) != (16, 3.65):
     sys.exit("non-default sizing requires --candidate NAME")
 out = _args.outdir
@@ -152,7 +161,7 @@ def emit(name, variant, mos, vc, temps):
                "source": "sim/varactor-characterization/records/20260927-081226-f88eb89.csv mos small 27C"},
               open(os.path.join(d, "cell.json"), "w"), indent=2)
 
-if _args.candidate:
+if _args.candidate is not None:
     for mos, vc in POINTS:
         emit(_args.candidate, "bn-sub", mos, vc, (-40, 27, 125))
     print("ok", out)
