@@ -20,6 +20,11 @@
 #   tank-ab-selftest      sim/tests/test-tank-ab-reserve.sh (tank A/B runner
 #                         reserves its record id; no ngspice/PDK/network)
 #   local-grid-guard-selftest  sim/tests/test-local-grid-guard.sh
+#   osdi-staging-selftest sim/tests/test-build-osdi-staging.sh (issue #182:
+#                         OSDI publication stays outside the PDK and a failed
+#                         build preserves the existing library; stubbed
+#                         compiler, disposable fixtures; no PDK/compiler/
+#                         simulator/network)
 #   spec-dr-selftest      .github/scripts/test-check-spec-change-has-dr.sh
 #   runner-selftest       .github/scripts/test-check-all.sh
 #   grader-spec-selftest  .github/scripts/test-check-grader-spec-agreement.sh
@@ -66,7 +71,7 @@
 # Aggregates:
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest tank-ab-selftest local-grid-guard-selftest
-#           spec-dr-selftest runner-selftest
+#           osdi-staging-selftest spec-dr-selftest runner-selftest
 #           grader-spec-selftest grader-spec currency-selftest currency
 #           model-inputs-selftest model-inputs
 #           deck-integrity-selftest deck-integrity friction-selftest friction
@@ -250,6 +255,8 @@ gate() {
       run_gate "$g" "$ROOT/sim/tests/test-tank-ab-reserve.sh" "$@" ;;
     local-grid-guard-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-local-grid-guard.sh" "$@" ;;
+    osdi-staging-selftest)
+      run_gate "$g" "$ROOT/sim/tests/test-build-osdi-staging.sh" "$@" ;;
     spec-dr-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-spec-change-has-dr.sh" "$@" ;;
     runner-selftest)
@@ -324,6 +331,7 @@ agg_test() {
   gate record-id-selftest
   gate tank-ab-selftest
   gate local-grid-guard-selftest
+  gate osdi-staging-selftest
   gate spec-dr-selftest
   gate runner-selftest
   gate grader-spec-selftest
