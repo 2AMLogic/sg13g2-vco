@@ -41,8 +41,10 @@ The citations, and the ones deliberately left out:
   needs xschem and a PDK, which this PDK-free CI does not have. Citing an
   unrelated envelope would turn the row green without evidence.
 - **Item 4 (LVS): not cited.** The device-aware LVS (`layout/lvs.sh`, IHP's
-  own runset) reports **`mismatch`**, with one remaining isolated difference
-  (#80; `layout/PROVENANCE.md` §14; the second, #79, is corrected). `klt lvs` at the `0.6.0` pin cannot
+  own runset plus the reviewed label-order step from #80) now reaches
+  **`match`** on the cross-reference. IHP's runset as shipped still reports
+  `mismatch`, and its strict top-port check still logs three port-name
+  findings (#162; `layout/PROVENANCE.md` §14.6). `klt lvs` at the `0.6.0` pin cannot
   produce a report for this block at all, and neither can the newest
   release, `0.7.0` (re-checked 2026-10-09, `layout/PROVENANCE.md` §14.5;
   klayout-tools#2849). So there is

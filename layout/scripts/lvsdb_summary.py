@@ -9,14 +9,18 @@ says "Netlists don't match".  The verdict of record therefore comes from the
 comparison database KLayout itself wrote: this reads it back through
 klayout.db.LayoutVsSchematic and reports, per circuit pair, every net, device
 and pin cross-reference entry that is not a plain match, plus the device
-census of each side (by device class).  Nothing is inferred: every field is
-read from the database.
+census of each side (by device class), plus the comparer's own log messages
+(`compare_log`: e.g. the "Port mismatch" findings of the runset's strict
+top-port check, `flag_missing_ports`, which the klayout.db API does not
+expose, so they are read from the file's cross-reference section).  Nothing
+is inferred: every field is read from the database.
 """
 
 from __future__ import annotations
 
 import collections
 import json
+import re
 import sys
 
 import klayout.db as kdb
@@ -52,6 +56,24 @@ def census(circuit):
         for d in circuit.each_device():
             c[d.device_class().name] += 1
     return dict(sorted(c.items()))
+
+
+# Short form (what KLayout's LVS DSL writes): Z( ... M(E B('msg')) ...);
+# long form (LayoutVsSchematic.write): xref( ... entry(error description('msg'))).
+_MSG = re.compile(r"(?:M|entry)\((E|W|I|error|warning|info)\b[^'()]*?"
+                  r"(?:B|description)\('((?:[^'\\]|\\.)*)'\)")
+_SEV = {"E": "error", "W": "warning", "I": "info",
+        "error": "error", "warning": "warning", "info": "info"}
+
+
+def compare_log(text):
+    """The comparer's log messages: every M(<sev> B('<msg>')) entry of the
+    cross-reference section (the top-level `Z(` / `xref(` block of an .lvsdb)."""
+    m = re.search(r"^(?:Z|xref)\($", text, re.M)
+    if not m:
+        return []
+    return [{"severity": _SEV[sev], "message": re.sub(r"\\(.)", r"\1", msg)}
+            for sev, msg in _MSG.findall(text[m.end():])]
 
 
 def main(argv):
@@ -106,8 +128,10 @@ def main(argv):
         if cstat != "match":
             all_match = False
         circuits.append(entry)
+    with open(argv[1], encoding="utf-8", errors="replace") as f:
+        log = compare_log(f.read())
     out = {"verdict": "match" if (all_match and circuits) else "mismatch",
-           "circuits": circuits}
+           "circuits": circuits, "compare_log": log}
     json.dump(out, sys.stdout, indent=2, sort_keys=False)
     sys.stdout.write("\n")
     return 0

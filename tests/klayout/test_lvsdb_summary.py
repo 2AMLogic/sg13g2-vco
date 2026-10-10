@@ -88,6 +88,29 @@ class LvsdbSummaryTests(unittest.TestCase):
         self.assertEqual(out["circuits"][0]["devices"],
                          {"layout": {"NMOS": 1}, "reference": {"NMOS": 2}})
 
+    def test_compare_log_long_form(self):
+        # LayoutVsSchematic.write's own form: the comparer's ambiguity warnings.
+        p = os.path.join(self.dir, "ok.lvsdb")
+        write_lvsdb(p, 1)
+        out = json.loads(summarize(p).stdout)
+        self.assertTrue(out["compare_log"])
+        self.assertTrue(all(e["severity"] == "warning" and "ambiguous" in e["message"]
+                            for e in out["compare_log"]))
+
+    def test_compare_log_short_form(self):
+        # The form KLayout's LVS DSL (IHP's runset) writes, with the strict
+        # top-port check's finding; the database must still read back.
+        p = os.path.join(self.dir, "ok.lvsdb")
+        write_lvsdb(p, 1)
+        text = open(p).read()
+        head, xref = text.split("\nxref(\n", 1)
+        xref = xref.replace("  log(\n", "  log(\n   M(E B('Port mismatch \\'LA,VDD\\' vs. \\'VDD\\''))\n", 1)
+        open(p, "w").write(head + "\nZ(\n" + xref)
+        r = summarize(p)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        log = json.loads(r.stdout)["compare_log"]
+        self.assertIn({"severity": "error", "message": "Port mismatch 'LA,VDD' vs. 'VDD'"}, log)
+
     def test_usage_error(self):
         r = subprocess.run([sys.executable, "-I", SCRIPT],
                            capture_output=True, text=True)
