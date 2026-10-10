@@ -1,6 +1,6 @@
 # DR-003: Target-spec ratification pass 1 — nine rows ratified as targets, three left explicitly open
 
-- **Status**: **proposed** — a recommendation for two-key ratification via this
+- **Status**: **ratified** (merged via PR #39; Status line corrected in #99) — a recommendation for two-key ratification via this
   PR (Judge review + Champion/operator merge), per the 2026-08-19
   ratification-via-PR ruling (2AMLogic/2am#357, cited by issue #35), which is
   the path this repo's own spec-ratification issue selects while the

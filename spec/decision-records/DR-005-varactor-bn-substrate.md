@@ -1,6 +1,6 @@
 # DR-005: Varactor `bn` is the p-substrate -- tie it to `0`, not to the tank node
 
-- **Status**: **proposed** -- a design correction made in the PR that carries this
+- **Status**: **ratified** (merged via PR #97; Status line corrected in #99) -- a design correction made in the PR that carries this
   record (issue #79), taking effect when that PR merges. It changes **no row of
   `spec/target-spec.md` and relaxes no bound**; it does change what DR-001's
   device evidence is evidence *of* (see "Consequences"). Same two-key path as

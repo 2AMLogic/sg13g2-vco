@@ -1,6 +1,6 @@
 # DR-004: Target-spec ratification pass 2 — rows 0, 3 and 7 disposed, and how row 10's supply sub-corners cross the graded grid
 
-- **Status**: **proposed** — a recommendation for two-key ratification via
+- **Status**: **ratified** (merged via PR #58; Status line corrected in #99) — a recommendation for two-key ratification via
   this PR (Judge review + Champion/operator merge), the same path DR-003 took,
   per the 2026-08-19 ratification-via-PR ruling (2AMLogic/2am#357) that
   `spec/target-spec.md`'s Status section cites while the fleet-standard
