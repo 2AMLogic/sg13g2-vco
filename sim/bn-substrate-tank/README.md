@@ -158,13 +158,22 @@ records reproduce byte-identically) and a new `tank-ab-coverage.csv`
   (corner ran but is a model failure, e.g. the known +125 C `dsubw` NaN),
   `NO-REPORT` (missing or unparseable report), `MISSING-CORNER`,
   `DUPLICATE-CORNER`, `UNEXPECTED-CORNER`. Records without request files get
-  one `COVERAGE-UNCHECKED` row per report and no invented inventory.
+  one `COVERAGE-UNCHECKED` row per report and no invented inventory. A request
+  file that is present but unreadable or malformed (bad JSON, no `corners`,
+  non-string process name, temperature not a finite number) gets a distinct
+  `REQUEST-UNREADABLE` row (detail `request unreadable: <error>`) instead of
+  `COVERAGE-UNCHECKED`: that is a coverage gap, not a legacy record.
 - **Robustness.** A malformed corner or missing `cell.json` flags that row
-  only; other corners are still reduced.
+  only; other corners are still reduced. A corner is malformed (coverage
+  `INVALID`, row `NO-VALUE (malformed corner: ...)`, blank `mim`/`temp_c` for
+  the offending field) if it is not an object, its `process` is not a string
+  (e.g. a list), or its `temperature_c` is not a finite real number (NaN, inf,
+  bool, string, null). This holds with or without a request file, so such a
+  corner never yields an `ok` row.
 - **Exit status.** 0 whenever the analysis completes; a coverage summary goes
   to stderr. With `--strict`, exit 2 if there is any `NO-REPORT`,
   `MISSING-CORNER`, `DUPLICATE-CORNER`, `UNEXPECTED-CORNER`,
-  `COVERAGE-UNCHECKED` or `INVALID` outcome. Model failures
+  `COVERAGE-UNCHECKED`, `REQUEST-UNREADABLE` or `INVALID` outcome. Model failures
   (`status != pass`) never change the exit status: that is spec evidence, not
   tool health, and no target is relaxed.
 - **Exploratory subsets.** A deliberately partial run (fewer corners in its

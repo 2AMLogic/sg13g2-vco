@@ -383,6 +383,110 @@ class AnalyzeTests(unittest.TestCase):
         cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
         self.assertEqual(cov[0]["outcome"], "NO-VALUE")
 
+    # ---- PR #168 review: unhashable process, bad temperature, bad request ----
+
+    GOOD = (5e9, 4.5e9, 5.5e9, 100.0)
+
+    def _assert_no_nonfinite(self):
+        for fn in ("tank-ab.csv", "tank-ab-delta.csv", "tank-ab-tuning.csv",
+                   "tank-ab-coverage.csv"):
+            with open(os.path.join(self.rec, fn)) as fh:
+                txt = fh.read().lower()
+            self.assertNotIn("nan", txt, fn)
+            self.assertNotIn("inf", txt, fn)
+
+    def test_unhashable_process_flags_only_its_row(self):
+        corners = [(["x"], 27) + self.GOOD, ({"a": 1}, 27) + self.GOOD,
+                   ("cap_typ", 27) + self.GOOD]
+        add_point(self.rec, "bn-tank", "tt", 1.5, multi_report(corners))
+        for with_request in (False, True):
+            with self.subTest(request=with_request):
+                if with_request:
+                    add_request(self.rec, "bn-tank", "tt", 1.5, ["cap_typ"], [27])
+                p = run_script(ANALYZE, self.rec)
+                self.assertEqual(p.returncode, 0, p.stderr)
+                rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+                self.assertEqual(len(rows), 3)
+                self.assertEqual([r["status"] for r in rows if r["status"] == "ok"], ["ok"])
+                bad = [r for r in rows if r["status"] != "ok"]
+                for r in bad:
+                    self.assertIn("process not a string", r["status"])
+                    self.assertEqual(r["mim"], "")
+                    self.assertEqual(r["f0_ghz"], "")
+                cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+                self.assertEqual([c["outcome"] for c in cov].count("INVALID"), 2)
+                if with_request:
+                    self.assertIn(("cap_typ", "27", "ok"),
+                                  [(c["process"], c["temp_c"], c["outcome"]) for c in cov])
+                self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
+    def test_bad_temperature_is_invalid_never_ok(self):
+        for label, temp in (("nan", float("nan")), ("inf", float("inf")),
+                            ("-inf", float("-inf")), ("string", "27"),
+                            ("bool", True), ("null", None), ("list", [27])):
+            for with_request in (False, True):
+                with self.subTest(temp=label, request=with_request):
+                    self.setUp()
+                    corners = [("cap_typ", temp) + self.GOOD, ("cap_bcs", 27) + self.GOOD]
+                    add_point(self.rec, "bn-tank", "tt", 1.5, multi_report(corners))
+                    if with_request:
+                        add_request(self.rec, "bn-tank", "tt", 1.5,
+                                    ["cap_typ", "cap_bcs"], [27])
+                    p = run_script(ANALYZE, self.rec)
+                    self.assertEqual(p.returncode, 0, p.stderr)
+                    rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+                    self.assertEqual(len(rows), 2)
+                    bad = [r for r in rows if r["mim"] != "cap_bcs"]
+                    self.assertEqual(len(bad), 1)
+                    self.assertIn("temperature not a finite number", bad[0]["status"])
+                    self.assertEqual(bad[0]["temp_c"], "")
+                    self.assertEqual(bad[0]["f0_ghz"], "")
+                    good = [r for r in rows if r["mim"] == "cap_bcs"]
+                    self.assertEqual(good[0]["status"], "ok")
+                    cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+                    outs = [(c["process"], c["outcome"]) for c in cov]
+                    self.assertIn(("cap_typ", "INVALID"), outs)
+                    if with_request:
+                        self.assertIn(("cap_typ", "MISSING-CORNER"), outs)
+                        self.assertIn(("cap_bcs", "ok"), outs)
+                    self._assert_no_nonfinite()
+                    self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
+    def test_unreadable_request_is_distinct_from_legacy(self):
+        name = "bn-tank__tt_v1.5"
+        bad_requests = {
+            "not json": "{ nope",
+            "no corners": json.dumps({"netlist": "tank.spice"}),
+            "nan temp": '{"corners": {"process": [{"name": "cap_typ"}], "temperature_c": [NaN]}}',
+            "string temp": json.dumps({"corners": {"process": [{"name": "cap_typ"}],
+                                                   "temperature_c": ["27"]}}),
+            "list process": json.dumps({"corners": {"process": [{"name": ["cap_typ"]}],
+                                                    "temperature_c": [27]}}),
+        }
+        for label, body in bad_requests.items():
+            for with_report in (True, False):
+                with self.subTest(label, report=with_report):
+                    self.setUp()
+                    if with_report:
+                        add_point(self.rec, "bn-tank", "tt", 1.5,
+                                  multi_report([("cap_typ", 27) + self.GOOD]))
+                    os.makedirs(os.path.join(self.rec, "decks"), exist_ok=True)
+                    with open(os.path.join(self.rec, "decks", name + ".request.json"), "w") as fh:
+                        fh.write(body)
+                    p = run_script(ANALYZE, self.rec)
+                    self.assertEqual(p.returncode, 0, p.stderr)
+                    cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+                    outs = [c["outcome"] for c in cov]
+                    self.assertIn("REQUEST-UNREADABLE", outs)
+                    self.assertNotIn("COVERAGE-UNCHECKED", outs)
+                    det = [c["detail"] for c in cov if c["outcome"] == "REQUEST-UNREADABLE"]
+                    self.assertTrue(det[0].startswith("request unreadable"), det)
+                    self.assertIn("REQUEST-UNREADABLE", p.stderr)
+                    if with_report:
+                        rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+                        self.assertEqual([r["status"] for r in rows], ["ok"])
+                    self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
     def test_no_arguments_fails(self):
         self.assertNotEqual(run_script(ANALYZE).returncode, 0)
 

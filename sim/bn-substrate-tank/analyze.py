@@ -16,8 +16,11 @@ row is "NO-VALUE (<reason>)" with blank derived columns.  When the record has
 decks/<name>.request.json, every expected (variant, point, process,
 temperature) gets exactly one outcome in tank-ab-coverage.csv: ok, NO-VALUE,
 NO-REPORT, MISSING-CORNER, DUPLICATE-CORNER or UNEXPECTED-CORNER.  Records
-without request files get one COVERAGE-UNCHECKED row per report; nothing is
-invented.  Exit status: 0 whenever the analysis completes (gaps are in the
+without request files get one COVERAGE-UNCHECKED row per report; a request file
+that is present but unreadable/malformed gets REQUEST-UNREADABLE instead.
+Nothing is invented.  A corner whose process is not a string or whose
+temperature_c is not a finite real number (not bool/str/NaN/inf) is INVALID
+("NO-VALUE (malformed corner: ...)") and never affects the other corners.  Exit status: 0 whenever the analysis completes (gaps are in the
 CSVs and a stderr summary); with --strict, 2 if any coverage gap or invalid
 "pass" corner was found.  Model failures (corner status != pass, e.g. the
 known +125 C dsubw NaN) never affect the exit status: that is spec/evidence,
@@ -56,17 +59,37 @@ def fmt_t(t):
 
 
 def expected_corners(rec, name):
-    """Set of (process, float temp) from decks/<name>.request.json, or None."""
+    """(set of (process, float temp), None) from decks/<name>.request.json.
+
+    Returns (None, None) when the request file is absent (legacy record) and
+    (None, why) when it is present but unreadable or malformed."""
     p = os.path.join(rec, "decks", name + ".request.json")
     if not os.path.exists(p):
-        return None
+        return None, None
     try:
-        cs = json.load(open(p))["corners"]
+        with open(p) as fh:
+            cs = json.load(fh)["corners"]
         procs = [x["name"] for x in cs["process"]]
-        temps = [float(t) for t in cs["temperature_c"]]
-        return {(pr, t) for pr in procs for t in temps}
-    except Exception:
+        temps = list(cs["temperature_c"])
+        if not procs or not temps:
+            raise ValueError("empty corner list")
+        if not all(isinstance(pr, str) for pr in procs):
+            raise ValueError("non-string process name")
+        if not all(isnum(t) for t in temps):
+            raise ValueError("non-numeric or non-finite temperature")
+        return {(pr, float(t)) for pr in procs for t in temps}, None
+    except Exception as e:
+        return None, "request unreadable: %s" % type(e).__name__
+
+
+def corner_key(c):
+    """(process, float temp) for a well-formed corner dict, else None."""
+    if not isinstance(c, dict):
         return None
+    proc, temp = c.get("process"), c.get("temperature_c")
+    if not isinstance(proc, str) or not isnum(temp):
+        return None
+    return (proc, float(temp))
 
 
 rows = []
@@ -78,7 +101,7 @@ def covrow(variant, point, process, temp, outcome, detail=""):
     cov.append(dict(variant=variant, point=point, process=process, temp_c=temp,
                     outcome=outcome, detail=detail))
     if outcome in ("NO-REPORT", "MISSING-CORNER", "DUPLICATE-CORNER", "UNEXPECTED-CORNER",
-                   "COVERAGE-UNCHECKED", "INVALID"):
+                   "COVERAGE-UNCHECKED", "REQUEST-UNREADABLE", "INVALID"):
         state["gap"] = True
 
 
@@ -90,7 +113,9 @@ def split_name(name):
 def no_report(name, why):
     variant, point = split_name(name)
     rows.append(dict(variant=variant, point=point, mim="", temp_c="", status="NO-REPORT"))
-    exp = expected_corners(rec, name)
+    exp, req_err = expected_corners(rec, name)
+    if req_err:
+        covrow(variant, point, "", "", "REQUEST-UNREADABLE", req_err)
     if exp is None:
         covrow(variant, point, "", "", "NO-REPORT", why)
     else:
@@ -109,27 +134,34 @@ def reduce_report(name, d):
         cell_err = "cell.json unreadable"
     job = (d.get("environment", {}).get("remote") or {}).get("job_id") if isinstance(
         d.get("environment"), dict) else None
-    exp = expected_corners(rec, name)
+    exp, req_err = expected_corners(rec, name)
     corners = d.get("corners", [])
     if not isinstance(corners, list):
         corners = []
-    keys = []
-    for c in corners:
-        try:
-            keys.append((c["process"], float(c["temperature_c"])))
-        except Exception:
-            keys.append(None)
+    # corner_key only ever returns None or a (str, finite float) tuple, so the
+    # counting below cannot raise on odd input (unhashable process etc.).
+    keys = [corner_key(c) for c in corners]
     seen = {}
     for k in keys:
-        seen[k] = seen.get(k, 0) + 1
+        if k is not None:
+            seen[k] = seen.get(k, 0) + 1
     for c, k in zip(corners, keys):
         try:
             proc = c.get("process", "") if isinstance(c, dict) else ""
             temp = c.get("temperature_c", "") if isinstance(c, dict) else ""
-            if not isinstance(c, dict) or k is None:
+            if k is None:
+                # only echo scalar identifiers; never write NaN/inf/lists to CSV
+                proc = proc if isinstance(proc, str) else ""
+                temp = temp if isnum(temp) else ""
+                why = "malformed corner"
+                if isinstance(c, dict):
+                    if not isinstance(c.get("process"), str):
+                        why = "malformed corner: process not a string"
+                    else:
+                        why = "malformed corner: temperature not a finite number"
                 rows.append(dict(variant=variant, mos=mos, vctrl_v=vctrl, mim=proc, temp_c=temp,
-                                 status="NO-VALUE (malformed corner)", job=job))
-                covrow(variant, point, proc, temp, "INVALID", "malformed corner")
+                                 status="NO-VALUE (%s)" % why, job=job))
+                covrow(variant, point, proc, temp, "INVALID", why)
                 continue
             m = {}
             for x in c.get("measurements", []) if isinstance(c.get("measurements"), list) else []:
@@ -172,7 +204,9 @@ def reduce_report(name, d):
         except Exception as e:  # one bad corner must not stop the others
             rows.append(dict(variant=variant, mos=mos, vctrl_v=vctrl, status="NO-VALUE (error: %s)" % type(e).__name__))
             covrow(variant, point, "", "", "INVALID", "error: %s" % type(e).__name__)
-    if exp is None:
+    if req_err:
+        covrow(variant, point, "", "", "REQUEST-UNREADABLE", req_err)
+    elif exp is None:
         covrow(variant, point, "", "", "COVERAGE-UNCHECKED", "no decks/%s.request.json" % name)
     else:
         for pr, t in sorted(exp):
