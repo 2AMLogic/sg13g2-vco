@@ -26,6 +26,14 @@ issue #192: every sample of vdiff and the four probes is validated before any
 extrema are taken; coverage tolerances are tied to TMAX) publishes nothing,
 keeps the scratch dir and exits 2.  A known-answer FAIL is kept as evidence (record written, exit 1).
 
+Evidence ownership (issue #191): before the simulator starts, a record id is
+reserved through sim/lib.sh reserve_record_id (exclusive mkdir under
+<parent of --records-dir>/corners/), and the published basename is
+<reserved id>-surrogate-<point>.  Custom --records-dir / --snapshots-dir are
+checked for that id too, and the deck, log, Markdown and CSV are created
+exclusively (never truncating).  A reservation or publication failure exits 1
+("refused") and overwrites nothing; a reservation failure writes no evidence.
+
 Not implemented here, by design: fleet grids, tuning sweeps, ISF / phase noise.
 The production OSDI deck (design/vco.spice, osc_bench.sh) is not touched.
 
@@ -35,7 +43,7 @@ period), the same code the pilot used.
 """
 import argparse
 import csv
-import datetime
+import glob
 import hashlib
 import math
 import os
@@ -225,6 +233,106 @@ def ngspice_version():
     return m.group(0) if m else "unknown"
 
 
+# --- evidence ownership (issue #191) -------------------------------------------
+# Records are append-only evidence.  Before anything is published the bench
+# reserves a record id through the shared sim/lib.sh reserve_record_id helper
+# (an exclusive mkdir of <root>/corners/<id>, the same namespace every runner
+# in this experiment uses), keeps the point in the basename AFTER the reserved
+# id, and then publishes with exclusive creation only, so even a misconfigured
+# reservation can never truncate an existing artifact.
+LIB_SH = os.path.join(REPO, "sim", "lib.sh")
+RESERVE_ATTEMPTS = 50
+
+
+class PublicationError(sur.SurrogateError):
+    """Evidence ownership could not be established or publication would clobber
+    an existing artifact.  Raised BEFORE / INSTEAD OF any evidence write."""
+
+
+def reservation_root(records_dir):
+    """Directory passed to reserve_record_id as <experiment_dir>: the parent of
+    the records dir.  In the standard layout (<R>/records + <R>/netlist-snapshots,
+    default <R> = this experiment) that is <R>, so the id comes from the same
+    <R>/corners namespace every runner here uses and the helper's own collision
+    checks cover both output locations.  For a custom layout the custom records
+    and snapshots dirs are additionally checked by reserve_publication, and
+    publish() creates exclusively, so a custom dir cannot bypass collision
+    detection."""
+    return os.path.dirname(os.path.realpath(records_dir))
+
+
+def _reserve_id(root, first):
+    """One call to the shared helper; returns the reserved id (raises on failure)."""
+    env = dict(os.environ)
+    if not first:
+        env.pop("SIM_RECORD_SUFFIX", None)  # test hook honoured on the first call only
+    r = subprocess.run(["bash", "-c", 'source "$1" && reserve_record_id "$2" "$3"', "_",
+                        LIB_SH, REPO, root], capture_output=True, text=True, env=env)
+    rid = r.stdout.strip()
+    if r.returncode != 0 or not re.match(r"^[0-9]{8}-[0-9]{6}-[0-9A-Za-z]+-[0-9a-f]+$", rid):
+        raise PublicationError("record id reservation failed under %s (rc=%d): %s"
+                               % (root, r.returncode, (r.stderr.strip() or rid or "no id printed")))
+    return rid
+
+
+def _taken(records_dir, snapshots_dir, rid):
+    return (glob.glob(os.path.join(glob.escape(records_dir), glob.escape(rid) + "*"))
+            or glob.glob(os.path.join(glob.escape(snapshots_dir), glob.escape(rid) + "*")))
+
+
+def reserve_publication(records_dir, snapshots_dir, point):
+    """Reserve an id and return the publication paths it owns.
+
+    Nothing under records_dir / snapshots_dir is created here.  Raises
+    PublicationError if no id can be reserved."""
+    records_dir = os.path.abspath(records_dir)
+    snapshots_dir = os.path.abspath(snapshots_dir)
+    root = reservation_root(records_dir)
+    for attempt in range(RESERVE_ATTEMPTS):
+        rid = _reserve_id(root, attempt == 0)
+        if _taken(records_dir, snapshots_dir, rid):
+            continue  # custom output dir already holds evidence under this id; never reuse it
+        base = "%s-surrogate-%s" % (rid, point)
+        snap = os.path.join(snapshots_dir, base)
+        return {"reserved_id": rid, "record_id": base, "root": root,
+                "md": os.path.join(records_dir, base + ".md"),
+                "csv": os.path.join(records_dir, base + ".csv"),
+                "snap": snap,
+                "deck": os.path.join(snap, "surrogate_%s.spice" % point),
+                "log": os.path.join(snap, "surrogate_%s.log" % point)}
+    raise PublicationError("could not reserve a record id free in %s and %s after %d attempts"
+                           % (records_dir, snapshots_dir, RESERVE_ATTEMPTS))
+
+
+def publish(paths, deck_bytes, log_bytes, md_text, fields):
+    """Publish the evidence with exclusive creation only (O_EXCL / non-`-p` mkdir).
+
+    If any destination already exists nothing is overwritten: the files this
+    call itself created are removed again and PublicationError is raised."""
+    for k in ("snap", "deck", "log", "md", "csv"):
+        if os.path.lexists(paths[k]):
+            raise PublicationError("refusing to overwrite existing evidence: %s" % paths[k])
+    made = []
+    try:
+        os.makedirs(os.path.dirname(paths["md"]), exist_ok=True)
+        os.makedirs(os.path.dirname(paths["snap"]), exist_ok=True)
+        os.mkdir(paths["snap"])
+        made.append(paths["snap"])
+        for k, data in (("deck", deck_bytes), ("log", log_bytes), ("md", md_text.encode())):
+            with open(paths[k], "xb") as fh:
+                made.append(paths[k])
+                fh.write(data)
+        with open(paths["csv"], "x", newline="") as fh:
+            made.append(paths["csv"])
+            w = csv.DictWriter(fh, fieldnames=list(fields))
+            w.writeheader()
+            w.writerow(fields)
+    except FileExistsError as e:
+        for p in reversed(made):
+            (os.rmdir if os.path.isdir(p) else os.unlink)(p)
+        raise PublicationError("refusing to overwrite existing evidence: %s" % e.filename)
+
+
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--point", required=True, choices=("pre79", "corrected"))
@@ -263,9 +371,7 @@ def main(argv):
         print(sur.STATUS_INVALID + ": DC v_rec = %g V" % v0, file=sys.stderr)
         return 3
 
-    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
-    rid = "%s-%s-surrogate-%s" % (stamp, head[:7], a.point)
-    work = tempfile.mkdtemp(prefix="sur179-")
+    work = tempfile.mkdtemp(prefix="sur179-")  # scratch only; never published in place
     prefix = os.path.join(work, "w")
     deck = render_deck(series, a.point, a.vctrl, a.temp, models_dir(), prefix)
     deck_path = os.path.join(work, "deck.spice")
@@ -275,6 +381,15 @@ def main(argv):
     if a.dry_run:
         print("deck:", deck_path)
         return 0
+
+    # --- reserve evidence ownership BEFORE the simulator starts (issue #191) --
+    try:
+        out = reserve_publication(a.records_dir, a.snapshots_dir, a.point)
+    except PublicationError:
+        shutil.rmtree(work, ignore_errors=True)
+        raise
+    rid = out["record_id"]
+    print("reserved record id %s (namespace %s)" % (out["reserved_id"], os.path.join(out["root"], "corners")))
 
     cmd = ["ngspice", "-b", "deck.spice"]
     r = subprocess.run(cmd, cwd=work, capture_output=True, text=True)
@@ -297,11 +412,6 @@ def main(argv):
         return 2
     status = sur.classify_domain(vmin, vmax)
 
-    os.makedirs(a.records_dir, exist_ok=True)
-    snap = os.path.join(a.snapshots_dir, rid)
-    os.makedirs(snap, exist_ok=True)
-    shutil.copy(deck_path, os.path.join(snap, "surrogate_%s.spice" % a.point))
-    shutil.copy(os.path.join(work, "ngspice.log"), os.path.join(snap, "surrogate_%s.log" % a.point))
     deck_sha = sha256_bytes(deck.encode())
     ver = ngspice_version()
 
@@ -392,17 +502,19 @@ def main(argv):
             md += ["This is the corrected-topology (`bn` on 0) smoke point. It proves startup and model "
                    "integration only and is not compared with the pre-#79 frequency.", ""]
 
-    md_path = os.path.join(a.records_dir, rid + ".md")
-    csv_path = os.path.join(a.records_dir, rid + ".csv")
-    with open(md_path, "w") as fh:
-        fh.write("\n".join(md))
     fields["label"] = sur.LABEL
-    with open(csv_path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(fields))
-        w.writeheader()
-        w.writerow(fields)
+    with open(deck_path, "rb") as fh:
+        deck_bytes = fh.read()
+    with open(os.path.join(work, "ngspice.log"), "rb") as fh:
+        log_bytes = fh.read()
+    try:
+        publish(out, deck_bytes, log_bytes, "\n".join(md), fields)
+    except PublicationError as e:
+        print("publication refused (nothing overwritten): %s" % e, file=sys.stderr)
+        print("scratch kept at", work, file=sys.stderr)
+        raise
     shutil.rmtree(work, ignore_errors=True)
-    print("record:", md_path)
+    print("record:", out["md"])
     print({k: fields[k] for k in fields if k not in ("label",)})
     return rc
 
