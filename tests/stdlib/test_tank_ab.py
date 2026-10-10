@@ -156,6 +156,25 @@ def add_point(rec, variant, mos, vctrl, rpt):
                {"mos": mos, "vctrl": vctrl})
 
 
+def multi_report(corners, job="job-1"):
+    """corners: list of (process, temp, f0, fp45, fm45, zpk[, status])."""
+    out = []
+    for c in corners:
+        process, temp, f0, fp, fm, zpk = c[:6]
+        ms = [{"name": "f0", "value": f0}, {"name": "f_p45", "value": fp},
+              {"name": "f_m45", "value": fm}, {"name": "zpk", "value": zpk}]
+        out.append({"process": process, "temperature_c": temp,
+                    "status": c[6] if len(c) > 6 else "pass", "measurements": ms})
+    return {"corners": out, "environment": {"remote": {"job_id": job}}}
+
+
+def add_request(rec, variant, mos, vctrl, processes, temps):
+    name = "%s__%s_v%s" % (variant, mos, vctrl)
+    write_json(os.path.join(rec, "decks", name + ".request.json"),
+               {"corners": {"process": [{"name": p, "sections": [p]} for p in processes],
+                            "temperature_c": list(temps)}})
+
+
 def read_csv(path):
     with open(path, newline="") as fh:
         return list(csv.DictReader(fh))
@@ -226,6 +245,247 @@ class AnalyzeTests(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
         self.assertIn("NO-REPORT", [r["status"] for r in rows])
+
+    # ---- issue #166: validation, coverage, exit status ----
+
+    def _one(self, f0, fp, fm, zpk, variant="bn-sub"):
+        self._populate()
+        add_point(self.rec, variant, "ss", 1.5, report(f0, fp, fm, zpk))
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        rows = [r for r in read_csv(os.path.join(self.rec, "tank-ab.csv")) if r["mos"] == "ss"]
+        self.assertEqual(len(rows), 1)
+        return rows[0]
+
+    def test_invalid_values_are_flagged_with_blank_derived(self):
+        cases = {
+            "nan": (float("nan"), 4.5e9, 5.5e9, 100.0),
+            "inf": (5e9, 4.5e9, float("inf"), 100.0),
+            "bool": (True, 4.5e9, 5.5e9, 100.0),
+            "string": ("5e9", 4.5e9, 5.5e9, 100.0),
+            "zero f0": (0, 4.5e9, 5.5e9, 100.0),
+            "negative zpk": (5e9, 4.5e9, 5.5e9, -1.0),
+            "zero bandwidth": (5e9, 5e9, 5e9, 100.0),
+            "negative bandwidth": (5e9, 5.5e9, 4.5e9, 100.0),
+            "f0 outside": (6e9, 4.5e9, 5.5e9, 100.0),
+        }
+        for label, args in cases.items():
+            with self.subTest(label):
+                self.setUp()
+                r = self._one(*args)
+                self.assertTrue(r["status"].startswith("NO-VALUE ("), r["status"])
+                self.assertGreater(len(r["status"]), len("NO-VALUE ()"))
+                for k in ("f0_ghz", "q_phase45"):
+                    self.assertEqual(r[k], "")
+                self.assertNotIn("nan", r["zpk_ohm"].lower() + "x")
+                self.assertNotIn("inf", r["zpk_ohm"].lower())
+                for fn in ("tank-ab.csv", "tank-ab-delta.csv", "tank-ab-tuning.csv"):
+                    with open(os.path.join(self.rec, fn)) as fh:
+                        txt = fh.read().lower()
+                    self.assertNotIn("nan", txt)
+                    self.assertNotIn("inf", txt)
+
+    def test_zero_baseline_never_raises(self):
+        # baseline f0 tiny enough to round to 0.0 GHz; its pair must be skipped
+        self._populate()
+        add_point(self.rec, "bn-tank", "tt", 1.5, report(1.0, 0.5, 1.5, 100.0))
+        add_point(self.rec, "bn-sub", "tt", 1.5, report(5e9, 4.5e9, 5.5e9, 100.0))
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        delta = read_csv(os.path.join(self.rec, "tank-ab-delta.csv"))
+        self.assertEqual(len(delta), 2)    # the vctrl 1.5 pair was omitted
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        self.assertIn("DELTA-SKIPPED", [c["outcome"] for c in cov])
+
+    def test_legacy_record_is_coverage_unchecked(self):
+        self._populate()
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        self.assertEqual({c["outcome"] for c in cov}, {"COVERAGE-UNCHECKED"})
+        self.assertEqual(len(cov), 4)
+        self.assertIn("COVERAGE-UNCHECKED", p.stderr)
+
+    def test_valid_request_report_pair_is_complete(self):
+        procs, temps = ["cap_typ", "cap_bcs"], [27, 125]
+        corners = [(pr, t, 5e9, 4.5e9, 5.5e9, 100.0) for pr in procs for t in temps]
+        add_point(self.rec, "bn-tank", "tt", 1.5, multi_report(corners))
+        add_request(self.rec, "bn-tank", "tt", 1.5, procs, temps)
+        p = run_script(ANALYZE, self.rec, "--strict")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        self.assertEqual([c["outcome"] for c in cov], ["ok"] * 4)
+        self.assertEqual(len(read_csv(os.path.join(self.rec, "tank-ab.csv"))), 4)
+
+    def test_partial_duplicate_and_unexpected_corners(self):
+        procs, temps = ["cap_typ", "cap_bcs"], [27, 125]
+        good = (5e9, 4.5e9, 5.5e9, 100.0)
+        corners = [("cap_typ", 27) + good,
+                   ("cap_bcs", 27) + good, ("cap_bcs", 27) + good,   # duplicate
+                   ("cap_wcs", 27) + good]                           # unexpected
+        add_point(self.rec, "bn-tank", "tt", 1.5, multi_report(corners))
+        add_request(self.rec, "bn-tank", "tt", 1.5, procs, temps)
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)       # default: gaps do not fail
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        out = sorted((c["process"], c["temp_c"], c["outcome"]) for c in cov)
+        self.assertEqual(out.count(("cap_bcs", "27", "DUPLICATE-CORNER")), 2)
+        self.assertIn(("cap_wcs", "27", "UNEXPECTED-CORNER"), out)
+        self.assertIn(("cap_typ", "27", "ok"), out)
+        self.assertIn(("cap_typ", "125", "MISSING-CORNER"), out)
+        self.assertIn(("cap_bcs", "125", "MISSING-CORNER"), out)
+        rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+        self.assertEqual(sum(r["status"] == "ok" for r in rows), 1)
+
+    def test_empty_corners_reports_all_missing_and_strict_exit(self):
+        add_point(self.rec, "bn-tank", "tt", 1.5, {"corners": []})
+        add_request(self.rec, "bn-tank", "tt", 1.5, ["cap_typ"], [27, 125])
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        self.assertEqual([c["outcome"] for c in cov], ["MISSING-CORNER"] * 2)
+        self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
+    def test_absent_report_with_request_is_no_report(self):
+        add_request(self.rec, "bn-sub", "tt", 1.5, ["cap_typ"], [27, 125])
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        self.assertEqual([c["outcome"] for c in cov], ["NO-REPORT"] * 2)
+        rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+        self.assertEqual([r["status"] for r in rows], ["NO-REPORT"])
+
+    def test_malformed_corner_and_missing_cell_do_not_stop_others(self):
+        good = {"process": "cap_typ", "temperature_c": 27, "status": "pass",
+                "measurements": [{"name": "f0", "value": 5e9}, {"name": "f_p45", "value": 4.5e9},
+                                 {"name": "f_m45", "value": 5.5e9}, {"name": "zpk", "value": 1.0}]}
+        rpt = {"corners": [{"process": "cap_bcs"}, "junk", good]}   # no status/measurements
+        add_point(self.rec, "bn-tank", "tt", 1.5, rpt)
+        # a second point whose cell.json is missing
+        write_json(os.path.join(self.rec, "reports", "bn-tank__tt_v0.0.json"),
+                   {"corners": [good]})
+        p = run_script(ANALYZE, self.rec)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+        self.assertEqual(len(rows), 4)
+        self.assertEqual(sum(r["status"] == "ok" for r in rows), 1)
+        self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
+    def test_model_failure_is_not_a_strict_gap(self):
+        procs = ["cap_typ"]
+        bad = multi_report([("cap_typ", 125, 5e9, 4.5e9, 5.5e9, 1.0, "fail")])
+        add_point(self.rec, "bn-sub", "tt", 1.5, bad)
+        add_request(self.rec, "bn-sub", "tt", 1.5, procs, [125])
+        p = run_script(ANALYZE, self.rec, "--strict")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+        self.assertTrue(rows[0]["status"].startswith("NO-VALUE"))
+        cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+        self.assertEqual(cov[0]["outcome"], "NO-VALUE")
+
+    # ---- PR #168 review: unhashable process, bad temperature, bad request ----
+
+    GOOD = (5e9, 4.5e9, 5.5e9, 100.0)
+
+    def _assert_no_nonfinite(self):
+        for fn in ("tank-ab.csv", "tank-ab-delta.csv", "tank-ab-tuning.csv",
+                   "tank-ab-coverage.csv"):
+            with open(os.path.join(self.rec, fn)) as fh:
+                txt = fh.read().lower()
+            self.assertNotIn("nan", txt, fn)
+            self.assertNotIn("inf", txt, fn)
+
+    def test_unhashable_process_flags_only_its_row(self):
+        corners = [(["x"], 27) + self.GOOD, ({"a": 1}, 27) + self.GOOD,
+                   ("cap_typ", 27) + self.GOOD]
+        add_point(self.rec, "bn-tank", "tt", 1.5, multi_report(corners))
+        for with_request in (False, True):
+            with self.subTest(request=with_request):
+                if with_request:
+                    add_request(self.rec, "bn-tank", "tt", 1.5, ["cap_typ"], [27])
+                p = run_script(ANALYZE, self.rec)
+                self.assertEqual(p.returncode, 0, p.stderr)
+                rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+                self.assertEqual(len(rows), 3)
+                self.assertEqual([r["status"] for r in rows if r["status"] == "ok"], ["ok"])
+                bad = [r for r in rows if r["status"] != "ok"]
+                for r in bad:
+                    self.assertIn("process not a string", r["status"])
+                    self.assertEqual(r["mim"], "")
+                    self.assertEqual(r["f0_ghz"], "")
+                cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+                self.assertEqual([c["outcome"] for c in cov].count("INVALID"), 2)
+                if with_request:
+                    self.assertIn(("cap_typ", "27", "ok"),
+                                  [(c["process"], c["temp_c"], c["outcome"]) for c in cov])
+                self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
+    def test_bad_temperature_is_invalid_never_ok(self):
+        for label, temp in (("nan", float("nan")), ("inf", float("inf")),
+                            ("-inf", float("-inf")), ("string", "27"),
+                            ("bool", True), ("null", None), ("list", [27])):
+            for with_request in (False, True):
+                with self.subTest(temp=label, request=with_request):
+                    self.setUp()
+                    corners = [("cap_typ", temp) + self.GOOD, ("cap_bcs", 27) + self.GOOD]
+                    add_point(self.rec, "bn-tank", "tt", 1.5, multi_report(corners))
+                    if with_request:
+                        add_request(self.rec, "bn-tank", "tt", 1.5,
+                                    ["cap_typ", "cap_bcs"], [27])
+                    p = run_script(ANALYZE, self.rec)
+                    self.assertEqual(p.returncode, 0, p.stderr)
+                    rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+                    self.assertEqual(len(rows), 2)
+                    bad = [r for r in rows if r["mim"] != "cap_bcs"]
+                    self.assertEqual(len(bad), 1)
+                    self.assertIn("temperature not a finite number", bad[0]["status"])
+                    self.assertEqual(bad[0]["temp_c"], "")
+                    self.assertEqual(bad[0]["f0_ghz"], "")
+                    good = [r for r in rows if r["mim"] == "cap_bcs"]
+                    self.assertEqual(good[0]["status"], "ok")
+                    cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+                    outs = [(c["process"], c["outcome"]) for c in cov]
+                    self.assertIn(("cap_typ", "INVALID"), outs)
+                    if with_request:
+                        self.assertIn(("cap_typ", "MISSING-CORNER"), outs)
+                        self.assertIn(("cap_bcs", "ok"), outs)
+                    self._assert_no_nonfinite()
+                    self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
+    def test_unreadable_request_is_distinct_from_legacy(self):
+        name = "bn-tank__tt_v1.5"
+        bad_requests = {
+            "not json": "{ nope",
+            "no corners": json.dumps({"netlist": "tank.spice"}),
+            "nan temp": '{"corners": {"process": [{"name": "cap_typ"}], "temperature_c": [NaN]}}',
+            "string temp": json.dumps({"corners": {"process": [{"name": "cap_typ"}],
+                                                   "temperature_c": ["27"]}}),
+            "list process": json.dumps({"corners": {"process": [{"name": ["cap_typ"]}],
+                                                    "temperature_c": [27]}}),
+        }
+        for label, body in bad_requests.items():
+            for with_report in (True, False):
+                with self.subTest(label, report=with_report):
+                    self.setUp()
+                    if with_report:
+                        add_point(self.rec, "bn-tank", "tt", 1.5,
+                                  multi_report([("cap_typ", 27) + self.GOOD]))
+                    os.makedirs(os.path.join(self.rec, "decks"), exist_ok=True)
+                    with open(os.path.join(self.rec, "decks", name + ".request.json"), "w") as fh:
+                        fh.write(body)
+                    p = run_script(ANALYZE, self.rec)
+                    self.assertEqual(p.returncode, 0, p.stderr)
+                    cov = read_csv(os.path.join(self.rec, "tank-ab-coverage.csv"))
+                    outs = [c["outcome"] for c in cov]
+                    self.assertIn("REQUEST-UNREADABLE", outs)
+                    self.assertNotIn("COVERAGE-UNCHECKED", outs)
+                    det = [c["detail"] for c in cov if c["outcome"] == "REQUEST-UNREADABLE"]
+                    self.assertTrue(det[0].startswith("request unreadable"), det)
+                    self.assertIn("REQUEST-UNREADABLE", p.stderr)
+                    if with_report:
+                        rows = read_csv(os.path.join(self.rec, "tank-ab.csv"))
+                        self.assertEqual([r["status"] for r in rows], ["ok"])
+                    self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
 
     def test_no_arguments_fails(self):
         self.assertNotEqual(run_script(ANALYZE).returncode, 0)

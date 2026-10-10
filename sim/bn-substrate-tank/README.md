@@ -140,6 +140,47 @@ All three need the OSDI `mosvar` library, and none could be regenerated:
 These records are therefore **not** superseded by this change; they remain the
 evidence for the *pre-#79* netlist and say so in `design/README.md`.
 
+## `analyze.py` diagnostics and exit status (#166)
+
+`analyze.py <record-dir> [--strict]` writes `tank-ab.csv`, `tank-ab-delta.csv`,
+`tank-ab-tuning.csv` (columns and values unchanged for valid data; the frozen
+records reproduce byte-identically) and a new `tank-ab-coverage.csv`
+(`variant, point, process, temp_c, outcome, detail`).
+
+- **Validity.** A corner with `status == pass` is reduced only if `f0`,
+  `f_p45`, `f_m45`, `zpk` are finite real numbers (not bool), positive, with
+  `f_p45 < f0 < f_m45` and a finite positive Q. Otherwise the row is
+  `NO-VALUE (<reason>)` with blank `f0_ghz`/`q_phase45`, and the coverage
+  outcome is `INVALID`. Pairs whose baseline f0/Q/zpk is zero are omitted from
+  the delta table (`DELTA-SKIPPED`); no NaN/inf is written.
+- **Coverage.** If `decks/<name>.request.json` exists, each expected
+  (variant, point, process, temperature) gets one outcome: `ok`, `NO-VALUE`
+  (corner ran but is a model failure, e.g. the known +125 C `dsubw` NaN),
+  `NO-REPORT` (missing or unparseable report), `MISSING-CORNER`,
+  `DUPLICATE-CORNER`, `UNEXPECTED-CORNER`. Records without request files get
+  one `COVERAGE-UNCHECKED` row per report and no invented inventory. A request
+  file that is present but unreadable or malformed (bad JSON, no `corners`,
+  non-string process name, temperature not a finite number) gets a distinct
+  `REQUEST-UNREADABLE` row (detail `request unreadable: <error>`) instead of
+  `COVERAGE-UNCHECKED`: that is a coverage gap, not a legacy record.
+- **Robustness.** A malformed corner or missing `cell.json` flags that row
+  only; other corners are still reduced. A corner is malformed (coverage
+  `INVALID`, row `NO-VALUE (malformed corner: ...)`, blank `mim`/`temp_c` for
+  the offending field) if it is not an object, its `process` is not a string
+  (e.g. a list), or its `temperature_c` is not a finite real number (NaN, inf,
+  bool, string, null). This holds with or without a request file, so such a
+  corner never yields an `ok` row.
+- **Exit status.** 0 whenever the analysis completes; a coverage summary goes
+  to stderr. With `--strict`, exit 2 if there is any `NO-REPORT`,
+  `MISSING-CORNER`, `DUPLICATE-CORNER`, `UNEXPECTED-CORNER`,
+  `COVERAGE-UNCHECKED`, `REQUEST-UNREADABLE` or `INVALID` outcome. Model failures
+  (`status != pass`) never change the exit status: that is spec evidence, not
+  tool health, and no target is relaxed.
+- **Exploratory subsets.** A deliberately partial run (fewer corners in its
+  request) is complete relative to its own request; run it without `--strict`
+  and cite the declared subset. The expected inventory is always the record's
+  own request, never the full corner table above.
+
 ## Reproducing
 
 ```bash
