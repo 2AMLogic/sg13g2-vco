@@ -9,4 +9,5 @@ rc=0
 python3 -I "$ROOT/.github/scripts/test_record_currency.py" || rc=1
 "$ROOT/sim/tests/test-source-capture.sh" || rc=1
 "$ROOT/sim/tests/test-model-bundle.sh" || rc=1
+"$ROOT/sim/tests/test-resume-checkpoint.sh" || rc=1
 exit "$rc"

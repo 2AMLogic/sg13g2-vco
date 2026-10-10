@@ -119,6 +119,26 @@ source "${SIM_DIR}/env.sh"
 # shellcheck source=../lib.sh
 source "${SIM_DIR}/lib.sh"
 
+# Optional restart (issue #154): --resume-from <record-id> imports the
+# VALIDATED completed transient points of an earlier record into this run's
+# NEW record. No argument = the unchanged cold start.
+RESUME_FROM=""
+case "${1:-}" in
+  "") ;;
+  --resume-from)
+    RESUME_FROM="${2:-}"
+    if [[ -z "${RESUME_FROM}" || $# -ne 2 ]]; then
+      echo "usage: run_pvt_sweep.sh [--resume-from <record-id>]" >&2; exit 2
+    fi
+    case "${RESUME_FROM}" in
+      */*|.*|*[!A-Za-z0-9._-]*) echo "error: --resume-from needs a plain record id, got '${RESUME_FROM}'." >&2; exit 2 ;;
+    esac
+    if [[ ! -d "${EXPERIMENT_DIR}/corners/${RESUME_FROM}" ]]; then
+      echo "error: no record ${RESUME_FROM} under ${EXPERIMENT_DIR}/corners." >&2; exit 2
+    fi ;;
+  *) echo "usage: run_pvt_sweep.sh [--resume-from <record-id>]" >&2; exit 2 ;;
+esac
+
 # Reserve the id (atomic mkdir) before any output path is created or opened.
 RECORD_ID="$(reserve_record_id "${REPO_ROOT}" "${EXPERIMENT_DIR}")" || exit 1
 # The record paths osc_bench.sh's helpers write to. shellcheck cannot follow a
@@ -191,6 +211,9 @@ MARGIN_TEMPS="-40 125"
 
 osc_preflight
 osc_write_csv_headers
+if [[ -n "${RESUME_FROM}" ]]; then
+  osc_resume_init "${RESUME_FROM}" || exit 1
+fi
 
 # ------------------------------------------------------------- cost estimate
 # n_words <space-separated list> -- the axis lengths, so the printed point
@@ -232,7 +255,10 @@ echo "                    Coarsening the ceiling does NOT help: the same 2 ns"
 echo "                    transient costs 183 s at a 5 ps ceiling."
 echo "estimated cost    : ~${EST_H} CPU-hours."
 echo "                    This is a fleet job. Partial evidence is written"
-echo "                    point by point, so an interrupted run is not lost."
+echo "                    point by point, so an interrupted run is not lost;"
+echo "                    --resume-from <record> reuses its VALIDATED completed"
+echo "                    transient points under a new record (margin ladders"
+echo "                    are always re-run)."
 echo "---------------------------------------------------------------"
 echo
 
@@ -249,7 +275,7 @@ for mos in ${MOS_LABELS}; do
         for vctrl in ${VCTRL_LIST}; do
           corner_id="vco_${mos}_${cap}_${hbt}_${temp}c_${vctrl}v"
           total=$((total + 1))
-          if osc_simulate_point "${corner_id}" "${mos}" "${cap}" "${hbt}" \
+          if osc_run_point "${corner_id}" "${mos}" "${cap}" "${hbt}" \
                                 "${temp}" "${vctrl}" "${OSC_TMAX}"; then
             passed=$((passed + 1))
           else
@@ -450,6 +476,19 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "  model result. See \`sim/inductor-model/README.md\`."
   osc_provenance_md
   echo "- **ngspice**: \`${OSC_NGSPICE_VERSION}\`"
+  echo "- **Execution**: ${OSC_N_EXECUTED} transient point(s) executed in this"
+  echo "  record, ${OSC_N_REUSED} reused from validated checkpoints"
+  if [[ -n "${RESUME_FROM}" ]]; then
+    echo "  (source record \`${RESUME_FROM}\`, read-only; ${OSC_N_REJECTED} checkpoint(s) refused and re-run;"
+    echo "  per-point source and digests: \`records/${RECORD_ID}-reuse.csv\`)."
+  else
+    echo "  (cold start, no resume source)."
+  fi
+  echo "  Reuse covers completed TRANSIENT points only: every margin ladder"
+  echo "  (${margin_total} corners) was executed in this record. Reused rows are"
+  echo "  byte-identical copies of the source record's, re-validated against this"
+  echo "  run's design/model/simulator/measurement identity; NOSC results stay"
+  echo "  findings and failed or incomplete points were re-run."
   echo "- **Result**: ${passed}/${total} transient points reached a countable"
   echo "  oscillation. Non-oscillating points: ${#nosc_points[@]}."
   echo "  Simulation failures: ${#failed_points[@]}."
@@ -495,6 +534,8 @@ ROW8_SUMMARY="$(awk -F, -v vc="${BAND_CENTRE_VCTRL}" -v pmax="${OSC_ROW8_P_MAX_W
   echo "  - Per-point generated netlists: \`netlist-snapshots/${RECORD_ID}/\`"
   echo "  - Per-point raw ngspice logs: \`corners/${RECORD_ID}/\`"
   echo "  - Per-point scalars: \`records/${RECORD_ID}.csv\`"
+  echo "  - Per-point completion checkpoints: \`corners/${RECORD_ID}/*.ckpt\`"
+  if [[ -n "${RESUME_FROM}" ]]; then echo "  - Reused points: \`records/${RECORD_ID}-reuse.csv\`"; fi
   echo "  - Tuning / Kvco summary: \`records/${RECORD_ID}-tuning.csv\`"
   echo "  - Kvco curve: \`records/${RECORD_ID}-kvco.csv\`"
   echo "  - Row-3 grade per corner: \`records/${RECORD_ID}-row3.csv\`"
@@ -512,6 +553,7 @@ echo
 echo "---------------------------------------------------------------"
 echo "record          : ${RECORD_ID}"
 echo "transients      : ${passed}/${total} oscillating"
+echo "executed/reused : ${OSC_N_EXECUTED} executed, ${OSC_N_REUSED} reused, ${OSC_N_REJECTED} refused (re-run)"
 echo "non-oscillating : ${#nosc_points[@]}"
 echo "sim failures    : ${#failed_points[@]}"
 echo "margin corners  : $(( margin_total - ${#margin_failed[@]} ))/${margin_total}"

@@ -978,6 +978,274 @@ osc_simulate_point() {
 }
 
 # --------------------------------------------------------------------------
+# Validated checkpoint reuse for the long sweep (issue #154)
+#
+# Scope: COMPLETED TRANSIENT POINTS ONLY. The row-6 margin ladders are always
+# re-run; no whole-ladder checkpoint contract exists. Phase noise is out of
+# scope.
+#
+# Contract. After osc_simulate_point has finalized a point's retained outputs
+# (frozen netlist, raw log, CSV row) and the point is a finished measurement
+# (status PASS or NOSC with meas_status VALID -- a NOSC is a finding, a FAIL,
+# NODATA or INVALID point is not complete), osc_write_checkpoint writes
+#   corners/<record>/<corner>.ckpt   key=value lines: point identity, status,
+#                                    the run fingerprint (osc_fingerprint),
+#                                    sha256 of netlist / log / row, a
+#                                    `complete=1` line and a trailing
+#                                    `ckpt_sha256=` over every line above it
+#   corners/<record>/<corner>.row    the point's CSV row, verbatim
+# atomically (temp file + rename), AFTER the artifacts. A point without that
+# file is not complete, whatever else exists, and legacy records (no
+# checkpoints) are never reusable.
+#
+# A restart (run_pvt_sweep.sh --resume-from <record>) always reserves a NEW
+# record and only READS the source: osc_try_reuse re-verifies the checkpoint
+# (trailer, completeness, point identity, fingerprint equal to THIS run's,
+# artifact digests, row shape/status), copies the three artifacts into the
+# new record, and writes a fresh checkpoint there that names the source.
+# Anything it cannot establish is refused with a diagnostic and the point is
+# simulated normally.
+# --------------------------------------------------------------------------
+OSC_CKPT_SCHEMA="sg13g2-vco/osc-point-checkpoint/1"
+OSC_RESUME_FROM="${OSC_RESUME_FROM:-}"
+OSC_N_EXECUTED=0
+OSC_N_REUSED=0
+OSC_N_REJECTED=0
+# Files whose bytes define the extraction/measurement code. Overridable only
+# so fixtures can mutate a copy; any change makes older checkpoints refuse.
+OSC_EXTRACTOR_FILES="${OSC_EXTRACTOR_FILES:-}"
+
+# osc_sha_stdin -- sha256 of stdin.
+osc_sha_stdin() {
+  local t h
+  t="$(mktemp "${WORKDIR}/sha.XXXXXX")" || return 1
+  cat > "${t}"
+  h="$(sha256_of "${t}")"; rm -f "${t}"
+  echo "${h}"
+}
+
+# osc_ckpt_get <file> <key> -- the value of the first <key>=... line.
+osc_ckpt_get() {
+  awk -v k="$2" 'index($0, k "=") == 1 { print substr($0, length(k) + 2); exit }' "$1"
+}
+
+# osc_fingerprint -- the identity of everything that determines a point's
+# numbers other than the point itself, as key=value lines. Empty output (and
+# failure) when any part cannot be established: reuse is then impossible.
+osc_fingerprint() {
+  osc_require_bundle || return 1
+  local files="${OSC_EXTRACTOR_FILES:-${SIM_DIR:-}/lib.sh ${EXPERIMENT_DIR}/osc_bench.sh}"
+  local f ext=""
+  for f in ${files}; do
+    [[ -f "${f}" ]] || { echo "error: extractor file ${f} missing; checkpoint identity not established." >&2; return 1; }
+    ext="${ext}$(sha256_of "${f}") "
+  done
+  [[ -n "${OSC_VCO_BODY:-}" && -f "${OSC_VCO_BODY}" ]] || { echo "error: no captured design body; checkpoint identity not established." >&2; return 1; }
+  local tmpl="${EXPERIMENT_DIR}/testbench/tb_vco_core_tran.spice.tmpl"
+  [[ -f "${tmpl}" ]] || { echo "error: ${tmpl} missing." >&2; return 1; }
+  [[ -n "${OSC_NGSPICE_VERSION:-}" ]] || { echo "error: simulator version unknown; checkpoint identity not established." >&2; return 1; }
+  echo "design_body_sha256=$(sha256_of "${OSC_VCO_BODY}")"
+  echo "tran_template_sha256=$(sha256_of "${tmpl}")"
+  echo "model_inputs_sha256=$(cut -f1-3 "${OSC_BUNDLE_MANIFEST}" | LC_ALL=C sort | osc_sha_stdin)"
+  echo "simulator=${OSC_NGSPICE_VERSION}"
+  echo "extractor_sha256=$(echo "${ext}" | osc_sha_stdin)"
+  echo "csv_header_sha256=$(head -n 1 "${CSV_OUT}" | osc_sha_stdin)"
+  echo "settings=tstep:${OSC_TSTEP} tstop:${OSC_TSTOP} tstop_s:${OSC_TSTOP_S} tmeas_start:${OSC_TMEAS_START} settle_frac:${OSC_SETTLE_FRAC} settle_ref:${OSC_SETTLE_REF} ic:${OSC_IC_DIFF_MV}/${OSC_IC_OUTP}/${OSC_IC_OUTN} vdd_nom:${OSC_VDD_NOM} rail:$(osc_rail) csv_rail:${OSC_CSV_RAIL}"
+  echo "pdk=${PDK:-}"
+}
+
+# osc_ckpt_point_lines <corner> <mos> <cap> <hbt> <temp> <vctrl> <tmax>
+osc_ckpt_point_lines() {
+  echo "corner_id=$1"; echo "mos=$2"; echo "cap=$3"; echo "hbt=$4"
+  echo "temp_c=$5"; echo "vctrl_v=$6"; echo "tmax=$7"
+}
+
+# osc_ckpt_paths <record> <corner> -- sets C_CKPT C_ROW C_LOG C_NET for a record
+osc_ckpt_paths() {
+  C_CKPT="${EXPERIMENT_DIR}/corners/$1/$2.ckpt"
+  C_ROW="${EXPERIMENT_DIR}/corners/$1/$2.row"
+  C_LOG="${EXPERIMENT_DIR}/corners/$1/$2.log"
+  C_NET="${EXPERIMENT_DIR}/netlist-snapshots/$1/$2.spice"
+}
+
+# osc_ckpt_emit <dest> <status> <meas> <source-record|-> <origin|-> <source-ckpt-sha|->
+# <point lines on stdin is avoided: pass them via OSC_CKPT_POINT>
+osc_ckpt_emit() {
+  local dest="$1" status="$2" meas="$3" src="$4" origin="$5" srcsha="$6"
+  local tmp="${dest}.tmp.$$" body
+  [[ ! -e "${dest}" ]] || { echo "error: ${dest} already exists (append-only)." >&2; return 1; }
+  body="$(
+    echo "schema=${OSC_CKPT_SCHEMA}"
+    printf '%s\n' "${OSC_CKPT_POINT}"
+    echo "status=${status}"
+    echo "meas_status=${meas}"
+    printf '%s\n' "${OSC_FP_LINES}"
+    echo "netlist_sha256=$(sha256_of "${C_NET}")"
+    echo "log_sha256=$(sha256_of "${C_LOG}")"
+    echo "row_sha256=$(sha256_of "${C_ROW}")"
+    echo "source_record=${src}"
+    echo "origin_record=${origin}"
+    echo "source_ckpt_sha256=${srcsha}"
+    echo "complete=1"
+  )" || return 1
+  { printf '%s\n' "${body}"; echo "ckpt_sha256=$(printf '%s\n' "${body}" | osc_sha_stdin)"; } > "${tmp}" \
+    && mv "${tmp}" "${dest}" || { rm -f "${tmp}"; return 1; }
+}
+
+# osc_write_checkpoint <corner> <mos> <cap> <hbt> <temp> <vctrl> <tmax>
+# Called after osc_simulate_point. Writes nothing (the point stays "to be
+# re-run") unless the point is a finished PASS/NOSC measurement.
+osc_write_checkpoint() {
+  local corner="$1" row status meas
+  osc_record_reserved || return 0
+  row="$(awk -F, -v c="${corner}" '$1 == c { r = $0 } END { print r }' "${CSV_OUT}")"
+  [[ -n "${row}" ]] || return 0
+  status="$(echo "${row}" | awk -F, '{ print $8 }')"
+  meas="$(echo "${row}" | awk -F, '{ print $28 }')"
+  case "${status}" in PASS|NOSC) ;; *) return 0 ;; esac
+  [[ "${meas}" == "VALID" ]] || return 0
+  [[ -n "${OSC_FP_LINES:-}" ]] || OSC_FP_LINES="$(osc_fingerprint)" || return 0
+  osc_ckpt_paths "${RECORD_ID}" "${corner}"
+  [[ -f "${C_NET}" && -f "${C_LOG}" ]] || return 0
+  printf '%s\n' "${row}" > "${C_ROW}" || return 0
+  OSC_CKPT_POINT="$(osc_ckpt_point_lines "$@")"
+  osc_ckpt_emit "${C_CKPT}" "${status}" "${meas}" - - - || echo "warning: could not write checkpoint for ${corner}; it will be re-run on restart." >&2
+}
+
+# osc_resume_init <source-record>
+# Validate the restart source and open the reuse manifest. Fails (before any
+# simulation) on a source that is not an existing, distinct, plain record id.
+osc_resume_init() {
+  local src="$1"
+  case "${src}" in
+    ""|*/*|.*|*[!A-Za-z0-9._-]*) echo "error: --resume-from needs a plain record id, got '${src}'." >&2; return 1 ;;
+  esac
+  if [[ "${src}" == "${RECORD_ID}" ]]; then
+    echo "error: --resume-from names this run's own record ${src}." >&2; return 1
+  fi
+  if [[ ! -d "${EXPERIMENT_DIR}/corners/${src}" ]]; then
+    echo "error: no record ${src} under ${EXPERIMENT_DIR}/corners." >&2; return 1
+  fi
+  OSC_RESUME_FROM="${src}"
+  OSC_REUSE_CSV="${EXPERIMENT_DIR}/records/${RECORD_ID}-reuse.csv"
+  [[ ! -e "${OSC_REUSE_CSV}" ]] || { echo "error: ${OSC_REUSE_CSV} exists (append-only)." >&2; return 1; }
+  echo "corner_id,source_record,origin_record,source_ckpt_sha256,netlist_sha256,log_sha256,row_sha256" > "${OSC_REUSE_CSV}"
+  OSC_FP_LINES="$(osc_fingerprint)" || return 1
+}
+
+# osc_reject <corner> <reason> -- diagnostic; the point is simulated normally.
+osc_reject() {
+  OSC_N_REJECTED=$((OSC_N_REJECTED + 1))
+  echo "resume: NOT reusing ${1} from ${OSC_RESUME_FROM}: ${2}" >&2
+  return 1
+}
+
+# osc_try_reuse <corner> <mos> <cap> <hbt> <temp> <vctrl> <tmax>
+# 0 = imported into this record (counts as reused); 1 = refused, run it.
+osc_try_reuse() {
+  local corner="$1" k want got diff="" s_ckpt s_row s_log s_net
+  [[ -n "${OSC_RESUME_FROM}" ]] || return 1
+  osc_ckpt_paths "${OSC_RESUME_FROM}" "${corner}"
+  s_ckpt="${C_CKPT}"; s_row="${C_ROW}"; s_log="${C_LOG}"; s_net="${C_NET}"
+  [[ -f "${s_ckpt}" ]] || { osc_reject "${corner}" "no completion checkpoint (legacy record or interrupted before completion)"; return 1; }
+  # trailer: the digest of every line above it, and a complete=1 line
+  local last body
+  last="$(tail -n 1 "${s_ckpt}")"
+  if [[ "${last}" != ckpt_sha256=* ]]; then
+    osc_reject "${corner}" "checkpoint is truncated (no digest trailer)"; return 1
+  fi
+  body="$(sed '$d' "${s_ckpt}")"
+  if [[ "$(printf '%s\n' "${body}" | osc_sha_stdin)" != "${last#ckpt_sha256=}" ]]; then
+    osc_reject "${corner}" "checkpoint digest mismatch (corrupt or edited)"; return 1
+  fi
+  if [[ "$(osc_ckpt_get "${s_ckpt}" schema)" != "${OSC_CKPT_SCHEMA}" ]]; then
+    osc_reject "${corner}" "unknown checkpoint schema"; return 1
+  fi
+  if [[ "$(osc_ckpt_get "${s_ckpt}" complete)" != "1" ]]; then
+    osc_reject "${corner}" "checkpoint not marked complete"; return 1
+  fi
+  if [[ "$(awk -F= '{ print $1 }' "${s_ckpt}" | sort | uniq -d | wc -l | tr -d ' ')" != "0" ]]; then
+    osc_reject "${corner}" "checkpoint has duplicate keys"; return 1
+  fi
+  # point identity
+  OSC_CKPT_POINT="$(osc_ckpt_point_lines "$@")"
+  while IFS= read -r want; do
+    k="${want%%=*}"; got="$(osc_ckpt_get "${s_ckpt}" "${k}")"
+    if [[ "${got}" != "${want#*=}" ]]; then
+      osc_reject "${corner}" "point identity ${k} differs (checkpoint '${got}', requested '${want#*=}')"; return 1
+    fi
+  done <<EOF2
+${OSC_CKPT_POINT}
+EOF2
+  # input / simulator / measurement identity
+  while IFS= read -r want; do
+    k="${want%%=*}"; got="$(osc_ckpt_get "${s_ckpt}" "${k}")"
+    [[ "${got}" == "${want#*=}" ]] || diff="${diff:+${diff}, }${k}"
+  done <<EOF2
+${OSC_FP_LINES}
+EOF2
+  if [[ -n "${diff}" ]]; then
+    osc_reject "${corner}" "incompatible inputs, changed since the checkpoint: ${diff}"; return 1
+  fi
+  local status meas
+  status="$(osc_ckpt_get "${s_ckpt}" status)"; meas="$(osc_ckpt_get "${s_ckpt}" meas_status)"
+  case "${status}" in PASS|NOSC) ;; *) osc_reject "${corner}" "checkpointed status '${status}' is not a finished measurement"; return 1 ;; esac
+  [[ "${meas}" == "VALID" ]] || { osc_reject "${corner}" "checkpointed measurement is not VALID"; return 1; }
+  # artifacts: present, non-empty, digest-equal
+  local a f key
+  for a in "netlist:${s_net}" "log:${s_log}" "row:${s_row}"; do
+    key="${a%%:*}_sha256"; f="${a#*:}"
+    [[ -f "${f}" && -s "${f}" ]] || { osc_reject "${corner}" "${a%%:*} artifact missing or empty (${f#"${REPO_ROOT}"/})"; return 1; }
+    if [[ "$(sha256_of "${f}")" != "$(osc_ckpt_get "${s_ckpt}" "${key}")" ]]; then
+      osc_reject "${corner}" "${a%%:*} artifact digest mismatch (truncated or modified)"; return 1
+    fi
+  done
+  # the row itself: one line, this point, current column count, same status
+  local nf_have nf_want
+  if [[ "$(wc -l < "${s_row}" | tr -d ' ')" != "1" ]]; then osc_reject "${corner}" "row artifact is not exactly one line"; return 1; fi
+  nf_have="$(awk -F, '{ print NF }' "${s_row}")"; nf_want="$(head -n 1 "${CSV_OUT}" | awk -F, '{ print NF }')"
+  if [[ "${nf_have}" != "${nf_want}" ]]; then osc_reject "${corner}" "row has ${nf_have} columns, this run writes ${nf_want}"; return 1; fi
+  if [[ "$(awk -F, '{ print $1 "|" $8 "|" $28 "|" $7 }' "${s_row}")" != "${corner}|${status}|VALID|$7" ]]; then
+    osc_reject "${corner}" "row disagrees with checkpoint (id/status/meas_status/tmax)"; return 1
+  fi
+  # import: copy into the NEW record, verify the copies, never touch the source
+  local n_net="${NETLIST_DIR}/${corner}.spice" n_log="${LOG_DIR}/${corner}.log"
+  osc_ckpt_paths "${RECORD_ID}" "${corner}"
+  if [[ -e "${n_net}" || -e "${n_log}" || -e "${C_ROW}" || -e "${C_CKPT}" ]]; then
+    osc_reject "${corner}" "destination artifacts already exist in the new record"; return 1
+  fi
+  cp "${s_net}" "${n_net}" && cp "${s_log}" "${n_log}" && cp "${s_row}" "${C_ROW}" \
+    && cmp -s "${s_net}" "${n_net}" && cmp -s "${s_log}" "${n_log}" && cmp -s "${s_row}" "${C_ROW}" \
+    || { rm -f "${n_net}" "${n_log}" "${C_ROW}"; osc_reject "${corner}" "copy into the new record failed"; return 1; }
+  local origin src_sha
+  origin="$(osc_ckpt_get "${s_ckpt}" origin_record)"; [[ -n "${origin}" && "${origin}" != "-" ]] || origin="${OSC_RESUME_FROM}"
+  src_sha="$(sha256_of "${s_ckpt}")"
+  osc_ckpt_emit "${C_CKPT}" "${status}" "${meas}" "${OSC_RESUME_FROM}" "${origin}" "${src_sha}" \
+    || { rm -f "${n_net}" "${n_log}" "${C_ROW}"; osc_reject "${corner}" "could not write the new checkpoint"; return 1; }
+  cat "${C_ROW}" >> "${CSV_OUT}"
+  echo "${corner},${OSC_RESUME_FROM},${origin},${src_sha},$(sha256_of "${n_net}"),$(sha256_of "${n_log}"),$(sha256_of "${C_ROW}")" >> "${OSC_REUSE_CSV}"
+  OSC_N_REUSED=$((OSC_N_REUSED + 1))
+  echo "[${corner}] ${status} REUSED from ${OSC_RESUME_FROM} (validated checkpoint)"
+  return 0
+}
+
+# osc_run_point <corner> <mos> <cap> <hbt> <temp> <vctrl> <tmax>
+# The sweep's per-point entry: reuse a validated checkpoint when resuming,
+# otherwise simulate and checkpoint. Returns like osc_simulate_point
+# (0 only for a PASS); a reused NOSC returns 1, exactly as when executed.
+osc_run_point() {
+  if [[ -n "${OSC_RESUME_FROM}" ]] && osc_try_reuse "$@"; then
+    [[ "$(awk -F, -v c="$1" '$1 == c { s = $8 } END { print s }' "${CSV_OUT}")" == "PASS" ]]
+    return
+  fi
+  local rc=0
+  osc_simulate_point "$@" || rc=$?
+  OSC_N_EXECUTED=$((OSC_N_EXECUTED + 1))
+  osc_write_checkpoint "$@"
+  return "${rc}"
+}
+
+# --------------------------------------------------------------------------
 # osc_margin_corner <corner-id-prefix> <mos> <cap> <hbt> <temp>
 # One corner of the row-6 margin bench: walk the RREF ladder, record the
 # measured tail current and envelope at each rung, and append both the
