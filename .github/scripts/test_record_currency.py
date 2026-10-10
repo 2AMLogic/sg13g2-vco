@@ -427,6 +427,155 @@ class TestDeckIntegrity(Fixture):
         self.mismatched()
         self.assertEqual(run(), 1)
 
+    # ---- issue #173: malformed paired reports are rejected, not skipped
+
+    DECK_H = hashlib.sha256(b"deck").hexdigest()
+    MALFORMED = {
+        # name: (raw report bytes, expected reason fragment)
+        "invalid-json": ("{nope", "invalid JSON"),
+        "numeric": (json.dumps({"environment": {"netlist_sha256": 123}}),
+                    "is a number (123), not a string"),
+        "null": (json.dumps({"environment": {"netlist_sha256": None}}),
+                 "is null"),
+        "missing": (json.dumps({"environment": {"other": "x"}}),
+                    "missing netlist_sha256"),
+        "bad-hex": (json.dumps({"netlist_sha256": "g" * 64}),
+                    "not 64 lowercase hex digits (length 64)"),
+        "uppercase": (json.dumps({"netlist_sha256": DECK_H.upper()}),
+                      "not 64 lowercase hex digits"),
+        "short": (json.dumps({"netlist_sha256": DECK_H[:63]}),
+                  "not 64 lowercase hex digits (length 63)"),
+        "long": (json.dumps({"netlist_sha256": DECK_H + "0"}),
+                 "not 64 lowercase hex digits (length 65)"),
+        "conflicting": (json.dumps({"netlist_sha256": DECK_H,
+                                    "environment": {"netlist_sha256": "a" * 64}}),
+                        "conflicting netlist_sha256 values"),
+        "one-good-one-numeric": (json.dumps({"netlist_sha256": DECK_H,
+                                             "environment": {"netlist_sha256": 7}}),
+                                 "not a string"),
+    }
+
+    def malformed_pair(self, raw, r=None, publish=True):
+        r = r or self.rid()
+        self.rec(BN, r); self.sidecar(BN, r, H1)  # source-current record
+        self.write("%s/%s/reports/c.json" % (BN, r), raw)
+        self.write("%s/%s/decks/c.spice" % (BN, r), "deck")
+        if publish:
+            self.write(rc.INDEX, rc.render(self.idx()))
+        return r
+
+    def run_cli(self, *a):
+        script = os.path.join(HERE, "record_currency.py")
+        p = subprocess.run(
+            [sys.executable, "-I", script, "--root", self.d] + list(a),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return p.returncode, p.stdout.decode(), p.stderr.decode()
+
+    def test_malformed_paired_reports_fail_with_reason(self):
+        for name, (raw, why) in sorted(self.MALFORMED.items()):
+            with self.subTest(case=name):
+                shutil.rmtree(os.path.join(self.d, "sim"), ignore_errors=True)
+                r = self.malformed_pair(raw)
+                rep = "%s/%s/reports/c.json" % (BN, r)
+                e = self.get(r)
+                self.assertEqual(e["state"], "current")  # currency unaffected
+                di = e["deck_integrity"]
+                self.assertEqual((di["checked"], di["matched"], di["unpaired"]),
+                                 (0, 0, 0))
+                self.assertEqual(list(di["malformed"]), [rep])
+                self.assertIn(why, di["malformed"][rep])
+                errs, notes = rc.integrity_scan(self.idx())
+                self.assertEqual(len(errs), 1, errs)
+                self.assertIn(rep, errs[0])
+                self.assertIn("decks/c.spice", errs[0])
+                self.assertIn(why, errs[0])
+                self.assertIn("malformed paired reports: 1", notes)
+
+    def test_cli_malformed_exit_and_diagnostics(self):
+        for name, (raw, why) in sorted(self.MALFORMED.items()):
+            with self.subTest(case=name):
+                shutil.rmtree(os.path.join(self.d, "sim"), ignore_errors=True)
+                r = self.malformed_pair(raw)
+                rc_, out, err = self.run_cli("integrity")
+                self.assertEqual(rc_, 1, (out, err))
+                self.assertNotIn("OK:", out)
+                self.assertIn("FAIL: deck integrity:", err)
+                self.assertIn("%s/%s/reports/c.json" % (BN, r), err)
+                self.assertIn(why, err)
+                self.assertIn("malformed paired reports: 1", out)
+
+    def test_citation_rejects_malformed_independent_of_currency(self):
+        r = self.malformed_pair(self.MALFORMED["numeric"][0])
+        self.assertEqual(self.get(r)["state"], "current")
+        errs = self.cite(r)
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn("malformed paired report", errs[0])
+        self.assertIn("reports/c.json", errs[0])
+        self.assertIn("not a string", errs[0])
+        rc_, out, err = self.run_cli("cite", "%s/%s.md" % (BN, r))
+        self.assertEqual(rc_, 1, (out, err))
+        self.assertIn("FAIL: sim citation:", err)
+        self.assertIn("malformed paired report", err)
+        # regenerating the index does not clear it
+        self.write(rc.INDEX, rc.render(self.idx()))
+        self.assertEqual(len(self.cite(r)), 1)
+
+    def test_valid_matching_pair_cli_ok(self):
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        self.pair(r, "c", self.DECK_H)
+        self.write(rc.INDEX, rc.render(self.idx()))
+        self.assertNotIn("malformed", self.get(r)["deck_integrity"])
+        rc_, out, err = self.run_cli("integrity")
+        self.assertEqual(rc_, 0, (out, err))
+        self.assertIn("verified pairs: 1", out)
+        self.assertIn("malformed paired reports: 0", out)
+        self.assertIn("OK: no known report/deck integrity mismatches", out)
+        self.assertEqual(self.run_cli("cite", "%s/%s.md" % (BN, r))[0], 0)
+
+    def test_valid_mismatching_pair_cli_fails(self):
+        r = self.mismatched()
+        self.assertNotIn("malformed", self.get(r)["deck_integrity"])
+        rc_, out, err = self.run_cli("integrity")
+        self.assertEqual(rc_, 1, (out, err))
+        self.assertIn("does not match its paired deck", err)
+        self.assertNotIn("malformed paired report", err)
+
+    def test_unpaired_malformed_reports_stay_unchecked(self):
+        # No decks/ companion: legacy policy. A string digest -> unpaired;
+        # unparseable or digest-less reports remain silently unchecked.
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        rdir = "%s/%s/reports" % (BN, r)
+        self.write(rdir + "/bad.json", "{nope")
+        self.j(rdir + "/num.json", {"netlist_sha256": 123})
+        self.j(rdir + "/none.json", {"x": 1})
+        self.j(rdir + "/short.json", {"netlist_sha256": "abc"})
+        self.write(rc.INDEX, rc.render(self.idx()))
+        di = self.get(r)["deck_integrity"]
+        self.assertEqual((di["checked"], di["unpaired"]), (0, 1))
+        self.assertNotIn("malformed", di)
+        self.assertEqual(self.cite(r), [])
+        rc_, out, err = self.run_cli("integrity")
+        self.assertEqual(rc_, 0, (out, err))
+        self.assertIn("UNCHECKED", out)
+
+    def test_malformed_allowlist_requires_justification(self):
+        r = self.malformed_pair("{nope")
+        rep = "%s/%s/reports/c.json" % (BN, r)
+        idx = self.idx()
+        errs, notes = rc.integrity_scan(idx, {rep: "historical, frozen"})
+        self.assertEqual(errs, [])
+        self.assertTrue(any(n.startswith("ALLOWLISTED: " + rep) for n in notes))
+        self.assertTrue(rc.integrity_scan(idx, {rep: ""})[0])
+
+    def test_index_entry_without_malformed_key(self):
+        # Older index entries (pre-#173) carry no "malformed" key.
+        e = {"record_id": "x", "deck_integrity": {
+            "checked": 1, "matched": 1, "mismatched": [], "unpaired": 0}}
+        self.assertEqual(rc.integrity_errors(e), [])
+        errs, notes = rc.integrity_scan({"records": [e]})
+        self.assertEqual(errs, [])
+        self.assertIn("malformed paired reports: 0", notes)
+
 
 class TestRealTreeIndex(unittest.TestCase):
     def test_committed_index_is_wellformed(self):
