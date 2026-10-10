@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 22
+    "unknown": 24
   },
   "records": [
     {
@@ -206,6 +206,36 @@
       "path": "sim/oscillator-core/records/20261001-231538-762fc8e.md",
       "reason": "filename-only provenance: the commit 762fc8e proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to f185c71437e0 (context, not currency).",
       "record_id": "20261001-231538-762fc8e",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 2,
+      "filename_commit": {
+        "id": "edf5eb5",
+        "resolution": "resolved",
+        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+      },
+      "path": "sim/oscillator-core/records/20261010-060505-edf5eb5-surrogate-pre79.csv",
+      "reason": "filename-only provenance: the commit edf5eb5 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to 090983d6ee9e (context, not currency).",
+      "record_id": "20261010-060505-edf5eb5",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 2,
+      "filename_commit": {
+        "id": "edf5eb5",
+        "resolution": "resolved",
+        "source_sha256": "090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+      },
+      "path": "sim/oscillator-core/records/20261010-060510-edf5eb5-surrogate-corrected.csv",
+      "reason": "filename-only provenance: the commit edf5eb5 proves at most the checkout the writer named, not a clean tree or the inputs consumed; design/vco.spice at that commit hashes to 090983d6ee9e (context, not currency).",
+      "record_id": "20261010-060510-edf5eb5",
       "state": "unknown"
     },
     {
