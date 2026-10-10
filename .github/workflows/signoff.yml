@@ -111,6 +111,9 @@ jobs:
       - name: Record-reservation self-test (no PDK, no simulator)
         run: .github/scripts/check-all.sh record-id-selftest
 
+      - name: Tank A/B runner reservation self-test (no PDK, no simulator)
+        run: .github/scripts/check-all.sh tank-ab-selftest
+
       - name: Local-grid guard self-test (no PDK, no simulator)
         run: .github/scripts/check-all.sh local-grid-guard-selftest
 

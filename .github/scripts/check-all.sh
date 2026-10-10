@@ -17,6 +17,8 @@
 #   signoff               .github/scripts/check-signoff.sh          pinned klt
 #   append-only-selftest  .github/scripts/test-check-sim-append-only.sh
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
+#   tank-ab-selftest      sim/tests/test-tank-ab-reserve.sh (tank A/B runner
+#                         reserves its record id; no ngspice/PDK/network)
 #   local-grid-guard-selftest  sim/tests/test-local-grid-guard.sh
 #   spec-dr-selftest      .github/scripts/test-check-spec-change-has-dr.sh
 #   runner-selftest       .github/scripts/test-check-all.sh
@@ -63,7 +65,8 @@
 #
 # Aggregates:
 #   test  = lint-selftest signoff-selftest append-only-selftest
-#           record-id-selftest local-grid-guard-selftest spec-dr-selftest runner-selftest
+#           record-id-selftest tank-ab-selftest local-grid-guard-selftest
+#           spec-dr-selftest runner-selftest
 #           grader-spec-selftest grader-spec currency-selftest currency
 #           model-inputs-selftest model-inputs
 #           deck-integrity-selftest deck-integrity friction-selftest friction
@@ -243,6 +246,8 @@ gate() {
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-sim-append-only.sh" "$@" ;;
     record-id-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-reserve-record-id.sh" "$@" ;;
+    tank-ab-selftest)
+      run_gate "$g" "$ROOT/sim/tests/test-tank-ab-reserve.sh" "$@" ;;
     local-grid-guard-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-local-grid-guard.sh" "$@" ;;
     spec-dr-selftest)
@@ -317,6 +322,7 @@ agg_test() {
   gate signoff-selftest
   gate append-only-selftest
   gate record-id-selftest
+  gate tank-ab-selftest
   gate local-grid-guard-selftest
   gate spec-dr-selftest
   gate runner-selftest
