@@ -21,7 +21,10 @@ Both report f_osc / Vpp and the minimum / maximum INSTANTANEOUS v_rec at the
 behavioral core (V(core node) - V(VCTRL)) over the whole run.  Outside
 [0, 3.3] V +/- 1 mV the run is INVALID-OUT-OF-DOMAIN: no oscillator number is
 written, the record carries only the status and the extrema, and the exit code
-is 3.  A known-answer FAIL is kept as evidence (record written, exit 1).
+is 3.  A malformed / incomplete / non-finite probe trace (a failed measurement,
+issue #192: every sample of vdiff and the four probes is validated before any
+extrema are taken; coverage tolerances are tied to TMAX) publishes nothing,
+keeps the scratch dir and exits 2.  A known-answer FAIL is kept as evidence (record written, exit 1).
 
 Not implemented here, by design: fleet grids, tuning sweeps, ISF / phase noise.
 The production OSDI deck (design/vco.spice, osc_bench.sh) is not touched.
@@ -51,7 +54,7 @@ PILOT_CSV = "sim/oscillator-core/records/20260926-010627-e391693-pilot.csv"
 PILOT_ROW = "pilot_tt_cap_typ_hbt_typ_27c_1.65v"
 IND_MODEL = "sim/inductor-model/sg13g2_inductor_em.spice"
 # Same transient settings as the pilot (osc_bench.sh): tran 1p 5n 0 2p, window 2.5..5 ns.
-TSTEP, TSTOP, TMAX = "1p", "5n", "2p"
+TSTEP, TSTOP, TMAX = "1p", "5n", "2p"  # TMAX_S below must match
 TMEAS_START, TSTOP_S = 2.5e-9, 5e-9
 SETTLE_FRAC = 0.9
 
@@ -126,16 +129,86 @@ def render_deck(series, topology, vctrl, temp_c, mdir, out_prefix):
         ".end", ""])
 
 
-def trace_extrema(path):
-    vals = []
+class TraceError(Exception):
+    """A probe waveform is malformed or incomplete (a failed MEASUREMENT).  This is
+    distinct from a valid waveform outside the characterized voltage domain
+    (INVALID-OUT-OF-DOMAIN, exit 3).  Never publishes f_osc / amplitude (exit 2)."""
+
+
+# Coverage / grid tolerances, tied to the bench's own transient settings.  The
+# deck runs `tran TSTEP TSTOP 0 TMAX`, so ngspice never takes a step above TMAX:
+# the first sample must lie within TMAX of t = 0, the last within TMAX of TSTOP,
+# and no gap may exceed 2*TMAX (a dropped row would otherwise hide a stretch of
+# the run from the whole-run domain decision).
+TMAX_S = 2e-12
+COVER_TOL_S = TMAX_S
+MAX_GAP_S = 2 * TMAX_S
+GRID_TOL_S = 1e-3 * TMAX_S  # probe time grids come from one transient: must agree
+
+
+def read_trace(path, t_stop=TSTOP_S, cover_tol=COVER_TOL_S, max_gap=MAX_GAP_S):
+    """Read and fully validate one `wrdata` trace: (times, values).
+
+    Every nonblank row must be exactly `time value`, both finite floats (overflow
+    such as 1e999 is inf and rejected); times strictly increasing; coverage of
+    [0, t_stop] within cover_tol with no gap above max_gap.  Validation happens
+    on every sample BEFORE any min/max reduction (min/max silently skip NaN)."""
+    ts, vs = [], []
     with open(path) as fh:
-        for ln in fh:
+        for n, ln in enumerate(fh, 1):
             f = ln.split()
-            if len(f) >= 2:
-                vals.append(float(f[1]))
-    if not vals:
-        return float("nan"), float("nan"), 0
-    return min(vals), max(vals), len(vals)
+            if not f:
+                continue
+            if len(f) != 2:
+                raise TraceError("%s:%d: malformed row (%d fields, expected 2)" % (path, n, len(f)))
+            try:
+                t, v = float(f[0]), float(f[1])
+            except ValueError:
+                raise TraceError("%s:%d: non-numeric row %r" % (path, n, ln.strip()))
+            if not (math.isfinite(t) and math.isfinite(v)):
+                raise TraceError("%s:%d: non-finite sample (t=%r, v=%r)" % (path, n, f[0], f[1]))
+            if ts and not t > ts[-1]:
+                raise TraceError("%s:%d: time not strictly increasing (%r after %r)" % (path, n, t, ts[-1]))
+            if ts and t - ts[-1] > max_gap:
+                raise TraceError("%s:%d: gap %.3g s exceeds %.3g s (missing rows)" % (path, n, t - ts[-1], max_gap))
+            ts.append(t)
+            vs.append(v)
+    if not ts:
+        raise TraceError("%s: empty trace" % path)
+    if ts[0] > cover_tol:
+        raise TraceError("%s: trace starts at %.3g s, after the %.3g s coverage tolerance" % (path, ts[0], cover_tol))
+    if ts[-1] < t_stop - cover_tol:
+        raise TraceError("%s: trace ends at %.3g s, short of %.3g s by more than %.3g s (truncated)"
+                         % (path, ts[-1], t_stop, cover_tol))
+    return ts, vs
+
+
+def trace_extrema(path):
+    """(min, max, n) of a validated trace; raises TraceError, never skips samples."""
+    _ts, vs = read_trace(path)
+    return min(vs), max(vs), len(vs)
+
+
+def check_common_grid(grids, tol=GRID_TOL_S):
+    """All probe traces come from one transient and must share one time grid."""
+    ref_name, ref = grids[0]
+    for name, ts in grids[1:]:
+        if len(ts) != len(ref) or any(abs(a - b) > tol for a, b in zip(ts, ref)):
+            raise TraceError("time grid of %s differs from %s (%d vs %d samples)"
+                             % (name, ref_name, len(ts), len(ref)))
+
+
+def validated_vrec_extrema(prefix):
+    """Validate vdiff and the four v_rec probes, check grid consistency, and return
+    the whole-run (vmin, vmax).  Raises TraceError on any invalid measurement."""
+    grids, ex = [], []
+    for k in ("vdiff", "vrec_p1", "vrec_p16", "vrec_n1", "vrec_n16"):
+        ts, vs = read_trace("%s_%s" % (prefix, k))
+        grids.append((k, ts))
+        if k != "vdiff":
+            ex.append((min(vs), max(vs)))
+    check_common_grid(grids)
+    return min(e[0] for e in ex), max(e[1] for e in ex)
 
 
 def git_info():
@@ -216,11 +289,12 @@ def main(argv):
         return 2
 
     # --- domain: instantaneous v_rec extrema over the WHOLE run ---------------
-    ex = [trace_extrema("%s_vrec_%s" % (prefix, k)) for k in ("p1", "p16", "n1", "n16")]
-    if any(e[2] == 0 for e in ex):
-        print("empty v_rec trace; scratch kept at", work, file=sys.stderr)
+    try:
+        vmin, vmax = validated_vrec_extrema(prefix)
+    except TraceError as e:
+        print("invalid measurement (NOT out-of-domain; no f_osc / amplitude published): %s" % e, file=sys.stderr)
+        print("scratch kept at", work, file=sys.stderr)
         return 2
-    vmin, vmax = min(e[0] for e in ex), max(e[1] for e in ex)
     status = sur.classify_domain(vmin, vmax)
 
     os.makedirs(a.records_dir, exist_ok=True)
