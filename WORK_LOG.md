@@ -4,6 +4,29 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-10
+
+- **PR #168**: analyze.py: validate tank corners and report request coverage (#166)
+- **PR #164**: sim: refuse local multi-point grids when batch backend is exported
+- **PR #165**: tests: known-answer tests for verify, lvs_break, ihp_deck_facts
+- **PR #163**: feat(layout): label-ordered inductor terminal step for LVS (L1 mirrored spiral, #80)
+- **PR #159**: sim: validated checkpoint reuse when restarting the PVT sweep
+- **PR #158**: sim: validate phase-noise raw waveforms before ISF extraction
+- **Issue #160** (closed): sim: refuse local multi-point PVT grids when the batch backend is exported
+- **Issue #161** (closed): ci: known-answer tests for verify.py, lvs_break.py, ihp_deck_facts.py and measure_ports.py
+- **Issue #80** (closed): lvs: IHP sg13g2.lvs orders inductor terminals by x position, so mirrored spiral L1 compares with its windings reversed (blocks #62 LVS match)
+- **Issue #154** (closed): sim: reuse validated completed points when restarting the long PVT sweep
+- **Issue #157** (closed): sim: validate phase-noise raw waveforms before ISF extraction
+
+### 2026-10-09
+
+- **PR #156**: sim: require exact corner identities for the global row-3 verdict
+- **PR #152**: sim: reject decimal overflow in oscillator waveform validity (#151)
+- **PR #150**: ci: require PDK and OSDI identities in model-input captures
+- **Issue #153** (closed): sim: require exact corner identities for the global row-3 verdict
+- **Issue #151** (closed): sim: reject decimal overflow in oscillator waveform validity checks
+- **Issue #148** (closed): ci: require PDK and OSDI identities in model-input captures
+
 ### 2026-10-09
 
 - **Issue #146** (closed): docs: track filed klayout-tools friction in a checked ledger tied to the klt pin
