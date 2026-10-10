@@ -177,6 +177,8 @@ if [[ "${rc}" != "0" || "${merr}" != "0" ]]; then
 fi
 REF_DAT="${WORKDIR}/pn_ref_vdiff"
 [[ -f "${REF_DAT}" ]] || { echo "error: the reference deck wrote no trace at ${REF_DAT}" >&2; exit 1; }
+# Raw-waveform validity BEFORE any mean, crossing or metric (issue #157).
+pn_require_valid_trace "ref" "${REF_DAT}" "${PN_TMEAS_START}" "${PN_TSTOP_S}" || exit 1
 
 # ONE crossing threshold, from the reference run, applied to every run: see
 # pn_window_mean's header in sim/lib.sh.
@@ -211,6 +213,7 @@ run_realization() {
   fi
   local dat="${WORKDIR}/pn_${run_id}_vdiff"
   [[ -f "${dat}" ]] || { echo "error: ${run_id} wrote no trace" >&2; return 1; }
+  pn_require_valid_trace "${run_id}" "${dat}" "${PN_TMEAS_START}" "${PN_TSTOP_S}" || return 1
 
   pn_crossings "${dat}" "${PN_TMEAS_START}" "${PN_TSTOP_S}" "${THR}" > "${WORKDIR}/${run_id}.cross"
   local steps base_rms n_far

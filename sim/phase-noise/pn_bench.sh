@@ -194,6 +194,28 @@ pn_isf_run() {
 }
 
 # --------------------------------------------------------------------------
+# pn_require_valid_trace <run-id> <wrdata-file> <t_start_s> <t_stop_s>
+# Raw-waveform gate (issue #157), run on the reference trace and on every
+# perturbed trace BEFORE any mean, crossing or metric is formed from it.
+# Reuses osc_trace_validity (sim/oscillator-core/osc_bench.sh) unchanged:
+# a trace that is missing, empty, malformed, non-finite (including decimal
+# overflow), unordered, or does not cover <t_start>..<t_stop> is a broken
+# MEASUREMENT, and derived scalar checks cannot recover the integrity of
+# the source waveform. On failure it names the run and the reason token on
+# stderr and returns 1; the caller keeps the frozen decks and logs and
+# publishes no summary. A valid trace that merely misses a target is NOT
+# rejected here -- that is a finding, not a broken measurement.
+# --------------------------------------------------------------------------
+pn_require_valid_trace() {
+  local run_id="$1" dat="$2" ts="$3" te="$4" v
+  v="$(osc_trace_validity "${dat}" "${ts}" "${te}")"
+  if [[ "${v}" != "ok" ]]; then
+    echo "error: run ${run_id}: raw differential trace ${dat} is invalid over ${ts}..${te} s (reason: ${v}); no summary published (decks: ${NETLIST_DIR:-?}, logs: ${LOG_DIR:-?})." >&2
+    return 1
+  fi
+}
+
+# --------------------------------------------------------------------------
 # pn_noise_run <port> <mos> <cap> <hbt> <temp> <vctrl>
 # One small-signal port-noise analysis. <port> is "tank" or "tail"; the probe
 # card and the noise output node are substituted as a MATCHED PAIR so the two
