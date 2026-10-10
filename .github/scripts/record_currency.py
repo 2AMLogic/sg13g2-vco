@@ -319,6 +319,10 @@ def paired_deck(report):
                           base[:-len(".json")] + ".spice")
 
 
+def _label(entry):
+    return entry["record_id"] or entry.get("path") or "<unrecognized>"
+
+
 def integrity_errors(entry, allowlist=None):
     """Error strings for known paired report/deck mismatches of an index
     entry, independent of its currency state. Unpaired reports are
@@ -329,12 +333,12 @@ def integrity_errors(entry, allowlist=None):
         return []
     errs = ["record %s: report %s netlist_sha256 does not match its paired "
             "deck %s (report/deck integrity mismatch)"
-            % (entry["record_id"], rep, paired_deck(rep))
+            % (_label(entry), rep, paired_deck(rep))
             for rep in di["mismatched"] if not allow.get(rep)]
     malformed = di.get("malformed") or {}
     errs.extend("record %s: report %s is a malformed paired report: %s; it "
                 "cannot be verified against its paired deck %s (report/deck "
-                "integrity)" % (entry["record_id"], rep, malformed[rep],
+                "integrity)" % (_label(entry), rep, malformed[rep],
                                 paired_deck(rep))
                 for rep in sorted(malformed) if not allow.get(rep))
     return errs
@@ -363,7 +367,7 @@ def integrity_scan(index, allowlist=None):
             notes.append("UNCHECKED: record %s: %d report(s) carry "
                          "netlist_sha256 but have no paired deck "
                          "(legacy/unpaired; not verified, not a failure)"
-                         % (e["record_id"], di["unpaired"]))
+                         % (_label(e), di["unpaired"]))
         for rep in di["mismatched"]:
             if allow.get(rep):
                 notes.append("ALLOWLISTED: %s: %s" % (rep, allow[rep]))
@@ -392,15 +396,17 @@ def classify_group(root, key, files, current):
         "state": "unknown", "basis": "none", "reason": "",
         "design_netlist_sha256": None,
     }
+    # Integrity is independent of currency (issue #194): scan every group
+    # before any currency-specific early return, whatever its name.
+    di = deck_integrity(root, files)
+    if di is not None:
+        entry["deck_integrity"] = di
     if rid is None:
         entry["reason"] = ("entry name carries no record id "
                            "(YYYYMMDD-HHMMSS-<commit>); cannot group or date it")
         return entry
     fc = filename_commit(root, rid)
     entry["filename_commit"] = fc
-    di = deck_integrity(root, files)
-    if di is not None:
-        entry["deck_integrity"] = di
 
     values, snaps, problems = explicit_provenance(root, files)
     if problems:

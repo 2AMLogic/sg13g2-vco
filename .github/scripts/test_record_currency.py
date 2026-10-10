@@ -577,6 +577,76 @@ class TestDeckIntegrity(Fixture):
         self.assertIn("malformed paired reports: 0", notes)
 
 
+class TestUnrecognizedNameIntegrity(Fixture):
+    """Issue #194: the integrity scan runs for unrecognized record names."""
+
+    NAME = "weird-name"
+    DECK_H = hashlib.sha256(b"deck").hexdigest()
+
+    def run_cli(self, *a):
+        script = os.path.join(HERE, "record_currency.py")
+        p = subprocess.run(
+            [sys.executable, "-I", script, "--root", self.d] + list(a),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return p.returncode, p.stdout.decode(), p.stderr.decode()
+
+    def odd(self, raw, deck="deck", with_deck=True):
+        base = "%s/%s" % (BN, self.NAME)
+        self.write(base + "/reports/x.json", raw)
+        if with_deck:
+            self.write(base + "/decks/x.spice", deck)
+        return base + "/reports/x.json"
+
+    def entry(self):
+        hits = [e for e in self.idx()["records"] if e["record_id"] is None]
+        self.assertEqual(len(hits), 1, hits)
+        return hits[0]
+
+    def test_matching_pair_verified_currency_unknown(self):
+        good = json.dumps({"environment": {"netlist_sha256": self.DECK_H}})
+        self.odd(good)
+        e = self.entry()
+        self.assertEqual(e["state"], "unknown")
+        self.assertEqual(e["deck_integrity"]["matched"], 1)
+        self.write(rc.INDEX, rc.render(self.idx()))
+        errs, notes = rc.integrity_scan(self.idx())
+        self.assertEqual(errs, [])
+        self.assertTrue(any(n.startswith("verified pairs: 1") for n in notes))
+        rc_, out, err = self.run_cli("integrity")
+        self.assertEqual(rc_, 0, (out, err))
+
+    def test_mismatch_and_malformed_fail_with_path_and_reason(self):
+        cases = {
+            "mismatch": (json.dumps({"netlist_sha256": "a" * 64}),
+                         "does not match its paired deck"),
+            "invalid-json": ("{nope", "malformed paired report"),
+            "absent": (json.dumps({"x": 1}), "missing netlist_sha256"),
+        }
+        for name, (raw, why) in sorted(cases.items()):
+            with self.subTest(case=name):
+                shutil.rmtree(os.path.join(self.d, "sim"), ignore_errors=True)
+                rep = self.odd(raw)
+                self.assertEqual(self.entry()["state"], "unknown")
+                errs, _ = rc.integrity_scan(self.idx())
+                self.assertEqual(len(errs), 1, errs)
+                self.assertIn(rep, errs[0])
+                self.assertIn(why, errs[0])
+                self.write(rc.INDEX, rc.render(self.idx()))
+                rc_, out, err = self.run_cli("integrity")
+                self.assertEqual(rc_, 1, (out, err))
+                self.assertIn(rep, err)
+
+    def test_unpaired_legacy_stays_unchecked(self):
+        self.odd(json.dumps({"netlist_sha256": "a" * 64}), with_deck=False)
+        di = self.entry()["deck_integrity"]
+        self.assertEqual((di["checked"], di["unpaired"]), (0, 1))
+        self.assertEqual(rc.integrity_scan(self.idx())[0], [])
+        self.write(rc.INDEX, rc.render(self.idx()))
+        rc_, out, err = self.run_cli("integrity")
+        self.assertEqual(rc_, 0, (out, err))
+        self.assertIn("UNCHECKED", out)
+
+
 class TestRealTreeIndex(unittest.TestCase):
     def test_committed_index_is_wellformed(self):
         root = os.path.abspath(os.path.join(HERE, "..", ".."))
