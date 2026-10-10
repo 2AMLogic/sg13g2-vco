@@ -145,8 +145,14 @@ All three need the OSDI `mosvar` library, and none could be regenerated:
 
 1. **Locally**: this host's ngspice is 42 (OSDI v0.3 only). The pinned
    compiler (OpenVAF-Reloaded v24.0.1mob, `sim/tools/build-osdi.sh`) emits OSDI
-   v0.4, which ngspice 42 refuses ("targets v0.4"). `build-osdi.sh` also writes
-   its result into the shared PDK tree.
+   v0.4, which ngspice 42 refuses ("targets v0.4"). Since #96, `build-osdi.sh` no longer
+   writes into the shared PDK tree: it builds in a staging directory beside
+   the outside-PDK cache (`$SG13G2_OSDI_DIR`, default
+   `${SG13G2_TOOLS_CACHE:-~/.cache/sg13g2-vco}/osdi`), probes the candidate
+   with the selected ngspice, and only then atomically publishes it (see the
+   header of `sim/tools/build-osdi.sh`). That fixes safe publication only; it
+   does not resolve the v0.4-vs-v0.3 compiler/simulator ABI mismatch above
+   (tracked in #94).
 2. **On the fleet**: the batch runner image runs klt 0.5.0. A 0.7.0 client is
    refused (`batch_runner_version_mismatch`); a 0.6.0 client is accepted but
    cannot send `options.osdi_preload` / `stage_model_inputs` (0.7.0 only), nor
