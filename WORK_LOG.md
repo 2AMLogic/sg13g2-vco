@@ -6,6 +6,12 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-10
 
+- **PR #220**: ci: run raw-trace gate fixture in grading-fixture dispatcher
+- **Issue #212** (closed): Guard telemetry: preserve stash scope protection
+- **Issue #217** (closed): ci: run the phase-noise raw-trace regression in the shared grading fixtures
+
+### 2026-10-10
+
 - **PR #216**: sim: validate passive-tank candidate paths and finite sizing
 - **PR #215**: sim: propagate passive-tank fleet collection failures to exit status
 - **PR #214**: fix(sim): reserve surrogate bench evidence before publication

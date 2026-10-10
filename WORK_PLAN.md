@@ -28,7 +28,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#221**: ci: validate retained model-overlay inputs from the current simulation writer
 
 ## PRs Awaiting Review
 
@@ -55,7 +55,6 @@ Issues carrying `loom:curated`.
 ## Proposed (Architect / Hermit)
 
 - **#198**: sim: bounded bn=substrate varactor cell characterization per DR-006 option (b) (gated on ratification) *(architect)*
-- **#217**: ci: run the phase-noise raw-trace regression in the shared grading fixtures *(architect)*
 
 ## Epics
 
@@ -68,10 +67,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 0 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
 | Curated | 5 |
-| Architect / Hermit proposals | 2 |
+| Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
