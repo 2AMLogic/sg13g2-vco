@@ -28,16 +28,15 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#95**: sim: PDK dsubw junction model (vj=0.1) goes NaN above ~52 C once bn is on the substrate -- row 11's +125 C cannot be simulated with the card as shipped
-- **#143**: ci: reject paired simulation report/deck digest mismatches at evidence consumption
-- **#167**: sim: preserve EM post/fit outputs when geometry inputs are incomplete
+- **#99**: Install ratification/ee-key and ratification/market-key reviewer trees (product#151)
+- **#182**: ci: run the OSDI staging regression through the shared check runner
+- **#191**: sim: reserve surrogate bench evidence before publication
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#169**: sim: run-local svaricap dsubw vj overlay (IHP-Open-PDK PR #1102), retire tnom workaround
-- **#170**: sim: EM post/fit preflight all geometries and publish staged outputs
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -52,15 +51,14 @@ Issues carrying `loom:curated`.
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
-- **#95**: sim: PDK dsubw junction model (vj=0.1) goes NaN above ~52 C once bn is on the substrate -- row 11's +125 C cannot be simulated with the card as shipped *(curated)*
+- **#99**: Install ratification/ee-key and ratification/market-key reviewer trees (product#151) *(curated)*
 - **#106**: ci: gate layout records' GDS digests against the committed layout/vco.gds (PDK-free) *(curated)*
-- **#143**: ci: reject paired simulation report/deck digest mismatches at evidence consumption *(curated)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#143**: ci: reject paired simulation report/deck digest mismatches at evidence consumption *(architect)*
-- **#167**: sim: preserve EM post/fit outputs when geometry inputs are incomplete *(architect)*
+- **#194**: ci: scan paired deck integrity even when a record name is unrecognized *(architect)*
+- **#195**: sim: preserve suffixed directory identities in currency citation lookup *(architect)*
 
 ## Epics
 
@@ -74,9 +72,9 @@ _None._
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 3 |
-| PRs awaiting review | 2 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
-| Curated | 7 |
+| Curated | 6 |
 | Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

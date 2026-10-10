@@ -6,6 +6,31 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-10
 
+- **PR #193**: sim: validate every surrogate probe sample before domain classification
+- **PR #188**: fix(supply-stage2): validate finite numbers before grading (#175)
+- **PR #187**: sim: compare complete captured model identities in the supply report
+- **PR #186**: spec: DR-006 (proposed) resolving the row-1/row-2 shortfall for the bn=substrate varactor
+- **PR #185**: docs: reconcile current LVS, supply and OSDI blocker descriptions
+- **PR #181**: sim: OSDI-free charge-based varactor surrogate for transient screening (#179)
+- **PR #180**: sim: stage, validate and atomically publish OSDI outside the PDK (#96)
+- **PR #178**: sim: apply the fleet guard to DR-004 stage-2 parent drivers (#176)
+- **PR #174**: ci: reject malformed paired simulation reports in the deck integrity gate
+- **PR #169**: sim: run-local svaricap dsubw vj overlay (IHP-Open-PDK PR #1102), retire tnom workaround
+- **PR #172**: ci: reject paired report/deck digest mismatches at evidence consumption
+- **PR #170**: sim: EM post/fit preflight all geometries and publish staged outputs
+- **Issue #192** (closed): sim: validate every surrogate probe sample before domain classification
+- **Issue #175** (closed): sim: reject malformed numeric inputs before supply escalation arithmetic
+- **Issue #177** (closed): sim: compare complete captured model identities in the supply report
+- **Issue #184** (closed): spec: author DR-006 resolving the row-1/row-2 shortfall for the bn=substrate varactor (#93 handoff)
+- **Issue #183** (closed): docs: reconcile current LVS, supply and OSDI blocker descriptions
+- **Issue #179** (closed): sim: OSDI-free charge-based varactor surrogate for transient/ISF screening while #94 is blocked
+- **Issue #96** (closed): sim/tools/build-osdi.sh overwrites the shared PDK's mosvar.osdi without checking the host ngspice's OSDI ABI
+- **Issue #176** (closed): sim: apply the fleet guard to DR-004 stage-2 parent drivers
+- **Issue #173** (closed): ci: reject malformed paired simulation reports in the deck integrity gate
+- **Issue #95** (closed): sim: PDK dsubw junction model (vj=0.1) goes NaN above ~52 C once bn is on the substrate -- row 11's +125 C cannot be simulated with the card as shipped
+- **Issue #143** (closed): ci: reject paired simulation report/deck digest mismatches at evidence consumption
+- **Issue #167** (closed): sim: preserve EM post/fit outputs when geometry inputs are incomplete
+- **Issue #166** (closed): sim: validate passive-tank measurements and retained request corner coverage
 - **PR #168**: analyze.py: validate tank corners and report request coverage (#166)
 - **PR #164**: sim: refuse local multi-point grids when batch backend is exported
 - **PR #165**: tests: known-answer tests for verify, lvs_break, ihp_deck_facts
