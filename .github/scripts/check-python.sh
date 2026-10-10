@@ -86,8 +86,20 @@ run_unittest() {
     echo "check-python: $1 not found" >&2
     return 1
   fi
-  # -B: no bytecode written into the tree.
-  (cd "$dir" && "$PY" -I -B -m unittest discover -v -s "$dir" -p 'test_*.py')
+  # Discover through the unittest API (the CLI exits 0 on zero tests), require
+  # at least one case, then run that same suite. -B: no bytecode in the tree;
+  # -I: isolated. discover() puts the start dir on sys.path like the CLI does.
+  (cd "$dir" && "$PY" -I -B -c '
+import sys, unittest
+label, start = sys.argv[1], sys.argv[2]
+suite = unittest.TestLoader().discover(start, pattern="test_*.py")
+n = suite.countTestCases()
+if n == 0:
+    print("check-python: suite %s discovered zero tests -- refusing to pass an empty gate" % label, file=sys.stderr)
+    sys.exit(1)
+result = unittest.TextTestRunner(verbosity=2).run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+' "$1" "$dir")
 }
 
 run_numeric() {
