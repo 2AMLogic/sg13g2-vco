@@ -28,7 +28,10 @@ printf '#!/usr/bin/env bash\nexit 0\n' > "${R}/design/netlist.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' > "${R}/sim/tools/build-osdi.sh"
 chmod +x "${R}/design/netlist.sh" "${R}/sim/tools/build-osdi.sh"
 PDKR="${T}/pdk"; M="${PDKR}/ihp-sg13g2/libs.tech/ngspice/models"
-mkdir -p "${M}" "${PDKR}/ihp-sg13g2/libs.tech/ngspice/osdi"
+mkdir -p "${M}" "${T}/osdi-out"
+# build-osdi.sh never writes the PDK (issue #96): consumers resolve the OSDI
+# library from SG13G2_OSDI_DIR, so the stub model lives in a scratch dir.
+export SG13G2_OSDI_DIR="${T}/osdi-out"
 for f in cornerHBT cornerCAP sg13g2_hbt_mod; do echo "* stub" > "${M}/${f}.lib"; done
 # cornerMOShv references both svaricap libraries, as the real one does, so the
 # capture closure brings both into the bundle for the overlay to patch.
@@ -45,7 +48,7 @@ printf '{"sg13g2_svaricaphv_mod.lib": "%s", "sg13g2_svaricaphv_mod_mismatch.lib"
   "$(sha256sum "${M}/sg13g2_svaricaphv_mod.lib" | cut -d' ' -f1)" \
   "$(sha256sum "${M}/sg13g2_svaricaphv_mod_mismatch.lib" | cut -d' ' -f1)" > "${T}/svaricap-spec.json"
 export SVARICAP_OVERLAY_SPEC="${T}/svaricap-spec.json"
-echo stub > "${PDKR}/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+echo stub > "${SG13G2_OSDI_DIR}/mosvar.osdi"
 
 BIN="${T}/bin"; mkdir -p "${BIN}"
 cat > "${BIN}/ngspice" <<'STUB'

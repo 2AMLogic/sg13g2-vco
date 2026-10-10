@@ -454,7 +454,7 @@ sweep_family diode svaricap_dio tb_diode_varactor_vscan.spice.tmpl \
   echo "  - \`cornerDIO.lib\` sha256 \`${CORNERDIO_SHA}\`"
   echo "  - \`diodes.lib\` sha256 \`${DIODES_SHA}\`"
   echo "  - \`libs.tech/verilog-a/mosvar/mosvar.va\` (source) sha256 \`${MOSVAR_VA_SHA}\`"
-  echo "  - \`libs.tech/ngspice/osdi/mosvar.osdi\` (this run's build) sha256 \`${MOSVAR_OSDI_SHA}\`"
+  echo "  - \`${OSDI_MOSVAR}\` (this run's build, loaded via pre_osdi; never the PDK's own copy) sha256 \`${MOSVAR_OSDI_SHA}\`"
   echo "- **ngspice**: \`${NGSPICE_VERSION}\`"
   local_grid_record_note
   echo "- **OSDI toolchain**: OpenVAF-Reloaded, pinned in"
