@@ -8,16 +8,19 @@ grading completeness, or PDK/model currency. Records are append-only evidence
 and are never edited; currency is computed here, outside the records, and
 published as the derived index sim/record-currency.json.
 
-Python stdlib only. Output is deterministic: sorted, no timestamps, and no
-dependence on HEAD (the filename-commit context only names blobs of commits
-that the record's own filename cites).
+Python stdlib only. The gated index is deterministic: sorted, no timestamps,
+and independent of git history (issue #213): the commit id parsed from a
+record's filename is kept as a string, but whether it resolves in this clone
+is live-only context printed by `show`, never committed or compared.
 
 Usage (all take --root DIR, default: the repository containing this script):
   record_currency.py write            regenerate sim/record-currency.json
   record_currency.py check            fresh classification == committed index
   record_currency.py cite PATH...     validate citations of record files
   record_currency.py cite --manifest signoff/manifest.json
-  record_currency.py show             print the fresh index on stdout
+  record_currency.py show             print the fresh index on stdout, with
+                                      live (non-gated) filename-commit
+                                      history context
   record_currency.py integrity        fail on any known paired report/deck
                                       sha256 mismatch (issue #143) or
                                       malformed paired report (issue #173)
@@ -226,12 +229,23 @@ def explicit_provenance(root, files):
     return values, snaps, problems
 
 
-def filename_commit(root, rid):
-    """Context only: what the commit named in the filename says about SOURCE."""
+def filename_commit(root, rid, live=False):
+    """What the commit named in the filename is.
+
+    Gated (live=False): a pure string parse, {"id": <commit id or None>}. It
+    never touches git objects, so the committed index cannot depend on which
+    history a clone holds (issue #213).
+    live=True: additionally resolves the id against this clone's objects
+    (resolution, source_sha256). Human context for `show` only; not gated.
+    """
     m = COMMIT_PART.match(rid or "")
     if not m:
-        return {"id": None, "resolution": "absent", "source_sha256": None}
+        if live:
+            return {"id": None, "resolution": "absent", "source_sha256": None}
+        return {"id": None}
     c = m.group(1)
+    if not live:
+        return {"id": c}
     rc, out, err = _git(root, "rev-parse", "--verify", c + "^{commit}")
     if rc != 0:
         text = err.decode("utf-8", "replace").lower()
@@ -418,7 +432,7 @@ def primary_path(rdir, rid, name, files):
     return files[0]
 
 
-def classify_group(root, key, files, current):
+def classify_group(root, key, files, current, live=False):
     rdir, rid, name = key
     entry = {
         "record_id": rid,
@@ -437,7 +451,7 @@ def classify_group(root, key, files, current):
         entry["reason"] = ("entry name carries no record id "
                            "(YYYYMMDD-HHMMSS-<commit>); cannot group or date it")
         return entry
-    fc = filename_commit(root, rid)
+    fc = filename_commit(root, rid, live)
     entry["filename_commit"] = fc
 
     values, snaps, problems = explicit_provenance(root, files)
@@ -472,7 +486,7 @@ def classify_group(root, key, files, current):
             basis = "explicit-source-hash+snapshot"
         entry["basis"] = basis
         note = ""
-        if fc["source_sha256"] is not None and fc["source_sha256"] != val:
+        if fc.get("source_sha256") is not None and fc["source_sha256"] != val:
             note = (" The filename commit %s holds a different %s blob; "
                     "accepted as a dirty run because the consumed source is "
                     "identified by the explicit hash." % (fc["id"], SOURCE)
@@ -499,7 +513,21 @@ def classify_group(root, key, files, current):
                            "source provenance; currency does not apply."
                            % SOURCE)
         return entry
-    if fc["resolution"] == "resolved":
+    if not live:
+        if fc["id"] is None:
+            entry["basis"] = "none"
+            entry["reason"] = ("no explicit source hash and no commit id in "
+                               "the name.")
+        else:
+            entry["basis"] = "filename-commit"
+            entry["reason"] = ("filename-only provenance: the commit %s named "
+                               "in the record id proves at most the checkout "
+                               "the writer named, not a clean tree or the "
+                               "inputs consumed; its resolution in git "
+                               "history is live-only context (record_currency"
+                               ".py show), not part of the gated index."
+                               % fc["id"])
+    elif fc["resolution"] == "resolved":
         entry["basis"] = "filename-commit"
         entry["reason"] = ("filename-only provenance: the commit %s proves at "
                            "most the checkout the writer named, not a clean "
@@ -539,12 +567,14 @@ def _flag_ambiguous(entries):
                                                           paths))
 
 
-def build_index(root):
+def build_index(root, live=False):
+    """live=False is the gated, history-independent index. live=True adds
+    history-derived filename-commit context (for `show`; never committed)."""
     src = os.path.join(root, SOURCE)
     if not os.path.isfile(src):
         raise SystemExit("record_currency: missing %s under %s" % (SOURCE, root))
     current = sha256_file(src)
-    entries = [classify_group(root, k, f, current)
+    entries = [classify_group(root, k, f, current, live)
                for k, f in sorted(group_records(root).items(),
                                   key=lambda kv: (kv[0][0], kv[0][1] or "",
                                                   kv[0][2] or ""))]
@@ -560,18 +590,9 @@ def render(index):
     return json.dumps(index, indent=2, sort_keys=True) + "\n"
 
 
-def _strip_commit_context(index):
-    idx = json.loads(json.dumps(index))
-    for e in idx["records"]:
-        e.pop("filename_commit", None)
-        if e["basis"] == "filename-commit":
-            e["reason"] = "<history-dependent>"
-    return idx
-
-
 def committed_matches_fresh(root, fresh):
-    """(ok, message). In a shallow clone the filename-commit context cannot be
-    resolved, so only history-independent fields are compared there."""
+    """(ok, message). Byte comparison; the gated index is history-independent
+    so no clone (shallow, single-branch, full) needs special handling."""
     path = os.path.join(root, INDEX)
     if not os.path.isfile(path):
         return False, "%s is missing; regenerate it with: %s write" % (
@@ -580,14 +601,6 @@ def committed_matches_fresh(root, fresh):
         raw = f.read()
     if raw == render(fresh).encode():
         return True, "%s is current" % INDEX
-    if is_shallow(root):
-        try:
-            old = json.loads(raw.decode("utf-8"))
-            if _strip_commit_context(old) == _strip_commit_context(fresh):
-                return True, ("%s matches (shallow clone: filename-commit "
-                              "context not compared)" % INDEX)
-        except ValueError:
-            pass
     return False, ("%s is stale or hand-edited (does not match the fresh "
                    "classification); regenerate it with: %s write"
                    % (INDEX, _cmd()))
@@ -705,7 +718,11 @@ def main(argv):
         return 2
     cmd, rest = args[0], args[1:]
     if cmd == "show":
-        sys.stdout.write(render(build_index(root)))
+        sys.stderr.write(
+            "NOTE: filename_commit resolution/source_sha256 below is live "
+            "context from this clone's git objects; it is NOT part of the "
+            "gated sim/record-currency.json.\n")
+        sys.stdout.write(render(build_index(root, live=True)))
         return 0
     if cmd == "write":
         text = render(build_index(root))
