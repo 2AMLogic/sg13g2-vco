@@ -19,7 +19,8 @@ Usage (all take --root DIR, default: the repository containing this script):
   record_currency.py cite --manifest signoff/manifest.json
   record_currency.py show             print the fresh index on stdout
   record_currency.py integrity        fail on any known paired report/deck
-                                      sha256 mismatch (issue #143)
+                                      sha256 mismatch (issue #143) or
+                                      malformed paired report (issue #173)
 
 See sim/README.md "Record currency" for states, limits and the schema.
 """
@@ -218,45 +219,96 @@ def filename_commit(root, rid):
             "source_sha256": sha256_bytes(blob)}
 
 
+def _json_type(v):
+    if v is None:
+        return "null"
+    if isinstance(v, bool):
+        return "a boolean"
+    if isinstance(v, (int, float)):
+        return "a number"
+    if isinstance(v, list):
+        return "an array"
+    if isinstance(v, dict):
+        return "an object"
+    return type(v).__name__
+
+
+def paired_report_digest(root, rel):
+    """(digest, None) for a well-formed paired report, else (None, reason).
+
+    Paired-report contract (issue #173): the report is valid JSON and every
+    netlist_sha256 key in it carries the same 64-lowercase-hex string."""
+    data, err = _load_json(root, rel)
+    if err is not None:
+        return None, "invalid JSON (%s)" % err
+    vals = list(_walk_keys(data, "netlist_sha256"))
+    if not vals:
+        return None, "missing netlist_sha256"
+    for v in vals:
+        if not isinstance(v, str):
+            return None, ("netlist_sha256 is %s (%s), not a string"
+                          % (_json_type(v), json.dumps(v)[:40]))
+    for v in sorted(set(vals)):
+        if not HEX64.match(v):
+            return None, ("netlist_sha256 %s is not 64 lowercase hex digits "
+                          "(length %d)" % (json.dumps(v[:72]), len(v)))
+    distinct = sorted(set(vals))
+    if len(distinct) > 1:
+        return None, ("conflicting netlist_sha256 values: %s"
+                      % ", ".join(h[:12] for h in distinct))
+    return distinct[0], None
+
+
 def deck_integrity(root, files):
     """Verify report netlist_sha256 only against an identified paired deck:
-    <dir>/reports/<stem>.json <-> <dir>/decks/<stem>.spice."""
+    <dir>/reports/<stem>.json <-> <dir>/decks/<stem>.spice.
+
+    The pair is identified before the report is parsed (issue #173): a
+    paired report that is not valid JSON or lacks exactly one well-formed
+    digest is recorded under "malformed" (report path -> reason) instead of
+    being skipped. Reports without a paired deck keep the legacy policy:
+    counted as unpaired only when they carry a string digest, else ignored."""
     fileset = set(files)
     checked = matched = unpaired = 0
     mismatched = []
+    malformed = {}
     for rel in files:
         if not rel.endswith(".json"):
             continue
         d, base = posixpath.split(rel)
         if posixpath.basename(d) != "reports":
             continue
-        data, err = _load_json(root, rel)
-        if err is not None:
-            continue
-        hashes = sorted(set(x for x in _walk_keys(data, "netlist_sha256")
-                            if isinstance(x, str)))
-        if not hashes:
-            continue
         deck = paired_deck(rel)
         if deck not in fileset:
-            unpaired += 1
+            data, err = _load_json(root, rel)
+            if err is None and any(isinstance(x, str) for x in
+                                   _walk_keys(data, "netlist_sha256")):
+                unpaired += 1
+            continue
+        digest, reason = paired_report_digest(root, rel)
+        if reason is not None:
+            malformed[rel] = reason
             continue
         checked += 1
-        if hashes == [sha256_file(os.path.join(root, deck))]:
+        if digest == sha256_file(os.path.join(root, deck)):
             matched += 1
         else:
             mismatched.append(rel)
-    if not (checked or unpaired):
+    if not (checked or unpaired or malformed):
         return None
-    return {"checked": checked, "matched": matched,
-            "mismatched": sorted(mismatched), "unpaired": unpaired}
+    out = {"checked": checked, "matched": matched,
+           "mismatched": sorted(mismatched), "unpaired": unpaired}
+    if malformed:  # absent == none; keeps older index entries comparable
+        out["malformed"] = malformed
+    return out
 
 
-# Known paired report/deck mismatches in frozen historical evidence that are
-# accepted by the integrity gate and by citation validation (issue #143).
-# Maps the mismatched report path -> justification. Records are append-only
-# and never edited, so a historical hit is dispositioned here, explicitly;
-# an unjustified entry is itself an error. Empty: today's tree has no hits.
+# Known paired report/deck mismatches (issue #143) and malformed paired
+# reports (issue #173) in frozen historical evidence that are accepted by the
+# integrity gate and by citation validation. Maps the report path ->
+# justification. Records are append-only and never edited, so a historical
+# hit is dispositioned here, explicitly; an unjustified entry is itself an
+# error. Empty: today's tree has no hits.
 INTEGRITY_ALLOWLIST = {}
 
 
@@ -275,10 +327,17 @@ def integrity_errors(entry, allowlist=None):
     di = entry.get("deck_integrity")
     if not di:
         return []
-    return ["record %s: report %s netlist_sha256 does not match its paired "
+    errs = ["record %s: report %s netlist_sha256 does not match its paired "
             "deck %s (report/deck integrity mismatch)"
             % (entry["record_id"], rep, paired_deck(rep))
             for rep in di["mismatched"] if not allow.get(rep)]
+    malformed = di.get("malformed") or {}
+    errs.extend("record %s: report %s is a malformed paired report: %s; it "
+                "cannot be verified against its paired deck %s (report/deck "
+                "integrity)" % (entry["record_id"], rep, malformed[rep],
+                                paired_deck(rep))
+                for rep in sorted(malformed) if not allow.get(rep))
+    return errs
 
 
 def integrity_scan(index, allowlist=None):
@@ -286,13 +345,19 @@ def integrity_scan(index, allowlist=None):
     mismatches; notes list verified/unchecked/allowlisted counts."""
     allow = INTEGRITY_ALLOWLIST if allowlist is None else allowlist
     errors, notes = [], []
-    verified = unchecked = 0
+    verified = unchecked = bad = 0
     for e in index["records"]:
         errors.extend(integrity_errors(e, allow))
         di = e.get("deck_integrity")
         if not di:
             continue
         verified += di["matched"]
+        malformed = di.get("malformed") or {}
+        bad += len(malformed)
+        for rep in sorted(malformed):
+            if allow.get(rep):
+                notes.append("ALLOWLISTED: %s (malformed: %s): %s"
+                             % (rep, malformed[rep], allow[rep]))
         if di["unpaired"]:
             unchecked += di["unpaired"]
             notes.append("UNCHECKED: record %s: %d report(s) carry "
@@ -304,6 +369,7 @@ def integrity_scan(index, allowlist=None):
                 notes.append("ALLOWLISTED: %s: %s" % (rep, allow[rep]))
     notes.append("verified pairs: %d; unchecked unpaired reports: %d"
                  % (verified, unchecked))
+    notes.append("malformed paired reports: %d" % bad)
     return errors, notes
 
 
@@ -592,7 +658,8 @@ def main(argv):
         for e in errors:
             print("FAIL: deck integrity: " + e, file=sys.stderr)
         if not errors:
-            print("OK: no known report/deck integrity mismatches")
+            print("OK: no known report/deck integrity mismatches or "
+                  "malformed paired reports")
         return 1 if errors else 0
     if cmd == "cite":
         if len(rest) == 2 and rest[0] == "--manifest":

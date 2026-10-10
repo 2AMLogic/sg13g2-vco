@@ -96,6 +96,20 @@ an entry with a written justification in `INTEGRITY_ALLOWLIST`
 (`.github/scripts/record_currency.py`). Disposition on the tree at introduction:
 no mismatches and no unpaired reports, so the allowlist is empty.
 
+**Paired-report contract (issue #173).** The pair is identified by name
+*before* the report is parsed. A report whose `decks/<n>.spice` companion
+exists must be valid JSON in which every `netlist_sha256` key carries the same
+64-character lowercase-hex string. Otherwise it is a **malformed paired
+report** (listed under `deck_integrity.malformed` as report path -> reason:
+invalid JSON, missing digest, non-string digest such as a number or `null`,
+wrong length or non-hex digest, or conflicting digests). A malformed paired
+report fails the integrity gate and citation validation exactly like a
+mismatch, independently of source currency, and is never silently skipped.
+The same justified `INTEGRITY_ALLOWLIST` is the only way to accept a
+historical one. Reports with no paired deck keep the legacy policy above:
+unchecked, and not parsed for validity. Disposition at introduction: all 26
+paired reports on the tree are well-formed, so the allowlist stays empty.
+
 **Provenance schema** (`sg13g2-vco/source-provenance/1`): for new
 `osc_derive_body()`-based runs (`run_pilot_grid.sh`, `run_pvt_sweep.sh`,
 `run_supply_stage2.sh`, `phase-noise/run_isf_pilot.sh`), the bench copies
