@@ -13,6 +13,9 @@ frequency grid the EM extraction produced.  The EM curve is the de-embedded
 (Z11 - Z12*Z21/Z22).  Nothing is rescaled or aligned; the three curves are
 compared point for point.
 
+The record id is reserved first (sim/lib.sh reserve_record_id, issue #225);
+all files are created exclusively and latest_record_id.txt moves last.
+
 Writes:
   records/<record-id>-em-vs-analytic.csv    per geometry x frequency
   records/<record-id>-delta-summary.csv     the scalar delta table
@@ -26,6 +29,7 @@ import datetime
 import json
 import os
 import platform
+import re
 import subprocess
 import sys
 import tempfile
@@ -94,6 +98,46 @@ def run_ngspice(model_lib, workdir):
     return f, out, deck, r.stdout + r.stderr
 
 
+# --- evidence ownership (issue #225) ----------------------------------------
+# Record ids come from the shared sim/lib.sh reserve_record_id (exclusive mkdir
+# of <em dir>/corners/<id>, which also rejects ids already used by historical
+# flat records/<id>*), so concurrent or same-second runs at one commit never
+# share a namespace.  A reservation is never released: a failed run keeps its
+# id.  Every record file is created exclusively ("x") so even a broken
+# reservation cannot truncate existing evidence.
+LIB_SH = os.path.normpath(os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "lib.sh"))
+RECORD_ID_RE = re.compile(r"^[0-9]{8}-[0-9]{6}-[0-9A-Za-z]+-[0-9a-f]+$")
+
+
+class ReservationError(RuntimeError):
+    pass
+
+
+def reserve_record_id(root):
+    """Reserve and return a record id under the experiment dir `root`.
+    Creates only <root>/corners/<id>; no record output is opened."""
+    r = subprocess.run(
+        ["bash", "-c", 'source "$1" && reserve_record_id "$2" "$3"', "_",
+         LIB_SH, root, root],
+        capture_output=True, text=True,
+    )
+    rid = r.stdout.strip()
+    if r.returncode != 0 or not RECORD_ID_RE.match(rid):
+        raise ReservationError(
+            "record id reservation failed under %s (rc=%d): %s"
+            % (root, r.returncode, r.stderr.strip() or rid or "no id printed"))
+    return rid
+
+
+def _write_latest(path, record_id):
+    """Atomically move the mutable latest-record pointer (success only)."""
+    tmp = "%s.%d.tmp" % (path, os.getpid())
+    with open(tmp, "x") as fh:
+        fh.write(record_id + "\n")
+    os.replace(tmp, path)
+
+
 def spot(f, y, f0):
     return emlib.at(f, y, f0)
 
@@ -106,18 +150,19 @@ def main():
     args = ap.parse_args()
     root, res = args.dir, os.path.join(args.dir, "results")
     recdir = os.path.join(root, "records")
-    os.makedirs(recdir, exist_ok=True)
 
-    repo = subprocess.run(
-        ["git", "-C", root, "rev-parse", "--short", "HEAD"],
-        capture_output=True, text=True,
-    ).stdout.strip() or "nogit"
-    record_id = "%s-%s" % (datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S"), repo)
+    # Ownership first: nothing under records/ is created or opened before this.
+    try:
+        record_id = reserve_record_id(root)
+    except ReservationError as e:
+        print("compare_analytic: %s; nothing written" % e, file=sys.stderr)
+        return 1
+    os.makedirs(recdir, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as wd:
         f_ana, Z_ana, deck_a, log_a = run_ngspice(args.analytic, os.path.join(wd, "a") if os.makedirs(os.path.join(wd, "a"), exist_ok=True) or os.path.join(wd, "a") else wd)
         f_fit, Z_fit, deck_f, log_f = run_ngspice(args.fitted, os.path.join(wd, "f") if os.makedirs(os.path.join(wd, "f"), exist_ok=True) or os.path.join(wd, "f") else wd)
-        with open(os.path.join(recdir, "%s-ngspice.txt" % record_id), "w") as fh:
+        with open(os.path.join(recdir, "%s-ngspice.txt" % record_id), "x") as fh:
             fh.write("=== analytic model ===\n" + log_a + "\n=== EM-fitted model ===\n" + log_f)
 
     rows = []
@@ -177,7 +222,7 @@ def main():
             )
         )
 
-    with open(os.path.join(recdir, "%s-em-vs-analytic.csv" % record_id), "w", newline="") as fh:
+    with open(os.path.join(recdir, "%s-em-vs-analytic.csv" % record_id), "x", newline="") as fh:
         wcsv = csv.writer(fh)
         wcsv.writerow(
             ["geometry", "f_hz", "l_em_h", "l_analytic_h", "l_fitted_h",
@@ -189,7 +234,7 @@ def main():
 
     if summary:
         keys = list(summary[0].keys())
-        with open(os.path.join(recdir, "%s-delta-summary.csv" % record_id), "w", newline="") as fh:
+        with open(os.path.join(recdir, "%s-delta-summary.csv" % record_id), "x", newline="") as fh:
             wcsv = csv.DictWriter(fh, fieldnames=keys)
             wcsv.writeheader()
             for r in summary:
@@ -219,7 +264,7 @@ def main():
                 "wall_seconds": m.get("wall_seconds"),
                 "host": m.get("host"),
             }
-    with open(os.path.join(recdir, "%s-env.json" % record_id), "w") as fh:
+    with open(os.path.join(recdir, "%s-env.json" % record_id), "x") as fh:
         json.dump(env, fh, indent=2, sort_keys=True)
         fh.write("\n")
 
@@ -231,9 +276,9 @@ def main():
         os.path.join(recdir, "%s.md" % record_id), record_id, summary, fits, convrows, env
     )
 
-    with open(os.path.join(root, "results", "latest_record_id.txt"), "w") as fh:
-        fh.write(record_id + "\n")
+    _write_latest(os.path.join(root, "results", "latest_record_id.txt"), record_id)
     print("record", record_id)
+    return 0
 
 
 def _pct(x):
@@ -342,9 +387,9 @@ def write_markdown(path, record_id, summary, fits, convrows, env):
     A("```json")
     A(json.dumps(env, indent=2, sort_keys=True))
     A("```")
-    with open(path, "w") as fh:
+    with open(path, "x") as fh:
         fh.write("\n".join(L) + "\n")
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
