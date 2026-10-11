@@ -27,6 +27,12 @@
 #                         simulator/network)
 #   spec-dr-selftest      .github/scripts/test-check-spec-change-has-dr.sh
 #   runner-selftest       .github/scripts/test-check-all.sh
+#   test-wiring-selftest  .github/scripts/test-check-test-wiring.sh git python3
+#   test-wiring           .github/scripts/check-test-wiring.sh      git python3
+#                         (issue #228: every tracked shell self-test is in
+#                         .github/scripts/test-wiring.tsv and reachable by an
+#                         executable chain from a target of the `test`
+#                         aggregate; parses only, runs no registered test)
 #   grader-spec-selftest  .github/scripts/test-check-grader-spec-agreement.sh
 #                         python3 (mutation fixtures on a temp copy of the
 #                         spec, DR-004 and the graders; no ngspice/PDK)
@@ -72,7 +78,7 @@
 #   test  = lint-selftest signoff-selftest append-only-selftest
 #           record-id-selftest tank-ab-selftest local-grid-guard-selftest
 #           osdi-staging-selftest spec-dr-selftest runner-selftest
-#           grader-spec-selftest grader-spec currency-selftest currency
+#           test-wiring-selftest test-wiring grader-spec-selftest grader-spec currency-selftest currency
 #           model-inputs-selftest model-inputs
 #           deck-integrity-selftest deck-integrity friction-selftest friction
 #           grading-fixtures py-selftest py-compile py-tests
@@ -261,6 +267,10 @@ gate() {
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-spec-change-has-dr.sh" "$@" ;;
     runner-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-all.sh" "$@" ;;
+    test-wiring-selftest)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-check-test-wiring.sh" "$@" ;;
+    test-wiring)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-test-wiring.sh" "$@" ;;
     grader-spec-selftest)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-check-grader-spec-agreement.sh" "$@" ;;
     grader-spec)
@@ -334,6 +344,8 @@ agg_test() {
   gate osdi-staging-selftest
   gate spec-dr-selftest
   gate runner-selftest
+  gate test-wiring-selftest
+  gate test-wiring
   gate grader-spec-selftest
   gate grader-spec
   gate currency-selftest
