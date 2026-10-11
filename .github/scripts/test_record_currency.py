@@ -286,6 +286,18 @@ class TestEnumeration(Fixture):
                          "sim/inductor-model/em-extraction")
         self.assertEqual([e["path"] for e in recs], sorted(e["path"] for e in recs))
 
+    def test_em_comparison_bundle_with_reserved_suffix(self):
+        # ids from reserve_record_id (issue #225) carry a random suffix; the
+        # whole EM comparison bundle must group under one record.
+        em = "sim/inductor-model/em-extraction/records"
+        r = "20261001-000000-%s-0123abcd" % self.c1
+        for n in ("%s.md", "%s-env.json", "%s-ngspice.txt",
+                  "%s-em-vs-analytic.csv", "%s-delta-summary.csv"):
+            self.write("%s/%s" % (em, n % r), "x")
+        e = self.get(r, "sim/inductor-model/em-extraction")
+        self.assertEqual(e["file_count"], 5)
+        self.assertEqual(e["record_id"], r)
+
     def test_suffixed_ids(self):
         r = "20261001-000000-%s-0123abcd" % self.c1
         self.write("%s/%s.md" % (OSC, r), "x")
