@@ -4,6 +4,16 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-11
+
+- **PR #226**: sim: reserve EM comparison record ownership before opening outputs
+- **Issue #225** (closed): sim: reserve EM comparison record ownership before opening outputs
+
+### 2026-10-10
+
+- **PR #223**: fix(currency): history-independent record-currency index (#213)
+- **Issue #213** (closed): Record currency depends on clone-local commit availability
+
 ### 2026-10-10
 
 - **PR #220**: ci: run raw-trace gate fixture in grading-fixture dispatcher
