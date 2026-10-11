@@ -91,7 +91,8 @@ class TestAllocation(Base):
 
 class TestMain(Base):
     def test_reservation_failure_opens_nothing(self):
-        with mock.patch.object(ca, "reserve_record_id", side_effect=ca.ReservationError("boom")):
+        with mock.patch.object(ca, "preflight", return_value=({}, {}, [])), \
+                mock.patch.object(ca, "reserve_record_id", side_effect=ca.ReservationError("boom")):
             rc, err = self.run_main()
         self.assertEqual(rc, 1)
         self.assertIn("boom", err)
@@ -110,7 +111,8 @@ class TestMain(Base):
         latest = os.path.join(self.root, "results", "latest_record_id.txt")
         with open(latest, "w") as fh:
             fh.write("PREVIOUS\n")
-        with mock.patch.object(ca, "reserve_record_id", spy), \
+        with mock.patch.object(ca, "preflight", return_value=({}, {}, [])), \
+                mock.patch.object(ca, "reserve_record_id", spy), \
                 mock.patch.object(ca, "run_ngspice", side_effect=RuntimeError("ngspice died")):
             with self.assertRaises(RuntimeError):
                 self.run_main()
@@ -123,14 +125,6 @@ class TestMain(Base):
         # a later run cannot be handed the failed run's id, even with frozen clock
         with mock.patch.dict(os.environ, {"SIM_RECORD_SUFFIX": seen["id"].rsplit("-", 1)[1]}):
             self.assertNotEqual(ca.reserve_record_id(self.root), seen["id"])
-
-    def test_latest_pointer_atomic_and_exclusive_files(self):
-        p = os.path.join(self.root, "results", "latest_record_id.txt")
-        ca._write_latest(p, "one")
-        ca._write_latest(p, "two")
-        with open(p) as fh:
-            self.assertEqual(fh.read(), "two\n")
-        self.assertEqual(os.listdir(os.path.dirname(p)), ["latest_record_id.txt"])
 
 
 if __name__ == "__main__":

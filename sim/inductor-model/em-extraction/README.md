@@ -133,12 +133,61 @@ whole set from the unchanged inputs and republishes it. Treat the outputs of a
 stage whose last run failed in publication as unverified until that re-run
 succeeds. Frozen records under `records/` are never touched by either stage.
 
+### Compare stage: inputs, staging and recovery
+
+`compare` (`scripts/compare_analytic.py`) follows the same all-or-nothing rule.
+Before ngspice starts it requires: both model libraries (non-empty, containing
+`.subckt inductor`); for each of `p1`, `p13`, `p11` the same three inputs as
+`post` plus `results/inductor_<g>/run_meta.json` (solver, settings, GDS and
+stackup hashes, consumed for provenance); EM data covering the whole
+comparison band 0.1..30 GHz (the EM curve is interpolated, never extrapolated);
+and, if present, well-formed `fit/fit_parameters.json` and
+`results/convergence.csv`. All problems are listed together; the exit status is
+nonzero and nothing is published.
+
+Each ngspice run must exit 0 (a curve file left by a failing run is ignored),
+and its curve must have the expected columns, exactly the requested number of
+samples, finite impedance and a strictly increasing frequency grid covering the
+requested band. The analytic and fitted grids must be identical; they are never
+compared by array position otherwise. Derived values that are *defined by the
+data* must be finite (L, Q and their deltas at the spot frequencies). A
+scientifically undefined quantity is not an error: an SRF with no Im(Z) zero
+crossing below 30 GHz is reported as `none < 30 GHz` (NaN in the CSV) and its
+delta is `n/a`.
+
+The record id is reserved (`sim/lib.sh` `reserve_record_id`, an exclusive
+`corners/<id>` directory) only after the inputs pass preflight and before any
+record file is staged; a reservation is never released, so a failed run keeps
+its id, and a record file that already exists is refused rather than replaced.
+
+Everything is computed into `.stage-compare-*`. Only when all geometries and the
+provenance succeeded are the record bundle (`records/<id>-em-vs-analytic.csv`,
+`-delta-summary.csv`, `.md`, `-env.json`, `-ngspice.txt`) and, last,
+`results/latest_record_id.txt` copied to their destinations. On any earlier
+failure earlier records and the pointer are untouched and the staging directory
+is removed; ngspice output of a failed run is kept at
+`run_log/compare-failure-<id>.txt` (not in `records/`, which holds complete
+records only), and `run_extraction.sh` keeps the previous `run_log/compare.txt`.
+As for `post`/`fit`, publication is a sequence of per-file atomic renames, not a
+crash-atomic multi-file transaction: if it fails part-way (disk full, kill), a
+subset of the new bundle may exist and the pointer may be stale; the error lists
+the files already replaced. Recovery: the partial record id is unreferenced by
+the pointer and is not a valid record; re-run `EM_STAGES=compare` (it makes a new
+record id from the unchanged inputs and republishes) and treat the orphaned
+files of the failed id as unverified. Files in `records/` are never rewritten by
+this repo's tooling; do not delete committed records.
+
 Tests (solver-free, no PDK/ngspice/openEMS; need numpy and scipy, declared in
 `.github/numeric-requirements.txt`): `.github/scripts/check-all.sh py-numeric`
 (`tests/numeric/test_em_extraction.py`) -- empty input, each omitted input of
 each geometry, empty and malformed files, a failure after the first geometry
 was processed, an injected publication failure with recovery, and a complete
-synthetic known-answer set. The known answer is generated from the fit
+synthetic known-answer set. The compare stage is tested the same way with a
+stub `ngspice` on `PATH`: missing geometry/metadata, malformed or non-finite
+curves, a failing simulator that still left a curve, mismatched grids,
+insufficient EM coverage, a failure after the first geometry (nothing published,
+prior records and pointer unchanged), and a complete known-answer record with an
+undefined SRF. The known answer is generated from the fit
 topology itself, so these tests establish the I/O and publication contract, not
 the EM physics.
 

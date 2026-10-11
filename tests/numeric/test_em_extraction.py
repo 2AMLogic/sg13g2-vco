@@ -1,4 +1,4 @@
-"""Failure contract and known-answer tests for the EM post/fit stages (#167)."""
+"""Failure contract and known-answer tests for the EM post/fit/compare stages (#167, #224)."""
 import contextlib
 import csv
 import io
@@ -14,7 +14,7 @@ from unittest import mock
 import numpy as np
 
 import _em
-from _em import (FIT_OUT, POST_OUT, EM, SCRIPTS, emlib, fit_lumped, postprocess)
+from _em import (FIT_OUT, POST_OUT, EM, SCRIPTS, compare_analytic, emlib, fit_lumped, postprocess)
 
 GEOMS = emlib.GEOMS
 
@@ -290,6 +290,249 @@ class TestCli(Base):
         r = self.cli(script, "--dir", self.root, "--model-out", self.model)
         self.assertNotEqual(r.returncode, 0)
         self.assertFalse(os.path.exists(self.model))
+
+
+# --------------------------------------------------------------- compare (#224)
+# A stand-in `ngspice` on PATH.  Its behaviour is read from a `* STUB k=v ...`
+# line in the model library named by the deck's .include, so the analytic and
+# fitted models can be made to behave differently.  Z = (R + jwL)/(1 + jwRC - w^2 LC)
+# per geometry with L scaled by 1, 2, 3 in GEOMS order.
+STUB = r'''#!%(py)s
+import os, re, sys
+import numpy as np
+if "--version" in sys.argv:
+    print("ngspice stub"); print("stub-version 0"); sys.exit(0)
+deck = open(sys.argv[-1]).read()
+lib = re.search(r'\.include "([^"]+)"', deck).group(1)
+kv = dict(x.split("=") for x in re.search(r"^\* STUB (.*)$", open(lib).read(), re.M).group(1).split())
+npts, fmin, fmax = re.search(r"^ac lin (\S+) (\S+) (\S+)$", deck, re.M).groups()
+npts = int(npts)
+curve, *vecs = re.search(r"^wrdata (.*)$", deck, re.M).group(1).split()
+mode = kv.get("mode", "ok")
+f = np.linspace(float(fmin), float(fmax), npts)
+if mode == "grid":
+    f[5] *= 1.001
+w = 2 * np.pi * f
+L, R, C = float(kv["L"]), float(kv["R"]), float(kv["C"])
+cols = {"frequency": f}
+for i, v in enumerate(vecs):
+    # vecs alternate zr_<g>, zi_<g>; geometry index is i // 2
+    k = i // 2 + 1
+    z = (R + 1j * w * L * k) / (1 + 1j * w * R * C - w**2 * L * k * C)
+    cols[v] = z.real if v.startswith("zr_") else z.imag
+if mode == "nan":
+    cols[vecs[2]][7] = float("nan")
+if mode == "missingcol":
+    del cols[vecs[-1]]
+rows = list(zip(*cols.values()))
+if mode == "short":
+    rows = rows[:-1]
+if mode == "decreasing":
+    rows = rows[::-1]
+if mode != "nofile":
+    with open(curve, "w") as fh:
+        fh.write(" ".join(cols) + "\n")
+        if mode == "garbled":
+            fh.write("abc def\n")
+        for r in rows:
+            fh.write(" ".join("%%.12g" %% x for x in r) + "\n")
+sys.stdout.write("stub ngspice ran mode=%%s\n" %% mode)
+sys.exit(3 if mode == "rc_fail" else 0)
+'''
+
+
+class TestCompare(Base):
+    def setUp(self):
+        super().setUp()
+        self.bin = os.path.join(self._td.name, "bin")
+        os.makedirs(self.bin)
+        exe = os.path.join(self.bin, "ngspice")
+        with open(exe, "w") as fh:
+            fh.write(STUB % {"py": sys.executable})
+        os.chmod(exe, 0o755)
+        env = mock.patch.dict(os.environ, {"PATH": self.bin + os.pathsep + os.environ["PATH"]})
+        env.start()
+        self.addCleanup(env.stop)
+        self.ana = self.model_file("analytic", L=1e-9, R=2.0, C=1e-13)
+        self.fit = self.model_file("fitted", L=1.1e-9, R=2.5, C=2e-13)
+        _em.make_tree(self.root)
+        _em.write_run_meta(self.root)
+        self.prior = {
+            "records/PRIOR-env.json": b"prior record\n",
+            "records/PRIOR.md": b"prior narrative\n",
+            "results/latest_record_id.txt": b"PRIOR\n",
+        }
+        self.keep = list(self.prior)
+        for rel, data in self.prior.items():
+            p = os.path.join(self.root, rel)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            with open(p, "wb") as fh:
+                fh.write(data)
+
+    def model_file(self, name, mode="ok", **kv):
+        p = os.path.join(self.root, "model", "%s.spice" % name)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        kv = dict(kv, mode=mode)
+        with open(p, "w") as fh:
+            fh.write("* STUB %s\n.subckt inductor la lb sub\n.ends\n" % " ".join("%s=%s" % i for i in kv.items()))
+        return p
+
+    def compare(self):
+        err = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            rc = compare_analytic.main(["--dir", self.root, "--analytic", self.ana, "--fitted", self.fit])
+        return rc, err.getvalue()
+
+    def assert_failed_cleanly(self, msg_part=None):
+        rc, err = self.compare()
+        self.assertNotEqual(rc, 0, err)
+        if msg_part:
+            self.assertIn(msg_part, err)
+        self.assertEqual(_em.read_all(self.root, self.keep), self.prior)
+        self.assertEqual(sorted(os.listdir(os.path.join(self.root, "records"))), ["PRIOR-env.json", "PRIOR.md"])
+        self.assertEqual(_em.stray(self.root), [])
+        return err
+
+    def test_missing_geometry_is_an_error_not_a_skip(self):
+        os.unlink(os.path.join(self.root, "results", "inductor_p13.s2p"))
+        self.assert_failed_cleanly("geometry p13")
+
+    def test_missing_metadata_and_models(self):
+        os.unlink(os.path.join(self.root, "results", "inductor_p11", "run_meta.json"))
+        self.assert_failed_cleanly("run_meta.json")
+        _em.write_run_meta(self.root)
+        os.unlink(self.fit)
+        self.assert_failed_cleanly("fitted model")
+        self.model_file("fitted", L=1e-9, R=1.0, C=1e-13)
+        with open(os.path.join(self.root, "results", "inductor_p1", "run_meta.json"), "w") as fh:
+            fh.write("{not json")
+        self.assert_failed_cleanly("p1")
+
+    def test_malformed_or_nonfinite_curves(self):
+        for mode in ("nan", "short", "decreasing", "missingcol", "garbled", "nofile"):
+            for which in ("ana", "fit"):
+                with self.subTest(mode=mode, model=which):
+                    kw = dict(L=1e-9, R=2.0, C=1e-13, mode=mode)
+                    if which == "ana":
+                        self.ana = self.model_file("analytic", **kw)
+                    else:
+                        self.ana = self.model_file("analytic", L=1e-9, R=2.0, C=1e-13)
+                        self.fit = self.model_file("fitted", **kw)
+                    self.assert_failed_cleanly()
+
+    def test_simulator_failure_despite_curve_file(self):
+        self.fit = self.model_file("fitted", mode="rc_fail", L=1e-9, R=2.0, C=1e-13)
+        err = self.assert_failed_cleanly("status 3")
+        diag = [n for n in os.listdir(os.path.join(self.root, "run_log")) if n.startswith("compare-failure-")]
+        self.assertEqual(len(diag), 1)
+        with open(os.path.join(self.root, "run_log", diag[0])) as fh:
+            self.assertIn("stub ngspice ran mode=rc_fail", fh.read())
+
+    def test_mismatched_analytic_and_fitted_grids(self):
+        self.fit = self.model_file("fitted", mode="grid", L=1e-9, R=2.0, C=1e-13)
+        self.assert_failed_cleanly("grids differ")
+
+    def test_insufficient_em_coverage(self):
+        for lo, hi in ((0.05e9, 20e9), (0.5e9, 30e9)):
+            with self.subTest(band=(lo, hi)):
+                f = np.linspace(lo, hi, 120)
+                Z = np.linalg.inv(emlib.model_Y(f, _em.true_params("p11")))
+                Zraw = emlib.deembed_series_L(f, Z, -emlib.port_inductances(_em.PORTS))
+                emlib.write_snp(os.path.join(self.root, "results", "inductor_p11.s2p"),
+                                f, emlib.z2s(Zraw, 50.0), 50.0)
+                self.assert_failed_cleanly("p11")
+                self.assertFalse(os.path.exists(os.path.join(self.root, "run_log")))
+
+    def test_failure_after_one_geometry_publishes_nothing(self):
+        real, calls = emlib.srf, []
+
+        def flaky(f, z):
+            calls.append(1)
+            if len(calls) > 3:  # three SRFs per geometry: fail inside the second
+                raise RuntimeError("injected failure in geometry 2")
+            return real(f, z)
+
+        with mock.patch.object(emlib, "srf", flaky):
+            with self.assertRaises(RuntimeError):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    compare_analytic.run(self.root, self.ana, self.fit)
+        self.assertGreater(len(calls), 3)
+        self.assertEqual(_em.read_all(self.root, self.keep), self.prior)
+        self.assertEqual(sorted(os.listdir(os.path.join(self.root, "records"))), ["PRIOR-env.json", "PRIOR.md"])
+        self.assertEqual(_em.stray(self.root), [])
+
+    def test_complete_known_answer_success(self):
+        # fitted model without C has no Im(Z) zero crossing: an undefined SRF
+        # (NaN, reported) must not fail the comparison.
+        self.fit = self.model_file("fitted", L=1.1e-9, R=2.5, C=0.0)
+        rc, err = self.compare()
+        self.assertEqual(rc, 0, err)
+        self.assertEqual(_em.stray(self.root), [])
+        with open(os.path.join(self.root, "results", "latest_record_id.txt")) as fh:
+            rid = fh.read().strip()
+        self.assertNotEqual(rid, "PRIOR")
+        recs = os.path.join(self.root, "records")
+        for suffix in ("-em-vs-analytic.csv", "-delta-summary.csv", ".md", "-env.json", "-ngspice.txt"):
+            self.assertGreater(os.path.getsize(os.path.join(recs, rid + suffix)), 0, suffix)
+        self.assertEqual(_em.read_all(self.root, [r for r in self.keep if r.startswith("records")]),
+                         {k: v for k, v in self.prior.items() if k.startswith("records")})
+        with open(os.path.join(recs, rid + "-delta-summary.csv")) as fh:
+            rows = list(csv.DictReader(fh))
+        self.assertEqual([r["geometry"] for r in rows], [g[0] for g in compare_analytic.GEOMS])
+        with open(os.path.join(recs, rid + "-em-vs-analytic.csv")) as fh:
+            curves = list(csv.DictReader(fh))
+        npts = int(round((compare_analytic.FMAX - compare_analytic.FMIN) / compare_analytic.DF)) + 1
+        self.assertEqual(len(curves), 3 * npts)
+        with open(os.path.join(recs, rid + "-env.json")) as fh:
+            env = json.load(fh)
+        self.assertEqual(sorted(env["em_runs"]), sorted(GEOMS))
+        for k, r in enumerate(rows, start=1):
+            g = r["geometry"]
+            L, R, C = 1e-9 * k, 2.0, 1e-13
+            w = 2 * np.pi * 1e9
+            z = (R + 1j * w * L) / (1 + 1j * w * R * C - w**2 * L * C)
+            self.assertAlmostEqual(float(r["l_analytic_1g_h"]) / (z.imag / w), 1.0, places=4)
+            self.assertAlmostEqual(float(r["q_analytic_1g"]) / (z.imag / z.real), 1.0, places=4)
+            srf = np.sqrt(1 / (L * C) - (R / L) ** 2) / (2 * np.pi)
+            self.assertAlmostEqual(float(r["srf_analytic_hz"]) / srf, 1.0, delta=5e-3)
+            self.assertTrue(np.isnan(float(r["srf_fitted_hz"])), g)
+            Lem, _ = emlib.lq(_em.FREQ, emlib.z_single_ended(_em.true_Z(g)))
+            self.assertAlmostEqual(float(r["l_em_1g_h"]) / emlib.at(_em.FREQ, Lem, 1e9), 1.0, delta=2e-2)
+
+    def test_success_reserves_id_and_refuses_existing_record_file(self):
+        # composition of #224 (staged publish) and #225 (reserved ids): the
+        # published id is the reserved one, and a colliding record file is
+        # refused instead of replaced.
+        rc, err = self.compare()
+        self.assertEqual(rc, 0, err)
+        with open(os.path.join(self.root, "results", "latest_record_id.txt")) as fh:
+            rid = fh.read().strip()
+        self.assertEqual(os.listdir(os.path.join(self.root, "corners")), [rid])
+        victim = os.path.join(self.root, "records", "FIXED-env.json")
+        with open(victim, "wb") as fh:
+            fh.write(b"existing evidence\n")
+        self.keep.append("records/FIXED-env.json")
+        self.prior["records/FIXED-env.json"] = b"existing evidence\n"
+        self.prior["results/latest_record_id.txt"] = ("%s\n" % rid).encode()
+        with mock.patch.object(compare_analytic, "reserve_record_id", return_value="FIXED"):
+            rc, err = self.compare()
+        self.assertNotEqual(rc, 0)
+        self.assertIn("already exists", err)
+        self.assertEqual(_em.read_all(self.root, self.keep), self.prior)
+        self.assertEqual(_em.stray(self.root), [])
+
+    def test_cli_exit_status(self):
+        script = os.path.join(SCRIPTS, "compare_analytic.py")
+        r = subprocess.run([sys.executable, "-I", "-B", script, "--dir", self.root,
+                            "--analytic", self.ana, "--fitted", self.fit],
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        os.unlink(os.path.join(self.root, "results", "inductor_p1.s2p"))
+        r = subprocess.run([sys.executable, "-I", "-B", script, "--dir", self.root,
+                            "--analytic", self.ana, "--fitted", self.fit],
+                           capture_output=True, text=True)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("nothing was published", r.stderr)
 
 
 def add_convergence(root, with_variant_files):
