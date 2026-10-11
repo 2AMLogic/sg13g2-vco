@@ -16,13 +16,17 @@ issue #133) this verifies the *committed* bytes:
     (no absolute path, backslash, '.'/'..' segment or symlink), exists as a
     regular file, and hashes to the declared sha256;
   * the role policy of the writer (osc_model_inputs_json /
-    osc_retain_model_inputs) holds: repo-owned roles (RETAINED_ROLES:
-    inductor-model, simulator-init) must carry a non-null retained_snapshot,
+    osc_retain_model_inputs) holds: retained roles (inductor-model,
+    simulator-init, and the optional model-overlay) must carry a non-null
+    retained_snapshot,
     external roles (EXTERNAL_ROLES: pdk-model, osdi-binary -- identified by
     digest only) must carry null, any other role is rejected, and at least
-    one entry of every role -- retained and external -- is present (the writer
-    always captures the inductor model, .spiceinit, PDK libraries and OSDI
-    binary). Roles are counted only from entries that pass the structural
+    one entry of every mandatory role (MANDATORY_ROLES: inductor-model,
+    simulator-init, pdk-model, osdi-binary) is present (the writer always
+    captures the inductor model, .spiceinit, PDK libraries and OSDI binary).
+    model-overlay (svaricap overlay provenance, issue #221) is optional:
+    captures without it stay valid, but if present it gets the same
+    namespace, regular-file, uniqueness and sha256 checks. Roles are counted only from entries that pass the structural
     checks above; external bytes stay unretained, only their digests count.
 
 Only the manifest and the retained snapshot files are ever read. Live model
@@ -60,6 +64,14 @@ INPUT_KEYS = {"role", "bundle_path", "sha256", "original_path",
 # repo-owned inputs are always retained and the external ones never are.
 RETAINED_ROLES = ("inductor-model", "simulator-init")
 EXTERNAL_ROLES = ("pdk-model", "osdi-binary")
+# Retained (repo-owned or run-generated, committed as snapshots) roles the
+# writer emits only when applicable. model-overlay is the svaricap overlay
+# provenance JSON (sim/lib.sh); captures made without it stay valid.
+OPTIONAL_RETAINED_ROLES = ("model-overlay",)
+# Allowed vs mandatory are separate policies: every allowed retained role must
+# carry a non-null retained_snapshot, but only MANDATORY_ROLES must be present.
+ALLOWED_RETAINED_ROLES = RETAINED_ROLES + OPTIONAL_RETAINED_ROLES
+MANDATORY_ROLES = RETAINED_ROLES + EXTERNAL_ROLES
 
 
 def _reject_dup(pairs):
@@ -222,10 +234,10 @@ def check_manifest(root, rel, rdir, rid):
             if len(errs) == n_err0:  # structurally valid entry only
                 seen_roles.add(role)
             continue
-        if role not in RETAINED_ROLES:
+        if role not in ALLOWED_RETAINED_ROLES:
             err("%s unknown role %r; expected one of %s (retained) or %s "
                 "(external) -- regenerate the manifest with osc_bench.sh"
-                % (w, role, ", ".join(RETAINED_ROLES),
+                % (w, role, ", ".join(ALLOWED_RETAINED_ROLES),
                    ", ".join(EXTERNAL_ROLES)))
             continue
         seen_roles.add(role)
@@ -269,7 +281,7 @@ def check_manifest(root, rel, rdir, rid):
             continue
         if HEX64.match(sha):
             verified += 1
-    for role in RETAINED_ROLES:
+    for role in RETAINED_ROLES:  # mandatory retained roles
         if role not in seen_roles:
             err("no %r entry; the writer always captures and retains it, so "
                 "this capture is incomplete -- regenerate the manifest with "
