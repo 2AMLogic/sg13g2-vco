@@ -1,0 +1,34 @@
+# Orphan-test guard registry (issue #228). Columns (TAB separated):
+#   test path <TAB> root check-all.sh target <TAB> launcher that directly executes it
+# One row per tracked shell self-test matching .github/scripts/test-*.sh,
+# sim/tests/test-*.sh or sim/*/tests/test*.sh. Checked, never executed, by
+# check-test-wiring.sh (see test_wiring_check.py for the accepted launcher syntax).
+# Transitive execution is a rooted row (launcher != check-all.sh), not an exception.
+.github/scripts/test-check-all.sh	runner-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-grader-spec-agreement.sh	grader-spec-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-klt-friction.sh	friction-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-python.sh	py-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-signoff.sh	signoff-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-sim-append-only.sh	append-only-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-spec-change-has-dr.sh	spec-dr-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-test-wiring.sh	test-wiring-selftest	.github/scripts/check-all.sh
+.github/scripts/test-lint-shell.sh	lint-selftest	.github/scripts/check-all.sh
+.github/scripts/test-model-inputs.sh	model-inputs-selftest	.github/scripts/check-all.sh
+.github/scripts/test-record-currency.sh	currency-selftest	.github/scripts/check-all.sh
+.github/scripts/test-record-deck-integrity.sh	deck-integrity-selftest	.github/scripts/check-all.sh
+sim/tests/test-build-osdi-staging.sh	osdi-staging-selftest	.github/scripts/check-all.sh
+sim/tests/test-local-grid-guard.sh	local-grid-guard-selftest	.github/scripts/check-all.sh
+sim/tests/test-reserve-record-id.sh	record-id-selftest	.github/scripts/check-all.sh
+sim/tests/test-tank-ab-reserve.sh	tank-ab-selftest	.github/scripts/check-all.sh
+# launched by test-record-currency.sh (one-level transitive, root currency-selftest)
+sim/tests/test-model-bundle.sh	currency-selftest	.github/scripts/test-record-currency.sh
+sim/tests/test-resume-checkpoint.sh	currency-selftest	.github/scripts/test-record-currency.sh
+sim/tests/test-source-capture.sh	currency-selftest	.github/scripts/test-record-currency.sh
+# launched by run-grading-fixtures.sh via run_fixture (root grading-fixtures)
+sim/oscillator-core/tests/test_emit_tuning.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
+sim/oscillator-core/tests/test_row3.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
+sim/oscillator-core/tests/test_row3_global.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
+sim/oscillator-core/tests/test_row7.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
+sim/oscillator-core/tests/test_supply_stage2.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
+sim/phase-noise/tests/test_trace_gate.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
+sim/phase-noise/tests/test_validity.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh

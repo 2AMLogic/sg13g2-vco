@@ -120,6 +120,15 @@ jobs:
       - name: OSDI staging regression (stubbed compiler, no PDK, no network)
         run: .github/scripts/check-all.sh osdi-staging-selftest
 
+      # Orphan-test guard (issue #228): every tracked shell self-test is in
+      # .github/scripts/test-wiring.tsv and reachable from a `test` aggregate
+      # target. Parses only; stdlib python3 + git.
+      - name: Orphan-test guard self-test (mutation fixtures)
+        run: .github/scripts/check-all.sh test-wiring-selftest
+
+      - name: Every shell self-test is wired into check-all.sh test
+        run: .github/scripts/check-all.sh test-wiring
+
       - name: sim/ evidence is append-only
         if: github.event_name == 'pull_request'
         run: .github/scripts/check-all.sh append-only
