@@ -178,10 +178,10 @@ fi
 # ---------------------------------------------------------------- compare --
 if stage compare; then
   echo "== compare: EM extraction vs analytic screening model =="
-  "${FIT_PYTHON}" "${HERE}/scripts/compare_analytic.py" --dir "${HERE}" \
+  run_logged "${HERE}/run_log/compare.txt" \
+    "${FIT_PYTHON}" "${HERE}/scripts/compare_analytic.py" --dir "${HERE}" \
     --analytic "${INDDIR}/sg13g2_inductor_analytic.spice" \
-    --fitted "${INDDIR}/sg13g2_inductor_em.spice" \
-    2>&1 | tee "${HERE}/run_log/compare.txt"
+    --fitted "${INDDIR}/sg13g2_inductor_em.spice"
 fi
 
 echo "done."

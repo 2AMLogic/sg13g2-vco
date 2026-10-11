@@ -14,13 +14,33 @@ frequency grid the EM extraction produced.  The EM curve is the de-embedded
 compared point for point.
 
 The record id is reserved first (sim/lib.sh reserve_record_id, issue #225);
-all files are created exclusively and latest_record_id.txt moves last.
+record files are refused if they already exist and latest_record_id.txt moves last.
 
 Writes:
   records/<record-id>-em-vs-analytic.csv    per geometry x frequency
   records/<record-id>-delta-summary.csv     the scalar delta table
   records/<record-id>.md                    the narrative record
   records/<record-id>-env.json              tool versions / provenance
+  records/<record-id>-ngspice.txt           both ngspice logs
+  results/latest_record_id.txt              pointer to the newest complete record
+
+FAILURE CONTRACT (#224).  The comparison is all-or-nothing.  Before ngspice is
+started it preflights the model files and, for each of the three geometries
+(p1, p13, p11), the Touchstone, port information, geometry metadata and
+run_meta.json.  Each ngspice run must exit 0 and its curve must have the
+expected columns and sample count, finite impedance and a strictly increasing
+frequency grid; the analytic and fitted grids must match and the EM data must
+cover the whole comparison band (no extrapolation).  Everything is computed
+into a staging directory and the record bundle is published, with the
+latest-record pointer last, only after every geometry succeeded.  A failure
+exits nonzero, leaves earlier records and the pointer untouched and writes the
+ngspice output (if any) to run_log/compare-failure-<record-id>.txt.  Publication
+is per-file atomic renames, not a crash-atomic multi-file transaction (see
+emlib.Stage and the README).
+
+Undefined derived quantities are NOT errors: an SRF with no Im(Z) zero crossing
+below FMAX is NaN ("none < 30 GHz") and its delta is NaN.  Invalid raw data are
+errors.
 """
 
 import argparse
@@ -38,7 +58,6 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import emlib  # noqa: E402
-from postprocess import load_run  # noqa: E402
 
 GEOMS = [
     ("p1", 8.22, 3.29, 47.65, 1),
@@ -47,6 +66,18 @@ GEOMS = [
 ]
 SPOT_F = [1e9, 2e9, 5e9, 10e9, 20e9]
 FMIN, FMAX, DF = 1e8, 3e10, 5e7
+RUN_META_KEYS = ("solver", "settings", "gds_sha256", "stackup_xml_sha256")
+
+
+class CompareError(Exception):
+    """Invalid raw data or a failed simulator run in the compare stage.
+
+    `diagnostic` optionally carries raw simulator output to retain.
+    """
+
+    def __init__(self, msg, diagnostic=None):
+        super().__init__(msg)
+        self.diagnostic = diagnostic
 
 
 def run_ngspice(model_lib, workdir):
@@ -85,17 +116,53 @@ def run_ngspice(model_lib, workdir):
         fh.write("\n".join(lines) + "\n")
     with open(os.path.join(workdir, ".spiceinit"), "w") as fh:
         fh.write("set ngbehavior=hsa\nset skywaterpdk\n")
-    r = subprocess.run(
-        ["ngspice", "-b", deck], cwd=workdir, capture_output=True, text=True
-    )
+    try:
+        r = subprocess.run(
+            ["ngspice", "-b", deck], cwd=workdir, capture_output=True, text=True
+        )
+    except OSError as e:
+        raise CompareError("cannot run ngspice for %s: %s" % (model_lib, e))
+    log = "$ ngspice -b (exit %s) model %s\n%s%s" % (r.returncode, model_lib, r.stdout, r.stderr)
+    if r.returncode != 0:
+        raise CompareError(
+            "ngspice exited with status %s for %s (a curve file, if any, is ignored)"
+            % (r.returncode, model_lib), log)
     if not os.path.isfile(curve):
-        raise RuntimeError("ngspice produced no curve file:\n%s\n%s" % (r.stdout, r.stderr))
-    a = np.genfromtxt(curve, names=True)
-    f = a[a.dtype.names[0]]
+        raise CompareError("ngspice produced no curve file for %s" % model_lib, log)
+    f, out = parse_curve(curve, npts, model_lib)
+    return f, out, deck, log
+
+
+def parse_curve(curve, npts, label):
+    """Validate and split an ngspice wrdata file into (f, {geom: Z(f)})."""
+    def bad(why):
+        return CompareError("invalid ngspice curve for %s: %s" % (label, why))
+
+    try:
+        a = np.genfromtxt(curve, names=True)
+    except Exception as e:  # noqa: BLE001 - any parse failure is an invalid curve
+        raise bad("unparseable (%s: %s)" % (type(e).__name__, e))
+    names = a.dtype.names or ()
+    need = ["zr_%s" % g[0] for g in GEOMS] + ["zi_%s" % g[0] for g in GEOMS]
+    missing = [n for n in need if n not in names]
+    if len(names) < 1 or missing:
+        raise bad("missing column(s) %s" % ", ".join(missing or ["frequency"]))
+    a = np.atleast_1d(a)
+    if len(a) != npts:
+        raise bad("expected %d samples, got %d" % (npts, len(a)))
+    f = np.asarray(a[names[0]], dtype=float)
+    if not np.all(np.isfinite(f)) or not np.all(np.diff(f) > 0):
+        raise bad("frequency grid is non-finite or not strictly increasing")
+    if not (np.isclose(f[0], FMIN, rtol=1e-6) and np.isclose(f[-1], FMAX, rtol=1e-6)):
+        raise bad("frequency grid %g..%g Hz is not the requested %g..%g Hz"
+                  % (f[0], f[-1], FMIN, FMAX))
     out = {}
-    for i, (name, *_) in enumerate(GEOMS):
-        out[name] = a["zr_%s" % name] + 1j * a["zi_%s" % name]
-    return f, out, deck, r.stdout + r.stderr
+    for name, *_ in GEOMS:
+        zr, zi = (np.asarray(a["%s_%s" % (k, name)], dtype=float) for k in ("zr", "zi"))
+        if not (np.all(np.isfinite(zr)) and np.all(np.isfinite(zi))):
+            raise bad("non-finite impedance for geometry %s" % name)
+        out[name] = zr + 1j * zi
+    return f, out
 
 
 # --- evidence ownership (issue #225) ----------------------------------------
@@ -103,8 +170,8 @@ def run_ngspice(model_lib, workdir):
 # of <em dir>/corners/<id>, which also rejects ids already used by historical
 # flat records/<id>*), so concurrent or same-second runs at one commit never
 # share a namespace.  A reservation is never released: a failed run keeps its
-# id.  Every record file is created exclusively ("x") so even a broken
-# reservation cannot truncate existing evidence.
+# id.  Staging refuses any record file that already exists (_stage_new), so even
+# a broken reservation cannot replace existing evidence.
 LIB_SH = os.path.normpath(os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "lib.sh"))
 RECORD_ID_RE = re.compile(r"^[0-9]{8}-[0-9]{6}-[0-9A-Za-z]+-[0-9a-f]+$")
@@ -130,28 +197,97 @@ def reserve_record_id(root):
     return rid
 
 
-def _write_latest(path, record_id):
-    """Atomically move the mutable latest-record pointer (success only)."""
-    tmp = "%s.%d.tmp" % (path, os.getpid())
-    with open(tmp, "x") as fh:
-        fh.write(record_id + "\n")
-    os.replace(tmp, path)
-
-
 def spot(f, y, f0):
     return emlib.at(f, y, f0)
 
 
-def main():
+def _read_json(path, what):
+    try:
+        with open(path) as fh:
+            return json.load(fh)
+    except (OSError, ValueError) as e:
+        raise emlib.InputError("%s: %s: %s: %s" % (what, path, type(e).__name__, e))
+
+
+def preflight(root, res, analytic, fitted):
+    """Check every input the comparison consumes; return the loaded inputs.
+
+    Raises emlib.InputError listing every problem found (one per line).
+    """
+    problems = []
+    for label, path in (("analytic model", analytic), ("fitted model", fitted)):
+        if not os.path.isfile(path) or os.path.getsize(path) == 0:
+            problems.append("%s: %s: missing or empty" % (label, path))
+        else:
+            with open(path, errors="replace") as fh:
+                if ".subckt inductor" not in fh.read().lower():
+                    problems.append("%s: %s: no `.subckt inductor`" % (label, path))
+    geoms = {}
+    for name, *_ in GEOMS:
+        try:
+            inp = emlib.load_geometry_inputs(root, name)
+            rm = os.path.join(res, "inductor_%s" % name, "run_meta.json")
+            if not os.path.isfile(rm):
+                raise emlib.InputError("geometry %s: %s: missing" % (name, rm))
+            meta = _read_json(rm, "geometry %s run metadata" % name)
+            absent = [k for k in RUN_META_KEYS if not isinstance(meta, dict) or k not in meta]
+            if absent:
+                raise emlib.InputError(
+                    "geometry %s: %s: missing key(s) %s" % (name, rm, ", ".join(absent)))
+            inp["meta"] = meta
+            fe = inp["f"]
+            if fe[0] > FMIN * (1 + 1e-9) or fe[-1] < FMAX * (1 - 1e-9):
+                raise emlib.InputError(
+                    "geometry %s: EM data span %.4g..%.4g Hz but the comparison band is "
+                    "%.4g..%.4g Hz; refusing to extrapolate" % (name, fe[0], fe[-1], FMIN, FMAX))
+            geoms[name] = inp
+        except emlib.InputError as e:
+            problems.append(str(e))
+    fitj = os.path.join(root, "fit", "fit_parameters.json")
+    fits = {}
+    if os.path.isfile(fitj):
+        try:
+            fits = _read_json(fitj, "fit parameters")
+            if not isinstance(fits, dict):
+                raise emlib.InputError("fit parameters: %s: not a JSON object" % fitj)
+        except emlib.InputError as e:
+            problems.append(str(e))
+    conv = os.path.join(res, "convergence.csv")
+    convrows = []
+    if os.path.isfile(conv):
+        try:
+            with open(conv) as fh:
+                convrows = list(csv.DictReader(fh))
+        except (OSError, csv.Error, UnicodeDecodeError) as e:
+            problems.append("convergence: %s: %s: %s" % (conv, type(e).__name__, e))
+    if problems:
+        raise emlib.InputError(
+            "compare needs all %d geometries (%s) and both models; nothing was published:\n  %s"
+            % (len(GEOMS), " ".join(g[0] for g in GEOMS), "\n  ".join(problems)))
+    return geoms, fits, convrows
+
+
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--analytic", required=True)
     ap.add_argument("--fitted", required=True)
-    args = ap.parse_args()
-    root, res = args.dir, os.path.join(args.dir, "results")
-    recdir = os.path.join(root, "records")
+    args = ap.parse_args(argv)
+    root = args.dir
+    try:
+        return run(root, args.analytic, args.fitted)
+    except (emlib.InputError, emlib.PublishError, CompareError) as e:
+        print("error: %s" % e, file=sys.stderr)
+        return 1
 
-    # Ownership first: nothing under records/ is created or opened before this.
+
+def run(root, analytic, fitted):
+    res = os.path.join(root, "results")
+    recdir = os.path.join(root, "records")
+    # Inputs first (#224): a bad input tree is rejected before anything is reserved.
+    geoms, fits, convrows = preflight(root, res, analytic, fitted)
+
+    # Ownership next (#225): nothing under records/ is created or opened before this.
     try:
         record_id = reserve_record_id(root)
     except ReservationError as e:
@@ -159,29 +295,90 @@ def main():
         return 1
     os.makedirs(recdir, exist_ok=True)
 
-    with tempfile.TemporaryDirectory() as wd:
-        f_ana, Z_ana, deck_a, log_a = run_ngspice(args.analytic, os.path.join(wd, "a") if os.makedirs(os.path.join(wd, "a"), exist_ok=True) or os.path.join(wd, "a") else wd)
-        f_fit, Z_fit, deck_f, log_f = run_ngspice(args.fitted, os.path.join(wd, "f") if os.makedirs(os.path.join(wd, "f"), exist_ok=True) or os.path.join(wd, "f") else wd)
-        with open(os.path.join(recdir, "%s-ngspice.txt" % record_id), "x") as fh:
-            fh.write("=== analytic model ===\n" + log_a + "\n=== EM-fitted model ===\n" + log_f)
+    stage = emlib.Stage(root, "compare")
+    try:
+        _compute(root, res, recdir, record_id, analytic, fitted, geoms, fits, convrows, stage)
+    except BaseException:
+        stage.discard()
+        raise
+    stage.publish()
+    print("record", record_id)
+    return 0
+
+
+def _stage_new(stage, dest):
+    """Stage a new record file; refuse to replace existing evidence (#225).
+
+    Publication replaces destinations, so exclusivity is checked here.  The
+    mutable latest-record pointer is staged with `stage.add` directly.
+    """
+    if os.path.lexists(dest):
+        raise CompareError("record file already exists, refusing to replace it: %s" % dest)
+    return stage.add(dest)
+
+
+def _retain_diagnostic(root, record_id, text):
+    """Keep failure output outside records/ (which holds only complete records)."""
+    d = os.path.join(root, "run_log")
+    os.makedirs(d, exist_ok=True)
+    path = os.path.join(d, "compare-failure-%s.txt" % record_id)
+    with open(path, "x") as fh:
+        fh.write(text)
+    print("failure diagnostics kept in %s" % path, file=sys.stderr)
+
+
+def _ngspice_pair(root, record_id, analytic, fitted):
+    logs = []
+    try:
+        with tempfile.TemporaryDirectory() as wd:
+            res = []
+            for tag, lib in (("a", analytic), ("f", fitted)):
+                sub = os.path.join(wd, tag)
+                os.makedirs(sub)
+                try:
+                    res.append(run_ngspice(lib, sub))
+                except CompareError as e:
+                    if e.diagnostic:
+                        logs.append(e.diagnostic)
+                    raise
+                logs.append(res[-1][3])
+            (f_ana, Z_ana, _, log_a), (f_fit, Z_fit, _, log_f) = res
+    except CompareError as e:
+        _retain_diagnostic(root, record_id, "%s\n\n%s\n" % (e, "\n".join(logs)))
+        raise
+    if f_ana.shape != f_fit.shape or not np.allclose(f_ana, f_fit, rtol=1e-9, atol=0):
+        _retain_diagnostic(root, record_id, "analytic/fitted grids differ\n\n" + "\n".join(logs))
+        raise CompareError("analytic and fitted frequency grids differ; refusing to compare by position")
+    return f_ana, Z_ana, Z_fit, log_a, log_f
+
+
+def _finite(label, *vals):
+    for v in vals:
+        if not np.all(np.isfinite(v)):
+            raise CompareError("%s: derived quantity is non-finite (invalid data, not an SRF-style undefined)" % label)
+
+
+def _compute(root, res, recdir, record_id, analytic, fitted, geoms, fits, convrows, stage):
+    f, Z_ana, Z_fit, log_a, log_f = _ngspice_pair(root, record_id, analytic, fitted)
+    with open(_stage_new(stage, os.path.join(recdir, "%s-ngspice.txt" % record_id)), "w") as fh:
+        fh.write("=== analytic model ===\n" + log_a + "\n=== EM-fitted model ===\n" + log_f)
 
     rows = []
     summary = []
     for name, w, s, d, n in GEOMS:
-        s2p = os.path.join(res, "inductor_%s.s2p" % name)
-        if not os.path.isfile(s2p):
-            print("MISSING %s" % s2p)
-            continue
-        fe, S, Z, Zd, z0, Lport, _ = load_run(os.path.join(res, "inductor_%s" % name), s2p)
+        inp = geoms[name]
+        fe, z0 = inp["f"], inp["z0"]
+        Zd = emlib.deembed_series_L(fe, emlib.s2z(inp["S"], z0), emlib.port_inductances(inp["pinfo"]))
         zse = emlib.z_single_ended(Zd)
-        # put everything on the ngspice grid
-        f = f_ana
+        _finite("geometry %s EM single-ended impedance" % name, zse)
+        # put everything on the ngspice grid (coverage was verified in preflight)
         zem = np.interp(f, fe, zse.real) + 1j * np.interp(f, fe, zse.imag)
         za, zf = Z_ana[name], Z_fit[name]
 
         Lem, Qem = emlib.lq(f, zem)
         La, Qa = emlib.lq(f, za)
         Lf, Qf = emlib.lq(f, zf)
+        _finite("geometry %s L/Q" % name, Lem, La, Lf)
         for i in range(len(f)):
             rows.append(
                 [name, "%.10g" % f[i]]
@@ -190,6 +387,7 @@ def main():
                                         zem[i].imag, za[i].imag, zf[i].imag)]
             )
 
+        # SRF may legitimately be undefined (no crossing): NaN, kept as such.
         srf_em, srf_a, srf_f = (emlib.srf(f, z) for z in (zem, za, zf))
         row = {
             "geometry": name, "w_um": w, "s_um": s, "d_um": d, "nr_r": n,
@@ -200,16 +398,21 @@ def main():
             g = "%dg" % int(round(f0 / 1e9))
             le, la_, lf = (spot(f, x, f0) for x in (Lem, La, Lf))
             qe, qa, qf = (spot(f, x, f0) for x in (Qem, Qa, Qf))
+            with np.errstate(divide="ignore", invalid="ignore"):
+                dl_a, dl_f = 100 * (la_ - le) / le, 100 * (lf - le) / le
+                dq_a, dq_f = 100 * (qa - qe) / qe, 100 * (qf - qe) / qe
+            _finite("geometry %s spot %s" % (name, g), le, la_, lf, qe, qa, qf,
+                    dl_a, dl_f, dq_a, dq_f)
             row["l_em_%s_h" % g] = le
             row["l_analytic_%s_h" % g] = la_
             row["l_fitted_%s_h" % g] = lf
-            row["d_l_analytic_vs_em_%s_pct" % g] = 100 * (la_ - le) / le
-            row["d_l_fitted_vs_em_%s_pct" % g] = 100 * (lf - le) / le
+            row["d_l_analytic_vs_em_%s_pct" % g] = dl_a
+            row["d_l_fitted_vs_em_%s_pct" % g] = dl_f
             row["q_em_%s" % g] = qe
             row["q_analytic_%s" % g] = qa
             row["q_fitted_%s" % g] = qf
-            row["d_q_analytic_vs_em_%s_pct" % g] = 100 * (qa - qe) / qe
-            row["d_q_fitted_vs_em_%s_pct" % g] = 100 * (qf - qe) / qe
+            row["d_q_analytic_vs_em_%s_pct" % g] = dq_a
+            row["d_q_fitted_vs_em_%s_pct" % g] = dq_f
         summary.append(row)
         print(
             "%-4s  L(1G) EM %8.4g nH vs analytic %8.4g nH (%+6.1f %%) | "
@@ -222,7 +425,7 @@ def main():
             )
         )
 
-    with open(os.path.join(recdir, "%s-em-vs-analytic.csv" % record_id), "x", newline="") as fh:
+    with open(_stage_new(stage, os.path.join(recdir, "%s-em-vs-analytic.csv" % record_id)), "w", newline="") as fh:
         wcsv = csv.writer(fh)
         wcsv.writerow(
             ["geometry", "f_hz", "l_em_h", "l_analytic_h", "l_fitted_h",
@@ -232,53 +435,51 @@ def main():
         )
         wcsv.writerows(rows)
 
-    if summary:
-        keys = list(summary[0].keys())
-        with open(os.path.join(recdir, "%s-delta-summary.csv" % record_id), "x", newline="") as fh:
-            wcsv = csv.DictWriter(fh, fieldnames=keys)
-            wcsv.writeheader()
-            for r in summary:
-                wcsv.writerow({k: ("%.6g" % v if isinstance(v, float) else v) for k, v in r.items()})
+    keys = list(summary[0].keys())
+    with open(_stage_new(stage, os.path.join(recdir, "%s-delta-summary.csv" % record_id)), "w", newline="") as fh:
+        wcsv = csv.DictWriter(fh, fieldnames=keys)
+        wcsv.writeheader()
+        for r in summary:
+            wcsv.writerow({k: ("%.6g" % v if isinstance(v, float) else v) for k, v in r.items()})
 
+    try:
+        ngv = subprocess.run(["ngspice", "--version"], capture_output=True, text=True).stdout.splitlines()[1:2]
+    except OSError:
+        ngv = []
     env = {
         "record_id": record_id,
         "generated_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "host": {"hostname": platform.node(), "platform": platform.platform()},
-        "ngspice_version": subprocess.run(["ngspice", "--version"], capture_output=True, text=True).stdout.splitlines()[1:2],
+        "ngspice_version": ngv,
         "python": sys.version.split()[0],
         "numpy": np.__version__,
         "models": {
-            "analytic": {"path": os.path.relpath(args.analytic, root), "sha256": emlib.sha256(args.analytic)},
-            "em_fitted": {"path": os.path.relpath(args.fitted, root), "sha256": emlib.sha256(args.fitted)},
+            "analytic": {"path": os.path.relpath(analytic, root), "sha256": emlib.sha256(analytic)},
+            "em_fitted": {"path": os.path.relpath(fitted, root), "sha256": emlib.sha256(fitted)},
         },
         "em_runs": {},
     }
     for name, *_ in GEOMS:
-        rm = os.path.join(res, "inductor_%s" % name, "run_meta.json")
-        if os.path.isfile(rm):
-            m = json.load(open(rm))
-            env["em_runs"][name] = {
-                "solver": m["solver"], "settings": m["settings"],
-                "gds_sha256": m["gds_sha256"],
-                "stackup_xml_sha256": m["stackup_xml_sha256"],
-                "wall_seconds": m.get("wall_seconds"),
-                "host": m.get("host"),
-            }
-    with open(os.path.join(recdir, "%s-env.json" % record_id), "x") as fh:
+        m = geoms[name]["meta"]
+        env["em_runs"][name] = {
+            "solver": m["solver"], "settings": m["settings"],
+            "gds_sha256": m["gds_sha256"],
+            "stackup_xml_sha256": m["stackup_xml_sha256"],
+            "wall_seconds": m.get("wall_seconds"),
+            "host": m.get("host"),
+        }
+    with open(_stage_new(stage, os.path.join(recdir, "%s-env.json" % record_id)), "w") as fh:
         json.dump(env, fh, indent=2, sort_keys=True)
         fh.write("\n")
 
-    fitj = os.path.join(root, "fit", "fit_parameters.json")
-    fits = json.load(open(fitj)) if os.path.isfile(fitj) else {}
-    conv = os.path.join(res, "convergence.csv")
-    convrows = list(csv.DictReader(open(conv))) if os.path.isfile(conv) else []
     write_markdown(
-        os.path.join(recdir, "%s.md" % record_id), record_id, summary, fits, convrows, env
+        _stage_new(stage, os.path.join(recdir, "%s.md" % record_id)), record_id, summary, fits, convrows, env
     )
 
-    _write_latest(os.path.join(root, "results", "latest_record_id.txt"), record_id)
-    print("record", record_id)
-    return 0
+    # The pointer is staged last, so it is also published last (Stage.publish
+    # replaces it by atomic rename; it is the one mutable file in the bundle).
+    with open(stage.add(os.path.join(res, "latest_record_id.txt")), "w") as fh:
+        fh.write(record_id + "\n")
 
 
 def _pct(x):

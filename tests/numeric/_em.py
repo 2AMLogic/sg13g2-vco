@@ -31,6 +31,7 @@ def load(name):
 
 postprocess = load("postprocess")
 fit_lumped = load("fit_lumped")
+compare_analytic = load("compare_analytic")
 
 # w, s, d (um), nr_r of the three PDK LVS-testcase geometries (gds/inductor_*.json)
 GEOM = {
@@ -75,6 +76,17 @@ def make_tree(root, omit=()):
         write_geometry(root, g)
     for rel in omit:
         os.unlink(os.path.join(root, rel))
+
+
+def write_run_meta(root, gs=None):
+    """run_meta.json (consumed by the compare stage's provenance) per geometry."""
+    for g in gs or emlib.GEOMS:
+        meta = {"solver": {"version_banner": "stub-solver"},
+                "settings": {"fstop": 30e9, "numfreq": len(FREQ)},
+                "gds_sha256": "g" * 64, "stackup_xml_sha256": "s" * 64,
+                "wall_seconds": 1.0, "host": "test"}
+        with open(os.path.join(root, "results", "inductor_%s" % g, "run_meta.json"), "w") as fh:
+            json.dump(meta, fh)
 
 
 # derived outputs of each stage, relative to the extraction root
