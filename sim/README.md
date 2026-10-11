@@ -170,7 +170,7 @@ What a reserved record **retains** (all append-only):
 | Retained | Where |
 |---|---|
 | machine-readable manifest: role, bundle path, sha256 of the copy, original location (context only) | `<experiment>/records/<id>-model-inputs.json` |
-| repo-owned inputs as captured: inductor model, `.spiceinit` | `<experiment>/netlist-snapshots/<id>/model-inputs/{inductor,init}/` |
+| repo-owned inputs as captured: inductor model, `.spiceinit`; when the svaricap overlay ran, its provenance JSON (role `model-overlay`) | `<experiment>/netlist-snapshots/<id>/model-inputs/{inductor,init,overlay}/` |
 
 What remains **external** to committed evidence, identified by digest only
 (`retained_snapshot: null` in the manifest): the PDK model libraries (pinned by
@@ -194,11 +194,16 @@ symlink) equal to `<experiment>/netlist-snapshots/<id>/model-inputs/<bundle_path
 exists, and hashes to the declared `sha256`. It also enforces the writer's role
 policy (`osc_model_inputs_json` / `osc_retain_model_inputs` in
 `sim/oscillator-core/osc_bench.sh`): the repo-owned roles `inductor-model` and
-`simulator-init` must have a non-null `retained_snapshot`, the external roles
+`simulator-init` -- plus the optional `model-overlay` (the overlay provenance
+`overlay/svaricap-vj.json`, issue #221) -- must have a non-null
+`retained_snapshot` and get the same namespace, regular-file, uniqueness and
+sha256 checks; the external roles
 `pdk-model` (PDK libraries) and `osdi-binary` (`mosvar.osdi`) must have
 `retained_snapshot: null` (digest only, never demanded), any other role is
-rejected, and at least one entry of each of the four roles (`inductor-model`,
-`simulator-init`, `pdk-model`, `osdi-binary`) must be present, counted only
+rejected, and at least one entry of each of the four mandatory roles
+(`inductor-model`, `simulator-init`, `pdk-model`, `osdi-binary`) must be
+present (`model-overlay` is allowed but not mandatory, so captures without an
+overlay stay valid), counted only
 from structurally valid entries -- so a manifest whose repo-owned inputs were
 not committed, or that dropped the PDK/OSDI digest identities, cannot pass as
 verified (the external bytes themselves stay unretained). Only the manifest and
