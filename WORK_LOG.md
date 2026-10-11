@@ -6,6 +6,13 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-11
 
+- **PR #231**: ci: fail when a shell self-test is not wired into check-all test (orphan-test guard)
+- **Issue #228** (closed): ci: fail when a self-test script is not wired into any check-all gate (orphan-test guard)
+- **Issue #218** (closed): Guard parity: clock sleep tool blocked as unknown
+- **PR #230**: ci: accept optional model-overlay role in model-inputs gate
+- **Issue #221** (closed): ci: validate retained model-overlay inputs from the current simulation writer
+- **PR #227**: sim: validate complete EM comparison inputs before publishing evidence
+- **Issue #224** (closed): sim: validate complete EM comparison inputs before publishing evidence
 - **PR #226**: sim: reserve EM comparison record ownership before opening outputs
 - **Issue #225** (closed): sim: reserve EM comparison record ownership before opening outputs
 

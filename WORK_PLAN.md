@@ -28,7 +28,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#221**: ci: validate retained model-overlay inputs from the current simulation writer
+_None._
 
 ## PRs Awaiting Review
 
@@ -41,7 +41,6 @@ _None._
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
 - **#108**: ci: gate layout records' GDS digests against committed vco.gds
-- **#227**: sim: validate complete EM comparison inputs before publishing evidence
 
 ## Proposed
 
@@ -56,7 +55,6 @@ Issues carrying `loom:curated`.
 ## Proposed (Architect / Hermit)
 
 - **#198**: sim: bounded bn=substrate varactor cell characterization per DR-006 option (b) (gated on ratification) *(architect)*
-- **#228**: ci: fail when a self-test script is not wired into any check-all gate (orphan-test guard) *(architect)*
 
 ## Epics
 
@@ -69,10 +67,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 2 |
+| Approved PRs awaiting merge | 1 |
 | Curated | 5 |
-| Architect / Hermit proposals | 2 |
+| Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
