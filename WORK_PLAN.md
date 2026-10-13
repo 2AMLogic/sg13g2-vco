@@ -10,7 +10,7 @@ only when label state changes and the Guide debounce window has elapsed.
 
 Judge-approved PRs stuck under a `loom:operator` merge-risk hold — implementation work is done, only a human merge decision is missing.
 
-_None._
+- **#108**: ci: gate layout records' GDS digests against committed vco.gds
 
 ## Operator Priority
 
@@ -64,7 +64,7 @@ _None._
 
 | Tier | Count |
 |------|-------|
-| Operator merge-risk holds | 0 |
+| Operator merge-risk holds | 1 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 0 |
