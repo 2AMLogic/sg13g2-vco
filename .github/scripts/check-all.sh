@@ -58,6 +58,9 @@
 #                         (issue #143: no paired report/deck sha256 mismatch
 #                         in sim/**/records/ except the justified allowlist;
 #                         separate from source currency; unpaired = unchecked)
+#   layout-evidence-selftest .github/scripts/test-check-layout-evidence.sh python3 sha256sum
+#   layout-evidence       .github/scripts/check-layout-evidence.sh  python3 sha256sum
+#                         (issue #106: layout records vouch for the committed GDS)
 #   friction-selftest     .github/scripts/test-check-klt-friction.sh python3
 #   friction              .github/scripts/check-klt-friction.sh     python3
 #                         (issue #146: every cited upstream tool-tracker issue
@@ -81,6 +84,7 @@
 #           test-wiring-selftest test-wiring grader-spec-selftest grader-spec currency-selftest currency
 #           model-inputs-selftest model-inputs
 #           deck-integrity-selftest deck-integrity friction-selftest friction
+#           layout-evidence-selftest layout-evidence
 #           grading-fixtures py-selftest py-compile py-tests
 #   ci    = lint + test
 #   all   = ci + signoff + py-numeric (only with numpy+scipy importable)
@@ -287,6 +291,10 @@ gate() {
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-record-deck-integrity.sh" "$@" ;;
     deck-integrity)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/check-record-deck-integrity.sh" "$@" ;;
+    layout-evidence-selftest)
+      need_tools "$g" python3 sha256sum && run_gate "$g" "$SCRIPTS/test-check-layout-evidence.sh" "$@" ;;
+    layout-evidence)
+      need_tools "$g" python3 sha256sum && run_gate "$g" "$SCRIPTS/check-layout-evidence.sh" "$@" ;;
     friction-selftest)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-check-klt-friction.sh" "$@" ;;
     friction)
@@ -356,6 +364,8 @@ agg_test() {
   gate deck-integrity
   gate friction-selftest
   gate friction
+  gate layout-evidence-selftest
+  gate layout-evidence
   gate grading-fixtures
   gate py-selftest
   gate py-compile
