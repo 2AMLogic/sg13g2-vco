@@ -142,10 +142,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Layout-evidence checker self-test
-        run: .github/scripts/test-check-layout-evidence.sh
+        run: .github/scripts/check-all.sh layout-evidence-selftest
 
       - name: Layout records vouch for the committed GDS
-        run: .github/scripts/check-layout-evidence.sh
+        run: .github/scripts/check-all.sh layout-evidence
 
   spec-change-has-dr:
     # Presence check: an edit to spec/target-spec.md needs a
