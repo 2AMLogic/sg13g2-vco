@@ -4,6 +4,15 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-15
+
+- **PR #236**: ci: wire layout-evidence self-test into check-all.sh (fixes test-wiring on main)
+- **Issue #235** (closed): CI: test-wiring fails on main — test-check-layout-evidence.sh has no check-all.sh target or test-wiring.tsv row
+
+### 2026-10-14
+
+- **Issue #43** (closed): README: embed the fleet burndown chart (one line)
+
 ### 2026-10-13
 
 - **PR #108**: ci: gate layout records' GDS digests against committed vco.gds
