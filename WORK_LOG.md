@@ -4,6 +4,11 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-13
+
+- **PR #108**: ci: gate layout records' GDS digests against committed vco.gds
+- **Issue #106** (closed): ci: gate layout records' GDS digests against the committed layout/vco.gds (PDK-free)
+
 ### 2026-10-11
 
 - **PR #231**: ci: fail when a shell self-test is not wired into check-all test (orphan-test guard)

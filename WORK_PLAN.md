@@ -10,11 +10,17 @@ only when label state changes and the Guide debounce window has elapsed.
 
 Judge-approved PRs stuck under a `loom:operator` merge-risk hold — implementation work is done, only a human merge decision is missing.
 
-- **#108**: ci: gate layout records' GDS digests against committed vco.gds
+_None._
 
-## Operator Priority
+## Very Important
 
-Issues the operator starred (`loom:operator-priority`); land these first.
+`loom:very-important` (one counts per workspace); every stage takes these first.
+
+_None._
+
+## Important
+
+`loom:important`; taken before unlabelled work.
 
 _None._
 
@@ -40,7 +46,7 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-- **#108**: ci: gate layout records' GDS digests against committed vco.gds
+_None._
 
 ## Proposed
 
@@ -49,7 +55,6 @@ Issues carrying `loom:curated`.
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
-- **#106**: ci: gate layout records' GDS digests against the committed layout/vco.gds (PDK-free) *(curated)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 
 ## Proposed (Architect / Hermit)
@@ -62,15 +67,16 @@ _None._
 
 ## Backlog Balance
 
-| Tier | Count |
+| Bucket | Count |
 |------|-------|
-| Operator merge-risk holds | 1 |
-| Operator priority | 0 |
+| Operator merge-risk holds | 0 |
+| Very important | 0 |
+| Important | 0 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 1 |
-| Curated | 5 |
+| Approved PRs awaiting merge | 0 |
+| Curated | 4 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
