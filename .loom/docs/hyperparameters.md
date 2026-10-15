@@ -52,6 +52,11 @@ below. Types/ranges are strict **on this surface** (see Validation).
 | `dispatch` | `weightBonusRedMainFix` | 400 | 0–1000000 (integer) | Points added to a repo's draw `weight` while it holds a verified red-main fix (#11742; [`priority-model.md`](priority-model.md)). Re-read every tick (hot-applies) | — | — |
 | `dispatch` | `weightBonusVeryImportant` | 100 | 0–1000000 (integer) | Points added while the repo has dispatchable `loom:very-important` work (#11742). Hot-applies | — | — |
 | `dispatch` | `weightBonusImportant` | 20 | 0–1000000 (integer) | Points added while the repo has dispatchable `loom:important` work (#11742). Hot-applies | — | — |
+| `dispatch` | `itemWeightRedMain` | 50 | 1–1000000 (integer) | Step engine item draw (#11896): priority factor of a red-main fix in `weight = actionable × priority × age`. Read per tick by the draw (`step_dispatch/item_draw.rs`) | — | — |
+| `dispatch` | `itemWeightVeryImportant` | 8 | 1–1000000 (integer) | Item-draw priority factor of `loom:very-important`, after the very-important cap (#11896) | — | — |
+| `dispatch` | `itemWeightImportant` | 3 | 1–1000000 (integer) | Item-draw priority factor of `loom:important` (#11896) | — | — |
+| `dispatch` | `itemAgeCapDays` | 90 | 0–3650 (integer) | Most stage-age days the item-draw age term `1 + min(age, cap) / divisor` counts (#11896; 0 turns the term off) | — | — |
+| `dispatch` | `itemAgeDivisorDays` | 30 | 1–3650 (integer) | Divisor of the item-draw age term (#11896) | — | — |
 
 | `lifecycle` | `leaseTtlMinutes` | 15.0 | >0–1440 | Lease-freshness TTL (#6286) | — | `LOOM_LEASE_TTL_MINUTES` |
 | `lifecycle` | `idleExitMinutes` | 60 | 1–10080 | Idle-exit turnaround (#4467) | `autonomous.idleExit.idleMinutes` | `LOOM_AUTONOMOUS_IDLE_EXIT_MINUTES` |
@@ -115,10 +120,12 @@ loop can tune a whole run with one env export.
 
 Notes:
 
-- Every tranche-1 field **hot-applies** (#9768): the work-finder trio, idle
-  exit, and the backoff pair re-read config every tick, and the lease TTL
-  re-resolves from the layer on every lease check — a committed-block edit
-  lands without a daemon restart. (The single-knob env vars are process
+- Tranche-1 fields **hot-apply** (#9768): `maxConcurrent`, the weight
+  bonuses, idle exit, and the backoff pair re-read config every tick,
+  `maxAdmissionsPerTick` does too since #12090, and the lease TTL re-resolves
+  from the layer on every lease check — a committed-block edit lands without
+  a daemon restart. The exception is `dispatch.tickIntervalSecs`, which still
+  needs a restart (#12090). (The single-knob env vars are process
   environment: fixed at launch, as always.)
 - A legacy key and a block key may coexist; the block wins per field, the
   legacy key fills fields the block omits.

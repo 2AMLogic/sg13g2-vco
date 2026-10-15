@@ -38,6 +38,8 @@ no priority side listing), and no priority exempts a candidate from any gate
 
 ## Selection: workspace first, then issue
 
+> **Step dispatch (#11894, live since #11909).** The workspace draw is unchanged, but the pick inside a workspace is a seeded weighted *item* draw (actionable × priority × stage-age, `loom-draw/v2`) over items at every stage, not only `loom:issue`; the in-workspace order below no longer picks what runs. See [`docs/design/work-finder-step-dispatch.md`](https://github.com/rjwalters/loom/blob/main/docs/design/work-finder-step-dispatch.md) §12.
+
 1. **Pick a workspace** among those with dispatchable work, at random, with
    probability **P = w / Σw** (#11742; operator ruling 2026-10-13). There are **no tiers**:
    nothing wins the draw outright.
