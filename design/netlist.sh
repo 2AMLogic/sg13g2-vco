@@ -54,8 +54,10 @@ XSCHEMRC="${PDK_ROOT}/${PDK}/libs.tech/xschem/xschemrc"
 SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/sg13g2-vco-netlist.XXXXXX")"
 trap 'rm -rf "${SCRATCH}"' EXIT
 
-# -q: no GUI, -n: netlist, -r: do not load the previous session's file list.
-xschem -n -q -r --rcfile "${XSCHEMRC}" -o "${SCRATCH}" \
+# -n: netlist, -x: no X/Tk GUI, -q: quit when done, -r: do not load the
+# previous session's file list. -x is load-bearing: without it xschem on macOS
+# starts the Aqua GUI and hangs instead of netlisting.
+xschem -n -x -q -r --rcfile "${XSCHEMRC}" -o "${SCRATCH}" \
        "${DESIGN_DIR}/vco.sch" >"${SCRATCH}/xschem.log" 2>&1 || {
   echo "error: xschem netlisting failed; log follows." >&2
   cat "${SCRATCH}/xschem.log" >&2
