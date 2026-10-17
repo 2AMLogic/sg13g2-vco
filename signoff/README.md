@@ -139,6 +139,37 @@ not actually support an item just to make a row go green.
     `well_boxes` form are both present in the refreshed checklist, so
     they are declarable rather than structurally unreachable now.
 
+## Item 6 (Monte Carlo): the declared statistical row set
+
+Item 6 renders `unmet` / `no_evidence` and stays uncited. The checklist says an
+analog partition always requires Monte Carlo evidence, so this block cannot
+close it by statement. What exists is a classification and a plan, not
+evidence (issue #244):
+
+- **Row set, per DR-007 (proposed):** the statistical rows of
+  `spec/target-spec.md` are **1, 2, 3, 4, 5, 6, 7, 9**. Rows 0, 8, 10 and 11
+  are corner-bounded. Reasons are in
+  `spec/decision-records/DR-007-statistical-row-classification.md`.
+- **Covered by the planned campaign:** rows 1, 2, 3, 5, 6, 7, 9
+  (`sim/oscillator-core/yield/README.md`). **Declared gap: row 4**, because no
+  per-sample phase-noise estimator exists.
+- **Why this is not in `manifest.json`:** the `spec_rows."6"` field that
+  declares this set (klayout-tools#2908) is not graded by the pinned `0.6.0`
+  (checked 2026-10-17: the field name does not appear anywhere in the
+  installed `0.6.0` package). Adding it now would be an unread key. A manifest
+  edit would also change `t1-report.json` only if the pin graded it.
+- **Move it into the manifest** when the pin moves to a release that grades
+  `spec_rows`: add `"spec_rows": {"6": [1, 2, 3, 4, 5, 6, 7, 9]}` to
+  `signoff/manifest.json` (confirm the exact shape in that release's
+  `docs/cli/signoff.md` first; the shape here is the issue's wording, not read
+  from a release), re-render `t1-report.json`, and confirm item 6 reads
+  `partial_coverage` with `uncovered_rows`, not `no_evidence`. Do not bump the
+  pin for this alone.
+- **Citing evidence later:** a `klt yield` report only counts if its own
+  `sample_size.verdict` is not `insufficient` and its negative control is
+  detected (`sim/oscillator-core/yield/README.md`). Item 6 is not met by any
+  report that omits either.
+
 ## Why the checklist doc is vendored
 
 The tiers checklist is `klt`'s runtime tool data: `klt signoff --manifest`

@@ -236,6 +236,46 @@
       "workarounds": [
         "sim/bn-substrate-tank/README.md"
       ]
+    },
+    {
+      "number": 2899,
+      "gap": "klt sim monte_carlo keys the mismatch seed on the point's position, so the same sample_index is a different draw at each corner.",
+      "status": "closed",
+      "status_checked_on": "2026-10-17",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "sim/oscillator-core/yield/README.md"
+      ]
+    },
+    {
+      "number": 2937,
+      "gap": "klt sim monte_carlo vary=process does not hold RNG-drawn mismatch fixed, so the documented sigma=0 negative control fails.",
+      "status": "closed",
+      "status_checked_on": "2026-10-17",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "sim/oscillator-core/yield/README.md"
+      ]
+    },
+    {
+      "number": 2900,
+      "gap": "The documented klayout-tools[yield] install path does not resolve; klt yield's native extension is not on PyPI.",
+      "status": "open",
+      "status_checked_on": "2026-10-17",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "sim/oscillator-core/yield/README.md"
+      ]
+    },
+    {
+      "number": 2908,
+      "gap": "klt signoff grades T1 item 6 from whichever yield report is cited, with no way to declare the statistical-row set.",
+      "status": "closed",
+      "status_checked_on": "2026-10-17",
+      "klt_version_verified": "0.6.0",
+      "workarounds": [
+        "signoff/README.md"
+      ]
     }
   ]
 }
