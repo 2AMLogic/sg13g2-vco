@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Sourced helper: resolve the IHP-Open-PDK install into PDK (the full install
 # path).  One copy of the search order shared by layout/ and the EM extraction
 # so the scripts cannot disagree on which install they use:
@@ -9,6 +10,7 @@
 # Usage: resolve_ihp_pdk ["context for the error message"]
 # Sets PDK; prints an error and exits 1 when no install is found.
 
+# shellcheck disable=SC2034 # PDK is consumed by the sourcing script
 resolve_ihp_pdk() {
   if [[ -n "${IHP_PDK_ROOT:-}" ]]; then
     PDK="${IHP_PDK_ROOT}"
