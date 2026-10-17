@@ -1,0 +1,47 @@
+{
+  "inventory": "repo-hygiene",
+  "t1_item": 10,
+  "members": [
+    {
+      "path": "README.md",
+      "sha256": "sha256:3a70ac842586c7fe29d0e76e9636faa4e3deae0a10c733498012987618907b65"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "spec/target-spec.md",
+      "sha256": "sha256:943b3fb67ffb98d1effb8098e229595d1b08ae898c62cc853b6721f170b03db0"
+    },
+    {
+      "path": "spec/decision-records/DR-003-target-spec-ratification.md",
+      "sha256": "sha256:2390f4f64465c0be2c343d157452d458f80ded43894bdae137ab4cc5b26ed414"
+    },
+    {
+      "path": "spec/decision-records/DR-004-target-spec-ratification-pass-2.md",
+      "sha256": "sha256:27cebbb6976fe9937f3a8a159185100ca053f427a11307ba1aa32f5171752f3e"
+    },
+    {
+      "path": ".github/workflows/lint.yml",
+      "sha256": "sha256:4c87b9d49134d26e39daabebf05f12d1eb6680e43cb442519473cd21fca984bb"
+    },
+    {
+      "path": ".github/workflows/method-check.yml",
+      "sha256": "sha256:1fe7009529711036dcbc3083724142629499f789002f2b38e051b1bce84c0178"
+    },
+    {
+      "path": ".github/workflows/python.yml",
+      "sha256": "sha256:21fc93ba91091a6cada9429a20b51e24c01e480610b833be86f1669a5452eed0"
+    },
+    {
+      "path": ".github/workflows/signoff.yml",
+      "sha256": "sha256:9b467b5672afd55a6a25d5d881e2d61a245332c7d525f73832e6e25c18d50fab"
+    },
+    {
+      "path": ".github/scripts/check-all.sh",
+      "sha256": "sha256:c558c053d570a501e17a2f8243aac19f8824cb9b65f27be0c56ac41e2b02c33d"
+    }
+  ],
+  "format_validation_command": ".github/scripts/check-all.sh test"
+}

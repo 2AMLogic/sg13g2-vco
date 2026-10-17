@@ -1,0 +1,26 @@
+{
+  "inventory": "design-sources",
+  "t1_item": 1,
+  "members": [
+    {
+      "path": "design/vco.sch",
+      "sha256": "sha256:a6ed7196dcc9d37c888e1557e9ccf0e49d168a25898bc463134e4c09d6e74fad"
+    },
+    {
+      "path": "design/vco.spice",
+      "sha256": "sha256:090983d6ee9e901a40e3d51bfb01f45742425d6190c3724da13ef4d18be49404"
+    },
+    {
+      "path": "design/netlist.sh",
+      "sha256": "sha256:83959a0f3d497db12f56f319740c274791e9118cd61252095fad035d8956d987"
+    }
+  ],
+  "regeneration_gate": {
+    "command": "design/netlist.sh --check",
+    "requires": [
+      "xschem",
+      "IHP-Open-PDK"
+    ],
+    "ran_in_signoff_ci": false
+  }
+}

@@ -28,6 +28,7 @@ cp "$RUNNER_SRC" "$F/.github/scripts/check-all.sh"
 RUNNER="$F/.github/scripts/check-all.sh"
 for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/test-check-signoff.sh .github/scripts/check-signoff.sh \
+         .github/scripts/check-signoff-inventories.sh \
          .github/scripts/test-check-sim-append-only.sh \
          .github/scripts/check-sim-append-only.sh \
          .github/scripts/test-check-spec-change-has-dr.sh \
@@ -108,11 +109,11 @@ for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; d
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-tank-ab-reserve.sh|test-local-grid-guard.sh|test-build-osdi-staging.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-test-wiring.sh|check-test-wiring.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-record-deck-integrity.sh|check-record-deck-integrity.sh|test-check-klt-friction.sh|check-klt-friction.sh|test-check-layout-evidence.sh|check-layout-evidence.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|check-signoff-inventories.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-tank-ab-reserve.sh|test-local-grid-guard.sh|test-build-osdi-staging.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-test-wiring.sh|check-test-wiring.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-record-deck-integrity.sh|check-record-deck-integrity.sh|test-check-klt-friction.sh|check-klt-friction.sh|test-check-layout-evidence.sh|check-layout-evidence.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
-# 1. test aggregate: twenty-seven gates in workflow order, exit 0
+# 1. test aggregate: twenty-eight gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '27 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '28 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -122,7 +123,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '26 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '27 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -161,7 +162,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-test-wiring.sh|" ]; then
 reset; touch "$FAILDIR/check-test-wiring.sh"; run_case "$BIN" test-wiring
 if [ "$RC" -eq 1 ]; then ok "test-wiring failure -> exit 1"; else bad "test-wiring failure: rc=$RC"; fi
 reset; touch "$FAILDIR/check-test-wiring.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: test-wiring' "$OUT" && grep -q '26 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: test-wiring' "$OUT" && grep -q '27 passed, 1 failed' "$OUT" \
    && grep -q '^test-check-grader-spec-agreement.sh$' "$CALLS"; then
   ok "test-wiring failure fails test, later gates still run"; else bad "test-wiring test agg: rc=$RC"; fi
 
@@ -175,7 +176,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-grader-spec-agreement.sh|" ]; then
 reset; touch "$FAILDIR/check-grader-spec-agreement.sh"; run_case "$BIN" grader-spec
 if [ "$RC" -eq 1 ]; then ok "grader-spec failure -> exit 1"; else bad "grader-spec failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-record-currency.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q '26 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
+if [ "$RC" -eq 1 ] && grep -q '27 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
   ok "currency self-test failure fails test, later gates still run"; else bad "currency selftest fail: rc=$RC"; fi
 
 # 4b2. model-inputs targets (issue #139)
@@ -196,7 +197,7 @@ reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$BIN" osdi-staging
 if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT"; then
   ok "osdi-staging-selftest failure -> exit 1"; else bad "osdi-staging failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT" && grep -q '26 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT" && grep -q '27 passed, 1 failed' "$OUT" \
    && grep -q '^test-check-spec-change-has-dr.sh$' "$CALLS"; then
   ok "osdi-staging failure fails test, later gates still run"; else bad "osdi-staging test agg: rc=$RC"; fi
 reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$NONG" ci
@@ -226,7 +227,7 @@ reset; run_case "$NONG" grading-fixtures
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-grading-fixtures.sh|" ]; then
   ok "grading-fixtures target dispatches without ngspice"; else bad "grading-fixtures: rc=$RC $(calls)"; fi
 reset; touch "$FAILDIR/run-grading-fixtures.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '26 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '27 passed, 1 failed' "$OUT" \
    && grep -q '^check-python.sh tests$' "$CALLS"; then
   ok "grading-fixtures failure fails test, later gates still run"; else bad "grading-fixtures fail: rc=$RC"; fi
 

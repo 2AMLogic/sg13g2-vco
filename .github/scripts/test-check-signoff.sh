@@ -59,6 +59,9 @@ fresh_tree() {
   # different report and the pristine case could never pass.  Paths are
   # repo-root-relative, as the manifest contract requires.
   tree="$(mktemp -d)"
+  # klt resolves an artifact-anchored envelope's `scope: "repo"` path against
+  # the enclosing git toplevel (issue #243), so the throwaway tree is a repo.
+  git init -q "$tree"
   cp -R "$ROOT/signoff" "$tree/signoff"
   python3 - "$ROOT" "$tree" <<'PY'
 import json, os, shutil, sys

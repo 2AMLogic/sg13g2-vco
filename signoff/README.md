@@ -17,10 +17,12 @@
 |---|---|
 | `manifest.json` | The block manifest: `block`, `kind`, and the per-item `evidence` map `klt signoff --manifest` grades. The fleet roll-up (2AMLogic/2am#956) consumes exactly this file; `sg13g2-vco` is the row identity. |
 | `t1-report.json` | The **verdict of record**: the committed `klt signoff --format json` output. CI re-renders the report on every push and PR and fails on any byte-drift (`.github/scripts/check-signoff.sh`), so a manifest citation whose artifact has since changed fails rather than rotting. |
+| `evidence/` | Issue #243: the audited **inventories** (`inventory-{1-design-sources,9-testbenches,10-repo-hygiene}.json`, every member file with its sha256) and the three artifact-anchored generic envelopes (`t1-item-{1,9,10}-*.json`, `"t1_item": N`, `provenance.input` bound to the inventory) that back items 1, 9 and 10. Generated, never hand-edited. |
+| `inventories.py` | The only writer and verifier of `evidence/`. `--regen` rebuilds inventories, envelopes and the manifest pins together; `--check` (CI: `check-all.sh signoff-inventories`) re-derives them from the live tree. Stdlib only; drift tests in `tests/stdlib/test_signoff_inventories.py`. |
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone, at a checklist revision this repo names and hashes, rather than at whatever revision the installed wheel happens to bundle (see "Why the checklist doc is vendored"). |
 
-**Current state (2026-10-08, issue #62): 1 of 11 T1 items `met`, item 2
-(Layout).** Every other item renders `unmet` with `reason: "no_evidence"`.
+**Current state (2026-10-17, issue #243): 4 of 11 T1 items `met` -- items
+1 (design sources), 2 (layout), 9 (testbenches) and 10 (repo hygiene).** Every other item renders `unmet` with `reason: "no_evidence"`.
 The citations, and the ones deliberately left out:
 
 - **Item 2 (Layout): cited, `met`.** The evidence is
@@ -35,11 +37,30 @@ The citations, and the ones deliberately left out:
   builds) and the cross-host cold regeneration re-run for #62, which was
   byte-identical (`layout/PROVENANCE.md` §14). It says nothing about DRC
   (item 3 stays uncited) or LVS.
-- **Item 1 (Design sources): not cited.** `design/vco.spice` is verified
-  current against `design/vco.sch` (`design/netlist.sh --check`, xschem), but
-  no passing `klt`-native envelope is pinned to it. That freshness check
-  needs xschem and a PDK, which this PDK-free CI does not have. Citing an
-  unrelated envelope would turn the row green without evidence.
+- **Items 1, 9, 10: cited, `met`, `input_verified: true`** (issue #243; `klt`
+  0.7.0 accepts an artifact-anchored generic envelope for items 1, 2, 9, 10,
+  klayout-tools#2843). Each envelope declares `"t1_item": N` and binds an
+  inventory by path and hash; the manifest pins that same hash, so the row
+  goes `stale_evidence` if the inventory changes. The inventory lists every
+  member file with its sha256 and `inventories.py --check` fails CI, naming
+  the file, when a member changes, appears or vanishes without regenerating
+  (item 2's citation is untouched).
+  - **Item 1**: `design/vco.sch`, `design/vco.spice`, `design/netlist.sh`.
+    **`design/netlist.sh --check` (xschem + PDK) does NOT run in signoff CI**,
+    and the envelope `summary` says so: the row attests both files are the
+    inventoried bytes, not that the netlist was re-derived today. Run the
+    gate wherever xschem and the PDK exist.
+  - **Item 9**: every `sim/*/testbench/*` template, the runner script(s) that
+    reference it, the PDK pin (`sim/pdk.json`) and the klt version.
+    Oscillator-core and phase-noise benches whose graded runs are blocked
+    (#50, #53, #94) are listed `shipped-but-not-yet-graded` with `blocked_by`
+    rather than omitted; the known-answer method-check benches are
+    `shipped`. This proves the benches ship, not that any spec row is met.
+  - **Item 10**: `README.md`, `LICENSE`, `spec/target-spec.md` with its
+    DR-003/DR-004 decision records, the CI workflows, `check-all.sh`, and
+    the validating command `.github/scripts/check-all.sh test`. Editing any of
+    those requires `python3 -I signoff/inventories.py --regen` and a
+    re-rendered `t1-report.json`.
 - **Item 4 (LVS): not cited.** The device-aware LVS (`layout/lvs.sh`, IHP's
   own runset plus the reviewed label-order step from #80) now reaches
   **`match`** on the cross-reference. IHP's runset as shipped still reports
@@ -235,10 +256,10 @@ fields klayout-tools#2175/#2176/#2201 added, and they say this:
 
 | Field | Value on the current record | What it settles |
 |---|---|---|
-| `build.version` / `build.package_version` | `0.6.0` / `0.6.0` | which `klt` graded this verdict — no longer inferred from the CI install step |
-| `build.git_tag` / `build.is_release` | `v0.6.0` / `true` | the grading build is the tagged PyPI release, not a working copy |
+| `build.version` / `build.package_version` | `0.7.0` / `0.7.0` | which `klt` graded this verdict — no longer inferred from the CI install step |
+| `build.git_tag` / `build.is_release` | `v0.7.0` / `true` | the grading build is the tagged PyPI release, not a working copy |
 | `build.dirty` | `false` | no uncommitted tool changes in the grading build |
-| `build.grading_ruleset_id` | `sha256:0d8cc27c…a17156` | the grading rules themselves are hashed, so a rules change is drift even at an unchanged version string |
+| `build.grading_ruleset_id` | `sha256:eb8d2ba5…c25e` | the grading rules themselves are hashed, so a rules change is drift even at an unchanged version string |
 | `source_doc_content_hash` | `sha256:63eeec72…3671e5` | the exact checklist bytes graded — matches the vendored doc's SHA-256 above |
 | `build_t1_item_count` vs `t1_item_count` | `11` vs `11` | the build has rules for every row the checklist renders; nothing is graded by a build that lacks rules for it |
 | `items[].graded_by_build` | `true` on all 11 T1 rows | per-row confirmation of the same, including item 11 |
@@ -251,15 +272,15 @@ the moment any of them moves.
 
 **One gotcha when re-rendering locally.** `build.package_version` alone
 does not identify the release: a git build of klayout-tools can report
-`package_version: "0.6.0"` while carrying different grading rules and a
+`package_version: "0.7.0"` while carrying different grading rules and a
 different bundled checklist (it self-reports the difference as
-`version: "0.6.0+g<sha>"`, `git_tag: null`, `is_release: false`, and a
+`version: "0.7.0+g<sha>"`, `git_tag: null`, `is_release: false`, and a
 different `grading_ruleset_id`). Such a build satisfies a
 pinned-version requirement in an already-provisioned environment
 but renders a record that byte-drifts against CI. Render from a clean
 `python3 -m pip install "klayout-tools==$(cat .github/klt-version)"` (a throwaway venv is
 enough) and, before committing, check that the record says
-`"git_tag": "v0.6.0"` and `"is_release": true`.
+`"git_tag": "v0.7.0"` and `"is_release": true`.
 
 ## Sources
 
