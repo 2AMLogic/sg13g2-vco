@@ -276,6 +276,7 @@
       "status": "closed",
       "status_checked_on": "2026-10-17",
       "klt_version_verified": "0.6.0",
+      "reverified": "0.7.0",
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
       ]
@@ -286,6 +287,7 @@
       "status": "closed",
       "status_checked_on": "2026-10-17",
       "klt_version_verified": "0.6.0",
+      "reverified": "0.7.0",
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
       ]
@@ -296,6 +298,7 @@
       "status": "open",
       "status_checked_on": "2026-10-17",
       "klt_version_verified": "0.6.0",
+      "reverified": "0.7.0",
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
       ]
@@ -306,6 +309,7 @@
       "status": "closed",
       "status_checked_on": "2026-10-17",
       "klt_version_verified": "0.6.0",
+      "reverified": "0.7.0",
       "workarounds": [
         "signoff/README.md"
       ]
