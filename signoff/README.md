@@ -19,8 +19,8 @@
 | `t1-report.json` | The **verdict of record**: the committed `klt signoff --format json` output. CI re-renders the report on every push and PR and fails on any byte-drift (`.github/scripts/check-signoff.sh`), so a manifest citation whose artifact has since changed fails rather than rotting. |
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone, at a checklist revision this repo names and hashes, rather than at whatever revision the installed wheel happens to bundle (see "Why the checklist doc is vendored"). |
 
-**Current state (2026-10-08, issue #62): 1 of 11 T1 items `met`, item 2
-(Layout).** Every other item renders `unmet` with `reason: "no_evidence"`.
+**Current state (2026-10-17, issue #242): 2 of 11 T1 items `met`, items 2
+(Layout) and 3 (DRC).** Every other item renders `unmet` with `reason: "no_evidence"`.
 The citations, and the ones deliberately left out:
 
 - **Item 2 (Layout): cited, `met`.** The evidence is
@@ -34,7 +34,29 @@ The citations, and the ones deliberately left out:
   is `layout/PROVENANCE.md` §2 (scripted, headless, byte-identical cold
   builds) and the cross-host cold regeneration re-run for #62, which was
   byte-identical (`layout/PROVENANCE.md` §14). It says nothing about DRC
-  (item 3 stays uncited) or LVS.
+  (item 3 is cited separately, below) or LVS.
+- **Item 3 (DRC clean): cited, `met` (issue #242).** The evidence is the same
+  envelope, `layout/drc/vco-drc-ihp.json` (IHP's primary runset
+  `ihp-sg13g2.drc`, `status: clean`, 0 violations, `coverage_assertion`
+  590/590 satisfied), pinned to the same `layout/vco.gds` content hash, which
+  renders `input_verified: true`. Item 3 requires the claimant to disclose
+  coverage, quoted here from the report's `citation.coverage` and the
+  envelope's own `coverage` block:
+  - `layers_in_stream_without_rules`: `[]`
+  - `rules_skipped`: `[]`
+  - `deck_scope`: `[]`
+
+  **Empty means the tool reported nothing. It does not mean the deck covers
+  everything**: `deck_scope` is empty because the tool did not enumerate DRM
+  chapters for this deck, and `klt signoff` grades `status: clean` alone. The
+  limits that hold regardless are: this is the **primary runset only** (the
+  separate `density.drc` reports 9 findings and `sg13g2_maximal.drc` reports
+  4 `NW.e` findings, neither covered by this citation); it is a block-level
+  result on `layout/vco.gds`; the report was produced by a post-tag source
+  build (`provenance.klt_version` `0.6.0+g70dee3b679a6`, deck
+  `released: false`) while the pin is `0.6.0`. The 16-chapter / 37-layer lists
+  in `layout/PROVENANCE.md` §12 belong to the curated-deck report
+  `layout/drc/vco-drc.json`, not to this envelope (correction note there).
 - **Item 1 (Design sources): not cited.** `design/vco.spice` is verified
   current against `design/vco.sch` (`design/netlist.sh --check`, xschem), but
   no passing `klt`-native envelope is pinned to it. That freshness check

@@ -567,7 +567,8 @@ is between a layer and a label that happens to share its name.
 
 - *(Superseded 2026-10-07 by §13: the IHP-native report is now `status:
   clean` inside §13's stated scope. The text of this bullet is kept as
-  the earlier state.)* **Not DRC-clean *by label*.** Neither report of record says `status:
+  the earlier state. Item 3 is now cited in `signoff/manifest.json`, issue
+  #242; see `signoff/README.md`.)* **Not DRC-clean *by label*.** Neither report of record says `status:
   clean`, so `signoff/design-evidence-tiers.md` item 3 is **not** satisfied
   and this layout must not be cited for it. The curated report's eight
   remaining violations are demonstrated in §12 to be artefacts of the
@@ -687,6 +688,18 @@ the tool's. Quoted verbatim from the cited envelope's `coverage` block:
   SVaricap markers. **Nothing on any of those 37 layers was checked.** The
   `1/20` entry is also the direct cause of the eight remaining violations,
   below.
+
+> **Correction note (2026-10-17, issue #242).** The two lists above (16
+> `deck_scope` chapters, 37 `layers_in_stream_without_rules`) are the
+> `coverage` block of the **curated-deck report**, `layout/drc/vco-drc.json`
+> (`status: violations`, 8 findings), not of the cited IHP-native envelope
+> `layout/drc/vco-drc-ihp.json`. The header sentence's "the cited envelope"
+> was wrong for them. The IHP-native envelope's own `coverage` reports
+> `layers_in_stream_without_rules: []`, `rules_skipped: []`, `deck_scope: []`
+> and a 590-category `rule_categories`/`rules_checked`. Those empty lists
+> mean the tool reported nothing, not that the deck covers everything. The
+> current disclosure for the cited envelope is in `signoff/README.md`. The
+> text above is kept as written.
 
 ### What was fixed to get here
 
@@ -842,7 +855,9 @@ scoping gap stays open for other layouts; this one no longer leans on it.)
 
 ### What this leaves for #62 and beyond
 
-- **Item 3 of `signoff/design-evidence-tiers.md` is not met** and no citation
+- *(Superseded 2026-10-17, issue #242: item 3 is now cited and renders `met`
+  in `signoff/t1-report.json`; disclosure in `signoff/README.md`. Earlier text
+  kept.)* **Item 3 of `signoff/design-evidence-tiers.md` is not met** and no citation
   of this layout should claim it. Every *real* design-rule violation IHP's
   own primary runset can find is fixed (zero findings,
   `layout/drc/vco-drc-ihp.json`), but the literal `status: clean` label is
