@@ -225,7 +225,7 @@
       "workarounds": [
         "sim/bn-substrate-tank/README.md"
       ],
-      "note": "Fleet-side caveat KEPT (2026-10-17): the 0.7.0 client could not be shown to reach the fleet (see #2901 note), so the runner 0.5.0 vs client 0.7.0 caveat in the README is not retired."
+      "note": "Fleet-side caveat KEPT (2026-10-17): the 0.7.0 client could not be shown to reach the fleet (see #2901 note), so the runner 0.5.0 vs client 0.7.0 caveat in the README is not retired. UPDATE 2026-10-17 (#250): the runner is now measured at klt 0.7.0 and the 0.7.0 client was accepted (runner_compatibility match) on two batch runs, so the 'runner 0.5.0 vs client 0.7.0' refusal premise no longer holds for the fleet; see the #2901 note for the evidence."
     },
     {
       "number": 2870,
@@ -247,7 +247,7 @@
       "workarounds": [
         "sim/bn-substrate-tank/README.md"
       ],
-      "note": "Fleet-side caveat KEPT (2026-10-17): not exercised on the fleet (see #2901 note); the README caveat stands."
+      "note": "Fleet-side caveat KEPT (2026-10-17): not exercised on the fleet (see #2901 note); the README caveat stands. UPDATE 2026-10-17 (#250): a plain 2-corner request ran on the fleet with a matching 0.7.0 runner (see #2901 note); request features newer than the runner were not exercised (no OSDI/osdi_preload request run), so this entry's gap is neither confirmed nor retired."
     },
     {
       "number": 2887,
@@ -269,7 +269,7 @@
       "workarounds": [
         "sim/bn-substrate-tank/README.md"
       ],
-      "note": "Fleet-side caveat KEPT; INCONCLUSIVE (2026-10-17): one 2-corner request with klayout-tools==0.7.0 and --backend batch (also with KLT_SIM_BACKEND=batch) ran locally and returned no environment.remote job id, so the fleet path was not exercised and no fleet result is claimed. Not retried as a local grid, per host rules."
+      "note": "Fleet-side caveat KEPT; INCONCLUSIVE (2026-10-17): one 2-corner request with klayout-tools==0.7.0 and --backend batch (also with KLT_SIM_BACKEND=batch) ran locally and returned no environment.remote job id, so the fleet path was not exercised and no fleet result is claimed. Not retried as a local grid, per host rules. UPDATE 2026-10-17 (#250), supersedes the inconclusive result above for the fleet path: with uvx klayout-tools==0.7.0, a 2-corner ac request run once with --backend batch (KLT_SIM_BACKEND unset) and once with KLT_SIM_BACKEND=batch (no flag) BOTH reached the Spot fleet (environment.remote.provider aws-batch-fleet, jobs klt-sim-8220bbde81d4 and klt-sim-09ce55ba4168, state done, exit 0, 2/2 corners pass, runner_klt_version 0.7.0, client_klt_version 0.7.0, runner_compatibility match). The earlier local/no-job-id observation was not reproduced and its cause is unrecorded (the host klt on PATH is 0.7.1.dev, not 0.7.0, so the binary used is unknown). No tool bug found. NOT exercised: OSDI/options.osdi_preload requests, so no fleet result is claimed for request-feature behaviour."
     },
     {
       "number": 2843,

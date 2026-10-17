@@ -158,6 +158,12 @@ All three need the OSDI `mosvar` library, and none could be regenerated:
    cannot send `options.osdi_preload` / `stage_model_inputs` (0.7.0 only), nor
    stage `.include` files. Upstream:
    2AMLogic/klayout-tools#2851, #2877, #2901.
+   *Update 2026-10-17 (#250):* the runner version stated above is stale. Two
+   2-corner `klt sim` runs with `klayout-tools==0.7.0` (`--backend batch`, and
+   `KLT_SIM_BACKEND=batch`) reached the fleet, both reporting
+   `runner_klt_version` 0.7.0 and `runner_compatibility: match`. The OSDI
+   case itself was not run on the fleet, so the records below are still not
+   superseded; see the #2901 note in `.github/klt-friction-ledger.json`.
 
 These records are therefore **not** superseded by this change; they remain the
 evidence for the *pre-#79* netlist and say so in `design/README.md`.
