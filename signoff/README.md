@@ -21,8 +21,8 @@
 | `inventories.py` | The only writer and verifier of `evidence/`. `--regen` rebuilds inventories, envelopes and the manifest pins together; `--check` (CI: `check-all.sh signoff-inventories`) re-derives them from the live tree. Stdlib only; drift tests in `tests/stdlib/test_signoff_inventories.py`. |
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone, at a checklist revision this repo names and hashes, rather than at whatever revision the installed wheel happens to bundle (see "Why the checklist doc is vendored"). |
 
-**Current state (2026-10-17, issue #243): 4 of 11 T1 items `met` -- items
-1 (design sources), 2 (layout), 9 (testbenches) and 10 (repo hygiene).** Every other item renders `unmet` with `reason: "no_evidence"`.
+**Current state (2026-10-17, issues #242, #243): 5 of 11 T1 items `met` -- items
+1 (design sources), 2 (layout), 3 (DRC), 9 (testbenches) and 10 (repo hygiene).** Every other item renders `unmet` with `reason: "no_evidence"`.
 The citations, and the ones deliberately left out:
 
 - **Item 2 (Layout): cited, `met`.** The evidence is
@@ -36,7 +36,7 @@ The citations, and the ones deliberately left out:
   is `layout/PROVENANCE.md` §2 (scripted, headless, byte-identical cold
   builds) and the cross-host cold regeneration re-run for #62, which was
   byte-identical (`layout/PROVENANCE.md` §14). It says nothing about DRC
-  (item 3 stays uncited) or LVS.
+  (item 3 is cited separately, below) or LVS.
 - **Items 1, 9, 10: cited, `met`, `input_verified: true`** (issue #243; `klt`
   0.7.0 accepts an artifact-anchored generic envelope for items 1, 2, 9, 10,
   klayout-tools#2843). Each envelope declares `"t1_item": N` and binds an
@@ -61,6 +61,28 @@ The citations, and the ones deliberately left out:
     the validating command `.github/scripts/check-all.sh test`. Editing any of
     those requires `python3 -I signoff/inventories.py --regen` and a
     re-rendered `t1-report.json`.
+- **Item 3 (DRC clean): cited, `met` (issue #242).** The evidence is the same
+  envelope, `layout/drc/vco-drc-ihp.json` (IHP's primary runset
+  `ihp-sg13g2.drc`, `status: clean`, 0 violations, `coverage_assertion`
+  590/590 satisfied), pinned to the same `layout/vco.gds` content hash, which
+  renders `input_verified: true`. Item 3 requires the claimant to disclose
+  coverage, quoted here from the report's `citation.coverage` and the
+  envelope's own `coverage` block:
+  - `layers_in_stream_without_rules`: `[]`
+  - `rules_skipped`: `[]`
+  - `deck_scope`: `[]`
+
+  **Empty means the tool reported nothing. It does not mean the deck covers
+  everything**: `deck_scope` is empty because the tool did not enumerate DRM
+  chapters for this deck, and `klt signoff` grades `status: clean` alone. The
+  limits that hold regardless are: this is the **primary runset only** (the
+  separate `density.drc` reports 9 findings and `sg13g2_maximal.drc` reports
+  4 `NW.e` findings, neither covered by this citation); it is a block-level
+  result on `layout/vco.gds`; the report was produced by a post-tag source
+  build (`provenance.klt_version` `0.6.0+g70dee3b679a6`, deck
+  `released: false`) while the pin is `0.6.0`. The 16-chapter / 37-layer lists
+  in `layout/PROVENANCE.md` §12 belong to the curated-deck report
+  `layout/drc/vco-drc.json`, not to this envelope (correction note there).
 - **Item 4 (LVS): not cited.** The device-aware LVS (`layout/lvs.sh`, IHP's
   own runset plus the reviewed label-order step from #80) now reaches
   **`match`** on the cross-reference. IHP's runset as shipped still reports

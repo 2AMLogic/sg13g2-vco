@@ -10,6 +10,10 @@
       "file": "layout/drc/vco-drc-ihp.json",
       "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
     },
+    "3": {
+      "file": "layout/drc/vco-drc-ihp.json",
+      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
+    },
     "9": {
       "file": "signoff/evidence/t1-item-9-testbenches.json",
       "content_hash": "sha256:24e7a39780c87db4758e45794d0e1c94e57fea35155cd0c0d37d54ca1fd3a1fd"
