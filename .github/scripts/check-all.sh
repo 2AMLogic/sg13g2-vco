@@ -15,6 +15,10 @@
 #   lint                  .github/scripts/lint-shell.sh [file...]   shellcheck
 #   signoff-selftest      .github/scripts/test-check-signoff.sh     pinned klt
 #   signoff               .github/scripts/check-signoff.sh          pinned klt
+#   signoff-inventories   .github/scripts/check-signoff-inventories.sh  python3
+#                         (issue #243: the T1 item 1/9/10 inventories, their
+#                         envelopes and manifest pins == the live tree; the
+#                         drift self-test is py-tests, tests/stdlib)
 #   append-only-selftest  .github/scripts/test-check-sim-append-only.sh
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
 #   tank-ab-selftest      sim/tests/test-tank-ab-reserve.sh (tank A/B runner
@@ -78,7 +82,7 @@
 #   method [artifact-dir]  ngspice-42 check, then run-method-checks.sh
 #
 # Aggregates:
-#   test  = lint-selftest signoff-selftest append-only-selftest
+#   test  = lint-selftest signoff-selftest signoff-inventories append-only-selftest
 #           record-id-selftest tank-ab-selftest local-grid-guard-selftest
 #           osdi-staging-selftest spec-dr-selftest runner-selftest
 #           test-wiring-selftest test-wiring grader-spec-selftest grader-spec currency-selftest currency
@@ -254,9 +258,11 @@ gate() {
     lint)
       need_tools "$g" shellcheck git && run_gate "$g" "$SCRIPTS/lint-shell.sh" "$@" ;;
     signoff-selftest)
-      need_tools "$g" klt python3 && run_gate "$g" "$SCRIPTS/test-check-signoff.sh" "$@" ;;
+      need_tools "$g" klt python3 git && run_gate "$g" "$SCRIPTS/test-check-signoff.sh" "$@" ;;
     signoff)
       need_tools "$g" klt python3 && run_gate "$g" "$SCRIPTS/check-signoff.sh" "$@" ;;
+    signoff-inventories)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-signoff-inventories.sh" "$@" ;;
     append-only-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-sim-append-only.sh" "$@" ;;
     record-id-selftest)
@@ -345,6 +351,7 @@ reject_opts() {
 agg_test() {
   gate lint-selftest
   gate signoff-selftest
+  gate signoff-inventories
   gate append-only-selftest
   gate record-id-selftest
   gate tank-ab-selftest

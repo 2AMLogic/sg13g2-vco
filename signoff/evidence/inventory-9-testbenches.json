@@ -1,0 +1,206 @@
+{
+  "inventory": "testbenches",
+  "t1_item": 9,
+  "pdk": {
+    "pin_file": {
+      "path": "sim/pdk.json",
+      "sha256": "sha256:462ed88d626bf694debba345c66b80350efb0fe62fafda0f864d7ed65eb9ad61"
+    },
+    "source": "IHP-GmbH/IHP-Open-PDK",
+    "release_tag": "v0.3.0",
+    "tarball_sha256": "f6afb7a8d2adf3e40acd3fd2c7892fc93510e6f760565409a8df2b5b242254fc",
+    "documented_tool_versions": {
+      "ngspice": "43",
+      "xschem": "3.4.6",
+      "openvaf": "23.5.0",
+      "openems": "v0.0.35-108-gc651cce"
+    }
+  },
+  "klt_version": "0.7.0",
+  "testbenches": [
+    {
+      "path": "sim/inductor-model/testbench/closed_form_z.awk",
+      "sha256": "sha256:a20c9b6686abbcfef7dbd817dd6f5537750a30a8d971738c6d8dfb3177c77edd",
+      "status": "shipped",
+      "runners": [
+        "sim/inductor-model/run_model_check.sh"
+      ]
+    },
+    {
+      "path": "sim/inductor-model/testbench/tb_inductor_model_check.spice.tmpl",
+      "sha256": "sha256:025934214c943c79e9afe4e00accf27780c0ac5f629427c3535bb03e9bb06473",
+      "status": "shipped",
+      "runners": [
+        "sim/inductor-model/run_model_check.sh"
+      ]
+    },
+    {
+      "path": "sim/oscillator-core/testbench/tb_period_count_known_answer.spice.tmpl",
+      "sha256": "sha256:b8e823e7c67a174df372793a6150977b64baf20cc69e2e4da48cff46550aae02",
+      "status": "shipped",
+      "runners": [
+        "sim/oscillator-core/run_method_check.sh"
+      ]
+    },
+    {
+      "path": "sim/oscillator-core/testbench/tb_vco_core_margin.spice.tmpl",
+      "sha256": "sha256:4a8eca0c501e9b7170be252507bd1c8c9435b0b73bf90e80a3d728494b62ac65",
+      "status": "shipped-but-not-yet-graded",
+      "runners": [
+        "sim/oscillator-core/osc_bench.sh",
+        "sim/oscillator-core/run_pilot_grid.sh",
+        "sim/oscillator-core/run_pvt_sweep.sh"
+      ],
+      "blocked_by": [
+        "#50",
+        "#94"
+      ]
+    },
+    {
+      "path": "sim/oscillator-core/testbench/tb_vco_core_tran.spice.tmpl",
+      "sha256": "sha256:3e7da14c54912e28655b9469b776b1a74944845333a37c2373561dde9fcab40c",
+      "status": "shipped-but-not-yet-graded",
+      "runners": [
+        "sim/oscillator-core/osc_bench.sh",
+        "sim/oscillator-core/run_pilot_grid.sh",
+        "sim/oscillator-core/run_pvt_sweep.sh"
+      ],
+      "blocked_by": [
+        "#50",
+        "#94"
+      ]
+    },
+    {
+      "path": "sim/phase-noise/testbench/tb_isf_known_answer.spice.tmpl",
+      "sha256": "sha256:81ea75555044bae79c44628be5fd57c5856c9e37c8878fe02cadde7a2b3aa8bb",
+      "status": "shipped",
+      "runners": [
+        "sim/phase-noise/run_method_check.sh"
+      ]
+    },
+    {
+      "path": "sim/phase-noise/testbench/tb_portnoise_known_answer.spice.tmpl",
+      "sha256": "sha256:595a2c9d47e7d9f118fa2877157113985e40abf4427ffb8f2eeabddb0807d237",
+      "status": "shipped",
+      "runners": [
+        "sim/phase-noise/run_method_check.sh"
+      ]
+    },
+    {
+      "path": "sim/phase-noise/testbench/tb_vco_isf_impulse.spice.tmpl",
+      "sha256": "sha256:25a1f5daf237768b952c3f10cb393e1a0e4e373b4977695fc15f3d9d23f2faad",
+      "status": "shipped-but-not-yet-graded",
+      "runners": [
+        "sim/phase-noise/pn_bench.sh",
+        "sim/phase-noise/run_isf_pilot.sh"
+      ],
+      "blocked_by": [
+        "#53",
+        "#94"
+      ]
+    },
+    {
+      "path": "sim/phase-noise/testbench/tb_vco_port_noise.spice.tmpl",
+      "sha256": "sha256:783fc5b81abd4f8e1b2fd23457967c3d4e37373368474bb1413e3ca1c21c7e25",
+      "status": "shipped-but-not-yet-graded",
+      "runners": [
+        "sim/lib.sh",
+        "sim/phase-noise/pn_bench.sh",
+        "sim/phase-noise/run_isf_pilot.sh"
+      ],
+      "blocked_by": [
+        "#53",
+        "#94"
+      ]
+    },
+    {
+      "path": "sim/tank-characterization/testbench/tb_inductor_zscan.spice.tmpl",
+      "sha256": "sha256:d56f2969d6b2b00244d4e1eb954f60fb40ee190fb9ffe9ac50233bf04a6ab499",
+      "status": "shipped",
+      "runners": [
+        "sim/tank-characterization/run_pvt_sweep.sh"
+      ]
+    },
+    {
+      "path": "sim/tank-characterization/testbench/tb_mimcap_zscan.spice.tmpl",
+      "sha256": "sha256:da202cce25b031ef857175cd2d5bb80197381f82d81c3b474ad9777ef6cf482a",
+      "status": "shipped",
+      "runners": [
+        "sim/tank-characterization/run_pvt_sweep.sh"
+      ]
+    },
+    {
+      "path": "sim/varactor-characterization/testbench/tb_diode_varactor_vscan.spice.tmpl",
+      "sha256": "sha256:058d59a582fabb181e5938b7760aafd8338d64a95a7a7e1cf6e95c2d56d23bf4",
+      "status": "shipped",
+      "runners": [
+        "sim/varactor-characterization/run_varactor_sweep.sh"
+      ]
+    },
+    {
+      "path": "sim/varactor-characterization/testbench/tb_mos_varactor_vscan.spice.tmpl",
+      "sha256": "sha256:2c17bf8e27b4b062aa74d9766908e72494310aed469f9906d96e6b35d07d72a4",
+      "status": "shipped",
+      "runners": [
+        "sim/varactor-characterization/run_varactor_sweep.sh"
+      ]
+    }
+  ],
+  "runners": [
+    {
+      "path": "sim/inductor-model/run_model_check.sh",
+      "sha256": "sha256:bf76bc80338066796b662c665ca516e5f82f95cf02719baabadc4573bb0bfd2f",
+      "cold_start_documented": true
+    },
+    {
+      "path": "sim/lib.sh",
+      "sha256": "sha256:7b398747da2ca89b4abad0a0c07d3626e72719ec99defa7e82b7617827bb9ffd",
+      "cold_start_documented": false
+    },
+    {
+      "path": "sim/oscillator-core/osc_bench.sh",
+      "sha256": "sha256:23d7c6c3cca9504a6d0725b3d85ebff4579bdee845f45bce3eca1f68bc2ddded",
+      "cold_start_documented": false
+    },
+    {
+      "path": "sim/oscillator-core/run_method_check.sh",
+      "sha256": "sha256:e35ff58a134585b1e6a1f38bc1d7d4a90ff5437975e033fb3414277ac4cebbad",
+      "cold_start_documented": true
+    },
+    {
+      "path": "sim/oscillator-core/run_pilot_grid.sh",
+      "sha256": "sha256:84f6bba654df13aada5c0e787f18dcbcd3006946c6bed4454b2f458015b04d13",
+      "cold_start_documented": true
+    },
+    {
+      "path": "sim/oscillator-core/run_pvt_sweep.sh",
+      "sha256": "sha256:6296631d6b31ea8db7275a2e1930da57d823a93652917bf2ed179c710c04952e",
+      "cold_start_documented": true
+    },
+    {
+      "path": "sim/phase-noise/pn_bench.sh",
+      "sha256": "sha256:6f3e8ba69a8d5011307313273b73f1a1049039c8cffa1ba721f52a08ee74f479",
+      "cold_start_documented": false
+    },
+    {
+      "path": "sim/phase-noise/run_isf_pilot.sh",
+      "sha256": "sha256:6940bcdbdf329f19e66539f10603d3929b0f1f0e3c18e8ebe09e7dada3f7bf5e",
+      "cold_start_documented": true
+    },
+    {
+      "path": "sim/phase-noise/run_method_check.sh",
+      "sha256": "sha256:6f37d00400689aa51dd6651e05c7416a3a0ccb9e3fe048ac6b242c6e235699e9",
+      "cold_start_documented": true
+    },
+    {
+      "path": "sim/tank-characterization/run_pvt_sweep.sh",
+      "sha256": "sha256:80470a0cc0e376cc4c0f295900a1e9f6a92c8fcda7774d1c7f95133e3dcdfbee",
+      "cold_start_documented": true
+    },
+    {
+      "path": "sim/varactor-characterization/run_varactor_sweep.sh",
+      "sha256": "sha256:340cf7760aeecda296b95acf3b71e644d5cab2b2f4c0ed4d01230f987deb81c5",
+      "cold_start_documented": true
+    }
+  ]
+}

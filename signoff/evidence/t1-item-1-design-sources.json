@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "kind": "generic",
+  "t1_item": 1,
+  "status": "pass",
+  "summary": "Audited inventory for T1 item 1 (Design sources): 3 files (schematic design/vco.sch, derived netlist design/vco.spice and the regeneration script), each listed with its sha256; signoff/inventories.py --check re-derives the inventory from the live tree in CI. The netlist freshness gate 'design/netlist.sh --check' needs xschem and an IHP-Open-PDK install, which the signoff CI does not have: it did NOT run there, so this envelope does not assert the netlist is regenerated from the schematic -- only that both files are the bytes inventoried. Run the gate where xschem and the PDK exist.",
+  "source": "signoff/evidence/inventory-1-design-sources.json",
+  "provenance": {
+    "klt_version": null,
+    "klayout_version": null,
+    "pdk": null,
+    "deck": null,
+    "input": {
+      "path": {
+        "path": "signoff/evidence/inventory-1-design-sources.json",
+        "scope": "repo"
+      },
+      "content_hash": "sha256:fe594b948d4cc3516659fab9371bd04cee56a6203adbae5d8732c8985c10200d"
+    }
+  }
+}

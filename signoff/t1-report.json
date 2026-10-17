@@ -5,17 +5,17 @@
   "tier": null,
   "t1_item_count": 11,
   "build_t1_item_count": 11,
-  "t1_met_count": 2,
+  "t1_met_count": 5,
   "source_doc": "signoff/design-evidence-tiers.md",
   "source_doc_content_hash": "sha256:63eeec72e3d849761cf32dcf091af5728b069b1515e32bb3138e9454303671e5",
   "build": {
-    "version": "0.6.0",
-    "package_version": "0.6.0",
-    "git_commit": "c622e8addb362491664d44ba4d717f354ca88bbd",
-    "git_tag": "v0.6.0",
+    "version": "0.7.0",
+    "package_version": "0.7.0",
+    "git_commit": "0e2362bda7309829398a35d54efaa989d5806065",
+    "git_tag": "v0.7.0",
     "dirty": false,
     "is_release": true,
-    "grading_ruleset_id": "sha256:0d8cc27c752ce25fc78499d4c280a4b472c460ac2dbcd38e56c9694485a17156"
+    "grading_ruleset_id": "sha256:eb8d2ba54d1700c78f1139ac111aee598fd7bc48688ab9654fca22995b6ac25e"
   },
   "items": [
     {
@@ -25,10 +25,29 @@
       "partition": null,
       "text": "committed schematic sources (or generator) plus the netlist derived from them, regenerated on design change.",
       "notes": [],
-      "status": "unmet",
-      "reason": "no_evidence",
+      "status": "met",
+      "reason": null,
       "graded_by_build": true,
-      "citation": null
+      "citation": {
+        "file": "signoff/evidence/t1-item-1-design-sources.json",
+        "command": null,
+        "kind": "generic",
+        "check_status": "pass",
+        "content_hash": "sha256:fe594b948d4cc3516659fab9371bd04cee56a6203adbae5d8732c8985c10200d",
+        "input_verified": true,
+        "exit_status": 0,
+        "artifact_binding": {
+          "t1_item": 1,
+          "path": {
+            "path": "signoff/evidence/inventory-1-design-sources.json",
+            "scope": "repo"
+          },
+          "content_hash": "sha256:fe594b948d4cc3516659fab9371bd04cee56a6203adbae5d8732c8985c10200d",
+          "input_verified": true,
+          "summary": "Audited inventory for T1 item 1 (Design sources): 3 files (schematic design/vco.sch, derived netlist design/vco.spice and the regeneration script), each listed with its sha256; signoff/inventories.py --check re-derives the inventory from the live tree in CI. The netlist freshness gate 'design/netlist.sh --check' needs xschem and an IHP-Open-PDK install, which the signoff CI does not have: it did NOT run there, so this envelope does not assert the netlist is regenerated from the schematic -- only that both files are the bytes inventoried. Run the gate where xschem and the PDK exist.",
+          "source": "signoff/evidence/inventory-1-design-sources.json"
+        }
+      }
     },
     {
       "tier": "T1",
@@ -151,10 +170,29 @@
       "partition": null,
       "text": "every claimed measurement's testbench committed, with a documented cold-start invocation a third party can run; pinned PDK revision.",
       "notes": [],
-      "status": "unmet",
-      "reason": "no_evidence",
+      "status": "met",
+      "reason": null,
       "graded_by_build": true,
-      "citation": null
+      "citation": {
+        "file": "signoff/evidence/t1-item-9-testbenches.json",
+        "command": null,
+        "kind": "generic",
+        "check_status": "pass",
+        "content_hash": "sha256:24e7a39780c87db4758e45794d0e1c94e57fea35155cd0c0d37d54ca1fd3a1fd",
+        "input_verified": true,
+        "exit_status": 0,
+        "artifact_binding": {
+          "t1_item": 9,
+          "path": {
+            "path": "signoff/evidence/inventory-9-testbenches.json",
+            "scope": "repo"
+          },
+          "content_hash": "sha256:24e7a39780c87db4758e45794d0e1c94e57fea35155cd0c0d37d54ca1fd3a1fd",
+          "input_verified": true,
+          "summary": "Audited inventory for T1 item 9 (Testbenches shipped): 13 testbench templates under sim/*/testbench/, each with its sha256, the runner script(s) that reference it, the pinned PDK release (sim/pdk.json) and the pinned klt version. Benches whose graded run is blocked (#50, #53, #94) are listed as shipped-but-not-yet-graded. This proves the benches ship and their bytes are unchanged; it does not run a simulation or grade any specification row.",
+          "source": "signoff/evidence/inventory-9-testbenches.json"
+        }
+      }
     },
     {
       "tier": "T1",
@@ -163,10 +201,29 @@
       "partition": null,
       "text": "a README stating what the block is, its spec table, and how to reproduce every result; a license; CI that at minimum keeps the harness and evidence formats valid.",
       "notes": [],
-      "status": "unmet",
-      "reason": "no_evidence",
+      "status": "met",
+      "reason": null,
       "graded_by_build": true,
-      "citation": null
+      "citation": {
+        "file": "signoff/evidence/t1-item-10-repo-hygiene.json",
+        "command": null,
+        "kind": "generic",
+        "check_status": "pass",
+        "content_hash": "sha256:d7f746c5f470027ac762398d75df041cbd1562e0ed402941d9892ee76bddb0f0",
+        "input_verified": true,
+        "exit_status": 0,
+        "artifact_binding": {
+          "t1_item": 10,
+          "path": {
+            "path": "signoff/evidence/inventory-10-repo-hygiene.json",
+            "scope": "repo"
+          },
+          "content_hash": "sha256:d7f746c5f470027ac762398d75df041cbd1562e0ed402941d9892ee76bddb0f0",
+          "input_verified": true,
+          "summary": "Audited inventory for T1 item 10 (Repo hygiene): 10 files (README.md, LICENSE, the ratified spec and its DR-003/DR-004 decision records, the CI workflows and the shared gate runner), each with its sha256, plus the CI command that validates harness and evidence formats ('.github/scripts/check-all.sh test'). signoff/inventories.py --check re-derives the inventory from the live tree in CI.",
+          "source": "signoff/evidence/inventory-10-repo-hygiene.json"
+        }
+      }
     },
     {
       "tier": "T1",

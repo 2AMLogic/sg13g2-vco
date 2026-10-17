@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "kind": "generic",
+  "t1_item": 9,
+  "status": "pass",
+  "summary": "Audited inventory for T1 item 9 (Testbenches shipped): 13 testbench templates under sim/*/testbench/, each with its sha256, the runner script(s) that reference it, the pinned PDK release (sim/pdk.json) and the pinned klt version. Benches whose graded run is blocked (#50, #53, #94) are listed as shipped-but-not-yet-graded. This proves the benches ship and their bytes are unchanged; it does not run a simulation or grade any specification row.",
+  "source": "signoff/evidence/inventory-9-testbenches.json",
+  "provenance": {
+    "klt_version": null,
+    "klayout_version": null,
+    "pdk": null,
+    "deck": null,
+    "input": {
+      "path": {
+        "path": "signoff/evidence/inventory-9-testbenches.json",
+        "scope": "repo"
+      },
+      "content_hash": "sha256:24e7a39780c87db4758e45794d0e1c94e57fea35155cd0c0d37d54ca1fd3a1fd"
+    }
+  }
+}
