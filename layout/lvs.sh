@@ -93,15 +93,9 @@ GDS="layout/vco.gds"
 SRC="design/vco.spice"
 
 # ------------------------------------------------------------------ pdk --
-if [[ -n "${IHP_PDK_ROOT:-}" ]]; then
-  PDK="${IHP_PDK_ROOT}"
-elif [[ -n "${PDK_ROOT:-}" && -d "${PDK_ROOT}/ihp-sg13g2" ]]; then
-  PDK="${PDK_ROOT}/ihp-sg13g2"
-elif [[ -d "${HOME}/share/pdk/ihp-sg13g2" ]]; then
-  PDK="${HOME}/share/pdk/ihp-sg13g2"
-else
-  echo "error: cannot find an IHP-Open-PDK install (set IHP_PDK_ROOT)" >&2; exit 1
-fi
+# shellcheck source=layout/scripts/resolve_pdk.sh
+source "${HERE}/scripts/resolve_pdk.sh"
+resolve_ihp_pdk
 LVSDIR="${PDK}/libs.tech/klayout/tech/lvs"
 [[ -f "${LVSDIR}/run_lvs.py" ]] || { echo "error: no ${LVSDIR}/run_lvs.py" >&2; exit 1; }
 deck_sha="$(cd "${LVSDIR}" && for f in $(ls sg13g2.lvs run_lvs.py rule_decks/*.lvs | LC_ALL=C sort); do

@@ -29,16 +29,9 @@ REPO_ROOT="$(cd "${LAYOUT_DIR}/.." && pwd)"
 BUILD="${LAYOUT_BUILD_DIR:-${LAYOUT_DIR}/build}"
 
 # --- resolve the PDK (same search order as sim/inductor-model/em-extraction) --
-if [[ -n "${IHP_PDK_ROOT:-}" ]]; then
-  PDK="${IHP_PDK_ROOT}"
-elif [[ -n "${PDK_ROOT:-}" && -d "${PDK_ROOT}/ihp-sg13g2" ]]; then
-  PDK="${PDK_ROOT}/ihp-sg13g2"
-elif [[ -d "${HOME}/share/pdk/ihp-sg13g2" ]]; then
-  PDK="${HOME}/share/pdk/ihp-sg13g2"
-else
-  echo "error: cannot find an IHP-Open-PDK install; set IHP_PDK_ROOT" >&2
-  exit 1
-fi
+# shellcheck source=layout/scripts/resolve_pdk.sh
+source "${LAYOUT_DIR}/scripts/resolve_pdk.sh"
+resolve_ihp_pdk
 PDK_KLAYOUT="${PDK}/libs.tech/klayout"
 [[ -d "${PDK_KLAYOUT}" ]] || { echo "error: no ${PDK_KLAYOUT}" >&2; exit 1; }
 

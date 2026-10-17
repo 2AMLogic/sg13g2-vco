@@ -266,16 +266,9 @@ NATIVE_KLAYOUT_VERSION="0.30.12"
 # shared host.  Every rule-group switch stays at the deck's default.
 NATIVE_DECK_VARS=(--deck-var threads=2)
 
-if [[ -n "${IHP_PDK_ROOT:-}" ]]; then
-  PDK="${IHP_PDK_ROOT}"
-elif [[ -n "${PDK_ROOT:-}" && -d "${PDK_ROOT}/ihp-sg13g2" ]]; then
-  PDK="${PDK_ROOT}/ihp-sg13g2"
-elif [[ -d "${HOME}/share/pdk/ihp-sg13g2" ]]; then
-  PDK="${HOME}/share/pdk/ihp-sg13g2"
-else
-  echo "error: cannot find an IHP-Open-PDK install for the native deck (set IHP_PDK_ROOT)" >&2
-  exit 1
-fi
+# shellcheck source=layout/scripts/resolve_pdk.sh
+source "${HERE}/scripts/resolve_pdk.sh"
+resolve_ihp_pdk "for the native deck"
 IHDECK="${PDK}/libs.tech/klayout/tech/drc/ihp-sg13g2.drc"
 [[ -f "${IHDECK}" ]] || { echo "error: no ihp-sg13g2.drc under ${PDK}" >&2; exit 1; }
 deck_sha="$(python3 -c 'import hashlib,sys;print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' "${IHDECK}")"
