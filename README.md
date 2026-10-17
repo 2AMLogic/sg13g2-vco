@@ -117,7 +117,7 @@ The friction protocol in [`CLAUDE.md`](CLAUDE.md) makes tool gaps a deliverable,
 so [`.github/klt-friction-ledger.json`](.github/klt-friction-ledger.json) lists
 every `2AMLogic/klayout-tools` issue this repository cites. Each entry has the
 issue number, a one-line generic description of the gap, its status as last
-checked (`open`, `closed` or `merged`) and the date, the klt version it was
+checked (`open`, `closed` or `merged`) and the date, an optional free-text `note` (e.g. why a workaround was kept), the klt version it was
 verified against (`klt_version_verified`), and the in-tree paths of the
 workarounds it justifies (`workarounds`, which may be empty). The ledger is
 hand-maintained and never queries the upstream tracker. The initial statuses

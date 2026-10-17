@@ -1344,6 +1344,15 @@ native-runset engine as the path for this case. The checklist and grader
 change that would make such a report count for T1 is
 2AMLogic/klayout-tools#2870, which depends on #2849.
 
+*Addendum, 2026-10-17 (issue #248; the measurements above are unchanged).*
+Upstream #2849 is now closed as not-planned, because the native-runset engine
+(`klayout_tools/lvs_runset.py`, upstream PR #3207) merged on 2026-10-17. That
+is after 0.7.0: the 0.7.0 wheel does not contain the module, and no newer
+release exists on PyPI. So "still open in 0.7.0" above means "not delivered in
+0.7.0"; the upstream tracker state has since moved. `klt lvs` is still refused
+on both routes at 0.7.0, and the `lvs.sh` workaround stays until a release
+carrying the engine is pinned. The ledger entry carries the same note.
+
 **State of the two blockers to the #62 match criterion (2026-10-09):**
 
 1. **Spiral L1 terminal order (#80): open, and it needs a decision.** The
