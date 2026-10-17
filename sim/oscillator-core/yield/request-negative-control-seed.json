@@ -1,0 +1,82 @@
+{
+  "_comment": [
+    "PLAN, NOT RUN. Planned by issue #244; no sample has been simulated and no yield claim is made.",
+    "Not runnable yet: (1) the full-oscillator route does not exist (#94: the OSDI varactor cannot run locally or on the batch backend);",
+    "(2) the pinned klt 0.6.0 predates the monte_carlo seed fixes (README.md, 'Preconditions'); (3) the generated inputs below do not exist yet.",
+    "@@MODELS_DIR@@ and @@IND_MODEL@@ are the tokens the ngspice templates in ../testbench/ carry. vco_core_body.spice is the circuit body derived from",
+    "design/vco.spice; corners_mc_sg13g2.lib is a nested-.lib aggregator exposing the *_stat and *_mismatch sections (recipe: ../klt-sim/README.md).",
+    "Seed 244 was fixed before any run and is not to be tuned. N=400 and the analysis limits are argued in README.md, 'Sample size'.",
+    "Per-sample measurements are raw; the derived rows (f0 band centre, tuning ratio, swing = vdiff_max - vdiff_min, ...) are assembled per sample",
+    "from the paired Vctrl points into a klt yield sample-set document by the run step (README.md, 'Analysis').",
+    "Seed negative control (deterministic). Same seed and axes as the two requests above, but the plain typical sections, which carry no gauss()/agauss()",
+    "(mm_ok=0). Every sample must return identical measurements; a nonzero spread means the sampler or the harness injects variation nobody asked for.",
+    "N is small because the expected answer is sigma = 0 exactly."
+  ],
+  "netlist": "vco_core_body.spice",
+  "netlist_source": "schematic",
+  "engine": "ngspice",
+  "models": {
+    "lib": "corners_mc_sg13g2.lib"
+  },
+  "corners": {
+    "process": [
+      {
+        "name": "tt_nominal_sections",
+        "sections": [
+          "hbt_typ",
+          "mos_tt",
+          "cap_typ"
+        ]
+      }
+    ],
+    "supply_v": {
+      "vct": [
+        0.0,
+        3.3
+      ]
+    },
+    "temperature_c": [
+      27
+    ]
+  },
+  "monte_carlo": {
+    "n": 8,
+    "seed": 244,
+    "vary": "both"
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 5n 0 2p"
+  },
+  "measurements": [
+    {
+      "name": "t_10_periods",
+      "unit": "s",
+      "spice": ".meas tran t_10_periods TRIG v(vdiff) VAL=0 RISE=11 TARG v(vdiff) VAL=0 RISE=21"
+    },
+    {
+      "name": "vdiff_max",
+      "unit": "V",
+      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "vdiff_min",
+      "unit": "V",
+      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "isup_avg",
+      "unit": "A",
+      "spice": ".meas tran isup_avg AVG i(vsup) FROM=2.5n TO=5n"
+    },
+    {
+      "name": "vtail_avg",
+      "unit": "V",
+      "spice": ".meas tran vtail_avg AVG v(tail) FROM=2.5n TO=5n"
+    }
+  ],
+  "options": {
+    "timeout_s": 3600,
+    "keep_artifacts": true
+  }
+}
