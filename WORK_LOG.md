@@ -4,6 +4,33 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-23
+
+- **PR #258**: feat(sim): store tank A/B outputs as per-unit archives and commit live manifest
+- **PR #257**: feat(sim): store tank A/B raw outputs via the artifact writer
+- **PR #256**: test: build no-python3 stub dir without readlink -f
+- **PR #254**: feat(sim): manifest-forward evidence writer and offline manifest gate
+- **Issue #255** (closed): CI lint: 'dispatcher no python3' self-test fails on main (rc=2 but 'python3 not found' not matched)
+- **Issue #253** (closed): Adopt the common artifact store for sim evidence (manifests in git, bytes via klt artifact)
+
+### 2026-10-17
+
+- **PR #251**: docs(friction): record klt 0.7.0 batch runs reaching the fleet
+- **PR #249**: docs(friction): record klt 0.7.0 retirement attempts and keep six workarounds
+- **PR #247**: docs(spec,sim): classify statistical spec rows and plan the Monte Carlo yield campaign
+- **PR #246**: feat(signoff): cite T1 items 1, 9, 10 with artifact-anchored inventories
+- **PR #245**: feat(signoff): cite DRC envelope for T1 item 3 with coverage disclosure
+- **PR #241**: refactor: share one IHP-Open-PDK resolver across layout and EM extraction
+- **Issue #250** (closed): Investigate: klt sim --backend batch ran locally with no environment.remote job id (klt 0.7.0)
+- **Issue #248** (closed): Follow-on from PR #246: retire klt-friction workarounds for ledger entries now closed upstream in 0.7.0
+- **Issue #243** (closed): T1 items 1, 9 and 10: cite artifact-anchored evidence (design-source, testbench and hygiene inventories)
+- **Issue #242** (closed): T1 item 3: cite the clean IHP-native DRC report in signoff/manifest.json, with its coverage disclosed
+- **Issue #240** (closed): Consolidate the four copied IHP-Open-PDK resolution blocks (layout + EM extraction) into one sourced helper
+
+### 2026-10-16
+
+- **PR #71**: fix(netlist): pass -x to xschem so batch netlisting is headless
+
 ### 2026-10-15
 
 - **PR #236**: ci: wire layout-evidence self-test into check-all.sh (fixes test-wiring on main)
