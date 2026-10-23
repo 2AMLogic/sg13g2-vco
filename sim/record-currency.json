@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 24
+    "unknown": 25
   },
   "records": [
     {
@@ -80,6 +80,25 @@
       "path": "sim/bn-substrate-tank/records/20261010-overlay-smoke-b233273",
       "reason": "entry name carries no record id (YYYYMMDD-HHMMSS-<commit>); cannot group or date it",
       "record_id": null,
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "deck_integrity": {
+        "checked": 10,
+        "matched": 10,
+        "mismatched": [],
+        "unpaired": 0
+      },
+      "design_netlist_sha256": null,
+      "family": "sim/bn-substrate-tank",
+      "file_count": 51,
+      "filename_commit": {
+        "id": "940760a"
+      },
+      "path": "sim/bn-substrate-tank/records/20261023-185723-940760a-5e2155d9",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20261023-185723-940760a-5e2155d9",
       "state": "unknown"
     },
     {

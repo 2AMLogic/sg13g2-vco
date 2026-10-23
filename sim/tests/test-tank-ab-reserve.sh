@@ -154,8 +154,9 @@ if [ "$RC" != 0 ] && [ ! -e "$T/manifests" ] && grep -q "KLT_ARTIFACT_BROKER is 
   ok "broker unset -> runner nonzero, no manifest written"; else bad "broker-unset rc=$RC"; fi
 run8 env KLT_ARTIFACT_BROKER=http://broker.invalid PATH="$T/bin:$PATH"
 m="$(ls "$T"/manifests/artifacts/bn-substrate-tank-*.manifest.json 2>/dev/null)"
-if [ "$RC" = 0 ] && [ -n "$m" ] && grep -q 'out/result.out' "$m"; then
-  ok "broker set -> raw out files stored, manifest written"; else bad "store-ok rc=$RC m='$m'"; fi
+if [ "$RC" = 0 ] && [ -n "$m" ] && grep -q '__good1.out.tar.gz' "$m" \
+   && ! grep -q 'out/result.out' "$m"; then
+  ok "broker set -> per-unit .out.tar.gz archives stored, manifest written"; else bad "store-ok rc=$RC m='$m'"; fi
 run8 env KLT_ARTIFACT_BROKER=http://broker.invalid PATH="$T/bin:$PATH" TANK_AB_STORE=false
 [ "$RC" != 0 ] && grep -q "evidence store failed" "$T/err8" \
   && ok "failing store -> runner nonzero" || bad "store-fail rc=$RC"

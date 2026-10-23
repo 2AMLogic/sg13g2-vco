@@ -85,13 +85,24 @@ if [[ "${units}" -eq 0 ]]; then
   echo "run_tank_ab: empty request inventory; nothing collected" >&2; exit 1
 fi
 [[ "${fails}" -eq 0 ]] || exit 1
-# Issue #253: after a clean collection the raw per-unit outputs (<unit>/out/*)
-# go to the fleet artifact store; only the manifest is committed.  Fail closed:
-# a store failure fails the run, there is no fallback to committing bytes.
-mapfile -t raw < <(find "${WORK}" -mindepth 4 -path '*/out/*' -type f | sort)
-if [[ "${#raw[@]}" -eq 0 ]]; then
+# Issue #253: after a clean collection each unit's raw outputs (<unit>/out/*)
+# are packed into one reproducible archive and the archives go to the fleet
+# artifact store (one broker call per unit, not per file); only the manifest is
+# committed.  Fail closed: a pack or store failure fails the run, there is no
+# fallback to committing bytes.
+archives=()
+while IFS= read -r od; do
+  ud="$(dirname "${od}")"; ar="${WORK}/$(basename "$(dirname "${ud}")")__$(basename "${ud}").out.tar.gz"
+  (cd "${od}" && find . -type f | LC_ALL=C sort \
+      | tar --mtime='1970-01-01 00:00:00Z' --owner=0 --group=0 --numeric-owner \
+            --no-recursion -T - -cf - | gzip -n > "${ar}") \
+    && [[ -s "${ar}" ]] \
+    || { echo "run_tank_ab: packing ${od} failed; nothing stored" >&2; exit 1; }
+  archives+=("${ar}")
+done < <(find "${WORK}" -mindepth 3 -maxdepth 3 -type d -name out | LC_ALL=C sort)
+if [[ "${#archives[@]}" -eq 0 ]]; then
   echo "run_tank_ab: no raw outputs under ${WORK}/*/*/out; nothing to store" >&2
 else
-  "${TANK_AB_STORE:-${HERE}/../store-evidence.sh}" bn-substrate-tank "${STAMP}" "${raw[@]}" \
+  "${TANK_AB_STORE:-${HERE}/../store-evidence.sh}" bn-substrate-tank "${STAMP}" "${archives[@]}" \
     || { echo "run_tank_ab: evidence store failed; no manifest written, nothing committed" >&2; exit 1; }
 fi
