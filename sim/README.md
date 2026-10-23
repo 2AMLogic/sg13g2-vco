@@ -39,6 +39,14 @@ record by adding a new record that supersedes it. Working output such as
 | [`tank-screen/`](tank-screen/) | PDK-free analytic screen ranking (cells, MIM, inductor) tuples against rows 1-2 for the closed #93 re-tune (no defensible candidate; decision pending in DR-006, #184); known-answer checked against the `bn-substrate-tank` A/B record | **Screening arithmetic, not evidence** (lumped LC, no HBT loading, endpoints-only calibration). Writes no records; grades no row. |
 | [`oscillator-core/yield/`](oscillator-core/yield/) | T1 item 6: the Monte Carlo yield **campaign plan** for the statistical rows (1, 2, 3, 5, 6, 7, 9; row 4 a declared gap) classified by [DR-007](../spec/decision-records/DR-007-statistical-row-classification.md) — seed, sample count with its sizing argument, negative controls, model gaps, and how it pairs with the row-10 corners | **Plan only; nothing has run and no yield claim is made.** Three `klt sim` requests are committed and unrun. The run depends on #94 (OSDI varactor on the fleet), follows the corner grid in #50, and needs a `klt` release newer than the `0.6.0` pin (seed contract). Grades no row. |
 
+## Evidence bytes (artifact store, issue #253)
+
+New runs store raw outputs in the fleet artifact store and commit only
+`manifests/artifacts/<bench>-<run-id>.manifest.json` plus the Markdown record,
+via `sim/store-evidence.sh <bench> <run-id> FILE...` (fail closed, no
+fallback to committing bytes). See `manifests/artifacts/README.md`. Evidence
+committed earlier stays where it is.
+
 ## Record currency (`sim/record-currency.json`)
 
 Records are append-only, so "is this record still about today's design?" is
