@@ -14,6 +14,7 @@ bad() { fail=$((fail + 1)); echo "FAIL - $1"; }
 # Scratch copy of the layout: $T/sim/{lib.sh,bn-substrate-tank/run_tank_ab.sh}
 mkdir -p "$T/sim/bn-substrate-tank"
 cp "$SRC/lib.sh" "$T/sim/lib.sh"
+cp "$SRC/store-evidence.sh" "$T/sim/store-evidence.sh"
 cp "$SRC/bn-substrate-tank/run_tank_ab.sh" "$T/sim/bn-substrate-tank/"
 EXP="$T/sim/bn-substrate-tank"
 cat > "$T/mkreq.py" <<'P'
@@ -128,6 +129,36 @@ runu ""; [ "$RC" != 0 ] && [ ! -s "$SUBMIT_LOG" ] && ok "empty inventory -> nonz
 export TANK_AB_MAKE_REQUESTS="$T/mkreq2.py"
 runu "modelfail1"; [ "$RC" = 0 ] && grep -q "device model failed" "$REC7/reports/v1__modelfail1.json" \
   && ok "model failure inside successful report stays distinct (rc 0)" || bad "modelfail rc=$RC"
+
+# 8. issue #253: raw outputs go to the artifact store after a clean collection;
+# a store failure fails the run and writes no manifest (no byte fallback).
+cat > "$T/klt3" <<'P'
+#!/usr/bin/env bash
+mkdir -p out && echo raw > out/result.out
+echo '{"ok":true}'
+P
+chmod +x "$T/klt3"
+cat > "$T/kltshim" <<'P'
+#!/usr/bin/env bash
+# `klt artifact put --manifest M FILE...`: records the file names in M.
+[ "$1 $2" = "artifact put" ] || exit 0
+[ "${3:-}" != "--help" ] || exit 0
+shift 3; m="$1"; shift; printf '%s\n' "$@" > "$m"
+P
+chmod +x "$T/kltshim"; mkdir -p "$T/bin"; cp "$T/kltshim" "$T/bin/klt"
+export TANK_AB_MAKE_REQUESTS="$T/mkreq2.py" TANK_AB_KLT="$T/klt3"
+run8() { rm -rf "$T/sim/build" "$EXP/records" "$EXP/corners" "$T/manifests"
+  OUT="$(TANK_AB_ARGS=good1 "$@" bash "$EXP/run_tank_ab.sh" 2>"$T/err8")"; RC=$?; }
+run8 env -u KLT_ARTIFACT_BROKER PATH="$T/bin:$PATH"
+if [ "$RC" != 0 ] && [ ! -e "$T/manifests" ] && grep -q "KLT_ARTIFACT_BROKER is unset" "$T/err8"; then
+  ok "broker unset -> runner nonzero, no manifest written"; else bad "broker-unset rc=$RC"; fi
+run8 env KLT_ARTIFACT_BROKER=http://broker.invalid PATH="$T/bin:$PATH"
+m="$(ls "$T"/manifests/artifacts/bn-substrate-tank-*.manifest.json 2>/dev/null)"
+if [ "$RC" = 0 ] && [ -n "$m" ] && grep -q 'out/result.out' "$m"; then
+  ok "broker set -> raw out files stored, manifest written"; else bad "store-ok rc=$RC m='$m'"; fi
+run8 env KLT_ARTIFACT_BROKER=http://broker.invalid PATH="$T/bin:$PATH" TANK_AB_STORE=false
+[ "$RC" != 0 ] && grep -q "evidence store failed" "$T/err8" \
+  && ok "failing store -> runner nonzero" || bad "store-fail rc=$RC"
 
 echo "passed=$pass failed=$fail"
 [ "$fail" -eq 0 ]
