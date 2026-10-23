@@ -429,10 +429,10 @@ if [ "$RC" -eq 1 ] && grep -q "pn-trace-gate: no 'all cases passed'" "$OUT"; the
 mkfix $TG 'echo "PASS a"; echo "all cases passed"'
 # missing python3 -> setup error (exit 2), not a misleading fixture verdict
 NOPY="$T/bin-nopy"; mkdir -p "$NOPY"
-for f in "$NONG"/*; do [ "$(basename "$f")" = python3 ] || ln -s "$(readlink -f "$f")" "$NOPY/"; done
+for f in "$NONG"/*; do [ "$(basename "$f")" = python3 ] || ln -s "$f" "$NOPY/"; done
 PATH="$NOPY" GRADING_SRC="$G" METHOD_CHECK_MIN_S2=2 "$GR" > "$OUT" 2>&1; RC=$?
 if [ "$RC" -eq 2 ] && grep -q 'python3 not found' "$OUT"; then
-  ok "dispatcher: missing python3 -> exit 2"; else bad "dispatcher no python3: rc=$RC"; fi
+  ok "dispatcher: missing python3 -> exit 2"; else bad "dispatcher no python3: rc=$RC"; sed 's/^/    | /' "$OUT"; fi
 
 echo "check-all self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
