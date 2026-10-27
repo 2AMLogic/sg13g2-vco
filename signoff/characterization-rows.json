@@ -1,0 +1,124 @@
+{
+  "schema": "sg13g2-vco/characterization-rows/1",
+  "rows": [
+    {
+      "row": 0,
+      "kind": "condition",
+      "records": [],
+      "evidence": [
+        "design/vco.spice"
+      ],
+      "note": "condition of the other rows (device flavor and rail instantiated by the committed netlist); not itself graded"
+    },
+    {
+      "row": 1,
+      "kind": "graded",
+      "records": [
+        "sim/inductor-model/em-extraction/records/20260910-052657-3896421.md",
+        "sim/oscillator-core/records/20260926-010627-e391693.md"
+      ],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 2,
+      "kind": "graded",
+      "records": [
+        "sim/varactor-characterization/records/20260927-081226-f88eb89.md",
+        "sim/oscillator-core/records/20260926-010627-e391693.md"
+      ],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 3,
+      "kind": "graded",
+      "records": [
+        "sim/varactor-characterization/records/20260927-081226-f88eb89.md",
+        "sim/oscillator-core/records/20260926-010627-e391693.md"
+      ],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 4,
+      "kind": "graded",
+      "records": [
+        "sim/phase-noise/records/20260926-071903-7a02483.md"
+      ],
+      "blocked_by": [
+        53
+      ]
+    },
+    {
+      "row": 5,
+      "kind": "graded",
+      "records": [
+        "sim/inductor-model/em-extraction/records/20260910-052657-3896421.md",
+        "sim/tank-characterization/records/20260927-081110-f88eb89.md"
+      ],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 6,
+      "kind": "graded",
+      "records": [
+        "sim/oscillator-core/records/20260926-010627-e391693.md"
+      ],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 7,
+      "kind": "graded",
+      "records": [
+        "sim/oscillator-core/records/20260926-010627-e391693.md"
+      ],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 8,
+      "kind": "graded",
+      "records": [
+        "sim/oscillator-core/records/20260926-010627-e391693.md"
+      ],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 9,
+      "kind": "graded",
+      "records": [],
+      "blocked_by": [
+        50
+      ]
+    },
+    {
+      "row": 10,
+      "kind": "condition",
+      "records": [],
+      "evidence": [
+        "sim/oscillator-core/run_pvt_sweep.sh"
+      ],
+      "note": "condition of the other rows (the corner set the graded grid must cross); not itself graded"
+    },
+    {
+      "row": 11,
+      "kind": "condition",
+      "records": [],
+      "evidence": [
+        "sim/oscillator-core/run_pvt_sweep.sh"
+      ],
+      "note": "condition of the other rows (the temperature envelope the corner set spans); not itself graded"
+    }
+  ]
+}

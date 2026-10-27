@@ -55,6 +55,12 @@ jobs:
       - name: T1 item 1/9/10 inventories match the live tree
         run: .github/scripts/check-all.sh signoff-inventories
 
+      # Issue #261: the T1 item 8 characterization report is regenerated from
+      # the spec table, the row map and sim/record-currency.json; a row whose
+      # line no longer matches fails by number. Stdlib python3 only.
+      - name: T1 item 8 characterization report matches its inputs
+        run: .github/scripts/check-all.sh signoff-characterization
+
   # Record currency (issue #122): sim/record-currency.json is the derived
   # index of which sim/**/records/ are current / superseded / unknown against
   # design/vco.spice. Stdlib python3 + git, full history so filename commits

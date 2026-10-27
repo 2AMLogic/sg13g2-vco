@@ -36,11 +36,11 @@
     },
     {
       "path": ".github/workflows/signoff.yml",
-      "sha256": "sha256:9b467b5672afd55a6a25d5d881e2d61a245332c7d525f73832e6e25c18d50fab"
+      "sha256": "sha256:96dec87ee8f4b0b5c61a3e80455f5030a37d724fca4c61e5c56d6b0d0476e3d7"
     },
     {
       "path": ".github/scripts/check-all.sh",
-      "sha256": "sha256:c558c053d570a501e17a2f8243aac19f8824cb9b65f27be0c56ac41e2b02c33d"
+      "sha256": "sha256:a7c72468a5fefac28900caf343cbe879d373bb65ca67eed9f2fedb22eedbff73"
     }
   ],
   "format_validation_command": ".github/scripts/check-all.sh test"

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "kind": "generic",
+  "t1_item": 8,
+  "status": "fail",
+  "summary": "Aggregated characterization report for T1 item 8: one line per ratified spec row (signoff/characterization.md), generated from spec/target-spec.md and sim/record-currency.json. 0 pass, 0 fail, 9 pending, 3 condition. A row grades only from a record whose currency is `current`; status is `pass` only when every graded row passes. A `fail` here means the graded evidence is not yet current and passing, not that a row was measured and missed.",
+  "source": "signoff/characterization.md",
+  "provenance": {
+    "klt_version": null,
+    "klayout_version": null,
+    "pdk": null,
+    "deck": null,
+    "input": {
+      "path": {
+        "path": "signoff/characterization.md",
+        "scope": "repo"
+      },
+      "content_hash": "sha256:cfbb7e2b6b571d56264c06f04d644ebff1b95c4f27a3a125f1aad6dc33b96e2c"
+    }
+  }
+}

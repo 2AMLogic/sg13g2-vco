@@ -19,6 +19,10 @@
 #                         (issue #243: the T1 item 1/9/10 inventories, their
 #                         envelopes and manifest pins == the live tree; the
 #                         drift self-test is py-tests, tests/stdlib)
+#   signoff-characterization  .github/scripts/check-signoff-characterization.sh  python3
+#                         (issue #261: the T1 item 8 characterization report,
+#                         its envelope and manifest pin == their inputs; the
+#                         drift self-test is py-tests, tests/stdlib)
 #   append-only-selftest  .github/scripts/test-check-sim-append-only.sh
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
 #   tank-ab-selftest      sim/tests/test-tank-ab-reserve.sh (tank A/B runner
@@ -82,7 +86,8 @@
 #   method [artifact-dir]  ngspice-42 check, then run-method-checks.sh
 #
 # Aggregates:
-#   test  = lint-selftest signoff-selftest signoff-inventories append-only-selftest
+#   test  = lint-selftest signoff-selftest signoff-inventories signoff-characterization
+#           append-only-selftest
 #           record-id-selftest tank-ab-selftest local-grid-guard-selftest
 #           osdi-staging-selftest spec-dr-selftest runner-selftest
 #           test-wiring-selftest test-wiring grader-spec-selftest grader-spec currency-selftest currency
@@ -263,6 +268,8 @@ gate() {
       need_tools "$g" klt python3 && run_gate "$g" "$SCRIPTS/check-signoff.sh" "$@" ;;
     signoff-inventories)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-signoff-inventories.sh" "$@" ;;
+    signoff-characterization)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-signoff-characterization.sh" "$@" ;;
     append-only-selftest)
       need_tools "$g" git && run_gate "$g" "$SCRIPTS/test-check-sim-append-only.sh" "$@" ;;
     record-id-selftest)
@@ -352,6 +359,7 @@ agg_test() {
   gate lint-selftest
   gate signoff-selftest
   gate signoff-inventories
+  gate signoff-characterization
   gate append-only-selftest
   gate record-id-selftest
   gate tank-ab-selftest
