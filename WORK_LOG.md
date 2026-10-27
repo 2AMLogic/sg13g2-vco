@@ -6,6 +6,7 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-27
 
+- **PR #265**: build: bump pinned klayout-tools to 0.8.0 and re-verify the friction ledger (Part of #264)
 - **PR #262**: feat(signoff): generate and gate the T1 item 8 characterization report
 - **Issue #261** (closed): T1 item 8 (characterization report): aggregate the 12 ratified rows into one current characterization record
 
