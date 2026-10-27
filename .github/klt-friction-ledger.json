@@ -7,117 +7,120 @@
       "number": 1232,
       "gap": "Extraction deck recognises no SiGe HBT (bipolar) devices.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 1242,
       "gap": "Documentation of why SiGe HBTs are not recognised by the extraction deck.",
       "status": "merged",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 1895,
       "gap": "Composition router: a cross-block via drop can short an unrelated net without any routed/unrouted/warning signal (cited here for the router's pin-approach-side behaviour).",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/scripts/measure_ports.py"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 1630,
       "gap": "Generator cannot reach the PDK's PCell library from the tool's Python path (compat shim not on sys.path; GUI-toolkit crash in the vendor shim).",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/scripts/pdk_env.sh",
         "layout/scripts/manifest.py",
         "layout/vco_manifest.json"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2057,
       "gap": "Signoff tier item for power delivery (structural) added.",
       "status": "merged",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 2175,
       "gap": "Signoff tier report names its checklist but does not pin the checklist content.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 2176,
       "gap": "With an external tiers doc, the doc's item list and the build's grading logic can diverge silently.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 2192,
       "gap": "Design spike for ERC well/substrate-tap net continuity.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 2201,
       "gap": "Signoff report lacked per-item build-grading coverage and the build name.",
       "status": "merged",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 2234,
       "gap": "ERC has no declarable tap for an implant-free stream, so the missing-tie half of the power-delivery item is unreachable for full-custom analog.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": []
     },
     {
       "number": 2511,
       "gap": "Simulation requests cannot express an OSDI device, an ngspice compatibility mode, a save policy, or a multi-library corner axis.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "sim/oscillator-core/run_pilot_grid.sh",
         "sim/phase-noise/run_isf_pilot.sh"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2679,
       "gap": "Curated deck's poly-resistor body/marker roles are inverted relative to the PDK's own PCell convention, so no drawn poly resistor is recognised.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [],
       "note": "Nothing to retire: no workaround."
     },
@@ -125,115 +128,120 @@
       "number": 2688,
       "gap": "Curated DRC contact rule drops the active-mask join, so every HBT contact false-positives.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/scripts/activ_mask_overlay.py"
       ],
-      "note": "Workaround KEPT (retirement tried 2026-10-17, uvx klayout-tools==0.7.0): `klt drc layout/vco.gds --deck sg13g2 --top vco` still reports 8 activ.enclosing.cont.1 violations (the dropped activ_mask join), plus 10 new cont.width.1; upstream closed it 2026-10-14 but 0.7.0 does not clear it."
+      "note": "Workaround KEPT (retirement tried 2026-10-27, uvx klayout-tools==0.8.0): `klt drc layout/vco.gds --deck sg13g2 --top vco` no longer reports activ.enclosing.cont.1 or cont.width.1, but reports 64 nwell.enclosing.pactiv.1 violations instead. The overlay diagnostic (layout/scripts/activ_mask_overlay.py) was not re-run; retiring it needs the PDK flow (layout/drc.sh), unavailable on this host."
     },
     {
       "number": 2689,
       "gap": "External-deck DRC engine cannot use the bundled KLayout and does not preflight the PATH one's DSL feature level.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/scripts/native_drc_env.sh"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2690,
       "gap": "Ring continuity check cannot scope its layer set, so a shared layer can report continuous from unrelated geometry.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/scripts/break_ring.py",
         "layout/scripts/prune_spirals.py"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2697,
       "gap": "Zero-finding external-deck DRC runs can never be labelled clean; needs an opt-in coverage assertion.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/drc.sh"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2698,
       "gap": "Router via drops use a fixed contact constant that violates PDKs whose via rules are min-and-max.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/scripts/floorplan.py"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2806,
       "gap": "No independent way to derive or check the expected rule-category set of an external-deck DRC run (count-only, input-dependent).",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/scripts/ihp_deck_categories.py",
         "layout/scripts/ihp_deck_facts.py"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2849,
       "gap": "No device-aware LVS path when a PDK's own LVS runset recognises devices the curated deck lacks (no native-runset engine).",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/lvs.sh",
         "layout/lvs/vco-lvs-record.json"
       ],
-      "note": "Workaround KEPT (2026-10-17, klayout-tools==0.7.0): upstream closed it not-planned after the native-runset engine (klayout_tools/lvs_runset.py) merged on 2026-10-17, which is after 0.7.0 and absent from the 0.7.0 wheel; no newer release exists on PyPI. `klt lvs` still refuses both routes at 0.7.0 (layout/PROVENANCE.md section 14.5). Status 'closed' means delivered upstream, not released; retire when a release carrying it is pinned."
+      "note": "Workaround KEPT (2026-10-27, uvx klayout-tools==0.8.0): `klt extract layout/vco.gds --deck sg13g2 --top vco` now recognises 4 devices (cap_cmim 1, rppd 3; was cap_cmim 1 at 0.7.0) but still no inductor, varactor or HBT class, and `klt lvs` on the pre-extracted runset netlist still fails to parse it (exit 1). The device-aware compare stays on IHP's runset (layout/lvs.sh). layout/lvs.sh and layout/lvs/vco-lvs-record.json were not re-run (need the PDK); the record must be regenerated where the PDK is present."
     },
     {
       "number": 2850,
       "gap": "Extract writes its default netlist next to the input stream, so a read-only run drops a file into the source tree.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "layout/lvs.sh"
       ],
-      "note": "Workaround KEPT (2026-10-17, klayout-tools==0.7.0): `klt extract vco.gds --deck sg13g2 --top vco` without -o still writes vco.spice next to the input stream; keep passing -o into scratch."
+      "note": "Workaround KEPT (2026-10-27, klayout-tools==0.8.0): `klt extract vco.gds --deck sg13g2 --top vco` without -o still writes vco.spice next to the input stream; keep passing -o into scratch."
     },
     {
       "number": 2851,
       "gap": "Batch simulation: runner/client tool version mismatch surfaces only after instance launch as per-corner errors; no override or preflight.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "sim/bn-substrate-tank/README.md"
       ],
-      "note": "Fleet-side caveat KEPT (2026-10-17): the 0.7.0 client could not be shown to reach the fleet (see #2901 note), so the runner 0.5.0 vs client 0.7.0 caveat in the README is not retired. UPDATE 2026-10-17 (#250): the runner is now measured at klt 0.7.0 and the 0.7.0 client was accepted (runner_compatibility match) on two batch runs, so the 'runner 0.5.0 vs client 0.7.0' refusal premise no longer holds for the fleet; see the #2901 note for the evidence."
+      "note": "Fleet-side caveat KEPT (2026-10-17): the 0.7.0 client could not be shown to reach the fleet (see #2901 note), so the runner 0.5.0 vs client 0.7.0 caveat in the README is not retired. UPDATE 2026-10-17 (#250): the runner is now measured at klt 0.7.0 and the 0.7.0 client was accepted (runner_compatibility match) on two batch runs, so the 'runner 0.5.0 vs client 0.7.0' refusal premise no longer holds for the fleet; see the #2901 note for the evidence. Fleet-side caveat KEPT; not exercised at 0.8.0 (the fleet runner image is klt 0.7.0 and refuses a newer client, klayout-tools#4109/#4211), so no batch result is claimed."
     },
     {
       "number": 2870,
       "gap": "Tiers: accept a PDK-runset LVS report as evidence for the LVS items (depends on the native-runset LVS gap).",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [],
       "note": "Nothing to retire: no workaround."
     },
@@ -241,21 +249,21 @@
       "number": 2877,
       "gap": "Batch simulation: request features newer than the fleet runner fail the whole job instead of being refused client-side.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "sim/bn-substrate-tank/README.md"
       ],
-      "note": "Fleet-side caveat KEPT (2026-10-17): not exercised on the fleet (see #2901 note); the README caveat stands. UPDATE 2026-10-17 (#250): a plain 2-corner request ran on the fleet with a matching 0.7.0 runner (see #2901 note); request features newer than the runner were not exercised (no OSDI/osdi_preload request run), so this entry's gap is neither confirmed nor retired."
+      "note": "Fleet-side caveat KEPT (2026-10-17): not exercised on the fleet (see #2901 note); the README caveat stands. UPDATE 2026-10-17 (#250): a plain 2-corner request ran on the fleet with a matching 0.7.0 runner (see #2901 note); request features newer than the runner were not exercised (no OSDI/osdi_preload request run), so this entry's gap is neither confirmed nor retired. Fleet-side caveat KEPT; not exercised at 0.8.0 (the fleet runner image is klt 0.7.0 and refuses a newer client, klayout-tools#4109/#4211), so no batch result is claimed."
     },
     {
       "number": 2887,
       "gap": "Signoff: no evidence form for the generator/netlist-freshness items (directory of committed artifacts).",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [],
       "note": "Nothing to retire: no workaround."
     },
@@ -263,65 +271,70 @@
       "number": 2901,
       "gap": "Batch runner older than the client silently drops newer request options under a warn-only version check.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "sim/bn-substrate-tank/README.md"
       ],
-      "note": "Fleet-side caveat KEPT; INCONCLUSIVE (2026-10-17): one 2-corner request with klayout-tools==0.7.0 and --backend batch (also with KLT_SIM_BACKEND=batch) ran locally and returned no environment.remote job id, so the fleet path was not exercised and no fleet result is claimed. Not retried as a local grid, per host rules. UPDATE 2026-10-17 (#250), supersedes the inconclusive result above for the fleet path: with uvx klayout-tools==0.7.0, a 2-corner ac request run once with --backend batch (KLT_SIM_BACKEND unset) and once with KLT_SIM_BACKEND=batch (no flag) BOTH reached the Spot fleet (environment.remote.provider aws-batch-fleet, jobs klt-sim-8220bbde81d4 and klt-sim-09ce55ba4168, state done, exit 0, 2/2 corners pass, runner_klt_version 0.7.0, client_klt_version 0.7.0, runner_compatibility match). The earlier local/no-job-id observation was not reproduced and its cause is unrecorded (the host klt on PATH is 0.7.1.dev, not 0.7.0, so the binary used is unknown). No tool bug found. NOT exercised: OSDI/options.osdi_preload requests, so no fleet result is claimed for request-feature behaviour."
+      "note": "Fleet-side caveat KEPT; INCONCLUSIVE (2026-10-17): one 2-corner request with klayout-tools==0.7.0 and --backend batch (also with KLT_SIM_BACKEND=batch) ran locally and returned no environment.remote job id, so the fleet path was not exercised and no fleet result is claimed. Not retried as a local grid, per host rules. UPDATE 2026-10-17 (#250), supersedes the inconclusive result above for the fleet path: with uvx klayout-tools==0.7.0, a 2-corner ac request run once with --backend batch (KLT_SIM_BACKEND unset) and once with KLT_SIM_BACKEND=batch (no flag) BOTH reached the Spot fleet (environment.remote.provider aws-batch-fleet, jobs klt-sim-8220bbde81d4 and klt-sim-09ce55ba4168, state done, exit 0, 2/2 corners pass, runner_klt_version 0.7.0, client_klt_version 0.7.0, runner_compatibility match). The earlier local/no-job-id observation was not reproduced and its cause is unrecorded (the host klt on PATH is 0.7.1.dev, not 0.7.0, so the binary used is unknown). No tool bug found. NOT exercised: OSDI/options.osdi_preload requests, so no fleet result is claimed for request-feature behaviour. Fleet-side caveat KEPT; not exercised at 0.8.0 (the fleet runner image is klt 0.7.0 and refuses a newer client, klayout-tools#4109/#4211), so no batch result is claimed."
     },
     {
       "number": 2843,
       "gap": "Items 1/2/9/10 of the T1 checklist accepted no artifact-anchored evidence kind, so a repo-content claim could only be backed by an unrelated passing envelope.",
       "status": "merged",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.7.0",
-      "workarounds": []
+      "workarounds": [],
+      "reverified": "0.8.0"
     },
     {
       "number": 2899,
       "gap": "klt sim monte_carlo keys the mismatch seed on the point's position, so the same sample_index is a different draw at each corner.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2937,
       "gap": "klt sim monte_carlo vary=process does not hold RNG-drawn mismatch fixed, so the documented sigma=0 negative control fails.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     },
     {
       "number": 2900,
       "gap": "The documented klayout-tools[yield] install path does not resolve; klt yield's native extension is not on PyPI.",
       "status": "open",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
-      ]
+      ],
+      "note": "Still open upstream (2026-10-27). `uv pip install 'klayout-tools[yield]==0.8.0'` still fails to resolve: klt-yield-native>=0.1.0,<0.2 is not in the package registry. Workaround KEPT."
     },
     {
       "number": 2908,
       "gap": "klt signoff grades T1 item 6 from whichever yield report is cited, with no way to declare the statistical-row set.",
       "status": "closed",
-      "status_checked_on": "2026-10-17",
+      "status_checked_on": "2026-10-27",
       "klt_version_verified": "0.6.0",
-      "reverified": "0.7.0",
+      "reverified": "0.8.0",
       "workarounds": [
         "signoff/README.md"
-      ]
+      ],
+      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
     }
   ]
 }

@@ -9,13 +9,13 @@
   "source_doc": "signoff/design-evidence-tiers.md",
   "source_doc_content_hash": "sha256:63eeec72e3d849761cf32dcf091af5728b069b1515e32bb3138e9454303671e5",
   "build": {
-    "version": "0.7.0",
-    "package_version": "0.7.0",
-    "git_commit": "0e2362bda7309829398a35d54efaa989d5806065",
-    "git_tag": "v0.7.0",
+    "version": "0.8.0",
+    "package_version": "0.8.0",
+    "git_commit": "c572046be644e0407f693f2410f3abb799d68a3a",
+    "git_tag": "v0.8.0",
     "dirty": false,
     "is_release": true,
-    "grading_ruleset_id": "sha256:eb8d2ba54d1700c78f1139ac111aee598fd7bc48688ab9654fca22995b6ac25e"
+    "grading_ruleset_id": "sha256:46c446d84423b7399ee1cf957b3d49801ae4f42a0bda53da92f435776cf977c4"
   },
   "items": [
     {
@@ -178,7 +178,7 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:24e7a39780c87db4758e45794d0e1c94e57fea35155cd0c0d37d54ca1fd3a1fd",
+        "content_hash": "sha256:f483effe85dae02a2ff9f0982f00359a5243a7a5c1147a776eecd609f1a3952f",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
@@ -187,7 +187,7 @@
             "path": "signoff/evidence/inventory-9-testbenches.json",
             "scope": "repo"
           },
-          "content_hash": "sha256:24e7a39780c87db4758e45794d0e1c94e57fea35155cd0c0d37d54ca1fd3a1fd",
+          "content_hash": "sha256:f483effe85dae02a2ff9f0982f00359a5243a7a5c1147a776eecd609f1a3952f",
           "input_verified": true,
           "summary": "Audited inventory for T1 item 9 (Testbenches shipped): 13 testbench templates under sim/*/testbench/, each with its sha256, the runner script(s) that reference it, the pinned PDK release (sim/pdk.json) and the pinned klt version. Benches whose graded run is blocked (#50, #53, #94) are listed as shipped-but-not-yet-graded. This proves the benches ship and their bytes are unchanged; it does not run a simulation or grade any specification row.",
           "source": "signoff/evidence/inventory-9-testbenches.json"
@@ -209,7 +209,7 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:1e5205da7111f1d16cd35e9073115603c3e73c9f0830c3f910a061eed68ceea1",
+        "content_hash": "sha256:97c8cfefe735889bc04f33715972986143aa6c2d9063d3ba3a7efa7e9bd35de4",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
@@ -218,7 +218,7 @@
             "path": "signoff/evidence/inventory-10-repo-hygiene.json",
             "scope": "repo"
           },
-          "content_hash": "sha256:1e5205da7111f1d16cd35e9073115603c3e73c9f0830c3f910a061eed68ceea1",
+          "content_hash": "sha256:97c8cfefe735889bc04f33715972986143aa6c2d9063d3ba3a7efa7e9bd35de4",
           "input_verified": true,
           "summary": "Audited inventory for T1 item 10 (Repo hygiene): 10 files (README.md, LICENSE, the ratified spec and its DR-003/DR-004 decision records, the CI workflows and the shared gate runner), each with its sha256, plus the CI command that validates harness and evidence formats ('.github/scripts/check-all.sh test'). signoff/inventories.py --check re-derives the inventory from the live tree in CI.",
           "source": "signoff/evidence/inventory-10-repo-hygiene.json"

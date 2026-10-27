@@ -40,7 +40,9 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install pinned klt
-        run: python3 -m pip install "klayout-tools==$(cat .github/klt-version)"
+        run: |
+          python3 -m pip install "klayout-tools==$(cat .github/klt-version)"
+          klt --version
 
       - name: Drift-checker self-test
         run: .github/scripts/check-all.sh signoff-selftest

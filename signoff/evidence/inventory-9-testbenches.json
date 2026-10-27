@@ -16,7 +16,7 @@
       "openems": "v0.0.35-108-gc651cce"
     }
   },
-  "klt_version": "0.7.0",
+  "klt_version": "0.8.0",
   "testbenches": [
     {
       "path": "sim/inductor-model/testbench/closed_form_z.awk",
