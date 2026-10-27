@@ -108,11 +108,11 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     upstream report to IHP is drafted in §14.6, **not yet filed**.
   - *Engine*: IHP's own KLayout LVS runset (`sg13g2.lvs`, KLayout 0.30.12).
     It recognizes **all 42 devices** (plus the guard-ring `ptap1` tie), with
-    the same per-class census on both sides. `klt lvs` at the pinned 0.6.0
+    the same per-class census on both sides. `klt lvs` at the pinned 0.8.0
     (and at current `main`) cannot run this compare: it refuses the reference
     (no inductor, varactor or HBT class for `sg13g2`), and its curated
-    extraction recognizes 1 of 42 devices
-    ([klayout-tools#2849](https://github.com/2AMLogic/klayout-tools/issues/2849)).
+    extraction recognizes 4 of 42 devices
+    (`cap_cmim` 1, `rppd` 3; [klayout-tools#2849](https://github.com/2AMLogic/klayout-tools/issues/2849)).
     So **no `klt lvs` report and no `power_connectivity` block exist** for
     this block.
   - *Reference*: `lvs/vco-reference.cir`, derived from `design/vco.spice` by
@@ -132,9 +132,10 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
   - *Re-run 2026-10-09* (`PROVENANCE.md` §14.5): byte-identical record,
     verdict still `mismatch`. The xschem 3.4.7 cross-check was re-run against
     the post-#79 netlist and agrees on all 39 cards. The tagged klt **0.7.0**
-    behaves as 0.6.0 does: it refuses the reference, recognizes 1 of 42
-    devices, and cannot read the runset's extraction as `layout.netlist`. So
-    #2849 is still open at the newest release. #80 (L1 order) is resolved
+    behaved as 0.6.0 did (historical; the pin is now 0.8.0, which recognizes
+    4 of 42): it refused the reference, recognized 1 of 42 devices, and could
+    not read the runset's extraction as `layout.netlist`. So #2849 was still
+    open at the newest release then. #80 (L1 order) is resolved
     by the label-order step above.
 
 No electrical, EM or phase-noise claim is made or implied by this layout.

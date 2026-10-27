@@ -862,9 +862,10 @@ record = {
                     "devices_in_design": 42},
         "reading": "klt 0.8.0 refuses the reference (no inductor / 4-terminal "
                    "varactor / HBT device class for sg13g2) and its curated "
-                   "extraction recognizes 1 of 42 devices, so no klt lvs report "
+                   "extraction recognizes %d of 42 devices, so no klt lvs report "
                    "of this block can exist at this pin (PROVENANCE.md section "
-                   "14; 2AMLogic/klayout-tools#2849)"},
+                   "14; 2AMLogic/klayout-tools#2849)"
+                   % sum((kx.get("device_counts") or {}).values())},
     "klt_leg_latest_release": {
         "klt": "klayout-tools==%s (tagged wheel, throwaway venv; not the CI pin)" % lat_ver,
         "lvs_inline_extraction": {"request": "same as klt_leg.lvs.request",
@@ -879,11 +880,12 @@ record = {
         "extract": {"exit": latx_rc, "device_counts": lkx.get("device_counts"),
                     "net_count": lkx.get("net_count"), "devices_in_design": 42},
         "reading": "the newest release behaves as the pin does: it refuses the "
-                   "reference, recognizes 1 of 42 devices on inline extraction, "
+                   "reference, recognizes %d of 42 devices on inline extraction, "
                    "and cannot read the runset's device-aware extraction as a "
                    "pre-extracted layout netlist -- the gap tracked by "
                    "2AMLogic/klayout-tools#2849 is open in %s too "
-                   "(PROVENANCE.md section 14.5)" % lat_ver},
+                   "(PROVENANCE.md section 14.5)"
+                   % (sum((lkx.get("device_counts") or {}).values()), lat_ver)},
     "limits": [
         "the verdict is IHP's runset's plus one repo-local step; klt lvs could "
         "not run it, so no klt-native LVS envelope (and no klt "
