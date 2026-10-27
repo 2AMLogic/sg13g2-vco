@@ -4,6 +4,11 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-27
+
+- **PR #262**: feat(signoff): generate and gate the T1 item 8 characterization report
+- **Issue #261** (closed): T1 item 8 (characterization report): aggregate the 12 ratified rows into one current characterization record
+
 ### 2026-10-23
 
 - **PR #258**: feat(sim): store tank A/B outputs as per-unit archives and commit live manifest
