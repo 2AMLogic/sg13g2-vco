@@ -12,7 +12,7 @@ Layout (klayout-tools driven) and DRC/LVS signoff artifacts.
 | `generate.sh` | Regenerates both artifacts from the PDK, end to end, headless |
 | `drc.sh` | Re-runs the design-rule evidence on **two engines** (IHP's own runset, which produces the report of record, and klt's curated deck as a diagnostic) plus the guard-ring checks. Fails on any verdict drift |
 | `drc/` | The committed `klt drc` / `klt ring-check` reports and the native run's assertion record (`PROVENANCE.md` §12–§13) |
-| `lvs.sh` | Re-runs the LVS evidence: derives the reference from `design/vco.spice`, runs IHP's own LVS runset as shipped (with control C1 and three negative controls) and with the reviewed label-order inductor terminal step (#80; with the fidelity control R0 and seven negative controls), and records why `klt lvs` (0.6.0, the CI pin, and 0.7.0, the newest release) cannot run this compare. Fails on any verdict drift |
+| `lvs.sh` | Re-runs the LVS evidence: derives the reference from `design/vco.spice`, runs IHP's own LVS runset as shipped (with control C1 and three negative controls) and with the reviewed label-order inductor terminal step (#80; with the fidelity control R0 and seven negative controls), and records why `klt lvs` (0.8.0, the CI pin and newest release) cannot run this compare. Fails on any verdict drift |
 | `lvs/` | The derived LVS reference and its per-line trace, the runset's device-aware extraction, the compare of record and the run record (`PROVENANCE.md` §14) |
 | `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s controls, the static rule-category review (`ihp_deck_categories.py`, `ihp_deck_facts.py`), the pinned native-DRC environment (`native_drc_env.sh`), and `lvs.sh`'s reference derivation (`lvs_reference.py`), `.lvsdb` reader (`lvsdb_summary.py`), label-order step (`lvs_label_order.rb`, #80) and negative-control helpers (`lvs_break.py`, `lvs_inductor_ctl.py`) |
 | `build/` | Scratch (gitignored, like `sim/build/` and `design/build/`) |
@@ -144,18 +144,18 @@ Read `PROVENANCE.md` §11 before citing any of it as evidence.
 
 ```sh
 # curated deck + helpers: the tagged klt release CI pins, KLayout 0.30.12
-uv venv layout/build/klt-0.6.0
-VIRTUAL_ENV=layout/build/klt-0.6.0 uv pip install klayout-tools==0.6.0
+uv venv layout/build/klt-0.8.0
+VIRTUAL_ENV=layout/build/klt-0.8.0 uv pip install klayout-tools==0.8.0
 layout/scripts/native_drc_env.sh layout/build/native-drc-env   # Ubuntu 24.04: KLayout 0.30.12 wrapper
-export PATH="$PWD/layout/build/klt-0.6.0/bin:$PWD/layout/build/native-drc-env/bin:$PATH"
+export PATH="$PWD/layout/build/klt-0.8.0/bin:$PWD/layout/build/native-drc-env/bin:$PATH"
 export IHP_PDK_ROOT=~/share/pdk/ihp-sg13g2            # deck sha256:0620b737…
 layout/drc.sh
 ```
 
 `drc.sh` provisions the IHP-native run's environment itself, into the
 gitignored `layout/build/native-drc-env/` (`scripts/native_drc_env.sh`). That
-environment is klayout-tools at `70dee3b679a6451c5f4d830fb995c5eeb16084ee`
-(the PR #2803 merge, the first revision with `--expect-rule-categories`) and
+environment is klayout-tools at `c572046be644e0407f693f2410f3abb799d68a3a`
+(the v0.8.0 tag commit; PR #2803, the first revision with `--expect-rule-categories`, predates it) and
 KLayout 0.30.12, extracted from KLayout's own Ubuntu 24.04 package; elsewhere,
 set `NATIVE_KLAYOUT` to a 0.30.12 binary. Nothing is installed host-wide. The
 script fails if the deck hash, either tool revision, the expected category
@@ -170,14 +170,14 @@ layout/lvs.sh
 
 `lvs.sh` reuses the pinned KLayout 0.30.12 environment that
 `scripts/native_drc_env.sh` provisions, and provisions the tagged
-`klayout-tools==0.6.0` venv for its klt leg, plus a tagged
-`klayout-tools==0.7.0` venv for the newest-release leg (§14.5), if they are
-missing. Both live under
+`klayout-tools==0.8.0` venv for its klt leg and for the newest-release leg
+(§14.5; both legs are the same version since the 0.8.0 bump), if it is
+missing. It lives under
 the gitignored `layout/build/`. If `xschem` is on `PATH`, the script also
 cross-checks the derived reference against xschem's own LVS-mode netlist. It
 writes `lvs/` only after every expectation holds: the runset-as-shipped
 `mismatch` (L1 only) and control C1, the label-order compare of record
 `match` with exactly the three known port-name findings, the fidelity control
 R0, every negative control (as shipped and through the step), the supply
-pairing, and klt's refusal (at both 0.6.0 and 0.7.0). Any drift fails the run and leaves the record untouched. Two
+pairing, and klt's refusal (at 0.8.0). Any drift fails the run and leaves the record untouched. Two
 consecutive runs produce byte-identical files.

@@ -9,10 +9,10 @@
 #
 # Why a separate environment.  The native run's `clean` verdict rests on
 # `klt drc --expect-rule-categories N`, which first landed in klayout-tools
-# PR #2803 (merge commit below) -- after the 0.6.0 release this repo's CI
-# and the rest of layout/drc.sh pin.  No release carries it yet, so the run
-# of record uses that exact source revision, installed into a private venv;
-# the repo-wide `klt` on PATH is left alone.
+# PR #2803.  The tagged v0.8.0 release carries it (and is what the rest of
+# layout/drc.sh pins); this env installs the v0.8.0 tag commit from git rather
+# than the PyPI wheel so the revision is recorded in the run, in a private
+# venv; the repo-wide `klt` on PATH is left alone.
 #
 # It also needs a standalone KLayout new enough for IHP's runset (the deck
 # uses DRC-DSL features -- e.g. `absolute` in edge-angle filters -- that
@@ -32,7 +32,7 @@
 set -euo pipefail
 
 KLT_REPO="https://github.com/2AMLogic/klayout-tools"
-KLT_REV="70dee3b679a6451c5f4d830fb995c5eeb16084ee"   # PR #2803 merge commit
+KLT_REV="c572046be644e0407f693f2410f3abb799d68a3a"   # tag v0.8.0 commit
 KLAYOUT_VER="0.30.12"
 KLAYOUT_DEB="klayout_${KLAYOUT_VER}-1_amd64.deb"
 KLAYOUT_URL="https://www.klayout.org/downloads/Ubuntu-24/${KLAYOUT_DEB}"

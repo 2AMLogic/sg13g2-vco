@@ -47,7 +47,7 @@
 # outside the deck that ran (section 13).
 #
 # TOOLS.  The curated deck, ring-check and Cnt.c control use `klt` on PATH
-# (the repo's release pin, 0.6.0) and `klayout` on PATH for the helper
+# (the repo's release pin, 0.8.0) and `klayout` on PATH for the helper
 # scripts.  The IHP-native run needs klayout-tools at the PR #2803 merge
 # revision and KLayout 0.30.12; layout/scripts/native_drc_env.sh provisions
 # both, pinned, into the gitignored scratch area (NATIVE_DRC_ENV, default
@@ -87,15 +87,15 @@ mkdir -p "${KLSCRATCH}"
 
 echo "== tools: $(klt --version 2>&1 | head -1) / $(klayout -v 2>&1 | head -1)"
 # The curated deck's hash and `released: true` (section 12) are the TAGGED
-# 0.6.0 wheel's -- the one .github/workflows/signoff.yml pins.  A post-tag
-# git build also reports "0.6.0+g<sha>" but ships a different curated deck,
+# 0.8.0 wheel's -- the one .github/workflows/signoff.yml pins.  A post-tag
+# git build reports "0.8.1.devN+g<sha>" but ships a different curated deck,
 # so it would silently rewrite the diagnostic reports with another deck.
-[[ "$(klt --version 2>&1 | head -1)" == "klt 0.6.0" ]] || {
+[[ "$(klt --version 2>&1 | head -1)" == "klt 0.8.0" ]] || {
   echo "error: \`klt\` on PATH is '$(klt --version 2>&1 | head -1)', not the" \
-       "tagged release 'klt 0.6.0' the curated reports are recorded with." \
+       "tagged release 'klt 0.8.0' the curated reports are recorded with." \
        "Put a throwaway venv first on PATH, e.g." \
-       "uv venv layout/build/klt-0.6.0 && VIRTUAL_ENV=layout/build/klt-0.6.0" \
-       "uv pip install klayout-tools==0.6.0 (README, 'DRC')." >&2; exit 1; }
+       "uv venv layout/build/klt-0.8.0 && VIRTUAL_ENV=layout/build/klt-0.8.0" \
+       "uv pip install klayout-tools==0.8.0 (README, 'DRC')." >&2; exit 1; }
 
 # ------------------------------------------------------------------- drc --
 # `klt drc` exits 3 on `status: violations`; that is a verdict, not a crash,
@@ -259,7 +259,7 @@ PY
 # re-reviews the count, instead of being re-vouched automatically.
 IHP_DECK_SHA256="0620b737538af7c86dfb7c6ca0ba3a38f8410b0d51412978ca977ea3df3fb693"
 IHP_EXPECT_CATEGORIES=590
-NATIVE_KLT_REV="70dee3b679a6451c5f4d830fb995c5eeb16084ee"
+NATIVE_KLT_REV="c572046be644e0407f693f2410f3abb799d68a3a"
 NATIVE_KLAYOUT_VERSION="0.30.12"
 # `threads` is the only deck-var passed: it sets KLayout's worker count
 # (ihp-sg13g2.drc, "Threads") and gates no rule; 2 keeps the run modest on a

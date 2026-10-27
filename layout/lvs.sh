@@ -40,8 +40,8 @@
 # Drop the step once the pinned runset orders inductor terminals by label
 # (PROVENANCE.md section 14.6, "Removal").
 #
-# `klt lvs` (the repo's pinned 0.6.0, and the newest release 0.7.0 --
-# section 14.5) cannot run this compare at all; both refusals are recorded
+# `klt lvs` (the repo's pinned 0.8.0 -- see layout/PROVENANCE.md
+# section 14.5 for the 0.6.0 and 0.7.0 records) cannot run this compare at all; both refusals are recorded
 # (2AMLogic/klayout-tools#2849).
 #
 # WHAT IT WRITES (all committed, repo-root-relative inside, no host paths):
@@ -63,8 +63,8 @@
 # environment layout/scripts/native_drc_env.sh provisions for the native DRC
 # (KLayout 0.30.12, extracted into gitignored scratch) is reused, together
 # with the `klayout` Python module of its venv.  The klt leg uses the tagged
-# klayout-tools==0.6.0 wheel CI pins, in a throwaway venv
-# (KLT_RELEASE_ENV, default layout/build/klt-0.6.0) -- never the host's.
+# klayout-tools==0.8.0 wheel CI pins, in a throwaway venv
+# (KLT_RELEASE_ENV, default layout/build/klt-0.8.0) -- never the host's.
 
 set -euo pipefail
 
@@ -118,14 +118,14 @@ nkl_ver="$("${NBIN}/klayout" -b -v 2>/dev/null | awk '{print $2}')"
   echo "error: KLayout for the runset is '${nkl_ver}', expected ${NATIVE_KLAYOUT_VERSION}" >&2; exit 1; }
 npy_kl="$("${NPY}" -c 'import klayout; print(klayout.__version__)')"
 
-KLT_REL="${KLT_RELEASE_ENV:-${HERE}/build/klt-0.6.0}"
+KLT_REL="${KLT_RELEASE_ENV:-${HERE}/build/klt-0.8.0}"
 if [[ ! -x "${KLT_REL}/bin/klt" ]]; then
   need uv
   uv venv -q "${KLT_REL}"
-  VIRTUAL_ENV="${KLT_REL}" uv pip install -q "klayout-tools==0.6.0"
+  VIRTUAL_ENV="${KLT_REL}" uv pip install -q "klayout-tools==0.8.0"
 fi
-[[ "$("${KLT_REL}/bin/klt" --version 2>&1 | head -1)" == "klt 0.6.0" ]] || {
-  echo "error: ${KLT_REL} does not hold the tagged klayout-tools 0.6.0" >&2; exit 1; }
+[[ "$("${KLT_REL}/bin/klt" --version 2>&1 | head -1)" == "klt 0.8.0" ]] || {
+  echo "error: ${KLT_REL} does not hold the tagged klayout-tools 0.8.0" >&2; exit 1; }
 echo "== tools: KLayout ${nkl_ver} (runset), klayout module ${npy_kl}, $("${KLT_REL}/bin/klt" --version | head -1) (klt leg)"
 echo "== deck:  IHP sg13g2.lvs runset @ sha256:${deck_sha}"
 
@@ -267,7 +267,7 @@ run a-plain-vs-c1 "${SCRATCH}/ctl/a-l1-flipped.gds" "${SCRATCH}/ref/diag-l1.cir"
 # --------------------------------------------------------------- klt leg --
 # The repo's pinned klt, on its own documented path: inline extraction with
 # the curated sg13g2 deck against the simulation-form reference (T1/T2 only).
-echo "== klt leg: klt 0.6.0 lvs (inline curated extraction) + extract census"
+echo "== klt leg: klt 0.8.0 lvs (inline curated extraction) + extract census"
 python3 -I - "${SRC}" "${SCRATCH}/klt/ref-subckt.spice" <<'PY'
 import sys
 out, ctl = [], False
@@ -298,7 +298,7 @@ echo "   klt lvs exit ${klt_rc}; klt extract exit ${xrc}"
 # other documented klt route: a pre-extracted layout netlist (the runset's
 # own extraction of this stream) against the derived reference.  Throwaway
 # venv (KLT_LATEST_ENV), never the host's klt.
-KLT_LATEST_VER="0.7.0"
+KLT_LATEST_VER="0.8.0"
 KLT_LAT="${KLT_LATEST_ENV:-${HERE}/build/klt-${KLT_LATEST_VER}}"
 if [[ ! -x "${KLT_LAT}/bin/klt" ]]; then
   need uv
@@ -593,11 +593,11 @@ klt_lvs = klt_lvs or {"unparsable": "neither stdout nor stderr held JSON"}
 kmsg = (klt_lvs.get("error") or {}).get("message", "")
 klt_refused = klt_rc == 1 and "'inductor' is not a known device" in kmsg
 if not klt_refused:
-    fail.append("klt 0.6.0 lvs no longer refuses this reference (exit %d) -- "
+    fail.append("klt 0.8.0 lvs no longer refuses this reference (exit %d) -- "
                 "the klt gap may be closed: re-evaluate, update section 14" % klt_rc)
 kx = json.load(open(os.path.join(scratch, "klt", "extract.json")))
-if xrc != 0 or kx.get("device_counts") != {"cap_cmim": 1}:
-    fail.append("klt 0.6.0 extract census changed: exit %d, %r -- re-evaluate "
+if xrc != 0 or kx.get("device_counts") != {"cap_cmim": 1, "rppd": 3}:
+    fail.append("klt 0.8.0 extract census changed: exit %d, %r -- re-evaluate "
                 "the klt leg" % (xrc, kx.get("device_counts")))
 
 # -- klt leg, newest release (section 14.5) -------------------------------
@@ -624,7 +624,7 @@ if not (latn_rc == 1 and "could not parse layout netlist" in nmsg):
     fail.append("klt %s lvs now reads the runset's extracted netlist (exit %d) -- "
                 "re-evaluate the pre-extracted route, update section 14.5" % (lat_ver, latn_rc))
 lkx = json.load(open(os.path.join(lat_dir, "extract.json")))
-if latx_rc != 0 or lkx.get("device_counts") != {"cap_cmim": 1}:
+if latx_rc != 0 or lkx.get("device_counts") != {"cap_cmim": 1, "rppd": 3}:
     fail.append("klt %s extract census changed: exit %d, %r -- re-evaluate "
                 "the klt leg" % (lat_ver, latx_rc, lkx.get("device_counts")))
 
@@ -767,7 +767,7 @@ record = {
         "power_connectivity": {
             "status": "not_produced",
             "why": "klt lvs's power_connectivity block exists only in a klt lvs "
-                   "report, and klt 0.6.0 cannot produce one for this design "
+                   "report, and klt 0.8.0 cannot produce one for this design "
                    "(klt_leg below). Supply pairing in the device-aware compare "
                    "is reported per net in vco-lvs-ihp.json -> compare.nets."},
         "removal": "drop the label-order step (layout/scripts/lvs_label_order.rb and "
@@ -791,7 +791,7 @@ record = {
                          "content_hash": "sha256:" + deck_sha},
               "label_order_step": {"path": STEP["script"],
                                    "content_hash": STEP["content_hash"]},
-              "klt_leg": "klayout-tools==0.6.0 (tagged wheel, the CI pin)"},
+              "klt_leg": "klayout-tools==0.8.0 (tagged wheel, the CI pin)"},
     "inputs": {"layout": {"file": "layout/vco.gds", "content_hash": "sha256:" + gds_sha},
                "schematic_netlist": json.load(open(os.path.join(
                    out, "vco-reference.json")))["source"],
@@ -860,7 +860,7 @@ record = {
         "extract": {"exit": xrc, "device_counts": kx.get("device_counts"),
                     "net_count": kx.get("net_count"),
                     "devices_in_design": 42},
-        "reading": "klt 0.6.0 refuses the reference (no inductor / 4-terminal "
+        "reading": "klt 0.8.0 refuses the reference (no inductor / 4-terminal "
                    "varactor / HBT device class for sg13g2) and its curated "
                    "extraction recognizes 1 of 42 devices, so no klt lvs report "
                    "of this block can exist at this pin (PROVENANCE.md section "
@@ -907,5 +907,5 @@ open(os.path.join(out, "vco-lvs-record.json"), "a").write("\n")
 print("\n== LVS record written: status %s (runset + label-order step: L1 reordered by "
       "its LA/LB labels, L2 untouched; 3 strict-port NAME findings recorded) -- runset "
       "as shipped: %s (L1 terminal order only, C1 match); R0 identical; every "
-      "negative control rejected; klt 0.6.0 refuses (recorded)" % (lo["verdict"], rec["verdict"]))
+      "negative control rejected; klt 0.8.0 refuses (recorded)" % (lo["verdict"], rec["verdict"]))
 PY

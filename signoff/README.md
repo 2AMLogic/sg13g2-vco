@@ -91,7 +91,7 @@ The citations, and the ones deliberately left out:
   4 `NW.e` findings, neither covered by this citation); it is a block-level
   result on `layout/vco.gds`; the report was produced by a post-tag source
   build (`provenance.klt_version` `0.6.0+g70dee3b679a6`, deck
-  `released: false`) while the pin is `0.6.0`. The 16-chapter / 37-layer lists
+  `released: false`) while the pin was `0.6.0` then (now `0.8.0`). The 16-chapter / 37-layer lists
   in `layout/PROVENANCE.md` §12 belong to the curated-deck report
   `layout/drc/vco-drc.json`, not to this envelope (correction note there).
 - **Item 4 (LVS): not cited.** The device-aware LVS (`layout/lvs.sh`, IHP's
@@ -320,8 +320,8 @@ fields klayout-tools#2175/#2176/#2201 added, and they say this:
 
 | Field | Value on the current record | What it settles |
 |---|---|---|
-| `build.version` / `build.package_version` | `0.7.0` / `0.7.0` | which `klt` graded this verdict — no longer inferred from the CI install step |
-| `build.git_tag` / `build.is_release` | `v0.7.0` / `true` | the grading build is the tagged PyPI release, not a working copy |
+| `build.version` / `build.package_version` | `0.8.0` / `0.8.0` | which `klt` graded this verdict — no longer inferred from the CI install step |
+| `build.git_tag` / `build.is_release` | `v0.8.0` / `true` | the grading build is the tagged PyPI release, not a working copy |
 | `build.dirty` | `false` | no uncommitted tool changes in the grading build |
 | `build.grading_ruleset_id` | `sha256:eb8d2ba5…c25e` | the grading rules themselves are hashed, so a rules change is drift even at an unchanged version string |
 | `source_doc_content_hash` | `sha256:63eeec72…3671e5` | the exact checklist bytes graded — matches the vendored doc's SHA-256 above |
