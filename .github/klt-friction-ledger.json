@@ -31,7 +31,7 @@
       "workarounds": [
         "layout/scripts/measure_ports.py"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: measure_ports.py reads `klt gen --pdk-pcell` streams, which need the IHP PDK PCell library (absent on this dispatch worker; #266). Workaround kept."
     },
     {
       "number": 1630,
@@ -45,7 +45,7 @@
         "layout/scripts/manifest.py",
         "layout/vco_manifest.json"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: pdk_env.sh builds the overlay over an IHP-Open-PDK install, which this dispatch worker lacks (#266). Workaround kept."
     },
     {
       "number": 2057,
@@ -112,7 +112,7 @@
         "sim/oscillator-core/run_pilot_grid.sh",
         "sim/phase-noise/run_isf_pilot.sh"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: run_pilot_grid.sh and run_isf_pilot.sh need the PDK models and run multi-corner grids, which go to the batch fleet, not this host; the fleet runner image is klt 0.7.0 and refuses a 0.8.0 client (klayout-tools#4109/#4211). Workaround kept."
     },
     {
       "number": 2679,
@@ -146,7 +146,7 @@
       "workarounds": [
         "layout/scripts/native_drc_env.sh"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: native_drc_env.sh provisions the standalone KLayout and IHP runset the native DRC needs; this worker has KLayout 0.28.16 and no sg13g2 PDK (#266). Workaround kept."
     },
     {
       "number": 2690,
@@ -159,7 +159,7 @@
         "layout/scripts/break_ring.py",
         "layout/scripts/prune_spirals.py"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Workaround KEPT (rerun 2026-10-27, uvx --from klayout-tools==0.8.0, KLayout 0.28.16, no PDK needed). `layout/scripts/break_ring.py` + `klt ring-check layout/vco.gds --layers [[L,D]] --region [-80,-106,105,-16] --top vco --ignore-enclosed` for L,D in 1/0, 14/0, 8/0: continuous on the committed stream and broken on the negative control (37, 72, 56 violations), identical to layout/drc/vco-ring-check.json, so the control is still what shows each layer discriminates; `klt ring-check` still has no way to scope the layer set. `layout/scripts/prune_spirals.py` + `klt extract ... --deck sg13g2 --top vco`: with the spirals removed OUTN, OUTP and VDD come back as separate nets (9 nets; 7 with them, where VDD/OUTP/OUTN merge as one), so the pruned-stream evidence still holds; the deck still declares no inductor class."
     },
     {
       "number": 2697,
@@ -171,7 +171,7 @@
       "workarounds": [
         "layout/drc.sh"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: layout/drc.sh runs IHP's native runset, which needs the PDK and KLayout 0.30 (absent here; #266). Workaround kept."
     },
     {
       "number": 2698,
@@ -183,7 +183,7 @@
       "workarounds": [
         "layout/scripts/floorplan.py"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: floorplan.py's via-drop constants only matter in `klt gen-compose`, which composes PDK-built device streams (PDK absent here; #266). `floorplan.py devices` runs without the PDK but does not touch the router. Workaround kept."
     },
     {
       "number": 2806,
@@ -196,7 +196,7 @@
         "layout/scripts/ihp_deck_categories.py",
         "layout/scripts/ihp_deck_facts.py"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: both scripts read IHP's runset source and rule table from the PDK checkout, absent here (#266). Workaround kept."
     },
     {
       "number": 2849,
@@ -298,7 +298,7 @@
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Fix is OPT-IN; workaround kept. Checked 2026-10-27, uvx --from klayout-tools==0.8.0, `klt sim --dry-run --format json` on sim/oscillator-core/yield/request-nominal-mismatch.json (no simulation run): with the default seed_scope (per_corner) the same sample_index still gets a different mismatch_seed at Vctrl 0.0 V and 3.3 V (0 of 400 samples paired). Adding `monte_carlo.seed_scope: \"shared\"` on a scratch copy pairs all 400 samples; `\"point\"` pairs 0 of 400. The committed yield requests do not set it, so their paired-endpoint measurements are still not paired. Seed derivation only; no sample was simulated."
     },
     {
       "number": 2937,
@@ -310,7 +310,7 @@
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Checked 2026-10-27, uvx --from klayout-tools==0.8.0, `klt sim --dry-run --format json` on sim/oscillator-core/yield/request-nominal-process.json (no simulation run): under vary=process the mismatch_seed is the same for all 400 samples of a corner (2 distinct values over 2 corners) while process_seed differs per sample, so the seed-level control holds. Upstream documents that a deck drawing from ngspice's own RNG (agauss/gauss) still changes per sample through rndseed; this deck's sigma=0 negative control was not simulated here. Workaround kept."
     },
     {
       "number": 2900,
@@ -334,7 +334,7 @@
       "workarounds": [
         "signoff/README.md"
       ],
-      "note": "Re-verified 2026-10-27 against klayout-tools 0.8.0: upstream status re-read (unchanged); workaround not exercised at 0.8.0, kept."
+      "note": "Not exercised at 0.8.0: signoff/README.md's workaround is about which yield report T1 item 6 cites; no yield report exists to grade (the yield requests are plans, not runs). Workaround kept."
     }
   ]
 }

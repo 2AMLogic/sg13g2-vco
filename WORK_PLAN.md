@@ -59,6 +59,7 @@ Issues carrying `loom:curated`.
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
+- **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
 - **#264**: Bump klayout-tools pin 0.6.0, 0.7.0, 70dee3b679a6 → 0.8.0 *(curated)*
 
 ## Proposed (Architect / Hermit)
@@ -80,7 +81,7 @@ _None._
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 6 |
+| Curated | 7 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
