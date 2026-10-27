@@ -19,7 +19,18 @@
 | `t1-report.json` | The **verdict of record**: the committed `klt signoff --format json` output. CI re-renders the report on every push and PR and fails on any byte-drift (`.github/scripts/check-signoff.sh`), so a manifest citation whose artifact has since changed fails rather than rotting. |
 | `evidence/` | Issue #243: the audited **inventories** (`inventory-{1-design-sources,9-testbenches,10-repo-hygiene}.json`, every member file with its sha256) and the three artifact-anchored generic envelopes (`t1-item-{1,9,10}-*.json`, `"t1_item": N`, `provenance.input` bound to the inventory) that back items 1, 9 and 10. Generated, never hand-edited. |
 | `inventories.py` | The only writer and verifier of `evidence/`. `--regen` rebuilds inventories, envelopes and the manifest pins together; `--check` (CI: `check-all.sh signoff-inventories`) re-derives them from the live tree. Stdlib only; drift tests in `tests/stdlib/test_signoff_inventories.py`. |
+| `characterization.py`, `characterization-rows.json`, `characterization.md` | Issue #261, T1 item 8. `characterization.md` is the **generated** aggregated report: one line per ratified `spec/target-spec.md` row (0-11) with target, measured value, binding corner, verdict and the linked records. The generator reads only the spec table, the row map and `sim/record-currency.json`; a row grades `pass`/`fail` only from a record the index calls `current`, otherwise it is `pending` and names why (record state, or the issue owing the graded run). `--check` (CI: `check-all.sh signoff-characterization`) names the row whose line drifted. Drift tests: `tests/stdlib/test_signoff_characterization.py`. |
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone, at a checklist revision this repo names and hashes, rather than at whatever revision the installed wheel happens to bundle (see "Why the checklist doc is vendored"). |
+
+**Item 8 (issue #261): cited, `unmet` (`check_failed`) -- on purpose.** The
+generic envelope `evidence/t1-item-8-characterization.json` is bound to
+`characterization.md` and carries a *derived* `status`: `pass` only when every
+graded row is `pass`. Today 0 of the 25 indexed records are `current` and the
+graded runs (#50, #53) and the statistical/post-layout rows (#244, #260) are
+outstanding, so 9 rows are `pending`, 3 are conditions and the status is
+`fail`. That is the finding, not a defect. klt 0.7.0 accepts the envelope and
+renders item 8 `unmet`. Refresh: `python3 -I signoff/characterization.py
+--regen`, then re-render `t1-report.json`.
 
 **Current state (2026-10-17, issues #242, #243): 5 of 11 T1 items `met` -- items
 1 (design sources), 2 (layout), 3 (DRC), 9 (testbenches) and 10 (repo hygiene).** Every other item renders `unmet` with `reason: "no_evidence"`.

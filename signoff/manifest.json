@@ -14,13 +14,17 @@
       "file": "layout/drc/vco-drc-ihp.json",
       "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
     },
+    "8": {
+      "file": "signoff/evidence/t1-item-8-characterization.json",
+      "content_hash": "sha256:cfbb7e2b6b571d56264c06f04d644ebff1b95c4f27a3a125f1aad6dc33b96e2c"
+    },
     "9": {
       "file": "signoff/evidence/t1-item-9-testbenches.json",
       "content_hash": "sha256:24e7a39780c87db4758e45794d0e1c94e57fea35155cd0c0d37d54ca1fd3a1fd"
     },
     "10": {
       "file": "signoff/evidence/t1-item-10-repo-hygiene.json",
-      "content_hash": "sha256:d7f746c5f470027ac762398d75df041cbd1562e0ed402941d9892ee76bddb0f0"
+      "content_hash": "sha256:1e5205da7111f1d16cd35e9073115603c3e73c9f0830c3f910a061eed68ceea1"
     }
   }
 }
