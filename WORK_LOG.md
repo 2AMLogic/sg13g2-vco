@@ -4,8 +4,15 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-10-28
+
+- **PR #271**: chore(signoff): vendor klt 0.8.0 tiers checklist and re-render t1-report
+- **Issue #270** (closed): T1 grading: re-vendor the v0.8.0 checklist doc (signoff/design-evidence-tiers.md is still klt v0.6.0's) and re-render t1-report.json
+
 ### 2026-10-27
 
+- **PR #269**: docs(friction): rerun runnable ledger workarounds at 0.8.0 and dry-run supply_v requests
+- **Issue #264** (closed): Bump klayout-tools pin 0.6.0, 0.7.0, 70dee3b679a6 → 0.8.0
 - **PR #265**: build: bump klayout-tools pin to 0.8.0 and re-verify friction ledger
 - **PR #262**: feat(signoff): generate and gate the T1 item 8 characterization report
 - **Issue #261** (closed): T1 item 8 (characterization report): aggregate the 12 ratified rows into one current characterization record
