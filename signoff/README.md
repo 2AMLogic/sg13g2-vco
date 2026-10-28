@@ -237,16 +237,16 @@ by the pin bump.
 | Field | Value |
 |---|---|
 | Source | `2AMLogic/klayout-tools` `docs/design-evidence-tiers.md` |
-| Pinned at | commit `0882541638acaec9ceb43c4df77b47d5a1a179db` (2026-09-22), i.e. the doc as of upstream tag `v0.6.0` |
-| File SHA-256 | `63eeec72e3d849761cf32dcf091af5728b069b1515e32bb3138e9454303671e5` |
-| Last doc-touching upstream commit | `0882541638acaec9ceb43c4df77b47d5a1a179db` (feat(signoff): carry a mixed-signal manifest's declared partition boundary, #2303) |
+| Pinned at | the checklist bundled in the `klayout-tools==0.8.0` wheel (`klayout_tools/data/design-evidence-tiers.md`), i.e. the doc as of upstream tag `v0.8.0` (upstream commit not traced) |
+| File SHA-256 | `a26b90262320d0fbd32b3f549a02b6300832706041797a559d8bf6bdb62efdc7` |
+| Last doc-touching upstream commit | not recorded at the 0.8.0 refresh (previously `0882541638acaec9ceb43c4df77b47d5a1a179db`, v0.6.0) |
 | License | Apache-2.0 (klayout-tools is Apache-2.0; this copy is verbatim, unmodified) |
 
 This copy is byte-identical to the checklist bundled inside the pinned
-`klayout-tools` wheel pinned at the time as `0.6.0` (`klayout_tools/data/design-evidence-tiers.md`,
+`klayout-tools` wheel pinned as `0.8.0` (`klayout_tools/data/design-evidence-tiers.md`,
 same SHA-256), so the vendored doc and the pinned build agree by
-construction — verified against a clean `pip install klayout-tools==0.6.0`,
-not inferred from the tag.
+construction — verified by extracting the file from the `uvx --from
+"klayout-tools==0.8.0"` environment, not inferred from the tag.
 
 **Upgrade procedure**: copy the newer doc from klayout-tools verbatim,
 update the provenance table, then refresh and commit `t1-report.json`
@@ -324,7 +324,7 @@ fields klayout-tools#2175/#2176/#2201 added, and they say this:
 | `build.git_tag` / `build.is_release` | `v0.8.0` / `true` | the grading build is the tagged PyPI release, not a working copy |
 | `build.dirty` | `false` | no uncommitted tool changes in the grading build |
 | `build.grading_ruleset_id` | `sha256:eb8d2ba5…c25e` | the grading rules themselves are hashed, so a rules change is drift even at an unchanged version string |
-| `source_doc_content_hash` | `sha256:63eeec72…3671e5` | the exact checklist bytes graded — matches the vendored doc's SHA-256 above |
+| `source_doc_content_hash` | `sha256:a26b9026…efdc7` | the exact checklist bytes graded — matches the vendored doc's SHA-256 above |
 | `build_t1_item_count` vs `t1_item_count` | `11` vs `11` | the build has rules for every row the checklist renders; nothing is graded by a build that lacks rules for it |
 | `items[].graded_by_build` | `true` on all 11 T1 rows | per-row confirmation of the same, including item 11 |
 
