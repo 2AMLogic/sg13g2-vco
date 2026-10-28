@@ -6,6 +6,8 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-10-28
 
+- **PR #274**: test(sim): capture per-caller output in the concurrent record-id self-test
+- **Issue #273** (closed): test flake: record-id-selftest concurrent distinct count fails on sim-append-only
 - **PR #271**: chore(signoff): vendor klt 0.8.0 tiers checklist and re-render t1-report
 - **Issue #270** (closed): T1 grading: re-vendor the v0.8.0 checklist doc (signoff/design-evidence-tiers.md is still klt v0.6.0's) and re-render t1-report.json
 
