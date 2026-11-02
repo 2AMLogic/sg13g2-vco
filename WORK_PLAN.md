@@ -36,7 +36,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#276**: design: export the VCO core as a subcircuit with a symbol (the pinned vco.spice is a flat bench, not instantiable)
 
 ## PRs Awaiting Review
 
@@ -60,6 +60,7 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
+- **#276**: design: export the VCO core as a subcircuit with a symbol (the pinned vco.spice is a flat bench, not instantiable) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -77,10 +78,10 @@ _None._
 | Very important | 0 |
 | Important | 3 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 0 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 6 |
+| Curated | 7 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
