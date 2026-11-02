@@ -48,6 +48,51 @@ and refuses to run if any survives:
 | `@@IND_MODEL@@` | `sim/inductor-model/sg13g2_inductor_em.spice` — this repo's own EM-fitted `inductor` subckt; **the PDK ships none** (`sim/pdk.json` → `known_model_gaps.spiral_inductor`) |
 | `@@OSDI_MOSVAR@@` | `mosvar.osdi`, built by `sim/tools/build-osdi.sh`; loaded with `pre_osdi` *inside* `.control` and **before** the first analysis command, because ngspice defers OSDI device instantiation to analysis setup rather than to netlist parse |
 
+## `vco_core` — the VCO as a subcircuit block (#276)
+
+`vco.sch`/`vco.spice` is a flat bench (sources, `.ic`, `.control`, `@@TOKEN@@`
+placeholders, ground on node `0`), so it cannot be placed inside a parent
+loop. `vco_core.sch` / `vco_core.sym` / `vco_core.spice` export the same
+devices as a block; the bench files are unchanged.
+
+```
+.subckt vco_core VCTRL OUTP OUTN VDD VSS
+```
+
+| Port | Meaning |
+|---|---|
+| `VCTRL` | varactor control, 0.0-3.3 V above `VSS` (DR-001 domain) |
+| `OUTP`, `OUTN` | differential tank nodes |
+| `VDD` | supply; the tank inductors and the bias reference resistor return here |
+| `VSS` | ground: tail/bias network, and the bulk terminal of the varactors and HBTs (the bench's node `0`) |
+
+Internal nets `TAIL`, `NBIAS`, `TE`, `RE` are not ports. No sources, no
+`.ic`, no `.control`, no `.end` (so the file can be `.include`d).
+
+**What a consumer must supply** (the bench's `MODELS` block, minus the
+placeholders): `.lib <models>/cornerHBT.lib hbt_typ`,
+`.lib <models>/cornerMOShv.lib mos_tt`, `.lib <models>/cornerCAP.lib cap_typ`,
+`.include sim/inductor-model/sg13g2_inductor_em.spice`, and
+`pre_osdi <mosvar.osdi>` (the varactor). Also a **startup kick**: the pair
+sits on an unstable equilibrium, so apply a differential `.ic` on
+`OUTP`/`OUTN` (the bench uses 10 mV about `VDD`). A non-zero `VSS` is a rail
+shift only: shift `VDD`, `VCTRL` and the `.ic` with it.
+
+**Drift guard.** `netlist.sh` derives both netlists and, before writing or
+checking, compares their device lines (core's `VSS` read as `0`, order-
+insensitive). `netlist.sh --check` fails if either file is stale or if the two
+schematics' devices diverge. Edit `vco.sch` and `vco_core.sch` together.
+
+**Smoke bench:** `design/run_core_smoke.sh [VSS]` runs the flat bench and the
+subcircuit at Vctrl = 1.65 V (one `tran 1p 20n 0 2p` each, 10-20 ns period
+count) and compares frequencies. Design-arithmetic evidence only: nominal
+corner, no spec row, no phase noise. It needs the OSDI varactor, which does
+not load on ngspice-42 (OSDI v0.3; #94, #252). Evidence available at
+authoring time, with the varactor replaced by a fixed 5 fF to its node (an
+ad-hoc stand-in, **not** the circuit's tuning behavior): flat bench and
+`vco_core` both give 5.538171 GHz, 55 cycles, Vpp 1.2318 V. That shows the
+wrapper preserves the topology; it does not show the real varactor oscillates.
+
 ## Which records fix the topology
 
 Nothing about the topology is chosen in this directory. It is fixed by three
