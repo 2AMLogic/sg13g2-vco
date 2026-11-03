@@ -1,0 +1,26 @@
+* klt sim -- generated corner deck, do not edit
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib mos_tt
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib hbt_typ
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib cap_typ
+.include /var/tmp/eda-job-klt-sim-cb3f711437a5/inputs/netlist.cir
+.temp 27
+.control
+pre_osdi /opt/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+save all
+alter vct=1.65
+setplot new
+echo klt_step_begin 0 $curplot
+op
+echo klt_step_end 0 $curplot
+set klt_plot_0 = $curplot
+setplot new
+echo klt_step_begin 1 $curplot
+tran 1p 2n 0 2p
+echo klt_step_end 1 $curplot
+set klt_plot_1 = $curplot
+let vdiff_pp = vecmax(vdiff)-vecmin(vdiff)
+let run__vdiff_pp = vdiff_pp
+print run__vdiff_pp
+quit
+.endc
+.end

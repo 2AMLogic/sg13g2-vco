@@ -151,3 +151,9 @@ RISE=n` counts a *fixed number of crossings* and cannot be told "count the
 crossings inside this time window", so its discarded-startup window moves with
 the frequency instead of being fixed at 10 ns. `../run_method_check.sh` does
 not validate that estimator, only the one in `sim/lib.sh`.
+
+## Hot start-up / OSDI-on-fleet request (issue #280)
+
+`hot-startup/` holds a pair of 2-unit `klt sim` requests (27 C control and 125 C, with and without a
+preceding `op`) that ran on the batch fleet, with per-unit decks and logs. Outcome and method:
+`../records/20261103-185500-666800d-hot-startup.md`.
