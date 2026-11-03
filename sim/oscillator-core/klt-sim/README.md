@@ -155,5 +155,5 @@ not validate that estimator, only the one in `sim/lib.sh`.
 ## Hot start-up / OSDI-on-fleet request (issue #280)
 
 `hot-startup/` holds a pair of 2-unit `klt sim` requests (27 C control and 125 C, with and without a
-preceding `op`) that ran on the batch fleet, with per-unit decks and logs. Outcome and method:
+preceding `op`) that ran on the batch fleet, with per-unit decks and reports (the ngspice logs were not retained). Outcome and method:
 `../records/20261103-185500-666800d-hot-startup.md`.
