@@ -4,6 +4,11 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-03
+
+- **PR #277**: design: add vco_core subcircuit, symbol and device-equivalence guard
+- **Issue #276** (closed): design: export the VCO core as a subcircuit with a symbol (the pinned vco.spice is a flat bench, not instantiable)
+
 ### 2026-10-28
 
 - **PR #274**: test(sim): capture per-caller output in the concurrent record-id self-test
