@@ -36,13 +36,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#276**: design: export the VCO core as a subcircuit with a symbol (the pinned vco.spice is a flat bench, not instantiable)
+- **#280**: sim: pinned VCO C-grid with the prescaler load: 0 of 162 corners in band, 125 C does not start, OSDI varactor runs on the fleet
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-_None._
+- **#281**: sim: classify 125 C start-up failure and reproduce OSDI varactor on fleet
 
 ## Approved (Awaiting Merge)
 
@@ -60,7 +60,7 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
-- **#276**: design: export the VCO core as a subcircuit with a symbol (the pinned vco.spice is a flat bench, not instantiable) *(curated)*
+- **#280**: sim: pinned VCO C-grid with the prescaler load: 0 of 162 corners in band, 125 C does not start, OSDI varactor runs on the fleet *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -79,7 +79,7 @@ _None._
 | Important | 3 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 0 |
+| PRs awaiting review | 1 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 7 |
 | Architect / Hermit proposals | 1 |
