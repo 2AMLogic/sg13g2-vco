@@ -12,7 +12,7 @@
     },
     {
       "path": "design/netlist.sh",
-      "sha256": "sha256:83959a0f3d497db12f56f319740c274791e9118cd61252095fad035d8956d987"
+      "sha256": "sha256:b21223c533d53e2f258811b47bb20c4e6d71498b23a01f69cc1b354b58f90f6e"
     }
   ],
   "regeneration_gate": {
