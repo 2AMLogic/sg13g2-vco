@@ -6,6 +6,8 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-03
 
+- **PR #281**: sim: classify 125 C start-up failure and reproduce OSDI varactor on fleet
+- **Issue #280** (closed): sim: pinned VCO C-grid with the prescaler load: 0 of 162 corners in band, 125 C does not start, OSDI varactor runs on the fleet
 - **PR #277**: design: add vco_core subcircuit, symbol and device-equivalence guard
 - **Issue #276** (closed): design: export the VCO core as a subcircuit with a symbol (the pinned vco.spice is a flat bench, not instantiable)
 
