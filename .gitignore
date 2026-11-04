@@ -99,7 +99,7 @@ flow/build/
 .loom/gh-config-by-owner/
 .loom/gh-config-by-owner.*/
 .loom/gh-config-by-owner-*/
-.loom-local/
+/.loom-local/
 # <<< loom-managed <<<
 
 # EM-extraction staging directories (removed on completion; see its README)
