@@ -36,13 +36,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#280**: sim: pinned VCO C-grid with the prescaler load: 0 of 162 corners in band, 125 C does not start, OSDI varactor runs on the fleet
+_None._
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#281**: sim: classify 125 C start-up failure and reproduce OSDI varactor on fleet
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -60,7 +60,6 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
-- **#280**: sim: pinned VCO C-grid with the prescaler load: 0 of 162 corners in band, 125 C does not start, OSDI varactor runs on the fleet *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -78,10 +77,10 @@ _None._
 | Very important | 0 |
 | Important | 3 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
+| In Progress (`loom:building`) | 0 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 7 |
+| Curated | 6 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
