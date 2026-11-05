@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 29
+    "unknown": 30
   },
   "records": [
     {
@@ -281,6 +281,19 @@
       "path": "sim/oscillator-core/records/20261105-170000-ecc6aeb-pvt-grid-graded.csv",
       "reason": "filename-only provenance: the commit ecc6aeb named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261105-170000-ecc6aeb",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 3,
+      "filename_commit": {
+        "id": "f6c364b"
+      },
+      "path": "sim/oscillator-core/records/20261105-180000-f6c364b-remeasure-nonhot-graded.csv",
+      "reason": "filename-only provenance: the commit f6c364b named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261105-180000-f6c364b",
       "state": "unknown"
     },
     {
