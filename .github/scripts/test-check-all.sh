@@ -370,6 +370,7 @@ mkfix sim/oscillator-core/tests/test_emit_tuning.sh "$PASSL"
 mkfix sim/oscillator-core/tests/test_row3.sh "$PASSL"
 mkfix sim/oscillator-core/tests/test_row3_global.sh "$PASSL"
 mkfix sim/oscillator-core/tests/test_row7.sh "$PASSL"
+mkfix sim/oscillator-core/tests/test_grade_fleet_grid.sh "$PASSL"
 mkfix sim/oscillator-core/run_validity_check.sh 'echo "all cases passed"'
 mkfix sim/oscillator-core/tests/test_supply_stage2.sh 'echo "PASS a"; echo "PASS b"; touch sim/scribble'
 mkfix sim/phase-noise/tests/test_validity.sh 'echo "PASS a"; echo "all cases passed"'
@@ -392,6 +393,7 @@ grun
 if [ "$RC" -eq 1 ] && grep -q 'row7-grade: no PASS lines' "$OUT"; then
   ok "dispatcher: fixture with no PASS lines -> exit 1"; else bad "dispatcher nopass: rc=$RC"; fi
 mkfix sim/oscillator-core/tests/test_row7.sh "$PASSL"
+mkfix sim/oscillator-core/tests/test_grade_fleet_grid.sh "$PASSL"
 mkfix sim/oscillator-core/run_validity_check.sh 'echo "something else"'
 grun
 if [ "$RC" -eq 1 ] && grep -q 'waveform-validity: no' "$OUT"; then
