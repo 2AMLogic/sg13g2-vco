@@ -1,0 +1,93 @@
+{
+ "netlist": "vco_core_body.spice",
+ "engine": "ngspice",
+ "models": {
+  "pdk": "ihp-sg13g2",
+  "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+ },
+ "corners": {
+  "process": [
+   {
+    "name": "tt_typ_typ",
+    "sections": [
+     {
+      "section": "hbt_typ",
+      "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+     },
+     {
+      "section": "mos_tt",
+      "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+     },
+     {
+      "section": "cap_typ",
+      "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+     }
+    ]
+   }
+  ],
+  "supply_v": {
+   "vct": [
+    0.0,
+    1.65,
+    3.3
+   ]
+  },
+  "temperature_c": [
+   27
+  ]
+ },
+ "analysis": {
+  "kind": "tran",
+  "args": "1p 20n 0 2p"
+ },
+ "measurements": [
+  {
+   "name": "t_cross_1",
+   "unit": "s",
+   "spice": ".meas tran t_cross_1 WHEN v(vdiff)=0 RISE=1 TD=10n"
+  },
+  {
+   "name": "t_cross_11",
+   "unit": "s",
+   "spice": ".meas tran t_cross_11 WHEN v(vdiff)=0 RISE=11 TD=10n"
+  },
+  {
+   "name": "vdiff_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vdiff_min",
+   "unit": "V",
+   "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vcm_max",
+   "unit": "V",
+   "spice": ".meas tran vcm_max MAX v(vcm) FROM=10n TO=20n"
+  },
+  {
+   "name": "vcm_min",
+   "unit": "V",
+   "spice": ".meas tran vcm_min MIN v(vcm) FROM=10n TO=20n"
+  },
+  {
+   "name": "isup_avg",
+   "unit": "A",
+   "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
+  },
+  {
+   "name": "vtail_avg",
+   "unit": "V",
+   "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
+  }
+ ],
+ "options": {
+  "timeout_s": 3000,
+  "keep_artifacts": true,
+  "stage_model_inputs": false,
+  "osdi_preload": [
+   "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+  ]
+ }
+}
