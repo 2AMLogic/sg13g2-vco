@@ -66,9 +66,9 @@ Row 4 is statistical but explicitly outside the first campaign's reach, so it
 appears in the declared gaps of the signoff coverage statement, not in the
 campaign's covered rows.
 
-The row set is recorded in `signoff/README.md` (the pinned `klt` 0.6.0 does
-not grade a `spec_rows` manifest field; see that file for the move into
-`signoff/manifest.json`).
+The row set is declared in `signoff/manifest.json` under `spec_rows."6"`
+(pinned `klt` 0.8.0 grades the field; every row carries `"ratified": false`
+while this record is proposed) and explained in `signoff/README.md`.
 
 ## Alternatives considered
 

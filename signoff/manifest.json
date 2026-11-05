@@ -26,5 +26,42 @@
       "file": "signoff/evidence/t1-item-10-repo-hygiene.json",
       "content_hash": "sha256:bdf41e431cc4f5aaff36dd8ed157f954dac8047849620b48d07503ff2c5c6d2f"
     }
+  },
+  "spec_rows": {
+    "6": [
+      {
+        "id": "1",
+        "ratified": false
+      },
+      {
+        "id": "2",
+        "ratified": false
+      },
+      {
+        "id": "3",
+        "ratified": false
+      },
+      {
+        "id": "4",
+        "gap": "no per-sample phase-noise estimator exists (ISF route costs about 1.2 CPU-hours per corner); see sim/oscillator-core/yield/README.md",
+        "ratified": false
+      },
+      {
+        "id": "5",
+        "ratified": false
+      },
+      {
+        "id": "6",
+        "ratified": false
+      },
+      {
+        "id": "7",
+        "ratified": false
+      },
+      {
+        "id": "9",
+        "ratified": false
+      }
+    ]
   }
 }
