@@ -4,6 +4,11 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-05
+
+- **PR #285**: sim: record OSDI op-only run at 27 C on ngspice-46 (NaN not reproduced)
+- **Issue #252** (closed): design/vco.spice at 17e49a8 fails DC operating point (NaN) with the OSDI varactor under ngspice-47
+
 ### 2026-11-03
 
 - **PR #281**: sim: classify 125 C start-up failure and reproduce OSDI varactor on fleet

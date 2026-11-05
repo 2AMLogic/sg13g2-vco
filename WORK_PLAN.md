@@ -24,7 +24,6 @@ _None._
 
 - **#94**: sim: regenerate design/run_elaborate.sh, sim/oscillator-core and sim/phase-noise for the post-#79 netlist (blocked: OSDI varactor cannot run locally or on the fleet)
 - **#162**: lvs: runset strict top-port check logs 3 port-name findings ('LA,VDD' vs 'VDD') after the cross-reference matches
-- **#252**: design/vco.spice at 17e49a8 fails DC operating point (NaN) with the OSDI varactor under ngspice-47
 
 ## Ready
 
@@ -36,13 +35,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#252**: design/vco.spice at 17e49a8 fails DC operating point (NaN) with the OSDI varactor under ngspice-47
+_None._
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#285**: sim: record OSDI op-only run at 27 C on ngspice-46 (NaN not reproduced)
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -57,9 +56,9 @@ Issues carrying `loom:curated`.
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
+- **#94**: sim: regenerate design/run_elaborate.sh, sim/oscillator-core and sim/phase-noise for the post-#79 netlist (blocked: OSDI varactor cannot run locally or on the fleet) *(curated)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
-- **#252**: design/vco.spice at 17e49a8 fails DC operating point (NaN) with the OSDI varactor under ngspice-47 *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
 
 ## Proposed (Architect / Hermit)
@@ -76,10 +75,10 @@ _None._
 |------|-------|
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
-| Important | 3 |
+| Important | 2 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
+| In Progress (`loom:building`) | 0 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 7 |
 | Architect / Hermit proposals | 1 |
