@@ -91,6 +91,9 @@ need_pass_lines row3-global
 run_fixture row7-grade sim/oscillator-core/tests/test_row7.sh
 need_pass_lines row7-grade
 
+run_fixture fleet-grid-grade sim/oscillator-core/tests/test_grade_fleet_grid.sh
+need_pass_lines fleet-grid-grade
+
 # Waveform-validity fault injection (#83), extended with the row-7 columns
 # (#112): the real osc_simulate_point over stubbed traces, no simulator.
 run_fixture waveform-validity sim/oscillator-core/run_validity_check.sh
