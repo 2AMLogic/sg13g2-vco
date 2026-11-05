@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "sha256": "2b56db4dde21e2e5d0e254c41049f9ae752495f919d3c3594834d85042e1104c",
+      "size": 280,
+      "kind": "evidence",
+      "producer": {
+        "tool": "klt",
+        "version": "0.9.1.dev18+gc663b4c65069",
+        "loom.repo": "2AMLogic/sg13g2-vco",
+        "commit": "94aec8fa9a39af08ba12b9c87cda83744f4d5202"
+      },
+      "uri": "artifact:evidence/2AMLogic__sg13g2-vco/2b/2b56db4dde21e2e5d0e254c41049f9ae752495f919d3c3594834d85042e1104c",
+      "name": "sim/build/op-only-f2ebf7/ngspice.log"
+    }
+  ]
+}

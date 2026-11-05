@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 26
+    "unknown": 27
   },
   "records": [
     {
@@ -242,6 +242,19 @@
       "path": "sim/oscillator-core/records/20261103-185500-666800d-hot-startup.md",
       "reason": "filename-only provenance: the commit 666800d named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261103-185500-666800d",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 1,
+      "filename_commit": {
+        "id": "504adb5"
+      },
+      "path": "sim/oscillator-core/records/20261105-085000-504adb5-op-only-27C.md",
+      "reason": "filename-only provenance: the commit 504adb5 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261105-085000-504adb5",
       "state": "unknown"
     },
     {
