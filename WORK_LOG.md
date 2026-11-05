@@ -6,6 +6,12 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-05
 
+- **PR #293**: sim: record post-#79 ISF phase-noise pilot from the fleet and update pre-#79 pointers
+- **PR #291**: sim: record post-#79 elaboration/start-up check on the fleet with the OSDI varactor
+- **PR #290**: sim: re-measure 199 estimator-errored post-#79 units on the fleet and grade rows 1-3/7 at -40/27 C
+- **PR #289**: sim: grade existing post-#79 fleet PVT grid CSV (all curves incomplete)
+- **PR #288**: sim: add post-#79 PVT grid request and ungraded fleet sweep record
+- **Issue #94** (closed): sim: regenerate design/run_elaborate.sh, sim/oscillator-core and sim/phase-noise for the post-#79 netlist (blocked: OSDI varactor cannot run locally or on the fleet)
 - **PR #285**: sim: record OSDI op-only run at 27 C on ngspice-46 (NaN not reproduced)
 - **Issue #252** (closed): design/vco.spice at 17e49a8 fails DC operating point (NaN) with the OSDI varactor under ngspice-47
 
