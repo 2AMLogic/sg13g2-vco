@@ -1,0 +1,602 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/oscillator-core/klt-sim/elaborate-post79/vco_core_body.spice",
+    "scope": "repo"
+  },
+  "status": "pass",
+  "corner_count": 3,
+  "passed": 3,
+  "failed": 0,
+  "errored": 0,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {},
+    "by_severity": {},
+    "corners_with_diagnostics": 0
+  },
+  "metrics": {
+    "sim__corner__count": 3,
+    "sim__corner__passed_count": 3,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 0,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "46",
+    "ngspice_binary": "/usr/local/bin/ngspice",
+    "engine_build": {
+      "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******",
+      "binary_sha256": "dc859418bedd0478ff439a2d3e2e09f4386a7f4d5e3f17671953e101a000cc60",
+      "probe": "ok",
+      "reason": null
+    },
+    "models_lib": {
+      "path": null,
+      "scope": "absent"
+    },
+    "models_lib_sha256": null,
+    "models_lib_sha256_scope": "client",
+    "netlist_sha256": "9ce081a6af3d5f3a884e0157e8e25a562d2afa3826b8de7c8d380ee812a6f155",
+    "netlist_closure": [
+      {
+        "path": "sim/oscillator-core/klt-sim/elaborate-post79/vco_core_body.spice",
+        "scope": "repo",
+        "sha256": "9ce081a6af3d5f3a884e0157e8e25a562d2afa3826b8de7c8d380ee812a6f155"
+      },
+      {
+        "path": "sim/oscillator-core/klt-sim/elaborate-post79/sg13g2_inductor_em.spice",
+        "scope": "repo",
+        "sha256": "6f24f9857ab7810c91bda5f6307e78f1dfcbe2afd750bb023e28156ded06d6a0"
+      }
+    ],
+    "netlist_identity": "sha256:cca719b340e33d668befe9d2aeed2ee3cf619511bb46557fec59ffee99fdf693",
+    "corner_section_libs": [
+      {
+        "name": "cornerHBT.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462"
+      },
+      {
+        "name": "cornerMOShv.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "5a1f862dc304fdfe2fb9758b15d54809a688d83c3ce981dad2e8473b3e93481a"
+      },
+      {
+        "name": "cornerCAP.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56"
+      }
+    ],
+    "osdi_preload_runner_resolved": [
+      {
+        "entry": "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi",
+        "reason": "env_var"
+      }
+    ],
+    "remote": {
+      "provider": "aws-batch-fleet",
+      "job_id": "klt-sim-73b272828756",
+      "region": "us-east-1",
+      "instance_id": "i-0b4b15d4580b536ee",
+      "instance_type": "m7i.4xlarge",
+      "availability_zone": "us-east-1d",
+      "ami_id": "ami-04591566329422a44",
+      "lifecycle": "spot",
+      "spot": true,
+      "state": "done",
+      "exit_code": "0",
+      "concurrency": "1",
+      "physical_cores": "8",
+      "elapsed_seconds": 11,
+      "client_submitted_at": "2026-11-05T16:52:36.008699Z",
+      "client_launched_at": "2026-11-05T16:53:03.540385Z",
+      "client_status_terminal_at": "2026-11-05T16:53:35.226815Z",
+      "client_collected_at": "2026-11-05T16:53:36.109856Z",
+      "runner_klt_version": "0.9.0",
+      "client_klt_version": "0.9.1.dev102+gef1ec19c95f6",
+      "runner_compatibility": "match",
+      "runner_request_features": {
+        "required": [
+          "corners.process[].sections[]",
+          "options.osdi_preload"
+        ],
+        "missing": [],
+        "status": "supported"
+      },
+      "worker_environment": {
+        "capture": "ok",
+        "simulator": {
+          "requested_binary": "ngspice",
+          "binary_source": "PATH",
+          "selected_path": "/usr/local/bin/ngspice",
+          "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+          "version_probe": "ok"
+        },
+        "pdk": {
+          "variant": "ihp-sg13g2",
+          "root": "/opt/pdk",
+          "stamp_scheme": null,
+          "stamp_sha256": null,
+          "stamp_text": null,
+          "models_staged": false,
+          "stamp_scope": "executed"
+        },
+        "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+        "omp_num_threads": null,
+        "image_manifest": null,
+        "model_inputs": null,
+        "diagnostics": [
+          "pdk stamp unreadable: FileNotFoundError"
+        ],
+        "pdk_stamp_comparison": {
+          "status": "not_comparable",
+          "reason": "worker_stamp_unavailable"
+        },
+        "engine_build_comparison": {
+          "status": "match"
+        }
+      },
+      "runner_model_inputs": null,
+      "job_ceiling": {
+        "basis": "conservative_serial_bound",
+        "unit_count": 3,
+        "per_unit_timeout_s": 3000,
+        "overhead_s": 120.0,
+        "job_bound_s": 9120.0,
+        "max_job_seconds": 3600.0,
+        "max_job_seconds_source": "fleet_config",
+        "exceeds_ceiling": true,
+        "check": "warn",
+        "max_units_per_job": 1,
+        "recommended_hosts": 3,
+        "warning": "batch job bound 9120s (options.timeout_s 3000s x 3 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 3 to run one job per shard of at most 1 units, each within the ceiling"
+      }
+    },
+    "engine_host": "worker",
+    "client_ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "backend": {
+      "resolved": "batch",
+      "source": "flag",
+      "requested": "batch"
+    }
+  },
+  "coverage": {
+    "corners_simulated": 3,
+    "measurements_declared": 7,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"isup_avg\"]/observation",
+      "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"t_10_periods\"]/observation",
+      "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vcm_max\"]/observation",
+      "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vcm_min\"]/observation",
+      "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vdiff_max\"]/observation",
+      "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vdiff_min\"]/observation",
+      "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vtail_avg\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"isup_avg\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"t_10_periods\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vcm_max\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vcm_min\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vdiff_max\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vdiff_min\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vtail_avg\"]/observation",
+      "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"isup_avg\"]/observation",
+      "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"t_10_periods\"]/observation",
+      "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vcm_max\"]/observation",
+      "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vcm_min\"]/observation",
+      "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vdiff_max\"]/observation",
+      "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vdiff_min\"]/observation",
+      "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vtail_avg\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"isup_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"t_10_periods\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vcm_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vcm_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vdiff_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vdiff_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"tt_typ_typ/0.000V/27C\",\"vtail_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"isup_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"t_10_periods\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vcm_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vcm_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vdiff_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vdiff_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/27C\",\"vtail_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"isup_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"t_10_periods\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vcm_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vcm_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vdiff_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vdiff_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"tt_typ_typ/3.300V/27C\",\"vtail_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.9.1.dev102+gef1ec19c95f6",
+    "klt_git_commit": "ef1ec19c95f67c1e8294b6dc249c8bb4764172cb",
+    "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@ef1ec19c95f67c1e8294b6dc249c8bb4764172cb",
+    "klayout_version": "0.30.12",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "search root: ~/share/pdk",
+      "version": "fetched:0.3.0"
+    },
+    "deck": null,
+    "input": {
+      "content_hash": "sha256:9ce081a6af3d5f3a884e0157e8e25a562d2afa3826b8de7c8d380ee812a6f155",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "t_10_periods",
+      "unit": "s",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/0.000V/27C",
+        "value": -7.59507e-09,
+        "margin": null
+      }
+    },
+    {
+      "name": "vdiff_max",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/0.000V/27C",
+        "value": 0.296975,
+        "margin": null
+      }
+    },
+    {
+      "name": "vdiff_min",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/0.000V/27C",
+        "value": -0.296967,
+        "margin": null
+      }
+    },
+    {
+      "name": "vcm_max",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/0.000V/27C",
+        "value": 3.30022,
+        "margin": null
+      }
+    },
+    {
+      "name": "vcm_min",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/0.000V/27C",
+        "value": 3.29888,
+        "margin": null
+      }
+    },
+    {
+      "name": "isup_avg",
+      "unit": "A",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/0.000V/27C",
+        "value": -0.000306561,
+        "margin": null
+      }
+    },
+    {
+      "name": "vtail_avg",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/0.000V/27C",
+        "value": 2.58959,
+        "margin": null
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "tt_typ_typ/0.000V/27C",
+      "process": "tt_typ_typ",
+      "supply_v": {
+        "vct": 0.0
+      },
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 3.324,
+      "peak_rss_bytes": 64786432,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "t_10_periods",
+          "value": -7.59507e-09,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_max",
+          "value": 0.296975,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_min",
+          "value": -0.296967,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vcm_max",
+          "value": 3.30022,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vcm_min",
+          "value": 3.29888,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "isup_avg",
+          "value": -0.000306561,
+          "unit": "A",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vtail_avg",
+          "value": 2.58959,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-94/sim/oscillator-core/klt-sim/elaborate-post79/evidence/tt_typ_typ_0p000V_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-94/sim/oscillator-core/klt-sim/elaborate-post79/evidence/tt_typ_typ_0p000V_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "tt_typ_typ/1.650V/27C",
+      "process": "tt_typ_typ",
+      "supply_v": {
+        "vct": 1.65
+      },
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 3.274,
+      "peak_rss_bytes": 64765952,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "t_10_periods",
+          "value": -7.62496e-09,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_max",
+          "value": 0.295914,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_min",
+          "value": -0.295913,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vcm_max",
+          "value": 3.30012,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vcm_min",
+          "value": 3.29904,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "isup_avg",
+          "value": -0.000306573,
+          "unit": "A",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vtail_avg",
+          "value": 2.58918,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-94/sim/oscillator-core/klt-sim/elaborate-post79/evidence/tt_typ_typ_1p650V_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-94/sim/oscillator-core/klt-sim/elaborate-post79/evidence/tt_typ_typ_1p650V_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "tt_typ_typ/3.300V/27C",
+      "process": "tt_typ_typ",
+      "supply_v": {
+        "vct": 3.3
+      },
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 3.274,
+      "peak_rss_bytes": 64765952,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "t_10_periods",
+          "value": -7.37407e-09,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_max",
+          "value": 0.264279,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_min",
+          "value": -0.264278,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vcm_max",
+          "value": 3.30039,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vcm_min",
+          "value": 3.29874,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "isup_avg",
+          "value": -0.000306566,
+          "unit": "A",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vtail_avg",
+          "value": 2.57928,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-94/sim/oscillator-core/klt-sim/elaborate-post79/evidence/tt_typ_typ_3p300V_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-94/sim/oscillator-core/klt-sim/elaborate-post79/evidence/tt_typ_typ_3p300V_27C/corner.cir"
+      },
+      "monte_carlo": null
+    }
+  ]
+}

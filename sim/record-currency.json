@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 30
+    "unknown": 31
   },
   "records": [
     {
@@ -294,6 +294,19 @@
       "path": "sim/oscillator-core/records/20261105-180000-f6c364b-remeasure-nonhot-graded.csv",
       "reason": "filename-only provenance: the commit f6c364b named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261105-180000-f6c364b",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 1,
+      "filename_commit": {
+        "id": "ac2481d"
+      },
+      "path": "sim/oscillator-core/records/20261105-190000-ac2481d-elaborate-post79.md",
+      "reason": "filename-only provenance: the commit ac2481d named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261105-190000-ac2481d",
       "state": "unknown"
     },
     {
