@@ -1,0 +1,15 @@
+port,freq_hz,inoise_a_per_sqrt_hz
+tank,3e9,5.666875e-12
+tank,4e9,5.48611e-12
+tank,5e9,5.451461e-12
+tank,6e9,5.491903e-12
+tank,7e9,5.579089e-12
+tank,8e9,5.699053e-12
+tank,9e9,5.843771e-12
+tail,3e9,9.610322e-12
+tail,4e9,7.434733e-12
+tail,5e9,6.941291e-12
+tail,6e9,8.70084e-12
+tail,7e9,9.396109e-12
+tail,8e9,9.676514e-12
+tail,9e9,9.808617e-12

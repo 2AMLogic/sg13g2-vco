@@ -17,7 +17,7 @@ the cross-reference compare reaches `match`, while its strict top-port check
 still logs three port-name findings (#162; provenance §14.6). That is not LVS
 closure: no `klt lvs` report exists (klayout-tools#2849) and the acceptable
 signoff envelope is still owed (#62; [signoff notes](signoff/README.md)). Simulation numbers in the tree
-predate #79 and are not current; the re-tune closed with no defensible candidate (#93), the decision is pending in [DR-006](spec/decision-records/DR-006-row2-shortfall-bn-substrate-varactor.md) (#184, status proposed), and regeneration (#94) is sequenced after it. The
+predate #79 and are not current; the re-tune closed with no defensible candidate (#93), the decision is pending in [DR-006](spec/decision-records/DR-006-row2-shortfall-bn-substrate-varactor.md) (#184, status proposed), and post-#79 fleet records now exist under #94 (`sim/oscillator-core/records/20261105-*`, `sim/phase-noise/records/20261105-200000-6834172.md`; the PVT grid grades rows 1/2/3/7 as not met, the ISF pilot is one corner and grades nothing). The
 [signoff report](signoff/t1-report.json) is the verdict of record.
 
 **Built agent-native.** Every specification, decision record, testbench, and
