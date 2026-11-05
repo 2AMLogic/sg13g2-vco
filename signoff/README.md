@@ -185,18 +185,22 @@ evidence (issue #244):
 - **Covered by the planned campaign:** rows 1, 2, 3, 5, 6, 7, 9
   (`sim/oscillator-core/yield/README.md`). **Declared gap: row 4**, because no
   per-sample phase-noise estimator exists.
-- **Why this is not in `manifest.json`:** the `spec_rows."6"` field that
-  declares this set (klayout-tools#2908) is not graded by the pinned `0.6.0`
-  (checked 2026-10-17: the field name does not appear anywhere in the
-  installed `0.6.0` package). Adding it now would be an unread key. A manifest
-  edit would also change `t1-report.json` only if the pin graded it.
-- **Move it into the manifest** when the pin moves to a release that grades
-  `spec_rows`: add `"spec_rows": {"6": [1, 2, 3, 4, 5, 6, 7, 9]}` to
-  `signoff/manifest.json` (confirm the exact shape in that release's
-  `docs/cli/signoff.md` first; the shape here is the issue's wording, not read
-  from a release), re-render `t1-report.json`, and confirm item 6 reads
-  `partial_coverage` with `uncovered_rows`, not `no_evidence`. Do not bump the
-  pin for this alone.
+- **Declared in `manifest.json` under `spec_rows."6"`** (klt 0.8.0 grades the
+  field, read from `klayout_tools/signoff.py` `_read_spec_rows`; the
+  klayout-tools#2908 field the pin `0.6.0` did not read). The value is a list
+  of objects, not bare numbers: `{"id": "<row>", "gap": "<reason>"?,
+  "ratified": bool?}`. Rows 1, 2, 3, 5, 6, 7, 9 are declared covered, row 4 is
+  declared with a `gap` reason, and every row carries `"ratified": false`
+  because DR-007 is still **proposed**: evidence against an unratified limit
+  never grades `met`. Flip `ratified` to `true` when DR-007 is ratified.
+- **It does not change the report yet (checked 2026-11-05, klt 0.8.0 via
+  `uvx --from klayout-tools==0.8.0`).** The render of the manifest with the
+  field is byte-identical to the committed `t1-report.json`: item 6 still
+  reads `unmet` / `no_evidence`, because `spec_rows` is graded only against a
+  cited evidence entry and none exists (no `klt yield` report is cited). Item 6
+  will read `partial_coverage` with `uncovered_rows` and `declared_gaps` once
+  an item 6 citation is added. That citation is the campaign run, which waits
+  on #50's grid.
 - **Citing evidence later:** a `klt yield` report only counts if its own
   `sample_size.verdict` is not `insufficient` and its negative control is
   detected (`sim/oscillator-core/yield/README.md`). Item 6 is not met by any
