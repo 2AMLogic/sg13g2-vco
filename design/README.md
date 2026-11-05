@@ -318,11 +318,11 @@ re-sized in this change: retuning the tank to put the band back at 5.0 GHz
 with the junction in place is a design task of its own, and it has to be done
 against the corrected netlist, not around it. Until then the pilot numbers
 below (and every `sim/oscillator-core`, `sim/phase-noise` number) describe the
-*pre-#79* netlist and must not be read as describing this one.
+*pre-#79* netlist and must not be read as describing this one. (Post-#79 fleet records now exist: `sim/oscillator-core/records/20261105-*` and, for phase noise, `sim/phase-noise/records/20261105-200000-6834172.md`; the tables below are not rewritten and remain pre-#79.)
 
-**What was not re-measured, and why.** The full-oscillator evidence
-(`design/run_elaborate.sh`, `sim/oscillator-core`, `sim/phase-noise`) needs
-the OSDI MOS-varactor core, and could not be regenerated for #79: this host's
+**What was not re-measured, and why.** At the time of #79 the full-oscillator evidence
+(`design/run_elaborate.sh`, `sim/oscillator-core`, `sim/phase-noise`) needed
+the OSDI MOS-varactor core and could not be regenerated (it has since been, on the fleet, under #94: see the post-#79 records above): this host's
 ngspice-42 cannot load the OSDI v0.4 library the pinned compiler emits, and
 the batch fleet's runner (klt 0.5.0) cannot take an `osdi_preload` request. See
 `sim/bn-substrate-tank/README.md` and DR-005 "Not regenerated". The tank-level
@@ -333,7 +333,7 @@ result above is the bound that could be measured; phase noise has not been.
 > **Pre-#79 numbers (including the predicted-vs-simulated f0 endpoints below).** The simulated figures in this section were produced
 > against the netlist before the `bn` correction. See "Correction (#79)" above and
 > [DR-005](../spec/decision-records/DR-005-varactor-bn-substrate.md); they are not current
-> (re-tuning #93, regeneration #94).
+> (re-tuning #93; post-#79 fleet records: `sim/oscillator-core/records/20261105-*`, `sim/phase-noise/records/20261105-200000-6834172.md`).
 
 Sixteen cells per side, i.e. 32 cells, all in parallel between a tank node and
 `VCTRL`. Two equal single-ended banks present **half** their capacitance to the
@@ -623,7 +623,7 @@ resonator, with TAIL behaving as a virtual ground at the fundamental.
 > **Pre-#79 numbers (table below).** The simulated figures in this section were produced
 > against the netlist before the `bn` correction. See "Correction (#79)" above and
 > [DR-005](../spec/decision-records/DR-005-varactor-bn-substrate.md); they are not current
-> (re-tuning #93, regeneration #94).
+> (re-tuning #93; post-#79 fleet records: `sim/oscillator-core/records/20261105-*`, `sim/phase-noise/records/20261105-200000-6834172.md`).
 
 | Vctrl (V) | f_osc (GHz) | Vpp_diff (V) | P_core (mW) |
 |---|---|---|---|
@@ -639,7 +639,7 @@ endpoints inside the row-1 4.5–5.5 GHz window.
 > **Pre-#79 numbers (including the Kvco non-linearity figures).** The simulated figures in this section were produced
 > against the netlist before the `bn` correction. See "Correction (#79)" above and
 > [DR-005](../spec/decision-records/DR-005-varactor-bn-substrate.md); they are not current
-> (re-tuning #93, regeneration #94).
+> (re-tuning #93; post-#79 fleet records: `sim/oscillator-core/records/20261105-*`, `sim/phase-noise/records/20261105-200000-6834172.md`).
 
 1. **Kvco is strongly non-linear over the `Vctrl` domain.** 5.4185 → 5.3842 GHz
    over the *lower* half of the range (0 → 1.65 V), and 5.3842 → 4.6226 GHz over

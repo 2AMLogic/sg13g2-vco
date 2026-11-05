@@ -9,6 +9,13 @@
 > the OSDI varactor; the batch runner cannot take an `osdi_preload` request).
 > Do not read any frequency, tuning ratio or `Kvco` below as describing the
 > current `design/vco.spice`.
+>
+> **Update (#94, 2026-11-05):** a post-#79 ISF pilot now exists on the batch fleet
+> (OSDI varactor via `options.osdi_preload`): [`records/20261105-200000-6834172.md`](records/20261105-200000-6834172.md)
+> -- one corner (tt/27 C/Vctrl 1.65 V), L(1 MHz) = -101.15 dBc/Hz, 1.12 dB worse than the pre-#79
+> pilot, grades no row-4 point. Its inputs are in `klt-sim/`. Every pre-#79 number below
+> (carrier 5.38 GHz, -102.28 dBc/Hz) is still pre-#79 and stays bannered; the "could not be
+> regenerated" sentence above is superseded by that record.
 
 The second half of the oscillator bench. [`oscillator-core/`](../oscillator-core/)
 measures what the circuit *does* — start-up, `f_osc`, tuning, power, the row-6

@@ -1,0 +1,20 @@
+* klt sim -- generated corner deck, do not edit
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib hbt_typ
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib mos_tt
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib cap_typ
+.include /var/tmp/eda-job-klt-sim-c37390425454/inputs/netlist.cir
+.temp 27
+.meas tran vdiff_max MAX v(vdiff) FROM=2.5n TO=1.088623e-08
+.control
+pre_osdi /opt/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+alterparam dqd=-8e-15
+alterparam dqt=0
+reset
+save all
+alter vct=1.65
+set filetype=ascii
+tran 1p 1.088622825828e-08 0 2p
+write /var/tmp/eda-job-klt-sim-c37390425454/outputs/artifacts/tt_typ_typ_1p650V_27C_params_5897c8b1dacafe4adfe887bd7670bba2f50b4f01b9a9dd27e6673664a09f2f47/waveform.raw
+quit
+.endc
+.end

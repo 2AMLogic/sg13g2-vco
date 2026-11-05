@@ -209,7 +209,7 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:97c8cfefe735889bc04f33715972986143aa6c2d9063d3ba3a7efa7e9bd35de4",
+        "content_hash": "sha256:bdf41e431cc4f5aaff36dd8ed157f954dac8047849620b48d07503ff2c5c6d2f",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
@@ -218,7 +218,7 @@
             "path": "signoff/evidence/inventory-10-repo-hygiene.json",
             "scope": "repo"
           },
-          "content_hash": "sha256:97c8cfefe735889bc04f33715972986143aa6c2d9063d3ba3a7efa7e9bd35de4",
+          "content_hash": "sha256:bdf41e431cc4f5aaff36dd8ed157f954dac8047849620b48d07503ff2c5c6d2f",
           "input_verified": true,
           "summary": "Audited inventory for T1 item 10 (Repo hygiene): 10 files (README.md, LICENSE, the ratified spec and its DR-003/DR-004 decision records, the CI workflows and the shared gate runner), each with its sha256, plus the CI command that validates harness and evidence formats ('.github/scripts/check-all.sh test'). signoff/inventories.py --check re-derives the inventory from the live tree in CI.",
           "source": "signoff/evidence/inventory-10-repo-hygiene.json"

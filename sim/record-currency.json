@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 31
+    "unknown": 32
   },
   "records": [
     {
@@ -333,6 +333,19 @@
       "path": "sim/phase-noise/records/20260926-071903-7a02483.md",
       "reason": "filename-only provenance: the commit 7a02483 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20260926-071903-7a02483",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/phase-noise",
+      "file_count": 5,
+      "filename_commit": {
+        "id": "6834172"
+      },
+      "path": "sim/phase-noise/records/20261105-200000-6834172.md",
+      "reason": "filename-only provenance: the commit 6834172 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261105-200000-6834172",
       "state": "unknown"
     },
     {

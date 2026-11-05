@@ -1,0 +1,30 @@
+* klt sim -- generated corner deck, do not edit
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib hbt_typ
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib mos_tt
+.lib /opt/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib cap_typ
+.include /var/tmp/eda-job-klt-sim-aa58f01bf9f7/inputs/netlist.cir
+.temp 27
+.control
+pre_osdi /opt/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+save all
+alter vct=1.65
+noise v(OUTP,OUTN) IPROBE lin 7 3e9 9e9
+let inoise_spectrum = noise1.inoise_spectrum
+let onoise_spectrum = noise1.onoise_spectrum
+let inoise_0 = inoise_spectrum[0]
+print inoise_0
+let inoise_1 = inoise_spectrum[1]
+print inoise_1
+let inoise_2 = inoise_spectrum[2]
+print inoise_2
+let inoise_3 = inoise_spectrum[3]
+print inoise_3
+let inoise_4 = inoise_spectrum[4]
+print inoise_4
+let inoise_5 = inoise_spectrum[5]
+print inoise_5
+let inoise_6 = inoise_spectrum[6]
+print inoise_6
+quit
+.endc
+.end

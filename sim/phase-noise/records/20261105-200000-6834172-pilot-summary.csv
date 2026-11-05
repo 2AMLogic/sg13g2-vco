@@ -1,0 +1,29 @@
+quantity,value,unit,note
+mos,tt,,process model section
+cap,cap_typ,,process model section
+hbt,hbt_typ,,process model section
+temp_c,27,C,simulation temperature
+vctrl_v,1.65,V,control voltage
+vsup_v,3.3,V,supply rail simulated
+f0_measured,4.196747e+09,Hz,crossing-counted over the reference run
+vpp_diff,5.917737e-01,V,peak-to-peak of v(OUTP)-v(OUTN) over the measurement window
+f0_grid_error_pct,-0.0060,%,measured carrier vs the nominal the impulse spacing was designed around
+si_tank,3.11262341e-23,A^2/Hz,input-referred one-sided noise current at the differential tank port
+si_tail,8.82868643e-23,A^2/Hz,input-referred one-sided noise current at the tail node
+si_tank_band_spread_pct,6.946,%,peak-to-peak over 3e9..9e9 Hz
+si_tail_band_spread_pct,34.237,%,peak-to-peak over 3e9..9e9 Hz
+gq_rms_tank_mean,1.394914e+13,rad/C,mean over 4 realisations
+gq_rms_tank_sd,3.360850e+11,rad/C,sample standard deviation over 4 realisations
+gq_rms_tail,5.02772680e+12,rad/C,single realisation
+isf_linearity_spread_pct,2.062,%,spread of Gq_rms between the two injected-charge magnitudes
+l_1mhz_mean,-101.1536,dBc/Hz,mean over the tank-port realisations
+l_1mhz_sd,0.2071,dBc/Hz,sample standard deviation over the tank-port realisations
+l_1mhz_min,-101.2881,dBc/Hz,best realisation
+l_1mhz_max,-100.8494,dBc/Hz,worst realisation
+l_10mhz_mean,-121.1536,dBc/Hz,mean over the tank-port realisations
+l_10mhz_sd,0.2071,dBc/Hz,sample standard deviation over the tank-port realisations
+l_1mhz_tail_port,-105.4875,dBc/Hz,the same circuit noise weighted by the TAIL port ISF instead
+port_isf_ratio_db,-8.86,dB,20*log10(Gq_rms tail / Gq_rms tank)
+inductor_bar_q,0.414,dB,propagated from the EM model's +-10% Q bar
+inductor_bar_fit,0.078,dB,propagated from the EM model's 0.90% rms fit residual
+inductor_bar_total,0.421,dB,the two added in quadrature

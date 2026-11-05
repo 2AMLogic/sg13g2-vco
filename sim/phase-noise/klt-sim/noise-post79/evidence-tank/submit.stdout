@@ -1,0 +1,20 @@
+netlist: sim/phase-noise/klt-sim/noise-post79/vco_noise_tank_body.spice
+status: pass
+corners: 1  passed: 1  failed: 0  errored: 0  inconclusive: 0
+engine: ngspice 46
+models_lib: <unresolved>
+pdk: ihp-sg13g2 fetched:0.3.0 (via search root: ~/share/pdk)
+pdk_stamp: not_comparable (worker_stamp_unavailable)
+models_staged: false
+resume: reused 0 checkpointed corner(s)  checkpoint_retained=False  path=sim/phase-noise/klt-sim/noise-post79/evidence-tank/checkpoint.json
+
+measurements:
+  inoise_0 [pass]  worst=5.666875e-12 @ tt_typ_typ/1.650V/27C (margin=None)
+  inoise_1 [pass]  worst=5.48611e-12 @ tt_typ_typ/1.650V/27C (margin=None)
+  inoise_2 [pass]  worst=5.451461e-12 @ tt_typ_typ/1.650V/27C (margin=None)
+  inoise_3 [pass]  worst=5.491903e-12 @ tt_typ_typ/1.650V/27C (margin=None)
+  inoise_4 [pass]  worst=5.579089e-12 @ tt_typ_typ/1.650V/27C (margin=None)
+  inoise_5 [pass]  worst=5.699053e-12 @ tt_typ_typ/1.650V/27C (margin=None)
+  inoise_6 [pass]  worst=5.843771e-12 @ tt_typ_typ/1.650V/27C (margin=None)
+
+tt_typ_typ/1.650V/27C  [pass]  runtime=0.217s
