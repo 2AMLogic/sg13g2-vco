@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "status": "error",
+  "request_count": 6,
+  "max_in_flight": 3,
+  "submitted": 6,
+  "refused": 5,
+  "refused_codes": [],
+  "requests": [
+    {
+      "index": 0,
+      "request": "request-a.json",
+      "status": "error",
+      "exit_code": 4,
+      "job_id": "klt-sim-3dbcc6036d2e",
+      "job_ids": [
+        "klt-sim-3dbcc6036d2e"
+      ],
+      "report": "evidence/units/request-a/report.json",
+      "error": null,
+      "shards": [
+        {
+          "job_id": "klt-sim-3dbcc6036d2e",
+          "last_state": "failed",
+          "interrupted_observations": 0
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "request": "request-b.json",
+      "status": "error",
+      "exit_code": 4,
+      "job_id": "klt-sim-09fdfb46f23f",
+      "job_ids": [
+        "klt-sim-09fdfb46f23f"
+      ],
+      "report": "evidence/units/request-b/report.json",
+      "error": null,
+      "shards": [
+        {
+          "job_id": "klt-sim-09fdfb46f23f",
+          "last_state": "failed",
+          "interrupted_observations": 0
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "request": "request-c.json",
+      "status": "error",
+      "exit_code": 4,
+      "job_id": "klt-sim-c289b57bd30d",
+      "job_ids": [
+        "klt-sim-c289b57bd30d"
+      ],
+      "report": "evidence/units/request-c/report.json",
+      "error": null,
+      "shards": [
+        {
+          "job_id": "klt-sim-c289b57bd30d",
+          "last_state": "failed",
+          "interrupted_observations": 0
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "request": "request-d.json",
+      "status": "error",
+      "exit_code": 4,
+      "job_id": "klt-sim-6a7d4a97ad83",
+      "job_ids": [
+        "klt-sim-6a7d4a97ad83"
+      ],
+      "report": "evidence/units/request-d/report.json",
+      "error": null,
+      "shards": [
+        {
+          "job_id": "klt-sim-6a7d4a97ad83",
+          "last_state": "failed",
+          "interrupted_observations": 0
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "request": "request-e.json",
+      "status": "pass",
+      "exit_code": 0,
+      "job_id": "klt-sim-81aea7ca0a1e",
+      "job_ids": [
+        "klt-sim-81aea7ca0a1e"
+      ],
+      "report": "evidence/units/request-e/report.json",
+      "error": null,
+      "shards": [
+        {
+          "job_id": "klt-sim-81aea7ca0a1e",
+          "last_state": "done",
+          "interrupted_observations": 0
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "request": "request-f.json",
+      "status": "error",
+      "exit_code": 4,
+      "job_id": "klt-sim-cf0e7f48ce58",
+      "job_ids": [
+        "klt-sim-cf0e7f48ce58"
+      ],
+      "report": "evidence/units/request-f/report.json",
+      "error": null,
+      "shards": [
+        {
+          "job_id": "klt-sim-cf0e7f48ce58",
+          "last_state": "failed",
+          "interrupted_observations": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+klt sim: warning: batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling
+klt: batch job klt-sim-3dbcc6036d2e submitting to s3://<bucket>/jobs/klt-sim-3dbcc6036d2e
+klt sim: warning: batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling
+klt: batch job klt-sim-c289b57bd30d submitting to s3://<bucket>/jobs/klt-sim-c289b57bd30d
+klt sim: warning: batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling
+klt: batch job klt-sim-09fdfb46f23f submitting to s3://<bucket>/jobs/klt-sim-09fdfb46f23f
+klt sim: batch job klt-sim-09fdfb46f23f (request-b.json): submitted
+klt sim: batch job klt-sim-c289b57bd30d (request-c.json): submitted
+klt sim: batch job klt-sim-3dbcc6036d2e (request-a.json): submitted
+klt sim: batch job klt-sim-3dbcc6036d2e launched; re-attach with `klt sim <request> --backend batch --attach klt-sim-3dbcc6036d2e`
+klt sim: batch job klt-sim-09fdfb46f23f launched; re-attach with `klt sim <request> --backend batch --attach klt-sim-09fdfb46f23f`
+klt sim: batch job klt-sim-c289b57bd30d launched; re-attach with `klt sim <request> --backend batch --attach klt-sim-c289b57bd30d`
+klt sim: batch job klt-sim-3dbcc6036d2e state=no status.json yet elapsed=2s
+klt sim: batch job klt-sim-09fdfb46f23f state=no status.json yet elapsed=2s
+klt sim: batch job klt-sim-c289b57bd30d state=no status.json yet elapsed=2s
+klt sim: batch job klt-sim-3dbcc6036d2e (request-a.json): failed
+klt sim: batch job klt-sim-09fdfb46f23f (request-b.json): failed
+klt sim: batch job klt-sim-c289b57bd30d (request-c.json): failed
+klt sim: warning: batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling
+klt: batch job klt-sim-6a7d4a97ad83 submitting to s3://<bucket>/jobs/klt-sim-6a7d4a97ad83
+klt sim: warning: batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling
+klt: batch job klt-sim-81aea7ca0a1e submitting to s3://<bucket>/jobs/klt-sim-81aea7ca0a1e
+klt sim: warning: batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling
+klt: batch job klt-sim-cf0e7f48ce58 submitting to s3://<bucket>/jobs/klt-sim-cf0e7f48ce58
+klt sim: batch job klt-sim-6a7d4a97ad83 (request-d.json): submitted
+klt sim: batch job klt-sim-81aea7ca0a1e (request-e.json): submitted
+klt sim: batch job klt-sim-cf0e7f48ce58 (request-f.json): submitted
+klt sim: batch job klt-sim-6a7d4a97ad83 launched; re-attach with `klt sim <request> --backend batch --attach klt-sim-6a7d4a97ad83`
+klt sim: batch job klt-sim-cf0e7f48ce58 launched; re-attach with `klt sim <request> --backend batch --attach klt-sim-cf0e7f48ce58`
+klt sim: batch job klt-sim-81aea7ca0a1e launched; re-attach with `klt sim <request> --backend batch --attach klt-sim-81aea7ca0a1e`
+klt sim: batch job klt-sim-6a7d4a97ad83 state=no status.json yet elapsed=2s
+klt sim: batch job klt-sim-cf0e7f48ce58 state=no status.json yet elapsed=2s
+klt sim: batch job klt-sim-81aea7ca0a1e state=no status.json yet elapsed=2s
+klt sim: batch job klt-sim-6a7d4a97ad83 (request-d.json): failed
+klt sim: batch job klt-sim-cf0e7f48ce58 (request-f.json): failed
+klt sim: batch job klt-sim-81aea7ca0a1e (request-e.json): done

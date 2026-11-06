@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 33
+    "unknown": 34
   },
   "records": [
     {
@@ -317,6 +317,19 @@
       "path": "sim/oscillator-core/records/20261106-000000-removal-surrogate-generator.md",
       "reason": "entry name carries no record id (YYYYMMDD-HHMMSS-<commit>); cannot group or date it",
       "record_id": null,
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 1,
+      "filename_commit": {
+        "id": "c9d7e70"
+      },
+      "path": "sim/oscillator-core/records/20261106-055147-c9d7e70-hot-startup-bisect.md",
+      "reason": "filename-only provenance: the commit c9d7e70 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261106-055147-c9d7e70",
       "state": "unknown"
     },
     {
