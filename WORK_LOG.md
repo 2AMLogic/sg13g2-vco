@@ -6,6 +6,8 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-06
 
+- **PR #298**: sim: bisect 125 C start-up abort with single-change fleet variants
+- **Issue #297** (closed): sim: bisect the 125 C VBIC start-up abort with the untried start-up variants on the fleet
 - **PR #296**: remove OSDI-free varactor surrogate generator and tests
 - **Issue #292** (closed): Remove OSDI-free varactor surrogate (#179): stop-gap for blocker that fleet runs now bypass
 
