@@ -4,8 +4,14 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-06
+
+- **PR #296**: remove OSDI-free varactor surrogate generator and tests
+- **Issue #292** (closed): Remove OSDI-free varactor surrogate (#179): stop-gap for blocker that fleet runs now bypass
+
 ### 2026-11-05
 
+- **PR #295**: signoff: declare item-6 statistical row set in manifest spec_rows
 - **PR #293**: sim: record post-#79 ISF phase-noise pilot from the fleet and update pre-#79 pointers
 - **PR #291**: sim: record post-#79 elaboration/start-up check on the fleet with the OSDI varactor
 - **PR #290**: sim: re-measure 199 estimator-errored post-#79 units on the fleet and grade rows 1-3/7 at -40/27 C
