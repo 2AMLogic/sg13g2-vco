@@ -12,7 +12,7 @@ batch receipts beside them; submit transcript in `evidence/batch-set-stderr.txt`
   OSDI varactor via `options.osdi_preload`; `tran 1p 2n 0 2p`). **Each variant changes exactly one thing** against that
   base. T = 27 C and 125 C in every request (two units per request).
 - Submission: `klt sim --backend batch --batch-set request-{a..f}.json --max-in-flight 3`, all six on the Spot fleet
-  (runner klt 0.9.0, client klt 0.9.2.dev47, ngspice-42 banner on the runner). **Nothing ran as a local ngspice grid.**
+  (runner klt 0.9.0, client klt 0.9.2.dev47, ngspice-46 on the runner: `environment.remote.worker_environment.simulator.version_banner` in each `report.json`, and the last line of every `ngspice.log`; the earlier "ngspice-42" wording was wrong). **Nothing ran as a local ngspice grid.**
   No Spot refusal and no `--resume` was needed. The job-bound warning in the transcript (6120 s vs a 3600 s ceiling) is
   klt's conservative serial bound; every job finished in about 7 s of runtime.
 - Runner PDK at `/opt/pdk` (the same fleet PDK as #280; not comparable by stamp to a host PDK).
