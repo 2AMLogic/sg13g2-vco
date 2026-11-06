@@ -1,0 +1,325 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/oscillator-core/klt-sim/hot-startup-bisect/body-a.spice",
+    "scope": "repo"
+  },
+  "status": "error",
+  "corner_count": 2,
+  "passed": 1,
+  "failed": 0,
+  "errored": 1,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {
+      "timestep_too_small": 1,
+      "analysis_aborted": 1
+    },
+    "by_severity": {
+      "error": 2
+    },
+    "corners_with_diagnostics": 1
+  },
+  "metrics": {
+    "sim__corner__count": 2,
+    "sim__corner__passed_count": 1,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 1,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "46",
+    "ngspice_binary": "/usr/local/bin/ngspice",
+    "engine_build": {
+      "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******",
+      "binary_sha256": "dc859418bedd0478ff439a2d3e2e09f4386a7f4d5e3f17671953e101a000cc60",
+      "probe": "ok",
+      "reason": null
+    },
+    "models_lib": {
+      "path": null,
+      "scope": "absent"
+    },
+    "models_lib_sha256": null,
+    "models_lib_sha256_scope": "client",
+    "netlist_sha256": "24d08e01df8d2cb42059c10f11efd51e03a642d7e8939062594393794ce46262",
+    "netlist_closure": [
+      {
+        "path": "sim/oscillator-core/klt-sim/hot-startup-bisect/body-a.spice",
+        "scope": "repo",
+        "sha256": "24d08e01df8d2cb42059c10f11efd51e03a642d7e8939062594393794ce46262"
+      },
+      {
+        "path": "sim/oscillator-core/klt-sim/hot-startup-bisect/sg13g2_inductor_em.spice",
+        "scope": "repo",
+        "sha256": "6f24f9857ab7810c91bda5f6307e78f1dfcbe2afd750bb023e28156ded06d6a0"
+      }
+    ],
+    "netlist_identity": "sha256:98df8c40d6ba9009d2ba99ba05f45aba29f55077899c828a9449e56ff5e895ab",
+    "corner_section_libs": [
+      {
+        "name": "cornerMOShv.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "5a1f862dc304fdfe2fb9758b15d54809a688d83c3ce981dad2e8473b3e93481a"
+      },
+      {
+        "name": "cornerHBT.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462"
+      },
+      {
+        "name": "cornerCAP.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56"
+      }
+    ],
+    "osdi_preload_runner_resolved": [
+      {
+        "entry": "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi",
+        "reason": "env_var"
+      }
+    ],
+    "remote": {
+      "provider": "aws-batch-fleet",
+      "job_id": "klt-sim-3dbcc6036d2e",
+      "region": "us-east-1",
+      "instance_id": "i-04ffe79a0805c5f7e",
+      "instance_type": "m7i.4xlarge",
+      "availability_zone": "us-east-1c",
+      "ami_id": "ami-095c25ae241a4d360",
+      "lifecycle": "spot",
+      "spot": true,
+      "state": "failed",
+      "exit_code": "4",
+      "concurrency": "1",
+      "physical_cores": "8",
+      "elapsed_seconds": 7,
+      "client_submitted_at": "2026-11-06T05:48:08.501393Z",
+      "client_launched_at": "2026-11-06T05:49:05.176704Z",
+      "client_status_terminal_at": "2026-11-06T05:49:39.080612Z",
+      "client_collected_at": "2026-11-06T05:49:41.977621Z",
+      "runner_klt_version": "0.9.0",
+      "client_klt_version": "0.9.2.dev47+g581de87616d8",
+      "runner_compatibility": "match",
+      "runner_request_features": {
+        "required": [
+          "measurements[].expr",
+          "corners.process[].sections[]",
+          "options.osdi_preload"
+        ],
+        "missing": [],
+        "status": "supported"
+      },
+      "worker_environment": {
+        "capture": "ok",
+        "simulator": {
+          "requested_binary": "ngspice",
+          "binary_source": "PATH",
+          "selected_path": "/usr/local/bin/ngspice",
+          "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+          "version_probe": "ok"
+        },
+        "pdk": {
+          "variant": "ihp-sg13g2",
+          "root": "/opt/pdk",
+          "stamp_scheme": null,
+          "stamp_sha256": null,
+          "stamp_text": null,
+          "models_staged": false,
+          "stamp_scope": "executed"
+        },
+        "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+        "omp_num_threads": null,
+        "image_manifest": null,
+        "model_inputs": null,
+        "diagnostics": [
+          "pdk stamp unreadable: FileNotFoundError"
+        ],
+        "pdk_stamp_comparison": {
+          "status": "not_comparable",
+          "reason": "worker_stamp_unavailable"
+        },
+        "engine_build_comparison": {
+          "status": "match"
+        }
+      },
+      "runner_model_inputs": null,
+      "exit_reason": {
+        "exit_code": 4,
+        "report_status": "error",
+        "nothing_checked": false,
+        "nothing_checked_reasons": [],
+        "message": "klt sim exited 4 (errored / not_checked / inconclusive): aggregate status 'error'; the job state is failed because of this verdict exit code, not a runner crash and not the whole-job ceiling (a ceiling kill reports state timeout, exit 124)",
+        "units": {
+          "total": 2,
+          "by_status": {
+            "pass": 1,
+            "error": 1
+          },
+          "first_not_passed": [
+            {
+              "corner_id": "tt_typ_typ/1.650V/125C",
+              "status": "error",
+              "code": "timestep_too_small",
+              "message": "ngspice aborted the transient: timestep too small; no results exist past the abort, so measurements beyond it produce no value (engine log: doAnalyses: TRAN:  Timestep too small; initial timepoint: trouble with xq1:npn13g2v_nx_vbic-instance q.xq1.qnpn13g2v)."
+            }
+          ]
+        }
+      },
+      "job_ceiling": {
+        "basis": "conservative_serial_bound",
+        "unit_count": 2,
+        "per_unit_timeout_s": 3000,
+        "overhead_s": 120.0,
+        "job_bound_s": 6120.0,
+        "max_job_seconds": 3600.0,
+        "max_job_seconds_source": "fleet_config",
+        "exceeds_ceiling": true,
+        "check": "warn",
+        "max_units_per_job": 1,
+        "recommended_hosts": 2,
+        "warning": "batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling"
+      }
+    },
+    "engine_host": "worker",
+    "client_ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "backend": {
+      "resolved": "batch",
+      "source": "flag",
+      "requested": "batch"
+    }
+  },
+  "coverage": {
+    "corners_simulated": 2,
+    "measurements_declared": 1,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"tt_typ_typ/1.650V/27C\",\"vdiff_pp\"]/observation",
+      "measurement:[1,\"tt_typ_typ/1.650V/125C\",\"vdiff_pp\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"tt_typ_typ/1.650V/27C\",\"vdiff_pp\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"tt_typ_typ/1.650V/125C\",\"vdiff_pp\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.9.2.dev47+g581de87616d8",
+    "klt_git_commit": "581de87616d81655e11bb44c5ddeefa8520d348f",
+    "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@581de87616d81655e11bb44c5ddeefa8520d348f",
+    "klayout_version": "0.30.13",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "PDK_ROOT environment variable",
+      "version": "fetched:0.3.0"
+    },
+    "deck": null,
+    "input": {
+      "content_hash": "sha256:24d08e01df8d2cb42059c10f11efd51e03a642d7e8939062594393794ce46262",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "vdiff_pp",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "tt_typ_typ/1.650V/27C",
+        "value": 9.145524e-10,
+        "margin": null
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "tt_typ_typ/1.650V/27C",
+      "process": "tt_typ_typ",
+      "supply_v": {
+        "vct": 1.65
+      },
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 0.418,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "vdiff_pp",
+          "value": 9.145524e-10,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-297/sim/oscillator-core/klt-sim/hot-startup-bisect/evidence/units/request-a/tt_typ_typ_1p650V_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-297/sim/oscillator-core/klt-sim/hot-startup-bisect/evidence/units/request-a/tt_typ_typ_1p650V_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "tt_typ_typ/1.650V/125C",
+      "process": "tt_typ_typ",
+      "supply_v": {
+        "vct": 1.65
+      },
+      "temperature_c": 125,
+      "status": "error",
+      "runtime_s": 0.316,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "vdiff_pp",
+          "value": 0.0,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "error",
+          "code": "timestep_too_small",
+          "message": "ngspice aborted the transient: timestep too small; no results exist past the abort, so measurements beyond it produce no value (engine log: doAnalyses: TRAN:  Timestep too small; initial timepoint: trouble with xq1:npn13g2v_nx_vbic-instance q.xq1.qnpn13g2v).",
+          "time_s": null,
+          "timestep_s": null,
+          "node": null
+        },
+        {
+          "severity": "error",
+          "code": "analysis_aborted",
+          "message": "analysis aborted by the engine: tran simulation(s) aborted"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-297/sim/oscillator-core/klt-sim/hot-startup-bisect/evidence/units/request-a/tt_typ_typ_1p650V_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-297/sim/oscillator-core/klt-sim/hot-startup-bisect/evidence/units/request-a/tt_typ_typ_1p650V_125C/corner.cir"
+      },
+      "monte_carlo": null
+    }
+  ]
+}

@@ -157,3 +157,9 @@ not validate that estimator, only the one in `sim/lib.sh`.
 `hot-startup/` holds a pair of 2-unit `klt sim` requests (27 C control and 125 C, with and without a
 preceding `op`) that ran on the batch fleet, with per-unit decks and reports (the ngspice logs were not retained). Outcome and method:
 `../records/20261103-185500-666800d-hot-startup.md`.
+
+## Hot start-up bisect (issue #297)
+
+`hot-startup-bisect/` holds six 2-unit batch requests (27 C control and 125 C), each changing one thing against the
+`hot-startup/` recipe (no `.ic`, `uic`, `.nodeset`, gmin/itl4, `tnom`, `selft=0`), with per-unit decks and the retained
+`ngspice.log` files. Outcome and method: `../records/20261106-055147-c9d7e70-hot-startup-bisect.md`.
