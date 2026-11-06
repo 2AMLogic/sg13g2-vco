@@ -22,7 +22,6 @@ _None._
 
 `loom:important`; taken before unlabelled work.
 
-- **#94**: sim: regenerate design/run_elaborate.sh, sim/oscillator-core and sim/phase-noise for the post-#79 netlist (blocked: OSDI varactor cannot run locally or on the fleet)
 - **#162**: lvs: runset strict top-port check logs 3 port-name findings ('LA,VDD' vs 'VDD') after the cross-reference matches
 
 ## Ready
@@ -35,7 +34,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#297**: sim: bisect the 125 C VBIC start-up abort with the untried start-up variants on the fleet
 
 ## PRs Awaiting Review
 
@@ -56,10 +55,10 @@ Issues carrying `loom:curated`.
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
-- **#94**: sim: regenerate design/run_elaborate.sh, sim/oscillator-core and sim/phase-noise for the post-#79 netlist (blocked: OSDI varactor cannot run locally or on the fleet) *(curated)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
+- **#297**: sim: bisect the 125 C VBIC start-up abort with the untried start-up variants on the fleet *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -75,9 +74,9 @@ _None._
 |------|-------|
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
-| Important | 2 |
+| Important | 1 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 0 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 7 |
