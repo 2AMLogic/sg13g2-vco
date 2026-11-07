@@ -426,6 +426,10 @@ mint_record_id() {
 # reserved id on stdout. Nothing is ever deleted: a rejected reservation dir
 # we created stays behind (empty) rather than being recycled. Callers must
 # open no output before this returns success.
+# Diagnostic hook: when SIM_RECORD_TRACE names a file, every attempt appends one
+# line "pid=<pid> attempt=<n> id=<id> mkdir=<ok|exists> bash=<version>" to it
+# (single O_APPEND write, so concurrent callers do not interleave). Off by
+# default; used by sim/tests/test-reserve-record-id.sh to explain a failure.
 reserve_record_id() {
   local repo_root="$1" exp_dir="$2"
   local attempt=0 id
@@ -436,12 +440,14 @@ reserve_record_id() {
     id="$(mint_record_id "${repo_root}")"
     _RECORD_SUFFIX_OVERRIDE=""
     if mkdir "${exp_dir}/corners/${id}" 2>/dev/null; then
+      [ -z "${SIM_RECORD_TRACE:-}" ] || printf 'pid=%s attempt=%s id=%s mkdir=ok bash=%s\n' "${BASHPID:-$$}" "${attempt}" "${id}" "${BASH_VERSION}" >> "${SIM_RECORD_TRACE}"
       if [ -e "${exp_dir}/netlist-snapshots/${id}" ] || compgen -G "${exp_dir}/records/${id}*" >/dev/null; then
         continue   # historical evidence already uses this id; keep it, try again
       fi
       echo "${id}"
       return 0
     fi
+    [ -z "${SIM_RECORD_TRACE:-}" ] || printf 'pid=%s attempt=%s id=%s mkdir=exists bash=%s\n' "${BASHPID:-$$}" "${attempt}" "${id}" "${BASH_VERSION}" >> "${SIM_RECORD_TRACE}"
   done
   echo "reserve_record_id: could not reserve a unique record id under ${exp_dir} after 50 attempts" >&2
   return 1
