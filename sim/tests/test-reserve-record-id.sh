@@ -22,23 +22,40 @@ if [ -n "$a" ] && [ "$a" != "$b" ] && [ -d "$E/corners/$a" ] && [ -d "$E/corners
   ok "consecutive allocations distinct (frozen ts+commit)"; else bad "consecutive: '$a' '$b'"; fi
 case "$a" in 20260101-000000-abc1234-*) ok "id keeps readable ts-commit prefix";; *) bad "id format: $a";; esac
 
-# 2. concurrent allocations (4 background procs). Each caller's stdout, stderr
-# and exit status are kept so a failure shows which caller printed what.
-mkdir -p "$T/out"
-for i in 1 2 3 4; do
-  ( reserve_record_id "$T" "$E" > "$T/out/$i.out" 2> "$T/out/$i.err"; echo $? > "$T/out/$i.rc" ) &
-done
-wait
-n="$(cat "$T"/out/*.out | sort -u | wc -l | tr -d ' ')"
-if [ "$n" = 4 ]; then ok "4 concurrent allocations distinct"; else
-  bad "concurrent distinct count $n (bash ${BASH_VERSION})"
-  for i in 1 2 3 4; do
-    echo "  caller $i: rc=$(cat "$T/out/$i.rc" 2>/dev/null || echo missing)" \
-      "stdout='$(cat "$T/out/$i.out" 2>/dev/null)'" \
-      "stderr='$(cat "$T/out/$i.err" 2>/dev/null)'"
+# 2. concurrent allocations (N background procs). Each caller's stdout, stderr
+# and exit status are kept so a failure shows which caller printed what, and
+# SIM_RECORD_TRACE records every mint/mkdir attempt (pid, id, outcome) so a
+# duplicate print can be traced to the attempt that produced it (issue #305).
+# $1 = label, $2 = caller count, remaining args = extra env (e.g. SIM_RECORD_SUFFIX=..).
+concurrent_case() {
+  local label="$1" count="$2" i n; shift 2
+  local D="$T/out-${label//[^a-z0-9]/_}"; rm -rf "$D"; mkdir -p "$D"
+  : > "$D/trace"
+  for i in $(seq 1 "$count"); do
+    # Forked subshell (not a fresh bash): same RANDOM/fork conditions as the
+    # CI failure this case was written for.
+    ( [ "$#" -eq 0 ] || export "$@"; export SIM_RECORD_TRACE="$D/trace"
+      reserve_record_id "$T" "$E" > "$D/$i.out" 2> "$D/$i.err"; echo $? > "$D/$i.rc" ) &
   done
-  echo "  reserved dirs: $(ls "$E/corners" | tr '\n' ' ')"
-fi
+  wait
+  n="$(cat "$D"/*.out | sort -u | wc -l | tr -d ' ')"
+  if [ "$n" = "$count" ] && [ "$(cat "$D"/*.out | wc -l | tr -d ' ')" = "$count" ]; then ok "$label distinct"; else
+    bad "$label distinct count $n of $count (bash ${BASH_VERSION})"
+    for i in $(seq 1 "$count"); do
+      echo "  caller $i: rc=$(cat "$D/$i.rc" 2>/dev/null || echo missing)" \
+        "stdout='$(cat "$D/$i.out" 2>/dev/null)'" \
+        "stderr='$(cat "$D/$i.err" 2>/dev/null)'"
+    done
+    echo "  trace:"; sed 's/^/    /' "$D/trace"
+    echo "  reserved dirs (inode name):"; ls -i "$E/corners" | sed 's/^/    /'
+  fi
+}
+concurrent_case "4 concurrent allocations" 4
+# Deterministic arbitration: every caller's FIRST attempt uses the same frozen
+# suffix, so mkdir alone must decide the winner and the rest must retry onto
+# fresh ids. Exercises the collision path on every run, not 1 CI run in N.
+concurrent_case "4 callers forcing one suffix" 4 SIM_RECORD_SUFFIX=0badc0de
+concurrent_case "8 callers forcing one suffix" 8 SIM_RECORD_SUFFIX=0badc0df
 
 # 3. forced collision with sentinel evidence: first attempt uses a frozen
 # suffix that is already taken; sentinel must stay byte-identical.
