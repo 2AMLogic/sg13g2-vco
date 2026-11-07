@@ -1,0 +1,23 @@
+status: error  requests: 11  submitted: 11  refused: 7  max_in_flight: 3
+  request-c0.json  [error]  job=klt-sim-663c8abf3d22
+    shard klt-sim-663c8abf3d22: failed  interrupted_observations=0
+  request-e0.json  [pass]  job=klt-sim-46e8f2bd4c41
+    shard klt-sim-46e8f2bd4c41: done  interrupted_observations=0
+  request-c1.json  [error]  job=klt-sim-4ca7d0645526
+    shard klt-sim-4ca7d0645526: failed  interrupted_observations=0
+  request-e1.json  [pass]  job=klt-sim-2de53bb5ca59
+    shard klt-sim-2de53bb5ca59: done  interrupted_observations=0
+  request-ci0.json  [error]  job=klt-sim-e6700f0d1457
+    shard klt-sim-e6700f0d1457: failed  interrupted_observations=0
+  request-fi.json  [pass]  job=klt-sim-35ce2fffe63c
+    shard klt-sim-35ce2fffe63c: done  interrupted_observations=0
+  request-fd.json  [error]  job=klt-sim-0d7641cc6803
+    shard klt-sim-0d7641cc6803: failed  interrupted_observations=0
+  request-fid.json  [error]  job=klt-sim-a654df15a5a6
+    shard klt-sim-a654df15a5a6: failed  interrupted_observations=0
+  request-ri.json  [error]  job=klt-sim-8f4c38124c12
+    shard klt-sim-8f4c38124c12: failed  interrupted_observations=0
+  request-rd.json  [pass]  job=klt-sim-49870272e038
+    shard klt-sim-49870272e038: done  interrupted_observations=0
+  request-ro.json  [error]  job=klt-sim-6af8b7e67415
+    shard klt-sim-6af8b7e67415: failed  interrupted_observations=0

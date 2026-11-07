@@ -1,0 +1,57 @@
+{
+  "netlist": "body-e0.spice",
+  "engine": "ngspice",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+  },
+  "corners": {
+    "process": [
+      {
+        "name": "tt_typ_typ",
+        "sections": [
+          {
+            "section": "mos_tt",
+            "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+          },
+          {
+            "section": "hbt_typ",
+            "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+          },
+          {
+            "section": "cap_typ",
+            "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+          }
+        ]
+      }
+    ],
+    "supply_v": {
+      "vct": [
+        1.65
+      ]
+    },
+    "temperature_c": [
+      27,
+      125
+    ]
+  },
+  "measurements": [
+    {
+      "name": "vdiff_pp",
+      "expr": "vecmax(vdiff)-vecmin(vdiff)",
+      "unit": "V"
+    }
+  ],
+  "options": {
+    "timeout_s": 3000,
+    "keep_artifacts": true,
+    "stage_model_inputs": false,
+    "osdi_preload": [
+      "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+    ]
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 2n 0 2p"
+  }
+}
