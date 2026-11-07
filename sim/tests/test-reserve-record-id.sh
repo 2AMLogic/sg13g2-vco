@@ -34,7 +34,7 @@ concurrent_case() {
   for i in $(seq 1 "$count"); do
     # Forked subshell (not a fresh bash): same RANDOM/fork conditions as the
     # CI failure this case was written for.
-    ( [ "$#" -eq 0 ] || export "$@"; export SIM_RECORD_TRACE="$D/trace"
+    ( [ "$#" -eq 0 ] || declare -gx "$@"; export SIM_RECORD_TRACE="$D/trace"
       reserve_record_id "$T" "$E" > "$D/$i.out" 2> "$D/$i.err"; echo $? > "$D/$i.rc" ) &
   done
   wait
