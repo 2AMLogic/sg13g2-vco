@@ -46,6 +46,8 @@ concurrent_case() {
         "stdout='$(cat "$D/$i.out" 2>/dev/null)'" \
         "stderr='$(cat "$D/$i.err" 2>/dev/null)'"
     done
+    # Which mkdir arbitrated the race (GNU vs uutils differ across runner images).
+    echo "  mkdir: $(command -v mkdir) = $(mkdir --version 2>&1 | head -1)"
     echo "  trace:"; sed 's/^/    /' "$D/trace"
     echo "  reserved dirs (inode name):"; ls -i "$E/corners" | sed 's/^/    /'
   fi
