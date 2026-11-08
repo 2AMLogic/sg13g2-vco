@@ -4,8 +4,14 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-08
+
+- **PR #307**: test: print mkdir implementation in record-id concurrency failure output
+- **Issue #305** (closed): test flake: record-id-selftest 'concurrent distinct' fails on sim-append-only (recurrence of #273)
+
 ### 2026-11-07
 
+- **PR #306**: test: trace record-id reservation attempts and force the collision path
 - **PR #303**: sim: trace dsubw diode TNOM reference as the cure for the 125 C start-up abort
 - **Issue #302** (closed): sim: trace which element's TNOM dependence clears the 125 C start-up abort (variant e)
 
