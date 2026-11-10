@@ -416,12 +416,12 @@ mint_record_id() {
 }
 
 # reserve_record_id <repo_root> <experiment_dir>
-# Mint a RECORD_ID and atomically reserve it: exclusive (non-`-p`) mkdir of
-# <experiment_dir>/corners/<id>, which every runner uses as its raw-log
-# namespace. mkdir either creates the directory or fails, so exactly one
-# caller owns an id. An id is also rejected (never reused) if any historical
-# flat record (records/<id>*) or snapshot dir (netlist-snapshots/<id>) already
-# exists. On a collision a fresh id is minted and retried (up to 50 times),
+# Mint a RECORD_ID and atomically reserve it: first an O_EXCL lock file
+# (<experiment_dir>/corners/.<id>.lock, via noclobber) decides the single
+# owner, then an exclusive (non-`-p`) mkdir of <experiment_dir>/corners/<id>,
+# which every runner uses as its raw-log namespace. An id is also rejected
+# (never reused) if any historical flat record (records/<id>*) or snapshot dir
+# (netlist-snapshots/<id>) already exists. On a collision a fresh id is minted and retried (up to 50 times),
 # then the call fails with a message on stderr and status 1. Prints the
 # reserved id on stdout. Nothing is ever deleted: a rejected reservation dir
 # we created stays behind (empty) rather than being recycled. Callers must
@@ -439,7 +439,12 @@ reserve_record_id() {
     attempt=$((attempt + 1))
     id="$(mint_record_id "${repo_root}")"
     _RECORD_SUFFIX_OVERRIDE=""
-    if mkdir "${exp_dir}/corners/${id}" 2>/dev/null; then
+    # Ownership is decided by an O_EXCL create (bash noclobber), which does not
+    # depend on the installed mkdir (uutils mkdir has been seen to succeed for
+    # several concurrent callers). Only the lock winner goes on to mkdir; locks
+    # are never deleted (dot-name, gitignored), so a stale one forces a new id.
+    if ( set -C; : > "${exp_dir}/corners/.${id}.lock" ) 2>/dev/null \
+       && mkdir "${exp_dir}/corners/${id}" 2>/dev/null; then
       [ -z "${SIM_RECORD_TRACE:-}" ] || printf 'pid=%s attempt=%s id=%s mkdir=ok bash=%s\n' "${BASHPID:-$$}" "${attempt}" "${id}" "${BASH_VERSION}" >> "${SIM_RECORD_TRACE}"
       if [ -e "${exp_dir}/netlist-snapshots/${id}" ] || compgen -G "${exp_dir}/records/${id}*" >/dev/null; then
         continue   # historical evidence already uses this id; keep it, try again

@@ -507,7 +507,8 @@ class TestCompare(Base):
         self.assertEqual(rc, 0, err)
         with open(os.path.join(self.root, "results", "latest_record_id.txt")) as fh:
             rid = fh.read().strip()
-        self.assertEqual(os.listdir(os.path.join(self.root, "corners")), [rid])
+        # ignore the dot-named O_EXCL `.<id>.lock` marker beside the reserved id
+        self.assertEqual([n for n in os.listdir(os.path.join(self.root, "corners")) if not n.startswith(".")], [rid])
         victim = os.path.join(self.root, "records", "FIXED-env.json")
         with open(victim, "wb") as fh:
             fh.write(b"existing evidence\n")
