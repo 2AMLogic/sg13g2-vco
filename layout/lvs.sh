@@ -591,7 +591,13 @@ for f in ("lvs.json", "lvs.err"):
         continue
 klt_lvs = klt_lvs or {"unparsable": "neither stdout nor stderr held JSON"}
 kmsg = (klt_lvs.get("error") or {}).get("message", "")
-klt_refused = klt_rc == 1 and "'inductor' is not a known device" in kmsg
+# klt <=0.8.0 words the refusal "'inductor' is not a known device"; 0.8.0 on a
+# reference with several unknown subckts says "subcircuits 'inductor', ... are
+# not known devices".  Same refusal (exit 1, inductor unsupported), two phrasings.
+def inductor_refused(msg):
+    return "'inductor'" in msg and ("not a known device" in msg
+                                    or "not known devices" in msg)
+klt_refused = klt_rc == 1 and inductor_refused(kmsg)
 if not klt_refused:
     fail.append("klt 0.8.0 lvs no longer refuses this reference (exit %d) -- "
                 "the klt gap may be closed: re-evaluate, update section 14" % klt_rc)
@@ -617,7 +623,7 @@ def envelope(stem):
 lat_lvs, lat_net = envelope("lvs"), envelope("lvs-netlist")
 lmsg = (lat_lvs.get("error") or {}).get("message", "")
 nmsg = (lat_net.get("error") or {}).get("message", "")
-if not (lat_rc == 1 and "'inductor' is not a known device" in lmsg):
+if not (lat_rc == 1 and inductor_refused(lmsg)):
     fail.append("klt %s lvs no longer refuses this reference (exit %d) -- the "
                 "klt gap may be closed: re-evaluate, update section 14.5" % (lat_ver, lat_rc))
 if not (latn_rc == 1 and "could not parse layout netlist" in nmsg):

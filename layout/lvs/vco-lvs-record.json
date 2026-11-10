@@ -206,7 +206,7 @@
     },
     "power_connectivity": {
       "status": "not_produced",
-      "why": "klt lvs's power_connectivity block exists only in a klt lvs report, and klt 0.6.0 cannot produce one for this design (klt_leg below). Supply pairing in the device-aware compare is reported per net in vco-lvs-ihp.json -> compare.nets."
+      "why": "klt lvs's power_connectivity block exists only in a klt lvs report, and klt 0.8.0 cannot produce one for this design (klt_leg below). Supply pairing in the device-aware compare is reported per net in vco-lvs-ihp.json -> compare.nets."
     },
     "removal": "drop the label-order step (layout/scripts/lvs_label_order.rb and the wrapper/shim in lvs.sh) once the pinned IHP-Open-PDK runset orders inductor terminals by their LA/LB labels or declares the two windings equivalent; bump IHP_LVS_DECK_SHA to that runset and re-check that the runset as shipped gives the verdict of record on its own (PROVENANCE.md section 14.6)"
   },
@@ -257,7 +257,7 @@
   "tools": {
     "runset_engine": {
       "klayout": "0.30.12",
-      "klayout_python_module": "0.30.12",
+      "klayout_python_module": "0.30.13",
       "source": "layout/scripts/native_drc_env.sh (KLayout's own 0.30.12 .deb, extracted)"
     },
     "runset": {
@@ -268,12 +268,12 @@
       "path": "layout/scripts/lvs_label_order.rb",
       "content_hash": "sha256:eaae5d1267265dfbc006b86ba765f3adf6eaf685a5a153807644f63eb6e26a8f"
     },
-    "klt_leg": "klayout-tools==0.6.0 (tagged wheel, the CI pin)"
+    "klt_leg": "klayout-tools==0.8.0 (tagged wheel, the CI pin)"
   },
   "inputs": {
     "layout": {
       "file": "layout/vco.gds",
-      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
+      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e"
     },
     "schematic_netlist": {
       "file": "design/vco.spice",
@@ -758,22 +758,23 @@
         "schema_version": 1,
         "error": {
           "command": "lvs",
-          "message": "could not convert subckt-call reference netlist 'layout/build/lvs/klt/ref-subckt.spice' to plain-element form: subcircuit 'inductor' is not a known device for the requested deck (known: cap_cmim, cap_rfcmim, rhigh, rppd, rsil, sg13_hv_nmos, sg13_hv_pmos, sg13_lv_nmos, sg13_lv_pmos); if it is a real device, pass reference.device_map to map it explicitly"
+          "message": "could not convert subckt-call reference netlist 'layout/build/lvs/klt/ref-subckt.spice' to plain-element form: subcircuits 'inductor', 'sg13_hv_svaricap' are not known devices for the requested deck (known: cap_cmim, cap_rfcmim, rhigh, rppd, rsil, sg13_hv_nmos, sg13_hv_pmos, sg13_lv_nmos, sg13_lv_pmos); if it is a real device, pass reference.device_map to map it explicitly"
         }
       }
     },
     "extract": {
       "exit": 0,
       "device_counts": {
-        "cap_cmim": 1
+        "cap_cmim": 1,
+        "rppd": 3
       },
       "net_count": 7,
       "devices_in_design": 42
     },
-    "reading": "klt 0.6.0 refuses the reference (no inductor / 4-terminal varactor / HBT device class for sg13g2) and its curated extraction recognizes 1 of 42 devices, so no klt lvs report of this block can exist at this pin (PROVENANCE.md section 14; 2AMLogic/klayout-tools#2849)"
+    "reading": "klt 0.8.0 refuses the reference (no inductor / 4-terminal varactor / HBT device class for sg13g2) and its curated extraction recognizes 4 of 42 devices, so no klt lvs report of this block can exist at this pin (PROVENANCE.md section 14; 2AMLogic/klayout-tools#2849)"
   },
   "klt_leg_latest_release": {
-    "klt": "klayout-tools==0.7.0 (tagged wheel, throwaway venv; not the CI pin)",
+    "klt": "klayout-tools==0.8.0 (tagged wheel, throwaway venv; not the CI pin)",
     "lvs_inline_extraction": {
       "request": "same as klt_leg.lvs.request",
       "exit": 1,
@@ -781,7 +782,7 @@
         "schema_version": 1,
         "error": {
           "command": "lvs",
-          "message": "could not convert subckt-call reference netlist '<scratch>/ref-subckt.spice' to plain-element form: subcircuit 'inductor' is not a known device for the requested deck (known: cap_cmim, cap_rfcmim, rhigh, rppd, rsil, sg13_hv_nmos, sg13_hv_pmos, sg13_lv_nmos, sg13_lv_pmos); if it is a real device, pass reference.device_map to map it explicitly"
+          "message": "could not convert subckt-call reference netlist '<scratch>/ref-subckt.spice' to plain-element form: subcircuits 'inductor', 'sg13_hv_svaricap' are not known devices for the requested deck (known: cap_cmim, cap_rfcmim, rhigh, rppd, rsil, sg13_hv_nmos, sg13_hv_pmos, sg13_lv_nmos, sg13_lv_pmos); if it is a real device, pass reference.device_map to map it explicitly"
         }
       }
     },
@@ -808,12 +809,13 @@
     "extract": {
       "exit": 0,
       "device_counts": {
-        "cap_cmim": 1
+        "cap_cmim": 1,
+        "rppd": 3
       },
       "net_count": 7,
       "devices_in_design": 42
     },
-    "reading": "the newest release behaves as the pin does: it refuses the reference, recognizes 1 of 42 devices on inline extraction, and cannot read the runset's device-aware extraction as a pre-extracted layout netlist -- the gap tracked by 2AMLogic/klayout-tools#2849 is open in 0.7.0 too (PROVENANCE.md section 14.5)"
+    "reading": "the newest release behaves as the pin does: it refuses the reference, recognizes 4 of 42 devices on inline extraction, and cannot read the runset's device-aware extraction as a pre-extracted layout netlist -- the gap tracked by 2AMLogic/klayout-tools#2849 is open in 0.8.0 too (PROVENANCE.md section 14.5)"
   },
   "limits": [
     "the verdict is IHP's runset's plus one repo-local step; klt lvs could not run it, so no klt-native LVS envelope (and no klt power_connectivity block) exists",
