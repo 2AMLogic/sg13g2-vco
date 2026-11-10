@@ -8,11 +8,11 @@
     },
     "2": {
       "file": "layout/drc/vco-drc-ihp.json",
-      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
+      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e"
     },
     "3": {
       "file": "layout/drc/vco-drc-ihp.json",
-      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6"
+      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e"
     },
     "8": {
       "file": "signoff/evidence/t1-item-8-characterization.json",
