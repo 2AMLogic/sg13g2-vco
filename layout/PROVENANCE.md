@@ -1735,17 +1735,27 @@ edit, so the whole difference is this change). Generated with `klt 0.6.0`
 - `signoff/manifest.json` / `t1-report.json`: the input hash of items 2 and 3
   moves to the new digest; inventories 1/9/10 unchanged (`--regen` is a no-op).
 
-**Not refreshed (pre-existing tool drift, not this change).**
-- `drc/vco-drc.json` and `drc/vco-cnt-c-control.json` (curated-deck
-  diagnostics, recorded with an older klt) are left as committed. The tagged
-  `klt 0.8.0` now reports 64 × `nwell.enclosing.pactiv.1` and 0 ×
-  `activ.enclosing.cont.1` on **both** the pre-change and the new stream, so
-  the gate's `8` baseline no longer reproduces for reasons unrelated to #314.
-- `lvs.sh` refuses to rewrite `lvs/vco-lvs-*.json`: its klt-leg gate string-matches
-  `'inductor' is not a known device`, and klt 0.8.0 now words the refusal as
-  `subcircuits 'inductor', 'sg13_hv_svaricap' are not known devices`.
-  Those records therefore still cite `937e5b16…`; the compare above was read
-  from the fresh runset outputs, not from them.
+**Curated-deck and klt-LVS records, also regenerated (under `klt 0.8.0`).**
+`drc/vco-drc.json`, `drc/vco-cnt-c-control.json`, `lvs/vco-lvs-ihp.json` and
+`lvs/vco-lvs-record.json` were regenerated with `drc.sh` / `lvs.sh` against
+`c65cad9b…`; each now cites that digest and none cites `937e5b16…`.
+- `drc/vco-drc.json`: 8 × `activ.enclosing.cont.1` became 64 ×
+  `nwell.enclosing.pactiv.1`. This is **not a regression from this change**:
+  `klt 0.8.0` reports the same 64 on the unmodified `main` stream, and the
+  main-branch entry "2026-11-10 (issue #315): `nwell.enclosing.pactiv.1` x64
+  is a curated-deck artefact" (§12, commit 70cf6b4) diagnoses them as a missing
+  carve-out in the curated rule, not a layout defect.
+- `drc/vco-cnt-c-control.json`: now reads `INCONCLUSIVE / CHANGED` (the control
+  still shows 64 violations of that rule, so the old `Cnt.c` explanation no
+  longer applies as written). The same §12 entry is the diagnosis.
+- `lvs.sh` was changed to accept `klt 0.8.0`'s wording of the inductor refusal
+  (`subcircuits 'inductor', 'sg13_hv_svaricap' are not known devices`) as well
+  as the older `'inductor' is not a known device`; it is the same refusal
+  (exit 1, inductor unsupported), so the gate's meaning is unchanged.
+- `lvs/vco-lvs-record.json` now records `klayout_python_module` 0.30.13
+  against engine 0.30.12 (the `drc.sh` native env pulls the newer module), and
+  `klt 0.8.0` recognizes 4 of 42 devices (was 1) on inline extraction; the
+  klt leg still cannot produce a report for this block (2AMLogic/klayout-tools#2849).
 
 **Keep-out check.** `klt keepout-check` (0.8.0) `--forbidden
 [[8,0],[10,0],[30,0],[50,0],[67,0]] --margin 20 --cells vco` on a stub parent
