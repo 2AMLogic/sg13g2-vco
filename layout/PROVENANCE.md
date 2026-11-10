@@ -883,6 +883,66 @@ scoping gap stays open for other layouts; this one no longer leans on it.)
 - **Density fill is deferred by design**, not forgotten: the 9 fill-rule
   findings are recorded above and belong to the fill/chip-assembly phase.
 
+### 2026-11-10 (issue #315): `nwell.enclosing.pactiv.1` x64 is a curated-deck artefact
+
+A downstream integrator reported 64 x `nwell.enclosing.pactiv.1` (32 + 32,
+source cell `SVaricap`, the two varactor banks) from the curated `sg13g2`
+deck and asked whether they are real. They are not an integration effect:
+the same 64 reproduce on the standalone `layout/vco.gds`. **Verdict: artefact
+of the curated rule, not a layout defect.** Nothing in `layout/vco.gds`, the
+waivers or the spec changed. (The same 64 were first seen 2026-10-27 under
+klt 0.8.0 and noted only in `.github/klt-friction-ledger.json`.)
+
+Three runs, one at a time, klt `0.9.2.dev420+gf186e14125ed`, input
+`sha256:937e5b16...ca1b3c6` (unchanged `layout/vco.gds`), standalone
+KLayout 0.30.12 for the native legs (klt's own `klayout` module is 0.30.13,
+so every report records `klayout_version_mismatch: true`; the native deck
+verdicts do not depend on the difference but it is not the pinned-0.30.12
+match the §13 record has). The PDK is the one `drc.sh` pins (`ihp-sg13g2.drc`
+`sha256:0620b737...fb693`).
+
+| Report | Command | Result |
+|---|---|---|
+| `layout/drc/vco-drc-both.json` | `klt drc layout/vco.gds --engine both --deck sg13g2 --top vco --deck-file <PDK>/libs.tech/klayout/tech/drc/ihp-sg13g2.drc --deck-var threads=2 --expect-rule-categories 590 --format json` | curated (deck `sha256:1c95db40...6dd15`): `violations`, 64 x `nwell.enclosing.pactiv.1`, rollup `SVaricap` 32 + `SVaricap$1` 32; native: `clean`, 0, 590/590 categories asserted. The crosscheck itself says `comparison.state: not_comparable` (no rule mapping between the engines), so the two verdicts are read side by side, not reconciled by klt. |
+| `layout/drc/vco-drc-maximal.json` | `klt drc layout/vco.gds --engine klayout --top vco --deck-file <PDK>/libs.tech/klayout/tech/drc/rule_decks/sg13g2_maximal.drc --deck-var threads=2 --format json` (deck `sha256:95166123...2dbd`) | `violations`: 4 x `NW.e` only, the PCell-internal ones recorded above; the `NW.c` category is present among 272 and reports **0**. |
+| `layout/drc/vco-drc-maximal-nocarve.json` | as above on a scratch copy of the maximal deck (`sha256:f71db44f...6ff9d2`) with exactly one line changed: `lNw_c = PActLV.ext_not(PActLV.ext_interacting(SVaricap))` -> `lNw_c = PActLV` | 12: 4 x `NW.e` (unchanged) + **8 x `NW.c`**. |
+
+Evidence for the call. The curated rule is a transcription of the
+foundry's `NW.c` (`sg13g2_maximal.drc`: `lNw_c.ext_enclosed(NWell_Nsram,
+0.31.um, ...)`), but the foundry first drops every P+ Activ that interacts
+with a recognised `SVaricap` (`lNw_c = PActLV.ext_not(PActLV.ext_interacting(SVaricap))`);
+the curated rule applies unconditionally. Removing only that carve-out from the
+foundry's own deck makes the foundry's `NW.c` fire on this stream too, so the
+carve-out, not a difference in the geometry check, is what separates 0 from
+non-zero. (8 vs 64 is counting granularity: the foundry deck reports merged
+edge-pair markers, the curated deck one marker per edge violation; the
+counts are not comparable and are not claimed to be.) All 64 curated hits
+are attributed to source cell `SVaricap`, the PDK device.
+
+Limits, stated plainly:
+
+- IHP's *primary* runset (`ihp-sg13g2.drc`, the report of record in §13)
+  has no `NW.c` rule at all, so its zero says nothing about this rule; the
+  evidence is the maximal deck, which the PDK README itself calls "not
+  verified or tested" (§12, optional-decks table).
+- The foundry carve-out keys on an `SVaricap` text label on the device
+  (as the PDK PCell emits it). That the carve-out applies here rests on the
+  maximal run's `NW.c` = 0 and the no-carve-out control; the label geometry
+  was not separately inspected.
+- This establishes that the *curated rule* is wrong for `SVaricap`, relative
+  to the foundry deck. It does not by itself establish that the varactor
+  banks are silicon-clean for NW.c: no foundry sign-off DRC (Calibre/ICV)
+  was run, as everywhere else in this record.
+- Reproduction of the control: copy the maximal deck to scratch, apply the
+  one-line change above, run the third command. The scratch deck is not
+  committed (it is derived from the PDK deck by that one line).
+
+Upstream gap filed per the friction protocol: 2AMLogic/klayout-tools#5212
+(generic: curated rule lacks the foundry `SVaricap` carve-out). Ledger
+`#2688` note updated to point here. `layout/drc.sh` is unchanged: these runs
+are diagnostics, not a new gate, and the committed `layout/drc/vco-drc.json`
+(klt 0.6.0) remains stale relative to the curated-deck history above.
+
 ## 13. DRC closure record (2026-10-07, issue #61)
 
 *Appended. §12 is kept unchanged as the record of the earlier passes. Where
