@@ -134,7 +134,7 @@
       "workarounds": [
         "layout/scripts/activ_mask_overlay.py"
       ],
-      "note": "Workaround KEPT (retirement tried 2026-10-27, uvx klayout-tools==0.8.0): `klt drc layout/vco.gds --deck sg13g2 --top vco` no longer reports activ.enclosing.cont.1 or cont.width.1, but reports 64 nwell.enclosing.pactiv.1 violations instead. The overlay diagnostic (layout/scripts/activ_mask_overlay.py) was not re-run; retiring it needs the PDK flow (layout/drc.sh), unavailable on this host."
+      "note": "Workaround KEPT (retirement tried 2026-10-27, uvx klayout-tools==0.8.0): `klt drc layout/vco.gds --deck sg13g2 --top vco` no longer reports activ.enclosing.cont.1 or cont.width.1, but reports 64 nwell.enclosing.pactiv.1 violations instead. The overlay diagnostic (layout/scripts/activ_mask_overlay.py) was not re-run; retiring it needs the PDK flow (layout/drc.sh), unavailable on this host. Update 2026-11-10 (issue #315): the 64 nwell.enclosing.pactiv.1 are a curated-deck artefact (rule lacks the foundry SVaricap carve-out); record in layout/PROVENANCE.md section 12 (2026-11-10 entry), reports layout/drc/vco-drc-both.json, vco-drc-maximal.json, vco-drc-maximal-nocarve.json."
     },
     {
       "number": 2689,
@@ -335,6 +335,14 @@
         "signoff/README.md"
       ],
       "note": "Not exercised at 0.8.0: signoff/README.md's workaround is about which yield report T1 item 6 cites; no yield report exists to grade (the yield requests are plans, not runs). Workaround kept."
+    },
+    {
+      "number": 5212,
+      "gap": "Curated sg13g2 nwell.enclosing.pactiv.1 lacks the foundry SVaricap carve-out, so PDK varactor cells false-positive.",
+      "status": "open",
+      "status_checked_on": "2026-11-10",
+      "klt_version_verified": "0.8.0",
+      "workarounds": []
     }
   ]
 }
