@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 35
+    "unknown": 36
   },
   "records": [
     {
@@ -343,6 +343,19 @@
       "path": "sim/oscillator-core/records/20261107-213000-fe779ef-hot-startup-trace.md",
       "reason": "filename-only provenance: the commit fe779ef named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261107-213000-fe779ef",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 1,
+      "filename_commit": {
+        "id": "2287682"
+      },
+      "path": "sim/oscillator-core/records/20261110-050317-2287682-hot-startup-leakage-trace.md",
+      "reason": "filename-only provenance: the commit 2287682 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261110-050317-2287682",
       "state": "unknown"
     },
     {

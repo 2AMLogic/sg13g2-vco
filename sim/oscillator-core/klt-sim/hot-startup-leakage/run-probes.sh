@@ -3,7 +3,7 @@
 # background jobs). Reads ../hot-startup-trace/{body,svar,ind}-*.spice read-only; writes body-*/svar-*/deck-*.cir and
 # evidence/<name>.log here. PDK from $PDK_ROOT (default ~/share/pdk).
 set -uo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")" || exit 1
 : "${PDK_ROOT:=$HOME/share/pdk}"; PDK=ihp-sg13g2
 M=$PDK_ROOT/$PDK/libs.tech/ngspice
 T=$PWD/../hot-startup-trace
