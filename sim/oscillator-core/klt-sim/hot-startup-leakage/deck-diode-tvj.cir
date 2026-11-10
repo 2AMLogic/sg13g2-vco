@@ -1,0 +1,13 @@
+* issue #309: temperature-adjusted junction potential of the dsubw card (single op, no circuit)
+.model d27  d tnom=27  is=2.45E-17 jsw=5.959E-10 n=4 ns=1.029 cjo=1.444E-15 vj=0.1 m=0.1052 cjp=1.117E-09 php=0.457 mjsw=0.2595 fc=0.95 cta=1E-06
+.model d125 d tnom=125 is=2.45E-17 jsw=5.959E-10 n=4 ns=1.029 cjo=1.444E-15 vj=0.1 m=0.1052 cjp=1.117E-09 php=0.457 mjsw=0.2595 fc=0.95 cta=1E-06
+V1 a 0 dc 1.65
+V2 b 0 dc 1.65
+D27  0 a d27  area='((0.38u+0.3u)+1.11u)*(3.74u+0.97u)' pj='2*(((0.38u+0.3u)+1.11u)+(3.74u+0.97u))'
+D125 0 b d125 area='((0.38u+0.3u)+1.11u)*(3.74u+0.97u)' pj='2*(((0.38u+0.3u)+1.11u)+(3.74u+0.97u))'
+.temp 125
+.control
+op
+show d : id cd
+.endc
+.end
