@@ -1,0 +1,18 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * issue #309: temperature-adjusted junction potential of the dsubw card (single op, no circuit)
+
+Doing analysis at TEMP = 125.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 1
+ Diode: Junction Diode model
+     device                  d125                   d27
+      model                  d125                   d27
+         id          -1.65775e-12           -5.0872e-10
+         cd           9.76683e-15                  -nan
+
+Note: Simulation executed from .control section 

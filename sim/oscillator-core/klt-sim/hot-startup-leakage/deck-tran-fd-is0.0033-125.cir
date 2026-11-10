@@ -1,0 +1,15 @@
+* issue #309 single-unit probe tran-fd-is0.0033-125 (temp 125)
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib mos_tt
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib hbt_typ
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib cap_typ
+.include /home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-309/sim/oscillator-core/klt-sim/hot-startup-leakage/body-fd-is0.0033.spice
+.temp 125
+.control
+pre_osdi /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+save all
+tran 1p 2n 0 2p
+let vdiff_pp = vecmax(vdiff)-vecmin(vdiff)
+print vdiff_pp
+quit
+.endc
+.end
