@@ -31,7 +31,9 @@ class Base(unittest.TestCase):
 
     def corners(self):
         d = os.path.join(self.root, "corners")
-        return sorted(os.listdir(d)) if os.path.isdir(d) else []
+        # reserve_record_id leaves a never-deleted `.<id>.lock` beside each
+        # reserved `<id>` dir (the O_EXCL ownership marker); only ids count.
+        return sorted(n for n in os.listdir(d) if not n.startswith(".")) if os.path.isdir(d) else []
 
     def run_main(self):
         argv = ["compare_analytic.py", "--dir", self.root, "--analytic", "a", "--fitted", "f"]

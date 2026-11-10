@@ -419,9 +419,9 @@ mint_record_id() {
 # Mint a RECORD_ID and atomically reserve it: first an O_EXCL lock file
 # (<experiment_dir>/corners/.<id>.lock, via noclobber) decides the single
 # owner, then an exclusive (non-`-p`) mkdir of <experiment_dir>/corners/<id>,
-# which every runner uses as its raw-log namespace. An id is also rejected (never reused) if any historical
-# flat record (records/<id>*) or snapshot dir (netlist-snapshots/<id>) already
-# exists. On a collision a fresh id is minted and retried (up to 50 times),
+# which every runner uses as its raw-log namespace. An id is also rejected
+# (never reused) if any historical flat record (records/<id>*) or snapshot dir
+# (netlist-snapshots/<id>) already exists. On a collision a fresh id is minted and retried (up to 50 times),
 # then the call fails with a message on stderr and status 1. Prints the
 # reserved id on stdout. Nothing is ever deleted: a rejected reservation dir
 # we created stays behind (empty) rather than being recycled. Callers must
