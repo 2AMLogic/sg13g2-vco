@@ -29,4 +29,4 @@ quantity.
 
 **Summary:** 0 pass, 0 fail, 9 pending, 3 condition. Envelope status (derived): `fail`.
 
-**Inputs:** `spec/target-spec.md` sha256:943b3fb67ffb, `signoff/characterization-rows.json` sha256:9ddc596f6abb, `sim/record-currency.json` sha256:6b6e73dcec6d.
+**Inputs:** `spec/target-spec.md` sha256:dd50e0cb7e7d, `signoff/characterization-rows.json` sha256:9ddc596f6abb, `sim/record-currency.json` sha256:6b6e73dcec6d.
