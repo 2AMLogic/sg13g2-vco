@@ -1,310 +1,2385 @@
 {
-  "schema_version": 2,
-  "file": "layout/vco.gds",
+  "schema_version": 3,
+  "file": {
+    "path": "layout/vco.gds",
+    "scope": "repo"
+  },
   "deck": "sg13g2",
   "dbu_um": 0.001,
   "status": "violations",
-  "violation_count": 8,
+  "violation_count": 64,
   "rule_counts": {
-    "activ.enclosing.cont.1": 8
+    "nwell.enclosing.pactiv.1": 64
   },
   "metrics": {
-    "drc__error__count": 8
+    "drc__error__count": 64
   },
   "violations": [
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q1__vco_npn_le1",
-        "npn13G2V"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": -10260,
-        "bottom": -69009,
-        "right": -10210,
-        "top": -67791
+        "left": -66965,
+        "bottom": -52520,
+        "right": -66725,
+        "top": -52000
       },
       "polygon": [
         [
-          -10260,
-          -69009
+          -66965,
+          -52520
         ],
         [
-          -10260,
-          -67791
+          -66965,
+          -52000
         ],
         [
-          -10210,
-          -68960
+          -66725,
+          -52000
         ],
         [
-          -10210,
-          -67840
+          -66725,
+          -52520
         ]
       ]
     },
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q1__vco_npn_le1",
-        "npn13G2V"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": -10050,
-        "bottom": -69009,
-        "right": -10000,
-        "top": -67791
+        "left": -66965,
+        "bottom": -47230,
+        "right": -66725,
+        "top": -46710
       },
       "polygon": [
         [
-          -10000,
-          -69009
+          -66965,
+          -47230
         ],
         [
-          -10050,
-          -67840
+          -66965,
+          -46710
         ],
         [
-          -10050,
-          -68960
+          -66725,
+          -46710
         ],
         [
-          -10000,
-          -67791
+          -66725,
+          -47230
         ]
       ]
     },
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V$2",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q3__vco_npn_le2",
-        "npn13G2V$2"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": -130,
-        "bottom": -83009,
-        "right": -80,
-        "top": -80791
+        "left": -64815,
+        "bottom": -52520,
+        "right": -64575,
+        "top": -52000
       },
       "polygon": [
         [
-          -130,
-          -83009
+          -64815,
+          -52520
         ],
         [
-          -130,
-          -80791
+          -64815,
+          -52000
         ],
         [
-          -80,
-          -82960
+          -64575,
+          -52000
         ],
         [
-          -80,
-          -80840
+          -64575,
+          -52520
         ]
       ]
     },
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V$2",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q3__vco_npn_le2",
-        "npn13G2V$2"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": 80,
-        "bottom": -83009,
-        "right": 130,
-        "top": -80791
+        "left": -64815,
+        "bottom": -47230,
+        "right": -64575,
+        "top": -46710
       },
       "polygon": [
         [
-          130,
-          -83009
+          -64815,
+          -47230
         ],
         [
-          80,
-          -80840
+          -64815,
+          -46710
         ],
         [
-          80,
-          -82960
+          -64575,
+          -46710
         ],
         [
-          130,
-          -80791
+          -64575,
+          -47230
         ]
       ]
     },
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V$1",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q2__vco_npn_le1",
-        "npn13G2V$1"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": 10000,
-        "bottom": -69009,
-        "right": 10050,
-        "top": -67791
+        "left": -62665,
+        "bottom": -52520,
+        "right": -62425,
+        "top": -52000
       },
       "polygon": [
         [
-          10000,
-          -69009
+          -62665,
+          -52520
         ],
         [
-          10000,
-          -67791
+          -62665,
+          -52000
         ],
         [
-          10050,
-          -68960
+          -62425,
+          -52000
         ],
         [
-          10050,
-          -67840
+          -62425,
+          -52520
         ]
       ]
     },
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V$1",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q2__vco_npn_le1",
-        "npn13G2V$1"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": 10210,
-        "bottom": -69009,
-        "right": 10260,
-        "top": -67791
+        "left": -62665,
+        "bottom": -47230,
+        "right": -62425,
+        "top": -46710
       },
       "polygon": [
         [
-          10260,
-          -69009
+          -62665,
+          -47230
         ],
         [
-          10210,
-          -67840
+          -62665,
+          -46710
         ],
         [
-          10210,
-          -68960
+          -62425,
+          -46710
         ],
         [
-          10260,
-          -67791
+          -62425,
+          -47230
         ]
       ]
     },
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V$3",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q4__vco_npn_le1",
-        "npn13G2V$3"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": 29870,
-        "bottom": -73009,
-        "right": 29920,
-        "top": -71791
+        "left": -60515,
+        "bottom": -52520,
+        "right": -60275,
+        "top": -52000
       },
       "polygon": [
         [
-          29870,
-          -73009
+          -60515,
+          -52520
         ],
         [
-          29870,
-          -71791
+          -60515,
+          -52000
         ],
         [
-          29920,
-          -72960
+          -60275,
+          -52000
         ],
         [
-          29920,
-          -71840
+          -60275,
+          -52520
         ]
       ]
     },
     {
-      "rule": "activ.enclosing.cont.1",
-      "description": "minimum Activ enclosure of Cont (approximates the official rule's SRAM/DigiBnd-scoped compound-layer derivation as a plain, unconditional Activ-encloses-Cont floor -- the same class of approximation sky130.py's diff.enclosing.licon.1 makes for its own compound-layer official rule)",
-      "check": "enclosing",
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
       "layer": "Activ.drawing",
       "cell": "vco",
-      "source_cell": "npn13G2V$3",
+      "source_cell": "SVaricap",
       "source_path": [
-        "CORE__vco_core",
-        "Q4__vco_npn_le1",
-        "npn13G2V$3"
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
       ],
       "bbox": {
-        "left": 30080,
-        "bottom": -73009,
-        "right": 30130,
-        "top": -71791
+        "left": -60515,
+        "bottom": -47230,
+        "right": -60275,
+        "top": -46710
       },
       "polygon": [
         [
-          30130,
-          -73009
+          -60515,
+          -47230
         ],
         [
-          30080,
-          -71840
+          -60515,
+          -46710
         ],
         [
-          30080,
-          -72960
+          -60275,
+          -46710
         ],
         [
-          30130,
-          -71791
+          -60275,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -58365,
+        "bottom": -52520,
+        "right": -58125,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -58365,
+          -52520
+        ],
+        [
+          -58365,
+          -52000
+        ],
+        [
+          -58125,
+          -52000
+        ],
+        [
+          -58125,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -58365,
+        "bottom": -47230,
+        "right": -58125,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -58365,
+          -47230
+        ],
+        [
+          -58365,
+          -46710
+        ],
+        [
+          -58125,
+          -46710
+        ],
+        [
+          -58125,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -56215,
+        "bottom": -52520,
+        "right": -55975,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -56215,
+          -52520
+        ],
+        [
+          -56215,
+          -52000
+        ],
+        [
+          -55975,
+          -52000
+        ],
+        [
+          -55975,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -56215,
+        "bottom": -47230,
+        "right": -55975,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -56215,
+          -47230
+        ],
+        [
+          -56215,
+          -46710
+        ],
+        [
+          -55975,
+          -46710
+        ],
+        [
+          -55975,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -54065,
+        "bottom": -52520,
+        "right": -53825,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -54065,
+          -52520
+        ],
+        [
+          -54065,
+          -52000
+        ],
+        [
+          -53825,
+          -52000
+        ],
+        [
+          -53825,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -54065,
+        "bottom": -47230,
+        "right": -53825,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -54065,
+          -47230
+        ],
+        [
+          -54065,
+          -46710
+        ],
+        [
+          -53825,
+          -46710
+        ],
+        [
+          -53825,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -51915,
+        "bottom": -52520,
+        "right": -51675,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -51915,
+          -52520
+        ],
+        [
+          -51915,
+          -52000
+        ],
+        [
+          -51675,
+          -52000
+        ],
+        [
+          -51675,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -51915,
+        "bottom": -47230,
+        "right": -51675,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -51915,
+          -47230
+        ],
+        [
+          -51915,
+          -46710
+        ],
+        [
+          -51675,
+          -46710
+        ],
+        [
+          -51675,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -49765,
+        "bottom": -52520,
+        "right": -49525,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -49765,
+          -52520
+        ],
+        [
+          -49765,
+          -52000
+        ],
+        [
+          -49525,
+          -52000
+        ],
+        [
+          -49525,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -49765,
+        "bottom": -47230,
+        "right": -49525,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -49765,
+          -47230
+        ],
+        [
+          -49765,
+          -46710
+        ],
+        [
+          -49525,
+          -46710
+        ],
+        [
+          -49525,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -47615,
+        "bottom": -52520,
+        "right": -47375,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -47615,
+          -52520
+        ],
+        [
+          -47615,
+          -52000
+        ],
+        [
+          -47375,
+          -52000
+        ],
+        [
+          -47375,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -47615,
+        "bottom": -47230,
+        "right": -47375,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -47615,
+          -47230
+        ],
+        [
+          -47615,
+          -46710
+        ],
+        [
+          -47375,
+          -46710
+        ],
+        [
+          -47375,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -45465,
+        "bottom": -52520,
+        "right": -45225,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -45465,
+          -52520
+        ],
+        [
+          -45465,
+          -52000
+        ],
+        [
+          -45225,
+          -52000
+        ],
+        [
+          -45225,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -45465,
+        "bottom": -47230,
+        "right": -45225,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -45465,
+          -47230
+        ],
+        [
+          -45465,
+          -46710
+        ],
+        [
+          -45225,
+          -46710
+        ],
+        [
+          -45225,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -43315,
+        "bottom": -52520,
+        "right": -43075,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -43315,
+          -52520
+        ],
+        [
+          -43315,
+          -52000
+        ],
+        [
+          -43075,
+          -52000
+        ],
+        [
+          -43075,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -43315,
+        "bottom": -47230,
+        "right": -43075,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -43315,
+          -47230
+        ],
+        [
+          -43315,
+          -46710
+        ],
+        [
+          -43075,
+          -46710
+        ],
+        [
+          -43075,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -41165,
+        "bottom": -52520,
+        "right": -40925,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -41165,
+          -52520
+        ],
+        [
+          -41165,
+          -52000
+        ],
+        [
+          -40925,
+          -52000
+        ],
+        [
+          -40925,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -41165,
+        "bottom": -47230,
+        "right": -40925,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -41165,
+          -47230
+        ],
+        [
+          -41165,
+          -46710
+        ],
+        [
+          -40925,
+          -46710
+        ],
+        [
+          -40925,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -39015,
+        "bottom": -52520,
+        "right": -38775,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -39015,
+          -52520
+        ],
+        [
+          -39015,
+          -52000
+        ],
+        [
+          -38775,
+          -52000
+        ],
+        [
+          -38775,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -39015,
+        "bottom": -47230,
+        "right": -38775,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -39015,
+          -47230
+        ],
+        [
+          -39015,
+          -46710
+        ],
+        [
+          -38775,
+          -46710
+        ],
+        [
+          -38775,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -36865,
+        "bottom": -52520,
+        "right": -36625,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -36865,
+          -52520
+        ],
+        [
+          -36865,
+          -52000
+        ],
+        [
+          -36625,
+          -52000
+        ],
+        [
+          -36625,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -36865,
+        "bottom": -47230,
+        "right": -36625,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -36865,
+          -47230
+        ],
+        [
+          -36865,
+          -46710
+        ],
+        [
+          -36625,
+          -46710
+        ],
+        [
+          -36625,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -34715,
+        "bottom": -52520,
+        "right": -34475,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          -34715,
+          -52520
+        ],
+        [
+          -34715,
+          -52000
+        ],
+        [
+          -34475,
+          -52000
+        ],
+        [
+          -34475,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap",
+      "source_path": [
+        "BANKP__vco_varbank_p",
+        "cell__vco_svaricap_p",
+        "SVaricap"
+      ],
+      "bbox": {
+        "left": -34715,
+        "bottom": -47230,
+        "right": -34475,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          -34715,
+          -47230
+        ],
+        [
+          -34715,
+          -46710
+        ],
+        [
+          -34475,
+          -46710
+        ],
+        [
+          -34475,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 34635,
+        "bottom": -52520,
+        "right": 34875,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          34635,
+          -52520
+        ],
+        [
+          34635,
+          -52000
+        ],
+        [
+          34875,
+          -52000
+        ],
+        [
+          34875,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 34635,
+        "bottom": -47230,
+        "right": 34875,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          34635,
+          -47230
+        ],
+        [
+          34635,
+          -46710
+        ],
+        [
+          34875,
+          -46710
+        ],
+        [
+          34875,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 36785,
+        "bottom": -52520,
+        "right": 37025,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          36785,
+          -52520
+        ],
+        [
+          36785,
+          -52000
+        ],
+        [
+          37025,
+          -52000
+        ],
+        [
+          37025,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 36785,
+        "bottom": -47230,
+        "right": 37025,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          36785,
+          -47230
+        ],
+        [
+          36785,
+          -46710
+        ],
+        [
+          37025,
+          -46710
+        ],
+        [
+          37025,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 38935,
+        "bottom": -52520,
+        "right": 39175,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          38935,
+          -52520
+        ],
+        [
+          38935,
+          -52000
+        ],
+        [
+          39175,
+          -52000
+        ],
+        [
+          39175,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 38935,
+        "bottom": -47230,
+        "right": 39175,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          38935,
+          -47230
+        ],
+        [
+          38935,
+          -46710
+        ],
+        [
+          39175,
+          -46710
+        ],
+        [
+          39175,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 41085,
+        "bottom": -52520,
+        "right": 41325,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          41085,
+          -52520
+        ],
+        [
+          41085,
+          -52000
+        ],
+        [
+          41325,
+          -52000
+        ],
+        [
+          41325,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 41085,
+        "bottom": -47230,
+        "right": 41325,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          41085,
+          -47230
+        ],
+        [
+          41085,
+          -46710
+        ],
+        [
+          41325,
+          -46710
+        ],
+        [
+          41325,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 43235,
+        "bottom": -52520,
+        "right": 43475,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          43235,
+          -52520
+        ],
+        [
+          43235,
+          -52000
+        ],
+        [
+          43475,
+          -52000
+        ],
+        [
+          43475,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 43235,
+        "bottom": -47230,
+        "right": 43475,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          43235,
+          -47230
+        ],
+        [
+          43235,
+          -46710
+        ],
+        [
+          43475,
+          -46710
+        ],
+        [
+          43475,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 45385,
+        "bottom": -52520,
+        "right": 45625,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          45385,
+          -52520
+        ],
+        [
+          45385,
+          -52000
+        ],
+        [
+          45625,
+          -52000
+        ],
+        [
+          45625,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 45385,
+        "bottom": -47230,
+        "right": 45625,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          45385,
+          -47230
+        ],
+        [
+          45385,
+          -46710
+        ],
+        [
+          45625,
+          -46710
+        ],
+        [
+          45625,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 47535,
+        "bottom": -52520,
+        "right": 47775,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          47535,
+          -52520
+        ],
+        [
+          47535,
+          -52000
+        ],
+        [
+          47775,
+          -52000
+        ],
+        [
+          47775,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 47535,
+        "bottom": -47230,
+        "right": 47775,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          47535,
+          -47230
+        ],
+        [
+          47535,
+          -46710
+        ],
+        [
+          47775,
+          -46710
+        ],
+        [
+          47775,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 49685,
+        "bottom": -52520,
+        "right": 49925,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          49685,
+          -52520
+        ],
+        [
+          49685,
+          -52000
+        ],
+        [
+          49925,
+          -52000
+        ],
+        [
+          49925,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 49685,
+        "bottom": -47230,
+        "right": 49925,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          49685,
+          -47230
+        ],
+        [
+          49685,
+          -46710
+        ],
+        [
+          49925,
+          -46710
+        ],
+        [
+          49925,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 51835,
+        "bottom": -52520,
+        "right": 52075,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          51835,
+          -52520
+        ],
+        [
+          51835,
+          -52000
+        ],
+        [
+          52075,
+          -52000
+        ],
+        [
+          52075,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 51835,
+        "bottom": -47230,
+        "right": 52075,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          51835,
+          -47230
+        ],
+        [
+          51835,
+          -46710
+        ],
+        [
+          52075,
+          -46710
+        ],
+        [
+          52075,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 53985,
+        "bottom": -52520,
+        "right": 54225,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          53985,
+          -52520
+        ],
+        [
+          53985,
+          -52000
+        ],
+        [
+          54225,
+          -52000
+        ],
+        [
+          54225,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 53985,
+        "bottom": -47230,
+        "right": 54225,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          53985,
+          -47230
+        ],
+        [
+          53985,
+          -46710
+        ],
+        [
+          54225,
+          -46710
+        ],
+        [
+          54225,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 56135,
+        "bottom": -52520,
+        "right": 56375,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          56135,
+          -52520
+        ],
+        [
+          56135,
+          -52000
+        ],
+        [
+          56375,
+          -52000
+        ],
+        [
+          56375,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 56135,
+        "bottom": -47230,
+        "right": 56375,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          56135,
+          -47230
+        ],
+        [
+          56135,
+          -46710
+        ],
+        [
+          56375,
+          -46710
+        ],
+        [
+          56375,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 58285,
+        "bottom": -52520,
+        "right": 58525,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          58285,
+          -52520
+        ],
+        [
+          58285,
+          -52000
+        ],
+        [
+          58525,
+          -52000
+        ],
+        [
+          58525,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 58285,
+        "bottom": -47230,
+        "right": 58525,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          58285,
+          -47230
+        ],
+        [
+          58285,
+          -46710
+        ],
+        [
+          58525,
+          -46710
+        ],
+        [
+          58525,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 60435,
+        "bottom": -52520,
+        "right": 60675,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          60435,
+          -52520
+        ],
+        [
+          60435,
+          -52000
+        ],
+        [
+          60675,
+          -52000
+        ],
+        [
+          60675,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 60435,
+        "bottom": -47230,
+        "right": 60675,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          60435,
+          -47230
+        ],
+        [
+          60435,
+          -46710
+        ],
+        [
+          60675,
+          -46710
+        ],
+        [
+          60675,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 62585,
+        "bottom": -52520,
+        "right": 62825,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          62585,
+          -52520
+        ],
+        [
+          62585,
+          -52000
+        ],
+        [
+          62825,
+          -52000
+        ],
+        [
+          62825,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 62585,
+        "bottom": -47230,
+        "right": 62825,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          62585,
+          -47230
+        ],
+        [
+          62585,
+          -46710
+        ],
+        [
+          62825,
+          -46710
+        ],
+        [
+          62825,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 64735,
+        "bottom": -52520,
+        "right": 64975,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          64735,
+          -52520
+        ],
+        [
+          64735,
+          -52000
+        ],
+        [
+          64975,
+          -52000
+        ],
+        [
+          64975,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 64735,
+        "bottom": -47230,
+        "right": 64975,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          64735,
+          -47230
+        ],
+        [
+          64735,
+          -46710
+        ],
+        [
+          64975,
+          -46710
+        ],
+        [
+          64975,
+          -47230
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 66885,
+        "bottom": -52520,
+        "right": 67125,
+        "top": -52000
+      },
+      "polygon": [
+        [
+          66885,
+          -52520
+        ],
+        [
+          66885,
+          -52000
+        ],
+        [
+          67125,
+          -52000
+        ],
+        [
+          67125,
+          -52520
+        ]
+      ]
+    },
+    {
+      "rule": "nwell.enclosing.pactiv.1",
+      "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+      "check": "enclosed",
+      "layer": "Activ.drawing",
+      "cell": "vco",
+      "source_cell": "SVaricap$1",
+      "source_path": [
+        "BANKN__vco_varbank_n",
+        "cell__vco_svaricap_n",
+        "SVaricap$1"
+      ],
+      "bbox": {
+        "left": 66885,
+        "bottom": -47230,
+        "right": 67125,
+        "top": -46710
+      },
+      "polygon": [
+        [
+          66885,
+          -47230
+        ],
+        [
+          66885,
+          -46710
+        ],
+        [
+          67125,
+          -46710
+        ],
+        [
+          67125,
+          -47230
         ]
       ]
     }
@@ -312,13 +2387,18 @@
   "coverage": {
     "deck_layers": [
       "1/0",
+      "1/20",
       "5/0",
       "6/0",
+      "7/0",
       "8/0",
       "10/0",
+      "14/0",
       "19/0",
       "29/0",
       "30/0",
+      "31/0",
+      "36/0",
       "49/0",
       "50/0",
       "66/0",
@@ -330,13 +2410,17 @@
     ],
     "layers_checked": [
       "1/0",
+      "1/20",
       "5/0",
       "6/0",
       "8/0",
       "10/0",
+      "14/0",
       "19/0",
       "29/0",
       "30/0",
+      "31/0",
+      "36/0",
       "49/0",
       "50/0",
       "66/0",
@@ -347,7 +2431,6 @@
       "134/0"
     ],
     "layers_in_stream_without_rules": [
-      "1/20",
       "1/23",
       "5/23",
       "8/2",
@@ -356,7 +2439,6 @@
       "10/2",
       "10/23",
       "10/25",
-      "14/0",
       "26/0",
       "27/0",
       "27/2",
@@ -364,9 +2446,7 @@
       "28/0",
       "30/23",
       "30/25",
-      "31/0",
       "32/0",
-      "36/0",
       "40/0",
       "46/21",
       "50/23",
@@ -407,9 +2487,22 @@
       "metal4.enclosing.via4.1",
       "metal4.space.1",
       "metal4.width.1",
+      "metal5.enclosing.mim.1",
       "metal5.enclosing.topvia1.1",
       "metal5.space.1",
       "metal5.width.1",
+      "mim.enclosing.topvia1.1",
+      "nwell.enclosing.pactiv.1",
+      "nwell.enclosing.pactiv.dig.1",
+      "nwell.enclosing.pactiv.hv.1",
+      "nwell.space.1",
+      "nwell.space.pactiv.1",
+      "nwell.space.pactiv.dig.1",
+      "nwell.space.pactiv.hv.1",
+      "nwell.width.1",
+      "psd.area.1",
+      "psd.space.1",
+      "psd.width.1",
       "topmetal1.enclosing.topvia1.1",
       "topmetal1.enclosing.topvia2.1",
       "topmetal1.space.1",
@@ -430,8 +2523,23 @@
       "via4.space.1",
       "via4.width.1"
     ],
-    "rules_skipped": [],
+    "rules_skipped": [
+      "nwell.enclosing.nactiv.1",
+      "nwell.enclosing.nactiv.dig.1",
+      "nwell.enclosing.nactiv.hv.1",
+      "nwell.space.nactiv.1",
+      "nwell.space.nactiv.dig.1",
+      "nwell.space.nactiv.hv.1"
+    ],
     "voltage_domain_warnings": [],
+    "unchecked_rules": [
+      {
+        "rule": "NW.b1",
+        "layer": "31/0",
+        "description": "NW.b1 (min. PWell width between NWell regions of different nets, 1.80 um) is net-aware and this engine has no net-aware spacing check; wells on different nets closer than 1.80 um are not flagged. Only the geometric nwell.space.1 (0.62 um) ran."
+      }
+    ],
+    "marker_blind_layers_in_stream": [],
     "deck_scope": [
       "Act",
       "Cnt",
@@ -441,6 +2549,8 @@
       "M3",
       "M4",
       "M5",
+      "MIM",
+      "NW",
       "TM1",
       "TM2",
       "TV1",
@@ -448,7 +2558,24 @@
       "V1",
       "V2",
       "V3",
-      "V4"
+      "V4",
+      "pSD"
+    ],
+    "unmodeled_rules": [
+      "LU.a",
+      "LU.c",
+      "LU.c1",
+      "LU.d",
+      "LU.d1",
+      "Pad.a1",
+      "Pad.aR",
+      "Pad.bR",
+      "Pad.d",
+      "Pad.d1R",
+      "Pad.dR",
+      "Pad.gR",
+      "Pad.jR",
+      "Pad.kR"
     ],
     "schema_version": 1,
     "known": true,
@@ -474,9 +2601,22 @@
       "metal4.enclosing.via4.1",
       "metal4.space.1",
       "metal4.width.1",
+      "metal5.enclosing.mim.1",
       "metal5.enclosing.topvia1.1",
       "metal5.space.1",
       "metal5.width.1",
+      "mim.enclosing.topvia1.1",
+      "nwell.enclosing.pactiv.1",
+      "nwell.enclosing.pactiv.dig.1",
+      "nwell.enclosing.pactiv.hv.1",
+      "nwell.space.1",
+      "nwell.space.pactiv.1",
+      "nwell.space.pactiv.dig.1",
+      "nwell.space.pactiv.hv.1",
+      "nwell.width.1",
+      "psd.area.1",
+      "psd.space.1",
+      "psd.width.1",
       "topmetal1.enclosing.topvia1.1",
       "topmetal1.enclosing.topvia2.1",
       "topmetal1.space.1",
@@ -498,22 +2638,47 @@
       "via4.width.1"
     ],
     "skipped": [],
-    "inapplicable": [],
+    "inapplicable": [
+      {
+        "id": "nwell.enclosing.nactiv.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "nwell.enclosing.nactiv.dig.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "nwell.enclosing.nactiv.hv.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "nwell.space.nactiv.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "nwell.space.nactiv.dig.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "nwell.space.nactiv.hv.1",
+        "reason": "no_applicable_geometry"
+      }
+    ],
     "unknown": [],
     "nothing_checked": false,
     "nothing_checked_reasons": []
   },
   "provenance": {
-    "klt_version": "0.6.0",
-    "klayout_version": "0.30.12",
+    "klt_version": "0.8.0",
+    "klayout_version": "0.30.13",
     "pdk": null,
     "deck": {
       "name": "sg13g2",
-      "content_hash": "sha256:894326a4e37fb24fef2f7ffc6ae1da55a0e262b0f0bc1c09adc4862909278fda",
+      "content_hash": "sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15",
       "released": true
     },
     "input": {
-      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
       "role": "layout"
     },
     "klayout_version_mismatch": true

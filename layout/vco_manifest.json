@@ -126,7 +126,7 @@
       "y1": 290.26
     },
     "dbu_um": 0.001,
-    "digest": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+    "digest": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
     "gds": "layout/vco.gds",
     "top_cell": "vco"
   },
@@ -198,13 +198,13 @@
       "bbox_um": {
         "x0": -186.315,
         "x1": 186.315,
-        "y0": -105.85000000000001,
+        "y0": -106.0,
         "y1": 1.0
       },
       "cell_name": "vco_wiring",
       "generator": "draw",
-      "label_count": 9,
-      "shape_count": 86,
+      "label_count": 10,
+      "shape_count": 87,
       "warnings": [
         "written verbatim by `klt draw`: no PDK awareness and no rule checking were applied; this cell is not guaranteed to be design-legal"
       ]
@@ -218,7 +218,7 @@
         "cap_cmim": 1
       },
       "net_count": 7,
-      "netlist_sha256": "4bf00db3773fb96a0d68b831f4500fd82785b65e56ec522843a7feb058fe0000",
+      "netlist_sha256": "2bb14777684520cf45d14c6809bbaaa6f31d22cfc34589e9a37a711ace1e6dcc",
       "nets": [
         "0",
         "NBIAS",
@@ -237,7 +237,7 @@
         "cap_cmim": 1
       },
       "net_count": 9,
-      "netlist_sha256": "58b4c54506271093f229d6937334d03c7836668a987e155b54b6bfe5694e848e",
+      "netlist_sha256": "318d1caf32d1cf7183d54ef0fe5937cd67ab798e7921276f74920462c5f45ff4",
       "nets": [
         "0",
         "NBIAS",
@@ -1059,6 +1059,60 @@
       "pcell": "SG13_dev/via_stack",
       "terminals": {}
     },
+    "vs_m3_tm2": {
+      "bbox_um": {
+        "x0": -1.93,
+        "x1": 1.93,
+        "y0": -1.93,
+        "y1": 1.93
+      },
+      "cell_name": "vco_vs_m3_tm2",
+      "gds_digest": "sha256:bcb0a897b77f14dcd09e5d6bd360dcf1d6310fd1252c944769887d21445e2ef4",
+      "pads": {
+        "Metal3": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal4": [
+          -0.35,
+          -0.305,
+          0.35,
+          0.305
+        ],
+        "Metal5": [
+          -0.73,
+          -0.73,
+          0.73,
+          0.73
+        ],
+        "TopMetal1": [
+          -1.93,
+          -1.93,
+          1.93,
+          1.93
+        ],
+        "TopMetal2": [
+          -1.93,
+          -1.93,
+          1.93,
+          1.93
+        ]
+      },
+      "params": {
+        "b_layer": "Metal3",
+        "t_layer": "TopMetal2",
+        "vn_columns": 2,
+        "vn_rows": 2,
+        "vt1_columns": 2,
+        "vt1_rows": 2,
+        "vt2_columns": 2,
+        "vt2_rows": 2
+      },
+      "pcell": "SG13_dev/via_stack",
+      "terminals": {}
+    },
     "vs_tm1_tm2": {
       "bbox_um": {
         "x0": -1.93,
@@ -1530,6 +1584,13 @@
       },
       {
         "datatype": 25,
+        "layer": 134,
+        "text": "VCTRL",
+        "x_um": -66.0,
+        "y_um": -104.0
+      },
+      {
+        "datatype": 25,
         "layer": 30,
         "text": "VCTRL",
         "x_um": 0.0,
@@ -1847,7 +1908,7 @@
       {
         "datatype": 0,
         "layer": 30,
-        "polygons": 26,
+        "polygons": 27,
         "texts": 0
       },
       {
@@ -1895,13 +1956,13 @@
       {
         "datatype": 0,
         "layer": 49,
-        "polygons": 12,
+        "polygons": 16,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 50,
-        "polygons": 3,
+        "polygons": 4,
         "texts": 0
       },
       {
@@ -1931,13 +1992,13 @@
       {
         "datatype": 0,
         "layer": 66,
-        "polygons": 12,
+        "polygons": 16,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 67,
-        "polygons": 5,
+        "polygons": 6,
         "texts": 0
       },
       {
@@ -1955,13 +2016,13 @@
       {
         "datatype": 0,
         "layer": 125,
-        "polygons": 12,
+        "polygons": 16,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 126,
-        "polygons": 23,
+        "polygons": 24,
         "texts": 0
       },
       {
@@ -1997,13 +2058,13 @@
       {
         "datatype": 0,
         "layer": 133,
-        "polygons": 268,
+        "polygons": 272,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 134,
-        "polygons": 13,
+        "polygons": 15,
         "texts": 0
       },
       {
@@ -2016,7 +2077,7 @@
         "datatype": 25,
         "layer": 134,
         "polygons": 0,
-        "texts": 1
+        "texts": 2
       },
       {
         "datatype": 0,
@@ -2038,7 +2099,7 @@
       "npn13G2V": 4,
       "ptap1": 4,
       "rppd": 3,
-      "via_stack": 54
+      "via_stack": 55
     }
   },
   "nets": [
@@ -2057,10 +2118,10 @@
     "method": "fully scripted, headless: klt gen --pdk-pcell per device, klt gen-compose for placement and the router-owned nets, klt draw for the nets klt's sg13g2 layer-role table cannot name",
     "not_signoff": "klt draw is PDK-unaware and klt gen-compose's nets[].routed is not a DRC guarantee; DRC closure is issue #61, LVS closure issue #62",
     "pdk": {
-      "install": "/Users/rwalters/share/pdk/ihp-sg13g2",
+      "install": "/home/ubuntu/share/pdk/ihp-sg13g2",
       "note": "the overlay repairs IHP-Open-PDK's two empty git submodules without mutating the shared install; see layout/scripts/pdk_env.sh and 2AMLogic/klayout-tools#1630",
       "overlay": {
-        "overlay": "/Users/rwalters/GitHub/sg13g2-vco/.loom/worktrees/issue-61/layout/build/pdk-klayout-overlay",
+        "overlay": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-314/layout/build/pdk-klayout-overlay",
         "pycell4klayout-api": {
           "repo": "https://github.com/IHP-GmbH/pycell4klayout-api.git",
           "rev": "2ffdf79fe51a7c35b361cc854369b5d434c8d478"
@@ -2073,8 +2134,8 @@
     },
     "source_of_truth": {
       "netlist": "design/vco.spice",
-      "repo_commit": "34fc709960643eb79e1fbc682d577c0c8948aa09",
-      "repo_describe": "34fc709-dirty",
+      "repo_commit": "32ab615d6d591f6b70b84c17df45d7c0cbfdfdb3",
+      "repo_describe": "32ab615-dirty",
       "schematic": "design/vco.sch"
     },
     "tools": {

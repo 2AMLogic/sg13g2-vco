@@ -1,6 +1,9 @@
 {
-  "schema_version": 2,
-  "file": "layout/vco.gds",
+  "schema_version": 3,
+  "file": {
+    "path": "layout/vco.gds",
+    "scope": "repo"
+  },
   "deck": "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/klayout/tech/drc/ihp-sg13g2.drc",
   "engine": "klayout",
   "dbu_um": 0.001,
@@ -1198,7 +1201,10 @@
     "layers_in_stream_without_rules": [],
     "rules_skipped": [],
     "voltage_domain_warnings": [],
+    "unchecked_rules": [],
     "deck_scope": [],
+    "unmodeled_rules": [],
+    "isolation_only_rules": [],
     "schema_version": 1,
     "known": true,
     "checked": [
@@ -1806,7 +1812,7 @@
     "satisfied": true
   },
   "provenance": {
-    "klt_version": "0.6.0+g70dee3b679a6",
+    "klt_version": "0.8.0.dev2612+gc572046be644",
     "klayout_version": "0.30.12",
     "pdk": null,
     "deck": {
@@ -1818,7 +1824,7 @@
       }
     },
     "input": {
-      "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
       "role": "layout"
     },
     "klayout_version_mismatch": false
