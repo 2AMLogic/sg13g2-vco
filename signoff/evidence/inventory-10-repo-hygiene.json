@@ -12,7 +12,7 @@
     },
     {
       "path": "spec/target-spec.md",
-      "sha256": "sha256:943b3fb67ffb98d1effb8098e229595d1b08ae898c62cc853b6721f170b03db0"
+      "sha256": "sha256:dd50e0cb7e7d7fbfc63d208946809d4ccdefd87a164e9d7160d08b55e4799634"
     },
     {
       "path": "spec/decision-records/DR-003-target-spec-ratification.md",
