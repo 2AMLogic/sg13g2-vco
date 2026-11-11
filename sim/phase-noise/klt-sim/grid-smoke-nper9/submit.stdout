@@ -1,0 +1,3 @@
+submitted: klt-sim-c332ab2ccd78  units: 2
+job: s3://2am-batch-jobs-221082181346/jobs/klt-sim-c332ab2ccd78  launched_at: 2026-11-11T23:27:57Z
+poll with: klt sim <request> --job-status klt-sim-c332ab2ccd78

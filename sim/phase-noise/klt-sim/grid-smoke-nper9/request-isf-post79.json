@@ -1,0 +1,67 @@
+{
+ "netlist": "vco_isf_body.spice",
+ "engine": "ngspice",
+ "models": {
+  "pdk": "ihp-sg13g2",
+  "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+ },
+ "corners": {
+  "process": [
+   {
+    "name": "tt_typ_typ",
+    "sections": [
+     {
+      "section": "hbt_typ",
+      "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+     },
+     {
+      "section": "mos_tt",
+      "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+     },
+     {
+      "section": "cap_typ",
+      "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+     }
+    ]
+   }
+  ],
+  "supply_v": {
+   "vct": [
+    1.65
+   ]
+  },
+  "temperature_c": [
+   27
+  ],
+  "params": {
+   "dqd": [
+    0.0,
+    4e-15
+   ],
+   "dqt": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "analysis": {
+  "kind": "tran",
+  "args": "1p 2.518366252787e-08 0 2p"
+ },
+ "measurements": [
+  {
+   "name": "vdiff_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=2.5n TO=2.518366e-08"
+  }
+ ],
+ "options": {
+  "timeout_s": 3000,
+  "keep_artifacts": true,
+  "stage_model_inputs": false,
+  "osdi_preload": [
+   "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+  ],
+  "waveforms": true
+ }
+}

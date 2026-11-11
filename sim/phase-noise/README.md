@@ -454,6 +454,31 @@ So this directory does what `oscillator-core/run_pilot_grid.sh` does: it
 measures the subset that fits, labels it a subset everywhere it appears, and
 **grades no row**.
 
+### Update (issue #53): the graded-grid machinery, and what it found
+
+The paragraphs above are the pre-fleet statement and are left as written. Since then the
+fleet route has run this deck (record `20261105-200000-6834172`), and issue #53 adds:
+
+- `run_pn_sweep.sh` (declares the 135-point grid, prints the cost, `--generate`/`--submit`
+  to the batch fleet only, `--grade`), `klt-sim/gen_isf_request.py --grid` (one request per
+  corner, carrier taken per corner from the oscillator-core fleet grid; 45 corners, all at
+  125 C, use the same process's 27 C carrier because that grid had no oscillating 125 C
+  unit), and `grade_pn_grid.py` (row 4 graded **only** when all 135 corners are present,
+  valid and `n_plateau_min >= 3`; a corner that fails stays listed with its raw log).
+  Known-answer fixture: `tests/test_grade_pn_grid.sh`.
+- **Impulse spacing: `nper = 9`, not the issue's "5-6".** The plateau is the last 0.35 of an
+  interval, so it holds `0.35 * (nper + 0.1)` carrier periods; `n_plateau >= 3` needs that
+  to exceed 3, i.e. `nper >= 9` (5-6 gives 1.8-2.1 periods, i.e. 1-2 crossings). Transient
+  length is then ~25.2 ns instead of 10.9 ns.
+- **Cost, measured.** At the pilot's local constant (11.19 ps/wall-s) the widened grid
+  prints ~505 CPU-h. On the fleet one 25.18 ns unit (job `klt-sim-1dfa416c0f4a`) ran in
+  5.73 s, ~400x faster, so compute is ~1.3 CPU-h for 810 units; the binding cost is
+  waveform volume (~300 MB/unit).
+- **Open before the grid can be graded:** the per-corner reduction glue (extracting each
+  corner's traces and the 135-corner port-noise values into `reduce_isf_fleet.sh` inputs);
+  and the 125 C corners, which aborted with `timestep_too_small` in every oscillator-core
+  fleet unit, so row 4 is expected to stay INCOMPLETE until that is resolved.
+
 ---
 
 ## The non-PDK inductor model's error bars travel with every number here
