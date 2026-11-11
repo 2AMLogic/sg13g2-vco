@@ -29,11 +29,12 @@ design/netlist.sh --check    # fail if the committed netlist is stale
 design/run_elaborate.sh      # --check, then build OSDI, then elaborate + run
 ```
 
-`netlist.sh` runs `xschem -n -x -q -r --rcfile $PDK_ROOT/$PDK/libs.tech/xschem/xschemrc`
-and applies exactly two normalisations to the raw output, so the committed file
-is machine-independent: the `** sch_path:` header (which carries an absolute
-path) is rewritten to `design/vco.sch`, and trailing whitespace is stripped.
-Device lines are xschem's verbatim. `run_elaborate.sh` calls
+`netlist.sh` runs `klt netlist --relative-paths` (which owns the headless
+xschem invocation and bounds it with a timeout) and so the committed file is
+machine-independent: the `** sch_path:` header (which carries an absolute
+path) is rewritten to `design/vco.sch`. `vco_core` uses `--block`, and
+staleness is judged with `--check --ignore-comments` (comment lines only, e.g.
+pin annotations, are ignored). Device lines are xschem's verbatim. `run_elaborate.sh` calls
 `netlist.sh --check` **first**, so a run can never silently simulate a netlist
 that has drifted from the schematic.
 
