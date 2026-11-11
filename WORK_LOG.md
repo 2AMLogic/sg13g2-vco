@@ -4,6 +4,25 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-11
+
+- **PR #322**: refactor(design): netlist via klt netlist instead of raw xschem wrapper
+- **PR #320**: docs(spec): state clock output swing, load and common mode against a downstream need
+- **Issue #321** (closed): Simplify design/netlist.sh: replace raw xschem wrapper with klt netlist
+- **Issue #319** (closed): spec: state clock output swing and load for a downstream TX mux
+
+### 2026-11-10
+
+- **PR #318**: ci: add 50-loop record-id-selftest confirmation job for the runner image
+- **PR #317**: drc: record nwell.enclosing.pactiv.1 x64 as curated-rule artefact
+- **PR #316**: layout: add TopMetal2 VCTRL chip-level pin on the bbox bottom edge
+- **PR #313**: fix: decide record-id ownership with an O_EXCL lock, not mkdir
+- **PR #310**: sim: attribute 125 C dsubw start-up abort to NaN junction capacitance
+- **Issue #315** (closed): DRC: nwell.enclosing.pactiv.1 reported on varactor banks (BANKP/BANKN) when placed in an integrated top
+- **Issue #314** (closed): layout: expose VCTRL as a top-metal pin at the bbox edge (parent keep-out forbids Metal3-5 access)
+- **Issue #312** (closed): test flake: record-id-selftest concurrent reservation fails on sim-append-only (recurrence of #273, #305)
+- **Issue #309** (closed): sim: trace why ~16 nA of dsubw leakage aborts the 125 C first timepoint at xq1 (physical vs solver artefact)
+
 ### 2026-11-08
 
 - **PR #307**: test: print mkdir implementation in record-id concurrency failure output
