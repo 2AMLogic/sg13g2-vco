@@ -1,0 +1,5220 @@
+{
+  "schema_version": 2,
+  "mode": "crosscheck",
+  "file": "layout/vco.gds",
+  "status": "violations",
+  "identity": {
+    "layout_content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+    "pdk": null,
+    "klt_version": "0.9.2.dev420+gf186e14125ed",
+    "klayout_version": "0.30.13",
+    "curated_deck": {
+      "name": "sg13g2",
+      "content_hash": "sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15",
+      "released": true
+    },
+    "native_deck": {
+      "name": "ihp-sg13g2.drc",
+      "content_hash": "sha256:0620b737538af7c86dfb7c6ca0ba3a38f8410b0d51412978ca977ea3df3fb693",
+      "released": false,
+      "options": {
+        "threads": "2"
+      }
+    }
+  },
+  "comparison": {
+    "state": "not_comparable",
+    "granularity": "region: zero vs non-zero plus bbox overlap, never rule-id equality or counts",
+    "groups": [],
+    "unmapped": {
+      "curated": [
+        "activ.enclosing.cont.1",
+        "activ.space.1",
+        "activ.width.1",
+        "cont.space.1",
+        "cont.width.1",
+        "gatpoly.enclosing.cont.1",
+        "gatpoly.separation.activ.1",
+        "gatpoly.space.1",
+        "gatpoly.width.1",
+        "metal1.enclosing.via1.1",
+        "metal1.space.1",
+        "metal1.width.1",
+        "metal2.enclosing.via2.1",
+        "metal2.space.1",
+        "metal2.width.1",
+        "metal3.enclosing.via3.1",
+        "metal3.space.1",
+        "metal3.width.1",
+        "metal4.enclosing.via4.1",
+        "metal4.space.1",
+        "metal4.width.1",
+        "metal5.enclosing.mim.1",
+        "metal5.enclosing.topvia1.1",
+        "metal5.space.1",
+        "metal5.width.1",
+        "mim.enclosing.topvia1.1",
+        "nwell.enclosing.pactiv.1",
+        "nwell.enclosing.pactiv.dig.1",
+        "nwell.enclosing.pactiv.hv.1",
+        "nwell.space.1",
+        "nwell.space.pactiv.1",
+        "nwell.space.pactiv.dig.1",
+        "nwell.space.pactiv.hv.1",
+        "nwell.width.1",
+        "psd.area.1",
+        "psd.space.1",
+        "psd.width.1",
+        "topmetal1.enclosing.topvia1.1",
+        "topmetal1.enclosing.topvia2.1",
+        "topmetal1.space.1",
+        "topmetal1.width.1",
+        "topmetal2.enclosing.topvia2.1",
+        "topmetal2.space.1",
+        "topmetal2.width.1",
+        "topvia1.space.1",
+        "topvia1.width.1",
+        "topvia2.space.1",
+        "topvia2.width.1",
+        "via1.space.1",
+        "via1.width.1",
+        "via2.space.1",
+        "via2.width.1",
+        "via3.space.1",
+        "via3.width.1",
+        "via4.space.1",
+        "via4.width.1"
+      ],
+      "native": [
+        "AFil.c",
+        "AFil.c1",
+        "AFil.d",
+        "AFil.e",
+        "AFil.j",
+        "Act.a",
+        "Act.b",
+        "Cnt.a",
+        "Cnt.b",
+        "Cnt.c",
+        "Cnt.c.SRAM",
+        "Cnt.c.digibnd",
+        "Cnt.d",
+        "Cnt.e",
+        "Cnt.g1",
+        "Cnt.g2",
+        "CntB.b1",
+        "CntB.h1",
+        "GFil.d",
+        "GFil.e",
+        "GFil.i",
+        "Gat.a",
+        "Gat.a1",
+        "Gat.a2",
+        "Gat.b",
+        "Gat.d",
+        "Gat.g",
+        "LBE.a",
+        "LBE.b",
+        "LBE.b1",
+        "LBE.c",
+        "LBE.d",
+        "LBE.h",
+        "LU.b",
+        "M1.a",
+        "M1.b",
+        "M1.e",
+        "M1.f",
+        "M1.g",
+        "M1.i",
+        "M1Fil.a2",
+        "M1Fil.c",
+        "M2.a",
+        "M2.b",
+        "M2.e",
+        "M2.f",
+        "M2.g",
+        "M2.i",
+        "M2Fil.a2",
+        "M2Fil.c",
+        "M3.a",
+        "M3.b",
+        "M3.e",
+        "M3.f",
+        "M3.g",
+        "M3.i",
+        "M3Fil.a2",
+        "M3Fil.c",
+        "M4.a",
+        "M4.b",
+        "M4.e",
+        "M4.f",
+        "M4.g",
+        "M4.i",
+        "M4Fil.a2",
+        "M4Fil.c",
+        "M5.a",
+        "M5.b",
+        "M5.e",
+        "M5.f",
+        "M5.g",
+        "M5.i",
+        "M5Fil.a2",
+        "M5Fil.c",
+        "MIM.c",
+        "MIM.d",
+        "NBL.b",
+        "NBL.c",
+        "NBL.d",
+        "NBL.e",
+        "NBL.f",
+        "NW.b",
+        "NW.b1",
+        "NW.f1",
+        "NW.f1.digibnd",
+        "PWB.e",
+        "PWB.e1",
+        "PWB.f",
+        "PWB.f1",
+        "Pad.fR_M1",
+        "Pad.fR_M2",
+        "Pad.fR_M3",
+        "Pad.fR_M4",
+        "Pad.fR_M5",
+        "Pad.fR_TM1",
+        "Pad.fR_TM2",
+        "Pad.i",
+        "Pad.m",
+        "Padb.a",
+        "Padb.b",
+        "Padb.c",
+        "Padb.d",
+        "Padc.a",
+        "Padc.b",
+        "Padc.c",
+        "Pas.a",
+        "Pas.b",
+        "Pas.c",
+        "Pin.a",
+        "Pin.b",
+        "Pin.e",
+        "Pin.f_M2",
+        "Pin.f_M3",
+        "Pin.f_M4",
+        "Pin.f_M5",
+        "Pin.g",
+        "Pin.h",
+        "Sdiod.b",
+        "Sdiod.c",
+        "Sdiod.d",
+        "Sdiod.e",
+        "Seal.b_activ",
+        "Seal.b_metal1",
+        "Seal.b_metal2",
+        "Seal.b_metal3",
+        "Seal.b_metal4",
+        "Seal.b_metal5",
+        "Seal.b_psd",
+        "Seal.b_topmetal1",
+        "Seal.b_topmetal2",
+        "Seal.k",
+        "Seal.m",
+        "Seal.n",
+        "Slt.e1_M1",
+        "Slt.e1_M2",
+        "Slt.e1_M3",
+        "Slt.e1_M4",
+        "Slt.e1_M5",
+        "Slt.e1_TM1",
+        "Slt.e1_TM2",
+        "TGO.f",
+        "TM1.a",
+        "TM1.b",
+        "TM1Fil.a1",
+        "TM1Fil.c",
+        "TM2.a",
+        "TM2.b",
+        "TM2.bR",
+        "TM2Fil.a1",
+        "TM2Fil.c",
+        "TV1.a",
+        "TV1.b",
+        "TV1.c",
+        "TV1.d",
+        "TV2.a",
+        "TV2.b",
+        "TV2.c",
+        "TV2.d",
+        "V1.a",
+        "V1.b",
+        "V1.c",
+        "V2.a",
+        "V2.b",
+        "V2.c",
+        "V3.a",
+        "V3.b",
+        "V3.c",
+        "V4.a",
+        "V4.b",
+        "V4.c",
+        "activ_drw_Acute",
+        "activ_drw_Angle45",
+        "activ_drw_Offgrid",
+        "activ_filler_Acute",
+        "activ_filler_Offgrid",
+        "activ_iopc_Acute",
+        "activ_iopc_Offgrid",
+        "activ_mask_Acute",
+        "activ_mask_Offgrid",
+        "activ_nofill_Acute",
+        "activ_nofill_Offgrid",
+        "activ_noqrc_Acute",
+        "activ_noqrc_Offgrid",
+        "activ_opc_Acute",
+        "activ_opc_Offgrid",
+        "activ_pin_Acute",
+        "activ_pin_Offgrid",
+        "alcustop_drw_Acute",
+        "alcustop_drw_Offgrid",
+        "antmetal1_drw_Acute",
+        "antmetal1_drw_Offgrid",
+        "backmetal1_diffprb_Acute",
+        "backmetal1_diffprb_Offgrid",
+        "backmetal1_drw_Acute",
+        "backmetal1_drw_Offgrid",
+        "backmetal1_filler_Acute",
+        "backmetal1_filler_Offgrid",
+        "backmetal1_iprobe_Acute",
+        "backmetal1_iprobe_Offgrid",
+        "backmetal1_mask_Acute",
+        "backmetal1_mask_Offgrid",
+        "backmetal1_nofill_Acute",
+        "backmetal1_nofill_Offgrid",
+        "backmetal1_noqrc_Acute",
+        "backmetal1_noqrc_Offgrid",
+        "backmetal1_opc_Acute",
+        "backmetal1_opc_Offgrid",
+        "backmetal1_pin_Acute",
+        "backmetal1_pin_Offgrid",
+        "backmetal1_res_Acute",
+        "backmetal1_res_Offgrid",
+        "backmetal1_slit_Acute",
+        "backmetal1_slit_Offgrid",
+        "backpassiv_drw_Acute",
+        "backpassiv_drw_Offgrid",
+        "baspoly_drw_Acute",
+        "baspoly_drw_Offgrid",
+        "baspoly_pin_Acute",
+        "baspoly_pin_Offgrid",
+        "biwind_drw_Acute",
+        "biwind_drw_Offgrid",
+        "biwind_opc_Acute",
+        "biwind_opc_Offgrid",
+        "colopen_drw_Acute",
+        "colopen_drw_Offgrid",
+        "colwind_drw_Acute",
+        "colwind_drw_Offgrid",
+        "cont_drw_Acute",
+        "cont_drw_Angle90",
+        "cont_drw_Offgrid",
+        "cont_opc_Acute",
+        "cont_opc_Offgrid",
+        "ctrgat_drw_Acute",
+        "ctrgat_drw_Offgrid",
+        "deepco_drw_Acute",
+        "deepco_drw_Offgrid",
+        "deepvia_drw_Acute",
+        "deepvia_drw_Offgrid",
+        "empoly_drw_Acute",
+        "empoly_drw_Offgrid",
+        "emwihv_drw_Acute",
+        "emwihv_drw_Offgrid",
+        "emwind_drw_Acute",
+        "emwind_drw_Offgrid",
+        "emwind_opc_Acute",
+        "emwind_opc_Offgrid",
+        "exchange0_drw_Acute",
+        "exchange0_drw_Offgrid",
+        "exchange0_pin_Acute",
+        "exchange0_pin_Offgrid",
+        "exchange1_drw_Acute",
+        "exchange1_drw_Offgrid",
+        "exchange1_pin_Acute",
+        "exchange1_pin_Offgrid",
+        "exchange2_drw_Acute",
+        "exchange2_drw_Offgrid",
+        "exchange2_pin_Acute",
+        "exchange2_pin_Offgrid",
+        "exchange3_drw_Acute",
+        "exchange3_drw_Offgrid",
+        "exchange3_pin_Acute",
+        "exchange3_pin_Offgrid",
+        "exchange4_drw_Acute",
+        "exchange4_drw_Offgrid",
+        "exchange4_pin_Acute",
+        "exchange4_pin_Offgrid",
+        "extblock_drw_Acute",
+        "extblock_drw_Offgrid",
+        "fbe_drw_Acute",
+        "fbe_drw_Offgrid",
+        "fgetch_drw_Acute",
+        "fgetch_drw_Offgrid",
+        "fgimp_drw_Acute",
+        "fgimp_drw_Offgrid",
+        "flm_drw_Acute",
+        "flm_drw_Offgrid",
+        "forbidden.baspoly",
+        "forbidden.biwind",
+        "forbidden.colwind",
+        "forbidden.deepco",
+        "forbidden.empoly",
+        "forbidden.flash",
+        "forbidden.ldmos",
+        "forbidden.nodrc",
+        "forbidden.pbiwind",
+        "forbidden.pempoly",
+        "forbidden.pemwind",
+        "gatpoly_drw_Acute",
+        "gatpoly_drw_Angle45",
+        "gatpoly_drw_Offgrid",
+        "gatpoly_filler_Acute",
+        "gatpoly_filler_Offgrid",
+        "gatpoly_iopc_Acute",
+        "gatpoly_iopc_Offgrid",
+        "gatpoly_nofill_Acute",
+        "gatpoly_nofill_Offgrid",
+        "gatpoly_noqrc_Acute",
+        "gatpoly_noqrc_Offgrid",
+        "gatpoly_opc_Acute",
+        "gatpoly_opc_Offgrid",
+        "gatpoly_pin_Acute",
+        "gatpoly_pin_Offgrid",
+        "graphgate_drw_Acute",
+        "graphgate_drw_Offgrid",
+        "hafniumox_drw_Acute",
+        "hafniumox_drw_Offgrid",
+        "ic_drw_Acute",
+        "ic_drw_Offgrid",
+        "inldpwl_drw_Acute",
+        "inldpwl_drw_Offgrid",
+        "isonwell_drw_Acute",
+        "isonwell_drw_Offgrid",
+        "lbe_drw_Acute",
+        "lbe_drw_Offgrid",
+        "ldmos_drw_Acute",
+        "ldmos_drw_Offgrid",
+        "mempad_drw_Acute",
+        "mempad_drw_Offgrid",
+        "memvia_drw_Acute",
+        "memvia_drw_Offgrid",
+        "metal1_diffprb_Acute",
+        "metal1_diffprb_Offgrid",
+        "metal1_drw_Acute",
+        "metal1_drw_Angle45",
+        "metal1_drw_Offgrid",
+        "metal1_filler_Acute",
+        "metal1_filler_Offgrid",
+        "metal1_iprobe_Acute",
+        "metal1_iprobe_Offgrid",
+        "metal1_mask_Acute",
+        "metal1_mask_Offgrid",
+        "metal1_nofill_Acute",
+        "metal1_nofill_Offgrid",
+        "metal1_noqrc_Acute",
+        "metal1_noqrc_Offgrid",
+        "metal1_opc_Acute",
+        "metal1_opc_Offgrid",
+        "metal1_pin_Acute",
+        "metal1_pin_Offgrid",
+        "metal1_res_Acute",
+        "metal1_res_Offgrid",
+        "metal1_slit_Acute",
+        "metal1_slit_Offgrid",
+        "metal2_diffprb_Acute",
+        "metal2_diffprb_Offgrid",
+        "metal2_drw_Acute",
+        "metal2_drw_Angle45",
+        "metal2_drw_Offgrid",
+        "metal2_filler_Acute",
+        "metal2_filler_Offgrid",
+        "metal2_iprobe_Acute",
+        "metal2_iprobe_Offgrid",
+        "metal2_mask_Acute",
+        "metal2_mask_Offgrid",
+        "metal2_nofill_Acute",
+        "metal2_nofill_Offgrid",
+        "metal2_noqrc_Acute",
+        "metal2_noqrc_Offgrid",
+        "metal2_opc_Acute",
+        "metal2_opc_Offgrid",
+        "metal2_pin_Acute",
+        "metal2_pin_Offgrid",
+        "metal2_res_Acute",
+        "metal2_res_Offgrid",
+        "metal2_slit_Acute",
+        "metal2_slit_Offgrid",
+        "metal3_diffprb_Acute",
+        "metal3_diffprb_Offgrid",
+        "metal3_drw_Acute",
+        "metal3_drw_Angle45",
+        "metal3_drw_Offgrid",
+        "metal3_filler_Acute",
+        "metal3_filler_Offgrid",
+        "metal3_iprobe_Acute",
+        "metal3_iprobe_Offgrid",
+        "metal3_mask_Acute",
+        "metal3_mask_Offgrid",
+        "metal3_nofill_Acute",
+        "metal3_nofill_Offgrid",
+        "metal3_noqrc_Acute",
+        "metal3_noqrc_Offgrid",
+        "metal3_opc_Acute",
+        "metal3_opc_Offgrid",
+        "metal3_pin_Acute",
+        "metal3_pin_Offgrid",
+        "metal3_res_Acute",
+        "metal3_res_Offgrid",
+        "metal3_slit_Acute",
+        "metal3_slit_Offgrid",
+        "metal4_diffprb_Acute",
+        "metal4_diffprb_Offgrid",
+        "metal4_drw_Acute",
+        "metal4_drw_Angle45",
+        "metal4_drw_Offgrid",
+        "metal4_filler_Acute",
+        "metal4_filler_Offgrid",
+        "metal4_iprobe_Acute",
+        "metal4_iprobe_Offgrid",
+        "metal4_mask_Acute",
+        "metal4_mask_Offgrid",
+        "metal4_nofill_Acute",
+        "metal4_nofill_Offgrid",
+        "metal4_noqrc_Acute",
+        "metal4_noqrc_Offgrid",
+        "metal4_opc_Acute",
+        "metal4_opc_Offgrid",
+        "metal4_pin_Acute",
+        "metal4_pin_Offgrid",
+        "metal4_res_Acute",
+        "metal4_res_Offgrid",
+        "metal4_slit_Acute",
+        "metal4_slit_Offgrid",
+        "metal5_diffprb_Acute",
+        "metal5_diffprb_Offgrid",
+        "metal5_drw_Acute",
+        "metal5_drw_Angle45",
+        "metal5_drw_Offgrid",
+        "metal5_filler_Acute",
+        "metal5_filler_Offgrid",
+        "metal5_iprobe_Acute",
+        "metal5_iprobe_Offgrid",
+        "metal5_mask_Acute",
+        "metal5_mask_Offgrid",
+        "metal5_nofill_Acute",
+        "metal5_nofill_Offgrid",
+        "metal5_noqrc_Acute",
+        "metal5_noqrc_Offgrid",
+        "metal5_opc_Acute",
+        "metal5_opc_Offgrid",
+        "metal5_pin_Acute",
+        "metal5_pin_Offgrid",
+        "metal5_res_Acute",
+        "metal5_res_Offgrid",
+        "metal5_slit_Acute",
+        "metal5_slit_Offgrid",
+        "mim_drw_Acute",
+        "mim_drw_Offgrid",
+        "nbulay_block_Acute",
+        "nbulay_block_Offgrid",
+        "nbulay_drw_Acute",
+        "nbulay_drw_Offgrid",
+        "nbulay_pin_Acute",
+        "nbulay_pin_Offgrid",
+        "nbulaycut_drw_Acute",
+        "nbulaycut_drw_Offgrid",
+        "next_drw_Acute",
+        "next_drw_Offgrid",
+        "nexthv_drw_Acute",
+        "nexthv_drw_Offgrid",
+        "nldb_drw_Acute",
+        "nldb_drw_Offgrid",
+        "nldd_drw_Acute",
+        "nldd_drw_Offgrid",
+        "npn13G2.bR",
+        "npn13G2L.cR",
+        "npn13G2V.cR",
+        "nsd_block_Acute",
+        "nsd_block_Offgrid",
+        "nsd_drw_Acute",
+        "nsd_drw_Offgrid",
+        "nwell_drw_Acute",
+        "nwell_drw_Offgrid",
+        "nwell_pin_Acute",
+        "nwell_pin_Offgrid",
+        "pSD.c1",
+        "padb.f",
+        "padc.f",
+        "passiv_drw_Acute",
+        "passiv_drw_Offgrid",
+        "passiv_pdl_Acute",
+        "passiv_pdl_Offgrid",
+        "passiv_pillar_Acute",
+        "passiv_pillar_Offgrid",
+        "passiv_pin_Acute",
+        "passiv_pin_Offgrid",
+        "passiv_sbump_Acute",
+        "passiv_sbump_Offgrid",
+        "pbiwind_drw_Acute",
+        "pbiwind_drw_Offgrid",
+        "pempoly_drw_Acute",
+        "pempoly_drw_Offgrid",
+        "pemwind_drw_Acute",
+        "pemwind_drw_Offgrid",
+        "pext_drw_Acute",
+        "pext_drw_Offgrid",
+        "pexthv_drw_Acute",
+        "pexthv_drw_Offgrid",
+        "pldb_drw_Acute",
+        "pldb_drw_Offgrid",
+        "pldd_drw_Acute",
+        "pldd_drw_Offgrid",
+        "polyres_drw_Acute",
+        "polyres_drw_Offgrid",
+        "polyres_pin_Acute",
+        "polyres_pin_Offgrid",
+        "prboundary_drw_Acute",
+        "prboundary_drw_Offgrid",
+        "psd_drw_Acute",
+        "psd_drw_Offgrid",
+        "pwell_block_Acute",
+        "pwell_block_Offgrid",
+        "pwell_drw_Acute",
+        "pwell_drw_Offgrid",
+        "pwell_pin_Acute",
+        "pwell_pin_Offgrid",
+        "rfmem_drw_Acute",
+        "rfmem_drw_Offgrid",
+        "salblock_drw_Acute",
+        "salblock_drw_Offgrid",
+        "sensor_drw_Acute",
+        "sensor_drw_Offgrid",
+        "snsarms_drw_Acute",
+        "snsarms_drw_Offgrid",
+        "snsbotvia_drw_Acute",
+        "snsbotvia_drw_Offgrid",
+        "snscmosvia_drw_Acute",
+        "snscmosvia_drw_Offgrid",
+        "snsring_drw_Acute",
+        "snsring_drw_Offgrid",
+        "snstopvia_drw_Acute",
+        "snstopvia_drw_Offgrid",
+        "substrate_drw_Acute",
+        "substrate_drw_Offgrid",
+        "thickgateox_drw_Acute",
+        "thickgateox_drw_Offgrid",
+        "thinfilmres_drw_Acute",
+        "thinfilmres_drw_Offgrid",
+        "topmetal1_diffprb_Acute",
+        "topmetal1_diffprb_Offgrid",
+        "topmetal1_drw_Acute",
+        "topmetal1_drw_Angle45",
+        "topmetal1_drw_Offgrid",
+        "topmetal1_filler_Acute",
+        "topmetal1_filler_Offgrid",
+        "topmetal1_iprobe_Acute",
+        "topmetal1_iprobe_Offgrid",
+        "topmetal1_mask_Acute",
+        "topmetal1_mask_Offgrid",
+        "topmetal1_nofill_Acute",
+        "topmetal1_nofill_Offgrid",
+        "topmetal1_noqrc_Acute",
+        "topmetal1_noqrc_Offgrid",
+        "topmetal1_pin_Acute",
+        "topmetal1_pin_Offgrid",
+        "topmetal1_res_Acute",
+        "topmetal1_res_Offgrid",
+        "topmetal1_slit_Acute",
+        "topmetal1_slit_Offgrid",
+        "topmetal2_diffprb_Acute",
+        "topmetal2_diffprb_Offgrid",
+        "topmetal2_drw_Acute",
+        "topmetal2_drw_Angle45",
+        "topmetal2_drw_Offgrid",
+        "topmetal2_filler_Acute",
+        "topmetal2_filler_Offgrid",
+        "topmetal2_iprobe_Acute",
+        "topmetal2_iprobe_Offgrid",
+        "topmetal2_mask_Acute",
+        "topmetal2_mask_Offgrid",
+        "topmetal2_nofill_Acute",
+        "topmetal2_nofill_Offgrid",
+        "topmetal2_noqrc_Acute",
+        "topmetal2_noqrc_Offgrid",
+        "topmetal2_pin_Acute",
+        "topmetal2_pin_Offgrid",
+        "topmetal2_res_Acute",
+        "topmetal2_res_Offgrid",
+        "topmetal2_slit_Acute",
+        "topmetal2_slit_Offgrid",
+        "topvia1_drw_Acute",
+        "topvia1_drw_Angle90",
+        "topvia1_drw_Offgrid",
+        "topvia2_drw_Acute",
+        "topvia2_drw_Angle90",
+        "topvia2_drw_Offgrid",
+        "via1_drw_Acute",
+        "via1_drw_Angle90",
+        "via1_drw_Offgrid",
+        "via2_drw_Acute",
+        "via2_drw_Angle90",
+        "via2_drw_Offgrid",
+        "via3_drw_Acute",
+        "via3_drw_Angle90",
+        "via3_drw_Offgrid",
+        "via4_drw_Acute",
+        "via4_drw_Angle90",
+        "via4_drw_Offgrid",
+        "vmim_drw_Acute",
+        "vmim_drw_Angle90",
+        "vmim_drw_Offgrid"
+      ]
+    }
+  },
+  "reports": {
+    "curated": {
+      "schema_version": 3,
+      "file": {
+        "path": "layout/vco.gds",
+        "scope": "repo"
+      },
+      "deck": "sg13g2",
+      "dbu_um": 0.001,
+      "status": "violations",
+      "violation_count": 64,
+      "rule_counts": {
+        "nwell.enclosing.pactiv.1": 64
+      },
+      "metrics": {
+        "drc__error__count": 64
+      },
+      "violations": [
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -66965,
+            "bottom": -52520,
+            "right": -66725,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -66965,
+              -52520
+            ],
+            [
+              -66965,
+              -52000
+            ],
+            [
+              -66725,
+              -52000
+            ],
+            [
+              -66725,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -66965,
+            "bottom": -47230,
+            "right": -66725,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -66965,
+              -47230
+            ],
+            [
+              -66965,
+              -46710
+            ],
+            [
+              -66725,
+              -46710
+            ],
+            [
+              -66725,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -64815,
+            "bottom": -52520,
+            "right": -64575,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -64815,
+              -52520
+            ],
+            [
+              -64815,
+              -52000
+            ],
+            [
+              -64575,
+              -52000
+            ],
+            [
+              -64575,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -64815,
+            "bottom": -47230,
+            "right": -64575,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -64815,
+              -47230
+            ],
+            [
+              -64815,
+              -46710
+            ],
+            [
+              -64575,
+              -46710
+            ],
+            [
+              -64575,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -62665,
+            "bottom": -52520,
+            "right": -62425,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -62665,
+              -52520
+            ],
+            [
+              -62665,
+              -52000
+            ],
+            [
+              -62425,
+              -52000
+            ],
+            [
+              -62425,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -62665,
+            "bottom": -47230,
+            "right": -62425,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -62665,
+              -47230
+            ],
+            [
+              -62665,
+              -46710
+            ],
+            [
+              -62425,
+              -46710
+            ],
+            [
+              -62425,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -60515,
+            "bottom": -52520,
+            "right": -60275,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -60515,
+              -52520
+            ],
+            [
+              -60515,
+              -52000
+            ],
+            [
+              -60275,
+              -52000
+            ],
+            [
+              -60275,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -60515,
+            "bottom": -47230,
+            "right": -60275,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -60515,
+              -47230
+            ],
+            [
+              -60515,
+              -46710
+            ],
+            [
+              -60275,
+              -46710
+            ],
+            [
+              -60275,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -58365,
+            "bottom": -52520,
+            "right": -58125,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -58365,
+              -52520
+            ],
+            [
+              -58365,
+              -52000
+            ],
+            [
+              -58125,
+              -52000
+            ],
+            [
+              -58125,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -58365,
+            "bottom": -47230,
+            "right": -58125,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -58365,
+              -47230
+            ],
+            [
+              -58365,
+              -46710
+            ],
+            [
+              -58125,
+              -46710
+            ],
+            [
+              -58125,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -56215,
+            "bottom": -52520,
+            "right": -55975,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -56215,
+              -52520
+            ],
+            [
+              -56215,
+              -52000
+            ],
+            [
+              -55975,
+              -52000
+            ],
+            [
+              -55975,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -56215,
+            "bottom": -47230,
+            "right": -55975,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -56215,
+              -47230
+            ],
+            [
+              -56215,
+              -46710
+            ],
+            [
+              -55975,
+              -46710
+            ],
+            [
+              -55975,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -54065,
+            "bottom": -52520,
+            "right": -53825,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -54065,
+              -52520
+            ],
+            [
+              -54065,
+              -52000
+            ],
+            [
+              -53825,
+              -52000
+            ],
+            [
+              -53825,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -54065,
+            "bottom": -47230,
+            "right": -53825,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -54065,
+              -47230
+            ],
+            [
+              -54065,
+              -46710
+            ],
+            [
+              -53825,
+              -46710
+            ],
+            [
+              -53825,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -51915,
+            "bottom": -52520,
+            "right": -51675,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -51915,
+              -52520
+            ],
+            [
+              -51915,
+              -52000
+            ],
+            [
+              -51675,
+              -52000
+            ],
+            [
+              -51675,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -51915,
+            "bottom": -47230,
+            "right": -51675,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -51915,
+              -47230
+            ],
+            [
+              -51915,
+              -46710
+            ],
+            [
+              -51675,
+              -46710
+            ],
+            [
+              -51675,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -49765,
+            "bottom": -52520,
+            "right": -49525,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -49765,
+              -52520
+            ],
+            [
+              -49765,
+              -52000
+            ],
+            [
+              -49525,
+              -52000
+            ],
+            [
+              -49525,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -49765,
+            "bottom": -47230,
+            "right": -49525,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -49765,
+              -47230
+            ],
+            [
+              -49765,
+              -46710
+            ],
+            [
+              -49525,
+              -46710
+            ],
+            [
+              -49525,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -47615,
+            "bottom": -52520,
+            "right": -47375,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -47615,
+              -52520
+            ],
+            [
+              -47615,
+              -52000
+            ],
+            [
+              -47375,
+              -52000
+            ],
+            [
+              -47375,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -47615,
+            "bottom": -47230,
+            "right": -47375,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -47615,
+              -47230
+            ],
+            [
+              -47615,
+              -46710
+            ],
+            [
+              -47375,
+              -46710
+            ],
+            [
+              -47375,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -45465,
+            "bottom": -52520,
+            "right": -45225,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -45465,
+              -52520
+            ],
+            [
+              -45465,
+              -52000
+            ],
+            [
+              -45225,
+              -52000
+            ],
+            [
+              -45225,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -45465,
+            "bottom": -47230,
+            "right": -45225,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -45465,
+              -47230
+            ],
+            [
+              -45465,
+              -46710
+            ],
+            [
+              -45225,
+              -46710
+            ],
+            [
+              -45225,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -43315,
+            "bottom": -52520,
+            "right": -43075,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -43315,
+              -52520
+            ],
+            [
+              -43315,
+              -52000
+            ],
+            [
+              -43075,
+              -52000
+            ],
+            [
+              -43075,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -43315,
+            "bottom": -47230,
+            "right": -43075,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -43315,
+              -47230
+            ],
+            [
+              -43315,
+              -46710
+            ],
+            [
+              -43075,
+              -46710
+            ],
+            [
+              -43075,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -41165,
+            "bottom": -52520,
+            "right": -40925,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -41165,
+              -52520
+            ],
+            [
+              -41165,
+              -52000
+            ],
+            [
+              -40925,
+              -52000
+            ],
+            [
+              -40925,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -41165,
+            "bottom": -47230,
+            "right": -40925,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -41165,
+              -47230
+            ],
+            [
+              -41165,
+              -46710
+            ],
+            [
+              -40925,
+              -46710
+            ],
+            [
+              -40925,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -39015,
+            "bottom": -52520,
+            "right": -38775,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -39015,
+              -52520
+            ],
+            [
+              -39015,
+              -52000
+            ],
+            [
+              -38775,
+              -52000
+            ],
+            [
+              -38775,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -39015,
+            "bottom": -47230,
+            "right": -38775,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -39015,
+              -47230
+            ],
+            [
+              -39015,
+              -46710
+            ],
+            [
+              -38775,
+              -46710
+            ],
+            [
+              -38775,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -36865,
+            "bottom": -52520,
+            "right": -36625,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -36865,
+              -52520
+            ],
+            [
+              -36865,
+              -52000
+            ],
+            [
+              -36625,
+              -52000
+            ],
+            [
+              -36625,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -36865,
+            "bottom": -47230,
+            "right": -36625,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -36865,
+              -47230
+            ],
+            [
+              -36865,
+              -46710
+            ],
+            [
+              -36625,
+              -46710
+            ],
+            [
+              -36625,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -34715,
+            "bottom": -52520,
+            "right": -34475,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              -34715,
+              -52520
+            ],
+            [
+              -34715,
+              -52000
+            ],
+            [
+              -34475,
+              -52000
+            ],
+            [
+              -34475,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap",
+          "source_path": [
+            "BANKP__vco_varbank_p",
+            "cell__vco_svaricap_p",
+            "SVaricap"
+          ],
+          "bbox": {
+            "left": -34715,
+            "bottom": -47230,
+            "right": -34475,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              -34715,
+              -47230
+            ],
+            [
+              -34715,
+              -46710
+            ],
+            [
+              -34475,
+              -46710
+            ],
+            [
+              -34475,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 34635,
+            "bottom": -52520,
+            "right": 34875,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              34635,
+              -52520
+            ],
+            [
+              34635,
+              -52000
+            ],
+            [
+              34875,
+              -52000
+            ],
+            [
+              34875,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 34635,
+            "bottom": -47230,
+            "right": 34875,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              34635,
+              -47230
+            ],
+            [
+              34635,
+              -46710
+            ],
+            [
+              34875,
+              -46710
+            ],
+            [
+              34875,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 36785,
+            "bottom": -52520,
+            "right": 37025,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              36785,
+              -52520
+            ],
+            [
+              36785,
+              -52000
+            ],
+            [
+              37025,
+              -52000
+            ],
+            [
+              37025,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 36785,
+            "bottom": -47230,
+            "right": 37025,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              36785,
+              -47230
+            ],
+            [
+              36785,
+              -46710
+            ],
+            [
+              37025,
+              -46710
+            ],
+            [
+              37025,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 38935,
+            "bottom": -52520,
+            "right": 39175,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              38935,
+              -52520
+            ],
+            [
+              38935,
+              -52000
+            ],
+            [
+              39175,
+              -52000
+            ],
+            [
+              39175,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 38935,
+            "bottom": -47230,
+            "right": 39175,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              38935,
+              -47230
+            ],
+            [
+              38935,
+              -46710
+            ],
+            [
+              39175,
+              -46710
+            ],
+            [
+              39175,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 41085,
+            "bottom": -52520,
+            "right": 41325,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              41085,
+              -52520
+            ],
+            [
+              41085,
+              -52000
+            ],
+            [
+              41325,
+              -52000
+            ],
+            [
+              41325,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 41085,
+            "bottom": -47230,
+            "right": 41325,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              41085,
+              -47230
+            ],
+            [
+              41085,
+              -46710
+            ],
+            [
+              41325,
+              -46710
+            ],
+            [
+              41325,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 43235,
+            "bottom": -52520,
+            "right": 43475,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              43235,
+              -52520
+            ],
+            [
+              43235,
+              -52000
+            ],
+            [
+              43475,
+              -52000
+            ],
+            [
+              43475,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 43235,
+            "bottom": -47230,
+            "right": 43475,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              43235,
+              -47230
+            ],
+            [
+              43235,
+              -46710
+            ],
+            [
+              43475,
+              -46710
+            ],
+            [
+              43475,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 45385,
+            "bottom": -52520,
+            "right": 45625,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              45385,
+              -52520
+            ],
+            [
+              45385,
+              -52000
+            ],
+            [
+              45625,
+              -52000
+            ],
+            [
+              45625,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 45385,
+            "bottom": -47230,
+            "right": 45625,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              45385,
+              -47230
+            ],
+            [
+              45385,
+              -46710
+            ],
+            [
+              45625,
+              -46710
+            ],
+            [
+              45625,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 47535,
+            "bottom": -52520,
+            "right": 47775,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              47535,
+              -52520
+            ],
+            [
+              47535,
+              -52000
+            ],
+            [
+              47775,
+              -52000
+            ],
+            [
+              47775,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 47535,
+            "bottom": -47230,
+            "right": 47775,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              47535,
+              -47230
+            ],
+            [
+              47535,
+              -46710
+            ],
+            [
+              47775,
+              -46710
+            ],
+            [
+              47775,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 49685,
+            "bottom": -52520,
+            "right": 49925,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              49685,
+              -52520
+            ],
+            [
+              49685,
+              -52000
+            ],
+            [
+              49925,
+              -52000
+            ],
+            [
+              49925,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 49685,
+            "bottom": -47230,
+            "right": 49925,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              49685,
+              -47230
+            ],
+            [
+              49685,
+              -46710
+            ],
+            [
+              49925,
+              -46710
+            ],
+            [
+              49925,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 51835,
+            "bottom": -52520,
+            "right": 52075,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              51835,
+              -52520
+            ],
+            [
+              51835,
+              -52000
+            ],
+            [
+              52075,
+              -52000
+            ],
+            [
+              52075,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 51835,
+            "bottom": -47230,
+            "right": 52075,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              51835,
+              -47230
+            ],
+            [
+              51835,
+              -46710
+            ],
+            [
+              52075,
+              -46710
+            ],
+            [
+              52075,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 53985,
+            "bottom": -52520,
+            "right": 54225,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              53985,
+              -52520
+            ],
+            [
+              53985,
+              -52000
+            ],
+            [
+              54225,
+              -52000
+            ],
+            [
+              54225,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 53985,
+            "bottom": -47230,
+            "right": 54225,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              53985,
+              -47230
+            ],
+            [
+              53985,
+              -46710
+            ],
+            [
+              54225,
+              -46710
+            ],
+            [
+              54225,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 56135,
+            "bottom": -52520,
+            "right": 56375,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              56135,
+              -52520
+            ],
+            [
+              56135,
+              -52000
+            ],
+            [
+              56375,
+              -52000
+            ],
+            [
+              56375,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 56135,
+            "bottom": -47230,
+            "right": 56375,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              56135,
+              -47230
+            ],
+            [
+              56135,
+              -46710
+            ],
+            [
+              56375,
+              -46710
+            ],
+            [
+              56375,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 58285,
+            "bottom": -52520,
+            "right": 58525,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              58285,
+              -52520
+            ],
+            [
+              58285,
+              -52000
+            ],
+            [
+              58525,
+              -52000
+            ],
+            [
+              58525,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 58285,
+            "bottom": -47230,
+            "right": 58525,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              58285,
+              -47230
+            ],
+            [
+              58285,
+              -46710
+            ],
+            [
+              58525,
+              -46710
+            ],
+            [
+              58525,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 60435,
+            "bottom": -52520,
+            "right": 60675,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              60435,
+              -52520
+            ],
+            [
+              60435,
+              -52000
+            ],
+            [
+              60675,
+              -52000
+            ],
+            [
+              60675,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 60435,
+            "bottom": -47230,
+            "right": 60675,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              60435,
+              -47230
+            ],
+            [
+              60435,
+              -46710
+            ],
+            [
+              60675,
+              -46710
+            ],
+            [
+              60675,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 62585,
+            "bottom": -52520,
+            "right": 62825,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              62585,
+              -52520
+            ],
+            [
+              62585,
+              -52000
+            ],
+            [
+              62825,
+              -52000
+            ],
+            [
+              62825,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 62585,
+            "bottom": -47230,
+            "right": 62825,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              62585,
+              -47230
+            ],
+            [
+              62585,
+              -46710
+            ],
+            [
+              62825,
+              -46710
+            ],
+            [
+              62825,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 64735,
+            "bottom": -52520,
+            "right": 64975,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              64735,
+              -52520
+            ],
+            [
+              64735,
+              -52000
+            ],
+            [
+              64975,
+              -52000
+            ],
+            [
+              64975,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 64735,
+            "bottom": -47230,
+            "right": 64975,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              64735,
+              -47230
+            ],
+            [
+              64735,
+              -46710
+            ],
+            [
+              64975,
+              -46710
+            ],
+            [
+              64975,
+              -47230
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 66885,
+            "bottom": -52520,
+            "right": 67125,
+            "top": -52000
+          },
+          "polygon": [
+            [
+              66885,
+              -52520
+            ],
+            [
+              66885,
+              -52000
+            ],
+            [
+              67125,
+              -52000
+            ],
+            [
+              67125,
+              -52520
+            ]
+          ]
+        },
+        {
+          "rule": "nwell.enclosing.pactiv.1",
+          "description": "minimum NWell enclosure of P+ Activ outside ThickGateOx",
+          "check": "enclosed",
+          "layer": "Activ.drawing",
+          "cell": "vco",
+          "source_cell": "SVaricap$1",
+          "source_path": [
+            "BANKN__vco_varbank_n",
+            "cell__vco_svaricap_n",
+            "SVaricap$1"
+          ],
+          "bbox": {
+            "left": 66885,
+            "bottom": -47230,
+            "right": 67125,
+            "top": -46710
+          },
+          "polygon": [
+            [
+              66885,
+              -47230
+            ],
+            [
+              66885,
+              -46710
+            ],
+            [
+              67125,
+              -46710
+            ],
+            [
+              67125,
+              -47230
+            ]
+          ]
+        }
+      ],
+      "coverage": {
+        "deck_layers": [
+          "1/0",
+          "1/20",
+          "5/0",
+          "6/0",
+          "7/0",
+          "8/0",
+          "10/0",
+          "14/0",
+          "19/0",
+          "29/0",
+          "30/0",
+          "31/0",
+          "36/0",
+          "49/0",
+          "50/0",
+          "66/0",
+          "67/0",
+          "125/0",
+          "126/0",
+          "133/0",
+          "134/0"
+        ],
+        "layers_checked": [
+          "1/0",
+          "1/20",
+          "5/0",
+          "6/0",
+          "8/0",
+          "10/0",
+          "14/0",
+          "19/0",
+          "29/0",
+          "30/0",
+          "31/0",
+          "36/0",
+          "49/0",
+          "50/0",
+          "66/0",
+          "67/0",
+          "125/0",
+          "126/0",
+          "133/0",
+          "134/0"
+        ],
+        "layers_in_stream_without_rules": [
+          "1/23",
+          "5/23",
+          "8/2",
+          "8/23",
+          "8/25",
+          "10/2",
+          "10/23",
+          "10/25",
+          "26/0",
+          "27/0",
+          "27/2",
+          "27/25",
+          "28/0",
+          "30/23",
+          "30/25",
+          "32/0",
+          "40/0",
+          "46/21",
+          "50/23",
+          "51/0",
+          "52/0",
+          "63/0",
+          "67/23",
+          "111/0",
+          "126/2",
+          "126/23",
+          "126/25",
+          "128/0",
+          "129/0",
+          "134/23",
+          "134/25",
+          "148/0",
+          "156/0"
+        ],
+        "rules_checked": [
+          "activ.enclosing.cont.1",
+          "activ.space.1",
+          "activ.width.1",
+          "cont.space.1",
+          "cont.width.1",
+          "gatpoly.enclosing.cont.1",
+          "gatpoly.separation.activ.1",
+          "gatpoly.space.1",
+          "gatpoly.width.1",
+          "metal1.enclosing.via1.1",
+          "metal1.space.1",
+          "metal1.width.1",
+          "metal2.enclosing.via2.1",
+          "metal2.space.1",
+          "metal2.width.1",
+          "metal3.enclosing.via3.1",
+          "metal3.space.1",
+          "metal3.width.1",
+          "metal4.enclosing.via4.1",
+          "metal4.space.1",
+          "metal4.width.1",
+          "metal5.enclosing.mim.1",
+          "metal5.enclosing.topvia1.1",
+          "metal5.space.1",
+          "metal5.width.1",
+          "mim.enclosing.topvia1.1",
+          "nwell.enclosing.pactiv.1",
+          "nwell.enclosing.pactiv.dig.1",
+          "nwell.enclosing.pactiv.hv.1",
+          "nwell.space.1",
+          "nwell.space.pactiv.1",
+          "nwell.space.pactiv.dig.1",
+          "nwell.space.pactiv.hv.1",
+          "nwell.width.1",
+          "psd.area.1",
+          "psd.space.1",
+          "psd.width.1",
+          "topmetal1.enclosing.topvia1.1",
+          "topmetal1.enclosing.topvia2.1",
+          "topmetal1.space.1",
+          "topmetal1.width.1",
+          "topmetal2.enclosing.topvia2.1",
+          "topmetal2.space.1",
+          "topmetal2.width.1",
+          "topvia1.space.1",
+          "topvia1.width.1",
+          "topvia2.space.1",
+          "topvia2.width.1",
+          "via1.space.1",
+          "via1.width.1",
+          "via2.space.1",
+          "via2.width.1",
+          "via3.space.1",
+          "via3.width.1",
+          "via4.space.1",
+          "via4.width.1"
+        ],
+        "rules_skipped": [
+          "nwell.enclosing.nactiv.1",
+          "nwell.enclosing.nactiv.dig.1",
+          "nwell.enclosing.nactiv.hv.1",
+          "nwell.space.nactiv.1",
+          "nwell.space.nactiv.dig.1",
+          "nwell.space.nactiv.hv.1"
+        ],
+        "voltage_domain_warnings": [],
+        "unchecked_rules": [
+          {
+            "rule": "NW.b1",
+            "layer": "31/0",
+            "description": "NW.b1 (min. PWell width between NWell regions of different nets, 1.80 um) is net-aware and this engine has no net-aware spacing check; wells on different nets closer than 1.80 um are not flagged. Only the geometric nwell.space.1 (0.62 um) ran."
+          }
+        ],
+        "marker_blind_layers_in_stream": [],
+        "deck_scope": [
+          "Act",
+          "Cnt",
+          "Gat",
+          "M1",
+          "M2",
+          "M3",
+          "M4",
+          "M5",
+          "MIM",
+          "NW",
+          "TM1",
+          "TM2",
+          "TV1",
+          "TV2",
+          "V1",
+          "V2",
+          "V3",
+          "V4",
+          "pSD"
+        ],
+        "unmodeled_rules": [
+          "LU.a",
+          "LU.c",
+          "LU.c1",
+          "LU.d",
+          "LU.d1",
+          "Pad.a1",
+          "Pad.aR",
+          "Pad.bR",
+          "Pad.d",
+          "Pad.d1R",
+          "Pad.dR",
+          "Pad.gR",
+          "Pad.jR",
+          "Pad.kR"
+        ],
+        "schema_version": 1,
+        "known": true,
+        "checked": [
+          "activ.enclosing.cont.1",
+          "activ.space.1",
+          "activ.width.1",
+          "cont.space.1",
+          "cont.width.1",
+          "gatpoly.enclosing.cont.1",
+          "gatpoly.separation.activ.1",
+          "gatpoly.space.1",
+          "gatpoly.width.1",
+          "metal1.enclosing.via1.1",
+          "metal1.space.1",
+          "metal1.width.1",
+          "metal2.enclosing.via2.1",
+          "metal2.space.1",
+          "metal2.width.1",
+          "metal3.enclosing.via3.1",
+          "metal3.space.1",
+          "metal3.width.1",
+          "metal4.enclosing.via4.1",
+          "metal4.space.1",
+          "metal4.width.1",
+          "metal5.enclosing.mim.1",
+          "metal5.enclosing.topvia1.1",
+          "metal5.space.1",
+          "metal5.width.1",
+          "mim.enclosing.topvia1.1",
+          "nwell.enclosing.pactiv.1",
+          "nwell.enclosing.pactiv.dig.1",
+          "nwell.enclosing.pactiv.hv.1",
+          "nwell.space.1",
+          "nwell.space.pactiv.1",
+          "nwell.space.pactiv.dig.1",
+          "nwell.space.pactiv.hv.1",
+          "nwell.width.1",
+          "psd.area.1",
+          "psd.space.1",
+          "psd.width.1",
+          "topmetal1.enclosing.topvia1.1",
+          "topmetal1.enclosing.topvia2.1",
+          "topmetal1.space.1",
+          "topmetal1.width.1",
+          "topmetal2.enclosing.topvia2.1",
+          "topmetal2.space.1",
+          "topmetal2.width.1",
+          "topvia1.space.1",
+          "topvia1.width.1",
+          "topvia2.space.1",
+          "topvia2.width.1",
+          "via1.space.1",
+          "via1.width.1",
+          "via2.space.1",
+          "via2.width.1",
+          "via3.space.1",
+          "via3.width.1",
+          "via4.space.1",
+          "via4.width.1"
+        ],
+        "skipped": [],
+        "inapplicable": [
+          {
+            "id": "nwell.enclosing.nactiv.1",
+            "reason": "no_applicable_geometry"
+          },
+          {
+            "id": "nwell.enclosing.nactiv.dig.1",
+            "reason": "no_applicable_geometry"
+          },
+          {
+            "id": "nwell.enclosing.nactiv.hv.1",
+            "reason": "no_applicable_geometry"
+          },
+          {
+            "id": "nwell.space.nactiv.1",
+            "reason": "no_applicable_geometry"
+          },
+          {
+            "id": "nwell.space.nactiv.dig.1",
+            "reason": "no_applicable_geometry"
+          },
+          {
+            "id": "nwell.space.nactiv.hv.1",
+            "reason": "no_applicable_geometry"
+          }
+        ],
+        "unknown": [],
+        "nothing_checked": false,
+        "nothing_checked_reasons": []
+      },
+      "source_cell_rollup": [
+        {
+          "source_cell": "SVaricap",
+          "rule": "nwell.enclosing.pactiv.1",
+          "count": 32,
+          "waived_count": 0
+        },
+        {
+          "source_cell": "SVaricap$1",
+          "rule": "nwell.enclosing.pactiv.1",
+          "count": 32,
+          "waived_count": 0
+        }
+      ],
+      "provenance": {
+        "klt_version": "0.9.2.dev420+gf186e14125ed",
+        "klt_git_commit": "f186e14125edbe7de06de1af710e3d4c2c87bb7e",
+        "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@f186e14125edbe7de06de1af710e3d4c2c87bb7e",
+        "klayout_version": "0.30.13",
+        "pdk": null,
+        "deck": {
+          "name": "sg13g2",
+          "content_hash": "sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15",
+          "released": true
+        },
+        "input": {
+          "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+          "role": "layout"
+        },
+        "klayout_version_mismatch": true
+      }
+    },
+    "native": {
+      "schema_version": 3,
+      "file": {
+        "path": "layout/vco.gds",
+        "scope": "repo"
+      },
+      "deck": "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/klayout/tech/drc/ihp-sg13g2.drc",
+      "engine": "klayout",
+      "dbu_um": 0.001,
+      "status": "clean",
+      "violation_count": 0,
+      "rule_counts": {},
+      "coverage": {
+        "deck_layers": [],
+        "layers_checked": [],
+        "rule_categories": [
+          "AFil.c",
+          "AFil.c1",
+          "AFil.d",
+          "AFil.e",
+          "AFil.j",
+          "Act.a",
+          "Act.b",
+          "Cnt.a",
+          "Cnt.b",
+          "Cnt.c",
+          "Cnt.c.SRAM",
+          "Cnt.c.digibnd",
+          "Cnt.d",
+          "Cnt.e",
+          "Cnt.g1",
+          "Cnt.g2",
+          "CntB.b1",
+          "CntB.h1",
+          "GFil.d",
+          "GFil.e",
+          "GFil.i",
+          "Gat.a",
+          "Gat.a1",
+          "Gat.a2",
+          "Gat.b",
+          "Gat.d",
+          "Gat.g",
+          "LBE.a",
+          "LBE.b",
+          "LBE.b1",
+          "LBE.c",
+          "LBE.d",
+          "LBE.h",
+          "LU.b",
+          "M1.a",
+          "M1.b",
+          "M1.e",
+          "M1.f",
+          "M1.g",
+          "M1.i",
+          "M1Fil.a2",
+          "M1Fil.c",
+          "M2.a",
+          "M2.b",
+          "M2.e",
+          "M2.f",
+          "M2.g",
+          "M2.i",
+          "M2Fil.a2",
+          "M2Fil.c",
+          "M3.a",
+          "M3.b",
+          "M3.e",
+          "M3.f",
+          "M3.g",
+          "M3.i",
+          "M3Fil.a2",
+          "M3Fil.c",
+          "M4.a",
+          "M4.b",
+          "M4.e",
+          "M4.f",
+          "M4.g",
+          "M4.i",
+          "M4Fil.a2",
+          "M4Fil.c",
+          "M5.a",
+          "M5.b",
+          "M5.e",
+          "M5.f",
+          "M5.g",
+          "M5.i",
+          "M5Fil.a2",
+          "M5Fil.c",
+          "MIM.c",
+          "MIM.d",
+          "NBL.b",
+          "NBL.c",
+          "NBL.d",
+          "NBL.e",
+          "NBL.f",
+          "NW.b",
+          "NW.b1",
+          "NW.f1",
+          "NW.f1.digibnd",
+          "PWB.e",
+          "PWB.e1",
+          "PWB.f",
+          "PWB.f1",
+          "Pad.fR_M1",
+          "Pad.fR_M2",
+          "Pad.fR_M3",
+          "Pad.fR_M4",
+          "Pad.fR_M5",
+          "Pad.fR_TM1",
+          "Pad.fR_TM2",
+          "Pad.i",
+          "Pad.m",
+          "Padb.a",
+          "Padb.b",
+          "Padb.c",
+          "Padb.d",
+          "Padc.a",
+          "Padc.b",
+          "Padc.c",
+          "Pas.a",
+          "Pas.b",
+          "Pas.c",
+          "Pin.a",
+          "Pin.b",
+          "Pin.e",
+          "Pin.f_M2",
+          "Pin.f_M3",
+          "Pin.f_M4",
+          "Pin.f_M5",
+          "Pin.g",
+          "Pin.h",
+          "Sdiod.b",
+          "Sdiod.c",
+          "Sdiod.d",
+          "Sdiod.e",
+          "Seal.b_activ",
+          "Seal.b_metal1",
+          "Seal.b_metal2",
+          "Seal.b_metal3",
+          "Seal.b_metal4",
+          "Seal.b_metal5",
+          "Seal.b_psd",
+          "Seal.b_topmetal1",
+          "Seal.b_topmetal2",
+          "Seal.k",
+          "Seal.m",
+          "Seal.n",
+          "Slt.e1_M1",
+          "Slt.e1_M2",
+          "Slt.e1_M3",
+          "Slt.e1_M4",
+          "Slt.e1_M5",
+          "Slt.e1_TM1",
+          "Slt.e1_TM2",
+          "TGO.f",
+          "TM1.a",
+          "TM1.b",
+          "TM1Fil.a1",
+          "TM1Fil.c",
+          "TM2.a",
+          "TM2.b",
+          "TM2.bR",
+          "TM2Fil.a1",
+          "TM2Fil.c",
+          "TV1.a",
+          "TV1.b",
+          "TV1.c",
+          "TV1.d",
+          "TV2.a",
+          "TV2.b",
+          "TV2.c",
+          "TV2.d",
+          "V1.a",
+          "V1.b",
+          "V1.c",
+          "V2.a",
+          "V2.b",
+          "V2.c",
+          "V3.a",
+          "V3.b",
+          "V3.c",
+          "V4.a",
+          "V4.b",
+          "V4.c",
+          "activ_drw_Acute",
+          "activ_drw_Angle45",
+          "activ_drw_Offgrid",
+          "activ_filler_Acute",
+          "activ_filler_Offgrid",
+          "activ_iopc_Acute",
+          "activ_iopc_Offgrid",
+          "activ_mask_Acute",
+          "activ_mask_Offgrid",
+          "activ_nofill_Acute",
+          "activ_nofill_Offgrid",
+          "activ_noqrc_Acute",
+          "activ_noqrc_Offgrid",
+          "activ_opc_Acute",
+          "activ_opc_Offgrid",
+          "activ_pin_Acute",
+          "activ_pin_Offgrid",
+          "alcustop_drw_Acute",
+          "alcustop_drw_Offgrid",
+          "antmetal1_drw_Acute",
+          "antmetal1_drw_Offgrid",
+          "backmetal1_diffprb_Acute",
+          "backmetal1_diffprb_Offgrid",
+          "backmetal1_drw_Acute",
+          "backmetal1_drw_Offgrid",
+          "backmetal1_filler_Acute",
+          "backmetal1_filler_Offgrid",
+          "backmetal1_iprobe_Acute",
+          "backmetal1_iprobe_Offgrid",
+          "backmetal1_mask_Acute",
+          "backmetal1_mask_Offgrid",
+          "backmetal1_nofill_Acute",
+          "backmetal1_nofill_Offgrid",
+          "backmetal1_noqrc_Acute",
+          "backmetal1_noqrc_Offgrid",
+          "backmetal1_opc_Acute",
+          "backmetal1_opc_Offgrid",
+          "backmetal1_pin_Acute",
+          "backmetal1_pin_Offgrid",
+          "backmetal1_res_Acute",
+          "backmetal1_res_Offgrid",
+          "backmetal1_slit_Acute",
+          "backmetal1_slit_Offgrid",
+          "backpassiv_drw_Acute",
+          "backpassiv_drw_Offgrid",
+          "baspoly_drw_Acute",
+          "baspoly_drw_Offgrid",
+          "baspoly_pin_Acute",
+          "baspoly_pin_Offgrid",
+          "biwind_drw_Acute",
+          "biwind_drw_Offgrid",
+          "biwind_opc_Acute",
+          "biwind_opc_Offgrid",
+          "colopen_drw_Acute",
+          "colopen_drw_Offgrid",
+          "colwind_drw_Acute",
+          "colwind_drw_Offgrid",
+          "cont_drw_Acute",
+          "cont_drw_Angle90",
+          "cont_drw_Offgrid",
+          "cont_opc_Acute",
+          "cont_opc_Offgrid",
+          "ctrgat_drw_Acute",
+          "ctrgat_drw_Offgrid",
+          "deepco_drw_Acute",
+          "deepco_drw_Offgrid",
+          "deepvia_drw_Acute",
+          "deepvia_drw_Offgrid",
+          "empoly_drw_Acute",
+          "empoly_drw_Offgrid",
+          "emwihv_drw_Acute",
+          "emwihv_drw_Offgrid",
+          "emwind_drw_Acute",
+          "emwind_drw_Offgrid",
+          "emwind_opc_Acute",
+          "emwind_opc_Offgrid",
+          "exchange0_drw_Acute",
+          "exchange0_drw_Offgrid",
+          "exchange0_pin_Acute",
+          "exchange0_pin_Offgrid",
+          "exchange1_drw_Acute",
+          "exchange1_drw_Offgrid",
+          "exchange1_pin_Acute",
+          "exchange1_pin_Offgrid",
+          "exchange2_drw_Acute",
+          "exchange2_drw_Offgrid",
+          "exchange2_pin_Acute",
+          "exchange2_pin_Offgrid",
+          "exchange3_drw_Acute",
+          "exchange3_drw_Offgrid",
+          "exchange3_pin_Acute",
+          "exchange3_pin_Offgrid",
+          "exchange4_drw_Acute",
+          "exchange4_drw_Offgrid",
+          "exchange4_pin_Acute",
+          "exchange4_pin_Offgrid",
+          "extblock_drw_Acute",
+          "extblock_drw_Offgrid",
+          "fbe_drw_Acute",
+          "fbe_drw_Offgrid",
+          "fgetch_drw_Acute",
+          "fgetch_drw_Offgrid",
+          "fgimp_drw_Acute",
+          "fgimp_drw_Offgrid",
+          "flm_drw_Acute",
+          "flm_drw_Offgrid",
+          "forbidden.baspoly",
+          "forbidden.biwind",
+          "forbidden.colwind",
+          "forbidden.deepco",
+          "forbidden.empoly",
+          "forbidden.flash",
+          "forbidden.ldmos",
+          "forbidden.nodrc",
+          "forbidden.pbiwind",
+          "forbidden.pempoly",
+          "forbidden.pemwind",
+          "gatpoly_drw_Acute",
+          "gatpoly_drw_Angle45",
+          "gatpoly_drw_Offgrid",
+          "gatpoly_filler_Acute",
+          "gatpoly_filler_Offgrid",
+          "gatpoly_iopc_Acute",
+          "gatpoly_iopc_Offgrid",
+          "gatpoly_nofill_Acute",
+          "gatpoly_nofill_Offgrid",
+          "gatpoly_noqrc_Acute",
+          "gatpoly_noqrc_Offgrid",
+          "gatpoly_opc_Acute",
+          "gatpoly_opc_Offgrid",
+          "gatpoly_pin_Acute",
+          "gatpoly_pin_Offgrid",
+          "graphgate_drw_Acute",
+          "graphgate_drw_Offgrid",
+          "hafniumox_drw_Acute",
+          "hafniumox_drw_Offgrid",
+          "ic_drw_Acute",
+          "ic_drw_Offgrid",
+          "inldpwl_drw_Acute",
+          "inldpwl_drw_Offgrid",
+          "isonwell_drw_Acute",
+          "isonwell_drw_Offgrid",
+          "lbe_drw_Acute",
+          "lbe_drw_Offgrid",
+          "ldmos_drw_Acute",
+          "ldmos_drw_Offgrid",
+          "mempad_drw_Acute",
+          "mempad_drw_Offgrid",
+          "memvia_drw_Acute",
+          "memvia_drw_Offgrid",
+          "metal1_diffprb_Acute",
+          "metal1_diffprb_Offgrid",
+          "metal1_drw_Acute",
+          "metal1_drw_Angle45",
+          "metal1_drw_Offgrid",
+          "metal1_filler_Acute",
+          "metal1_filler_Offgrid",
+          "metal1_iprobe_Acute",
+          "metal1_iprobe_Offgrid",
+          "metal1_mask_Acute",
+          "metal1_mask_Offgrid",
+          "metal1_nofill_Acute",
+          "metal1_nofill_Offgrid",
+          "metal1_noqrc_Acute",
+          "metal1_noqrc_Offgrid",
+          "metal1_opc_Acute",
+          "metal1_opc_Offgrid",
+          "metal1_pin_Acute",
+          "metal1_pin_Offgrid",
+          "metal1_res_Acute",
+          "metal1_res_Offgrid",
+          "metal1_slit_Acute",
+          "metal1_slit_Offgrid",
+          "metal2_diffprb_Acute",
+          "metal2_diffprb_Offgrid",
+          "metal2_drw_Acute",
+          "metal2_drw_Angle45",
+          "metal2_drw_Offgrid",
+          "metal2_filler_Acute",
+          "metal2_filler_Offgrid",
+          "metal2_iprobe_Acute",
+          "metal2_iprobe_Offgrid",
+          "metal2_mask_Acute",
+          "metal2_mask_Offgrid",
+          "metal2_nofill_Acute",
+          "metal2_nofill_Offgrid",
+          "metal2_noqrc_Acute",
+          "metal2_noqrc_Offgrid",
+          "metal2_opc_Acute",
+          "metal2_opc_Offgrid",
+          "metal2_pin_Acute",
+          "metal2_pin_Offgrid",
+          "metal2_res_Acute",
+          "metal2_res_Offgrid",
+          "metal2_slit_Acute",
+          "metal2_slit_Offgrid",
+          "metal3_diffprb_Acute",
+          "metal3_diffprb_Offgrid",
+          "metal3_drw_Acute",
+          "metal3_drw_Angle45",
+          "metal3_drw_Offgrid",
+          "metal3_filler_Acute",
+          "metal3_filler_Offgrid",
+          "metal3_iprobe_Acute",
+          "metal3_iprobe_Offgrid",
+          "metal3_mask_Acute",
+          "metal3_mask_Offgrid",
+          "metal3_nofill_Acute",
+          "metal3_nofill_Offgrid",
+          "metal3_noqrc_Acute",
+          "metal3_noqrc_Offgrid",
+          "metal3_opc_Acute",
+          "metal3_opc_Offgrid",
+          "metal3_pin_Acute",
+          "metal3_pin_Offgrid",
+          "metal3_res_Acute",
+          "metal3_res_Offgrid",
+          "metal3_slit_Acute",
+          "metal3_slit_Offgrid",
+          "metal4_diffprb_Acute",
+          "metal4_diffprb_Offgrid",
+          "metal4_drw_Acute",
+          "metal4_drw_Angle45",
+          "metal4_drw_Offgrid",
+          "metal4_filler_Acute",
+          "metal4_filler_Offgrid",
+          "metal4_iprobe_Acute",
+          "metal4_iprobe_Offgrid",
+          "metal4_mask_Acute",
+          "metal4_mask_Offgrid",
+          "metal4_nofill_Acute",
+          "metal4_nofill_Offgrid",
+          "metal4_noqrc_Acute",
+          "metal4_noqrc_Offgrid",
+          "metal4_opc_Acute",
+          "metal4_opc_Offgrid",
+          "metal4_pin_Acute",
+          "metal4_pin_Offgrid",
+          "metal4_res_Acute",
+          "metal4_res_Offgrid",
+          "metal4_slit_Acute",
+          "metal4_slit_Offgrid",
+          "metal5_diffprb_Acute",
+          "metal5_diffprb_Offgrid",
+          "metal5_drw_Acute",
+          "metal5_drw_Angle45",
+          "metal5_drw_Offgrid",
+          "metal5_filler_Acute",
+          "metal5_filler_Offgrid",
+          "metal5_iprobe_Acute",
+          "metal5_iprobe_Offgrid",
+          "metal5_mask_Acute",
+          "metal5_mask_Offgrid",
+          "metal5_nofill_Acute",
+          "metal5_nofill_Offgrid",
+          "metal5_noqrc_Acute",
+          "metal5_noqrc_Offgrid",
+          "metal5_opc_Acute",
+          "metal5_opc_Offgrid",
+          "metal5_pin_Acute",
+          "metal5_pin_Offgrid",
+          "metal5_res_Acute",
+          "metal5_res_Offgrid",
+          "metal5_slit_Acute",
+          "metal5_slit_Offgrid",
+          "mim_drw_Acute",
+          "mim_drw_Offgrid",
+          "nbulay_block_Acute",
+          "nbulay_block_Offgrid",
+          "nbulay_drw_Acute",
+          "nbulay_drw_Offgrid",
+          "nbulay_pin_Acute",
+          "nbulay_pin_Offgrid",
+          "nbulaycut_drw_Acute",
+          "nbulaycut_drw_Offgrid",
+          "next_drw_Acute",
+          "next_drw_Offgrid",
+          "nexthv_drw_Acute",
+          "nexthv_drw_Offgrid",
+          "nldb_drw_Acute",
+          "nldb_drw_Offgrid",
+          "nldd_drw_Acute",
+          "nldd_drw_Offgrid",
+          "npn13G2.bR",
+          "npn13G2L.cR",
+          "npn13G2V.cR",
+          "nsd_block_Acute",
+          "nsd_block_Offgrid",
+          "nsd_drw_Acute",
+          "nsd_drw_Offgrid",
+          "nwell_drw_Acute",
+          "nwell_drw_Offgrid",
+          "nwell_pin_Acute",
+          "nwell_pin_Offgrid",
+          "pSD.c1",
+          "padb.f",
+          "padc.f",
+          "passiv_drw_Acute",
+          "passiv_drw_Offgrid",
+          "passiv_pdl_Acute",
+          "passiv_pdl_Offgrid",
+          "passiv_pillar_Acute",
+          "passiv_pillar_Offgrid",
+          "passiv_pin_Acute",
+          "passiv_pin_Offgrid",
+          "passiv_sbump_Acute",
+          "passiv_sbump_Offgrid",
+          "pbiwind_drw_Acute",
+          "pbiwind_drw_Offgrid",
+          "pempoly_drw_Acute",
+          "pempoly_drw_Offgrid",
+          "pemwind_drw_Acute",
+          "pemwind_drw_Offgrid",
+          "pext_drw_Acute",
+          "pext_drw_Offgrid",
+          "pexthv_drw_Acute",
+          "pexthv_drw_Offgrid",
+          "pldb_drw_Acute",
+          "pldb_drw_Offgrid",
+          "pldd_drw_Acute",
+          "pldd_drw_Offgrid",
+          "polyres_drw_Acute",
+          "polyres_drw_Offgrid",
+          "polyres_pin_Acute",
+          "polyres_pin_Offgrid",
+          "prboundary_drw_Acute",
+          "prboundary_drw_Offgrid",
+          "psd_drw_Acute",
+          "psd_drw_Offgrid",
+          "pwell_block_Acute",
+          "pwell_block_Offgrid",
+          "pwell_drw_Acute",
+          "pwell_drw_Offgrid",
+          "pwell_pin_Acute",
+          "pwell_pin_Offgrid",
+          "rfmem_drw_Acute",
+          "rfmem_drw_Offgrid",
+          "salblock_drw_Acute",
+          "salblock_drw_Offgrid",
+          "sensor_drw_Acute",
+          "sensor_drw_Offgrid",
+          "snsarms_drw_Acute",
+          "snsarms_drw_Offgrid",
+          "snsbotvia_drw_Acute",
+          "snsbotvia_drw_Offgrid",
+          "snscmosvia_drw_Acute",
+          "snscmosvia_drw_Offgrid",
+          "snsring_drw_Acute",
+          "snsring_drw_Offgrid",
+          "snstopvia_drw_Acute",
+          "snstopvia_drw_Offgrid",
+          "substrate_drw_Acute",
+          "substrate_drw_Offgrid",
+          "thickgateox_drw_Acute",
+          "thickgateox_drw_Offgrid",
+          "thinfilmres_drw_Acute",
+          "thinfilmres_drw_Offgrid",
+          "topmetal1_diffprb_Acute",
+          "topmetal1_diffprb_Offgrid",
+          "topmetal1_drw_Acute",
+          "topmetal1_drw_Angle45",
+          "topmetal1_drw_Offgrid",
+          "topmetal1_filler_Acute",
+          "topmetal1_filler_Offgrid",
+          "topmetal1_iprobe_Acute",
+          "topmetal1_iprobe_Offgrid",
+          "topmetal1_mask_Acute",
+          "topmetal1_mask_Offgrid",
+          "topmetal1_nofill_Acute",
+          "topmetal1_nofill_Offgrid",
+          "topmetal1_noqrc_Acute",
+          "topmetal1_noqrc_Offgrid",
+          "topmetal1_pin_Acute",
+          "topmetal1_pin_Offgrid",
+          "topmetal1_res_Acute",
+          "topmetal1_res_Offgrid",
+          "topmetal1_slit_Acute",
+          "topmetal1_slit_Offgrid",
+          "topmetal2_diffprb_Acute",
+          "topmetal2_diffprb_Offgrid",
+          "topmetal2_drw_Acute",
+          "topmetal2_drw_Angle45",
+          "topmetal2_drw_Offgrid",
+          "topmetal2_filler_Acute",
+          "topmetal2_filler_Offgrid",
+          "topmetal2_iprobe_Acute",
+          "topmetal2_iprobe_Offgrid",
+          "topmetal2_mask_Acute",
+          "topmetal2_mask_Offgrid",
+          "topmetal2_nofill_Acute",
+          "topmetal2_nofill_Offgrid",
+          "topmetal2_noqrc_Acute",
+          "topmetal2_noqrc_Offgrid",
+          "topmetal2_pin_Acute",
+          "topmetal2_pin_Offgrid",
+          "topmetal2_res_Acute",
+          "topmetal2_res_Offgrid",
+          "topmetal2_slit_Acute",
+          "topmetal2_slit_Offgrid",
+          "topvia1_drw_Acute",
+          "topvia1_drw_Angle90",
+          "topvia1_drw_Offgrid",
+          "topvia2_drw_Acute",
+          "topvia2_drw_Angle90",
+          "topvia2_drw_Offgrid",
+          "via1_drw_Acute",
+          "via1_drw_Angle90",
+          "via1_drw_Offgrid",
+          "via2_drw_Acute",
+          "via2_drw_Angle90",
+          "via2_drw_Offgrid",
+          "via3_drw_Acute",
+          "via3_drw_Angle90",
+          "via3_drw_Offgrid",
+          "via4_drw_Acute",
+          "via4_drw_Angle90",
+          "via4_drw_Offgrid",
+          "vmim_drw_Acute",
+          "vmim_drw_Angle90",
+          "vmim_drw_Offgrid"
+        ],
+        "rules_checked": [
+          "AFil.c",
+          "AFil.c1",
+          "AFil.d",
+          "AFil.e",
+          "AFil.j",
+          "Act.a",
+          "Act.b",
+          "Cnt.a",
+          "Cnt.b",
+          "Cnt.c",
+          "Cnt.c.SRAM",
+          "Cnt.c.digibnd",
+          "Cnt.d",
+          "Cnt.e",
+          "Cnt.g1",
+          "Cnt.g2",
+          "CntB.b1",
+          "CntB.h1",
+          "GFil.d",
+          "GFil.e",
+          "GFil.i",
+          "Gat.a",
+          "Gat.a1",
+          "Gat.a2",
+          "Gat.b",
+          "Gat.d",
+          "Gat.g",
+          "LBE.a",
+          "LBE.b",
+          "LBE.b1",
+          "LBE.c",
+          "LBE.d",
+          "LBE.h",
+          "LU.b",
+          "M1.a",
+          "M1.b",
+          "M1.e",
+          "M1.f",
+          "M1.g",
+          "M1.i",
+          "M1Fil.a2",
+          "M1Fil.c",
+          "M2.a",
+          "M2.b",
+          "M2.e",
+          "M2.f",
+          "M2.g",
+          "M2.i",
+          "M2Fil.a2",
+          "M2Fil.c",
+          "M3.a",
+          "M3.b",
+          "M3.e",
+          "M3.f",
+          "M3.g",
+          "M3.i",
+          "M3Fil.a2",
+          "M3Fil.c",
+          "M4.a",
+          "M4.b",
+          "M4.e",
+          "M4.f",
+          "M4.g",
+          "M4.i",
+          "M4Fil.a2",
+          "M4Fil.c",
+          "M5.a",
+          "M5.b",
+          "M5.e",
+          "M5.f",
+          "M5.g",
+          "M5.i",
+          "M5Fil.a2",
+          "M5Fil.c",
+          "MIM.c",
+          "MIM.d",
+          "NBL.b",
+          "NBL.c",
+          "NBL.d",
+          "NBL.e",
+          "NBL.f",
+          "NW.b",
+          "NW.b1",
+          "NW.f1",
+          "NW.f1.digibnd",
+          "PWB.e",
+          "PWB.e1",
+          "PWB.f",
+          "PWB.f1",
+          "Pad.fR_M1",
+          "Pad.fR_M2",
+          "Pad.fR_M3",
+          "Pad.fR_M4",
+          "Pad.fR_M5",
+          "Pad.fR_TM1",
+          "Pad.fR_TM2",
+          "Pad.i",
+          "Pad.m",
+          "Padb.a",
+          "Padb.b",
+          "Padb.c",
+          "Padb.d",
+          "Padc.a",
+          "Padc.b",
+          "Padc.c",
+          "Pas.a",
+          "Pas.b",
+          "Pas.c",
+          "Pin.a",
+          "Pin.b",
+          "Pin.e",
+          "Pin.f_M2",
+          "Pin.f_M3",
+          "Pin.f_M4",
+          "Pin.f_M5",
+          "Pin.g",
+          "Pin.h",
+          "Sdiod.b",
+          "Sdiod.c",
+          "Sdiod.d",
+          "Sdiod.e",
+          "Seal.b_activ",
+          "Seal.b_metal1",
+          "Seal.b_metal2",
+          "Seal.b_metal3",
+          "Seal.b_metal4",
+          "Seal.b_metal5",
+          "Seal.b_psd",
+          "Seal.b_topmetal1",
+          "Seal.b_topmetal2",
+          "Seal.k",
+          "Seal.m",
+          "Seal.n",
+          "Slt.e1_M1",
+          "Slt.e1_M2",
+          "Slt.e1_M3",
+          "Slt.e1_M4",
+          "Slt.e1_M5",
+          "Slt.e1_TM1",
+          "Slt.e1_TM2",
+          "TGO.f",
+          "TM1.a",
+          "TM1.b",
+          "TM1Fil.a1",
+          "TM1Fil.c",
+          "TM2.a",
+          "TM2.b",
+          "TM2.bR",
+          "TM2Fil.a1",
+          "TM2Fil.c",
+          "TV1.a",
+          "TV1.b",
+          "TV1.c",
+          "TV1.d",
+          "TV2.a",
+          "TV2.b",
+          "TV2.c",
+          "TV2.d",
+          "V1.a",
+          "V1.b",
+          "V1.c",
+          "V2.a",
+          "V2.b",
+          "V2.c",
+          "V3.a",
+          "V3.b",
+          "V3.c",
+          "V4.a",
+          "V4.b",
+          "V4.c",
+          "activ_drw_Acute",
+          "activ_drw_Angle45",
+          "activ_drw_Offgrid",
+          "activ_filler_Acute",
+          "activ_filler_Offgrid",
+          "activ_iopc_Acute",
+          "activ_iopc_Offgrid",
+          "activ_mask_Acute",
+          "activ_mask_Offgrid",
+          "activ_nofill_Acute",
+          "activ_nofill_Offgrid",
+          "activ_noqrc_Acute",
+          "activ_noqrc_Offgrid",
+          "activ_opc_Acute",
+          "activ_opc_Offgrid",
+          "activ_pin_Acute",
+          "activ_pin_Offgrid",
+          "alcustop_drw_Acute",
+          "alcustop_drw_Offgrid",
+          "antmetal1_drw_Acute",
+          "antmetal1_drw_Offgrid",
+          "backmetal1_diffprb_Acute",
+          "backmetal1_diffprb_Offgrid",
+          "backmetal1_drw_Acute",
+          "backmetal1_drw_Offgrid",
+          "backmetal1_filler_Acute",
+          "backmetal1_filler_Offgrid",
+          "backmetal1_iprobe_Acute",
+          "backmetal1_iprobe_Offgrid",
+          "backmetal1_mask_Acute",
+          "backmetal1_mask_Offgrid",
+          "backmetal1_nofill_Acute",
+          "backmetal1_nofill_Offgrid",
+          "backmetal1_noqrc_Acute",
+          "backmetal1_noqrc_Offgrid",
+          "backmetal1_opc_Acute",
+          "backmetal1_opc_Offgrid",
+          "backmetal1_pin_Acute",
+          "backmetal1_pin_Offgrid",
+          "backmetal1_res_Acute",
+          "backmetal1_res_Offgrid",
+          "backmetal1_slit_Acute",
+          "backmetal1_slit_Offgrid",
+          "backpassiv_drw_Acute",
+          "backpassiv_drw_Offgrid",
+          "baspoly_drw_Acute",
+          "baspoly_drw_Offgrid",
+          "baspoly_pin_Acute",
+          "baspoly_pin_Offgrid",
+          "biwind_drw_Acute",
+          "biwind_drw_Offgrid",
+          "biwind_opc_Acute",
+          "biwind_opc_Offgrid",
+          "colopen_drw_Acute",
+          "colopen_drw_Offgrid",
+          "colwind_drw_Acute",
+          "colwind_drw_Offgrid",
+          "cont_drw_Acute",
+          "cont_drw_Angle90",
+          "cont_drw_Offgrid",
+          "cont_opc_Acute",
+          "cont_opc_Offgrid",
+          "ctrgat_drw_Acute",
+          "ctrgat_drw_Offgrid",
+          "deepco_drw_Acute",
+          "deepco_drw_Offgrid",
+          "deepvia_drw_Acute",
+          "deepvia_drw_Offgrid",
+          "empoly_drw_Acute",
+          "empoly_drw_Offgrid",
+          "emwihv_drw_Acute",
+          "emwihv_drw_Offgrid",
+          "emwind_drw_Acute",
+          "emwind_drw_Offgrid",
+          "emwind_opc_Acute",
+          "emwind_opc_Offgrid",
+          "exchange0_drw_Acute",
+          "exchange0_drw_Offgrid",
+          "exchange0_pin_Acute",
+          "exchange0_pin_Offgrid",
+          "exchange1_drw_Acute",
+          "exchange1_drw_Offgrid",
+          "exchange1_pin_Acute",
+          "exchange1_pin_Offgrid",
+          "exchange2_drw_Acute",
+          "exchange2_drw_Offgrid",
+          "exchange2_pin_Acute",
+          "exchange2_pin_Offgrid",
+          "exchange3_drw_Acute",
+          "exchange3_drw_Offgrid",
+          "exchange3_pin_Acute",
+          "exchange3_pin_Offgrid",
+          "exchange4_drw_Acute",
+          "exchange4_drw_Offgrid",
+          "exchange4_pin_Acute",
+          "exchange4_pin_Offgrid",
+          "extblock_drw_Acute",
+          "extblock_drw_Offgrid",
+          "fbe_drw_Acute",
+          "fbe_drw_Offgrid",
+          "fgetch_drw_Acute",
+          "fgetch_drw_Offgrid",
+          "fgimp_drw_Acute",
+          "fgimp_drw_Offgrid",
+          "flm_drw_Acute",
+          "flm_drw_Offgrid",
+          "forbidden.baspoly",
+          "forbidden.biwind",
+          "forbidden.colwind",
+          "forbidden.deepco",
+          "forbidden.empoly",
+          "forbidden.flash",
+          "forbidden.ldmos",
+          "forbidden.nodrc",
+          "forbidden.pbiwind",
+          "forbidden.pempoly",
+          "forbidden.pemwind",
+          "gatpoly_drw_Acute",
+          "gatpoly_drw_Angle45",
+          "gatpoly_drw_Offgrid",
+          "gatpoly_filler_Acute",
+          "gatpoly_filler_Offgrid",
+          "gatpoly_iopc_Acute",
+          "gatpoly_iopc_Offgrid",
+          "gatpoly_nofill_Acute",
+          "gatpoly_nofill_Offgrid",
+          "gatpoly_noqrc_Acute",
+          "gatpoly_noqrc_Offgrid",
+          "gatpoly_opc_Acute",
+          "gatpoly_opc_Offgrid",
+          "gatpoly_pin_Acute",
+          "gatpoly_pin_Offgrid",
+          "graphgate_drw_Acute",
+          "graphgate_drw_Offgrid",
+          "hafniumox_drw_Acute",
+          "hafniumox_drw_Offgrid",
+          "ic_drw_Acute",
+          "ic_drw_Offgrid",
+          "inldpwl_drw_Acute",
+          "inldpwl_drw_Offgrid",
+          "isonwell_drw_Acute",
+          "isonwell_drw_Offgrid",
+          "lbe_drw_Acute",
+          "lbe_drw_Offgrid",
+          "ldmos_drw_Acute",
+          "ldmos_drw_Offgrid",
+          "mempad_drw_Acute",
+          "mempad_drw_Offgrid",
+          "memvia_drw_Acute",
+          "memvia_drw_Offgrid",
+          "metal1_diffprb_Acute",
+          "metal1_diffprb_Offgrid",
+          "metal1_drw_Acute",
+          "metal1_drw_Angle45",
+          "metal1_drw_Offgrid",
+          "metal1_filler_Acute",
+          "metal1_filler_Offgrid",
+          "metal1_iprobe_Acute",
+          "metal1_iprobe_Offgrid",
+          "metal1_mask_Acute",
+          "metal1_mask_Offgrid",
+          "metal1_nofill_Acute",
+          "metal1_nofill_Offgrid",
+          "metal1_noqrc_Acute",
+          "metal1_noqrc_Offgrid",
+          "metal1_opc_Acute",
+          "metal1_opc_Offgrid",
+          "metal1_pin_Acute",
+          "metal1_pin_Offgrid",
+          "metal1_res_Acute",
+          "metal1_res_Offgrid",
+          "metal1_slit_Acute",
+          "metal1_slit_Offgrid",
+          "metal2_diffprb_Acute",
+          "metal2_diffprb_Offgrid",
+          "metal2_drw_Acute",
+          "metal2_drw_Angle45",
+          "metal2_drw_Offgrid",
+          "metal2_filler_Acute",
+          "metal2_filler_Offgrid",
+          "metal2_iprobe_Acute",
+          "metal2_iprobe_Offgrid",
+          "metal2_mask_Acute",
+          "metal2_mask_Offgrid",
+          "metal2_nofill_Acute",
+          "metal2_nofill_Offgrid",
+          "metal2_noqrc_Acute",
+          "metal2_noqrc_Offgrid",
+          "metal2_opc_Acute",
+          "metal2_opc_Offgrid",
+          "metal2_pin_Acute",
+          "metal2_pin_Offgrid",
+          "metal2_res_Acute",
+          "metal2_res_Offgrid",
+          "metal2_slit_Acute",
+          "metal2_slit_Offgrid",
+          "metal3_diffprb_Acute",
+          "metal3_diffprb_Offgrid",
+          "metal3_drw_Acute",
+          "metal3_drw_Angle45",
+          "metal3_drw_Offgrid",
+          "metal3_filler_Acute",
+          "metal3_filler_Offgrid",
+          "metal3_iprobe_Acute",
+          "metal3_iprobe_Offgrid",
+          "metal3_mask_Acute",
+          "metal3_mask_Offgrid",
+          "metal3_nofill_Acute",
+          "metal3_nofill_Offgrid",
+          "metal3_noqrc_Acute",
+          "metal3_noqrc_Offgrid",
+          "metal3_opc_Acute",
+          "metal3_opc_Offgrid",
+          "metal3_pin_Acute",
+          "metal3_pin_Offgrid",
+          "metal3_res_Acute",
+          "metal3_res_Offgrid",
+          "metal3_slit_Acute",
+          "metal3_slit_Offgrid",
+          "metal4_diffprb_Acute",
+          "metal4_diffprb_Offgrid",
+          "metal4_drw_Acute",
+          "metal4_drw_Angle45",
+          "metal4_drw_Offgrid",
+          "metal4_filler_Acute",
+          "metal4_filler_Offgrid",
+          "metal4_iprobe_Acute",
+          "metal4_iprobe_Offgrid",
+          "metal4_mask_Acute",
+          "metal4_mask_Offgrid",
+          "metal4_nofill_Acute",
+          "metal4_nofill_Offgrid",
+          "metal4_noqrc_Acute",
+          "metal4_noqrc_Offgrid",
+          "metal4_opc_Acute",
+          "metal4_opc_Offgrid",
+          "metal4_pin_Acute",
+          "metal4_pin_Offgrid",
+          "metal4_res_Acute",
+          "metal4_res_Offgrid",
+          "metal4_slit_Acute",
+          "metal4_slit_Offgrid",
+          "metal5_diffprb_Acute",
+          "metal5_diffprb_Offgrid",
+          "metal5_drw_Acute",
+          "metal5_drw_Angle45",
+          "metal5_drw_Offgrid",
+          "metal5_filler_Acute",
+          "metal5_filler_Offgrid",
+          "metal5_iprobe_Acute",
+          "metal5_iprobe_Offgrid",
+          "metal5_mask_Acute",
+          "metal5_mask_Offgrid",
+          "metal5_nofill_Acute",
+          "metal5_nofill_Offgrid",
+          "metal5_noqrc_Acute",
+          "metal5_noqrc_Offgrid",
+          "metal5_opc_Acute",
+          "metal5_opc_Offgrid",
+          "metal5_pin_Acute",
+          "metal5_pin_Offgrid",
+          "metal5_res_Acute",
+          "metal5_res_Offgrid",
+          "metal5_slit_Acute",
+          "metal5_slit_Offgrid",
+          "mim_drw_Acute",
+          "mim_drw_Offgrid",
+          "nbulay_block_Acute",
+          "nbulay_block_Offgrid",
+          "nbulay_drw_Acute",
+          "nbulay_drw_Offgrid",
+          "nbulay_pin_Acute",
+          "nbulay_pin_Offgrid",
+          "nbulaycut_drw_Acute",
+          "nbulaycut_drw_Offgrid",
+          "next_drw_Acute",
+          "next_drw_Offgrid",
+          "nexthv_drw_Acute",
+          "nexthv_drw_Offgrid",
+          "nldb_drw_Acute",
+          "nldb_drw_Offgrid",
+          "nldd_drw_Acute",
+          "nldd_drw_Offgrid",
+          "npn13G2.bR",
+          "npn13G2L.cR",
+          "npn13G2V.cR",
+          "nsd_block_Acute",
+          "nsd_block_Offgrid",
+          "nsd_drw_Acute",
+          "nsd_drw_Offgrid",
+          "nwell_drw_Acute",
+          "nwell_drw_Offgrid",
+          "nwell_pin_Acute",
+          "nwell_pin_Offgrid",
+          "pSD.c1",
+          "padb.f",
+          "padc.f",
+          "passiv_drw_Acute",
+          "passiv_drw_Offgrid",
+          "passiv_pdl_Acute",
+          "passiv_pdl_Offgrid",
+          "passiv_pillar_Acute",
+          "passiv_pillar_Offgrid",
+          "passiv_pin_Acute",
+          "passiv_pin_Offgrid",
+          "passiv_sbump_Acute",
+          "passiv_sbump_Offgrid",
+          "pbiwind_drw_Acute",
+          "pbiwind_drw_Offgrid",
+          "pempoly_drw_Acute",
+          "pempoly_drw_Offgrid",
+          "pemwind_drw_Acute",
+          "pemwind_drw_Offgrid",
+          "pext_drw_Acute",
+          "pext_drw_Offgrid",
+          "pexthv_drw_Acute",
+          "pexthv_drw_Offgrid",
+          "pldb_drw_Acute",
+          "pldb_drw_Offgrid",
+          "pldd_drw_Acute",
+          "pldd_drw_Offgrid",
+          "polyres_drw_Acute",
+          "polyres_drw_Offgrid",
+          "polyres_pin_Acute",
+          "polyres_pin_Offgrid",
+          "prboundary_drw_Acute",
+          "prboundary_drw_Offgrid",
+          "psd_drw_Acute",
+          "psd_drw_Offgrid",
+          "pwell_block_Acute",
+          "pwell_block_Offgrid",
+          "pwell_drw_Acute",
+          "pwell_drw_Offgrid",
+          "pwell_pin_Acute",
+          "pwell_pin_Offgrid",
+          "rfmem_drw_Acute",
+          "rfmem_drw_Offgrid",
+          "salblock_drw_Acute",
+          "salblock_drw_Offgrid",
+          "sensor_drw_Acute",
+          "sensor_drw_Offgrid",
+          "snsarms_drw_Acute",
+          "snsarms_drw_Offgrid",
+          "snsbotvia_drw_Acute",
+          "snsbotvia_drw_Offgrid",
+          "snscmosvia_drw_Acute",
+          "snscmosvia_drw_Offgrid",
+          "snsring_drw_Acute",
+          "snsring_drw_Offgrid",
+          "snstopvia_drw_Acute",
+          "snstopvia_drw_Offgrid",
+          "substrate_drw_Acute",
+          "substrate_drw_Offgrid",
+          "thickgateox_drw_Acute",
+          "thickgateox_drw_Offgrid",
+          "thinfilmres_drw_Acute",
+          "thinfilmres_drw_Offgrid",
+          "topmetal1_diffprb_Acute",
+          "topmetal1_diffprb_Offgrid",
+          "topmetal1_drw_Acute",
+          "topmetal1_drw_Angle45",
+          "topmetal1_drw_Offgrid",
+          "topmetal1_filler_Acute",
+          "topmetal1_filler_Offgrid",
+          "topmetal1_iprobe_Acute",
+          "topmetal1_iprobe_Offgrid",
+          "topmetal1_mask_Acute",
+          "topmetal1_mask_Offgrid",
+          "topmetal1_nofill_Acute",
+          "topmetal1_nofill_Offgrid",
+          "topmetal1_noqrc_Acute",
+          "topmetal1_noqrc_Offgrid",
+          "topmetal1_pin_Acute",
+          "topmetal1_pin_Offgrid",
+          "topmetal1_res_Acute",
+          "topmetal1_res_Offgrid",
+          "topmetal1_slit_Acute",
+          "topmetal1_slit_Offgrid",
+          "topmetal2_diffprb_Acute",
+          "topmetal2_diffprb_Offgrid",
+          "topmetal2_drw_Acute",
+          "topmetal2_drw_Angle45",
+          "topmetal2_drw_Offgrid",
+          "topmetal2_filler_Acute",
+          "topmetal2_filler_Offgrid",
+          "topmetal2_iprobe_Acute",
+          "topmetal2_iprobe_Offgrid",
+          "topmetal2_mask_Acute",
+          "topmetal2_mask_Offgrid",
+          "topmetal2_nofill_Acute",
+          "topmetal2_nofill_Offgrid",
+          "topmetal2_noqrc_Acute",
+          "topmetal2_noqrc_Offgrid",
+          "topmetal2_pin_Acute",
+          "topmetal2_pin_Offgrid",
+          "topmetal2_res_Acute",
+          "topmetal2_res_Offgrid",
+          "topmetal2_slit_Acute",
+          "topmetal2_slit_Offgrid",
+          "topvia1_drw_Acute",
+          "topvia1_drw_Angle90",
+          "topvia1_drw_Offgrid",
+          "topvia2_drw_Acute",
+          "topvia2_drw_Angle90",
+          "topvia2_drw_Offgrid",
+          "via1_drw_Acute",
+          "via1_drw_Angle90",
+          "via1_drw_Offgrid",
+          "via2_drw_Acute",
+          "via2_drw_Angle90",
+          "via2_drw_Offgrid",
+          "via3_drw_Acute",
+          "via3_drw_Angle90",
+          "via3_drw_Offgrid",
+          "via4_drw_Acute",
+          "via4_drw_Angle90",
+          "via4_drw_Offgrid",
+          "vmim_drw_Acute",
+          "vmim_drw_Angle90",
+          "vmim_drw_Offgrid"
+        ],
+        "layers_in_stream_without_rules": [],
+        "rules_skipped": [],
+        "voltage_domain_warnings": [],
+        "unchecked_rules": [],
+        "deck_scope": [],
+        "unmodeled_rules": [],
+        "isolation_only_rules": [],
+        "schema_version": 1,
+        "known": true,
+        "checked": [
+          "AFil.c",
+          "AFil.c1",
+          "AFil.d",
+          "AFil.e",
+          "AFil.j",
+          "Act.a",
+          "Act.b",
+          "Cnt.a",
+          "Cnt.b",
+          "Cnt.c",
+          "Cnt.c.SRAM",
+          "Cnt.c.digibnd",
+          "Cnt.d",
+          "Cnt.e",
+          "Cnt.g1",
+          "Cnt.g2",
+          "CntB.b1",
+          "CntB.h1",
+          "GFil.d",
+          "GFil.e",
+          "GFil.i",
+          "Gat.a",
+          "Gat.a1",
+          "Gat.a2",
+          "Gat.b",
+          "Gat.d",
+          "Gat.g",
+          "LBE.a",
+          "LBE.b",
+          "LBE.b1",
+          "LBE.c",
+          "LBE.d",
+          "LBE.h",
+          "LU.b",
+          "M1.a",
+          "M1.b",
+          "M1.e",
+          "M1.f",
+          "M1.g",
+          "M1.i",
+          "M1Fil.a2",
+          "M1Fil.c",
+          "M2.a",
+          "M2.b",
+          "M2.e",
+          "M2.f",
+          "M2.g",
+          "M2.i",
+          "M2Fil.a2",
+          "M2Fil.c",
+          "M3.a",
+          "M3.b",
+          "M3.e",
+          "M3.f",
+          "M3.g",
+          "M3.i",
+          "M3Fil.a2",
+          "M3Fil.c",
+          "M4.a",
+          "M4.b",
+          "M4.e",
+          "M4.f",
+          "M4.g",
+          "M4.i",
+          "M4Fil.a2",
+          "M4Fil.c",
+          "M5.a",
+          "M5.b",
+          "M5.e",
+          "M5.f",
+          "M5.g",
+          "M5.i",
+          "M5Fil.a2",
+          "M5Fil.c",
+          "MIM.c",
+          "MIM.d",
+          "NBL.b",
+          "NBL.c",
+          "NBL.d",
+          "NBL.e",
+          "NBL.f",
+          "NW.b",
+          "NW.b1",
+          "NW.f1",
+          "NW.f1.digibnd",
+          "PWB.e",
+          "PWB.e1",
+          "PWB.f",
+          "PWB.f1",
+          "Pad.fR_M1",
+          "Pad.fR_M2",
+          "Pad.fR_M3",
+          "Pad.fR_M4",
+          "Pad.fR_M5",
+          "Pad.fR_TM1",
+          "Pad.fR_TM2",
+          "Pad.i",
+          "Pad.m",
+          "Padb.a",
+          "Padb.b",
+          "Padb.c",
+          "Padb.d",
+          "Padc.a",
+          "Padc.b",
+          "Padc.c",
+          "Pas.a",
+          "Pas.b",
+          "Pas.c",
+          "Pin.a",
+          "Pin.b",
+          "Pin.e",
+          "Pin.f_M2",
+          "Pin.f_M3",
+          "Pin.f_M4",
+          "Pin.f_M5",
+          "Pin.g",
+          "Pin.h",
+          "Sdiod.b",
+          "Sdiod.c",
+          "Sdiod.d",
+          "Sdiod.e",
+          "Seal.b_activ",
+          "Seal.b_metal1",
+          "Seal.b_metal2",
+          "Seal.b_metal3",
+          "Seal.b_metal4",
+          "Seal.b_metal5",
+          "Seal.b_psd",
+          "Seal.b_topmetal1",
+          "Seal.b_topmetal2",
+          "Seal.k",
+          "Seal.m",
+          "Seal.n",
+          "Slt.e1_M1",
+          "Slt.e1_M2",
+          "Slt.e1_M3",
+          "Slt.e1_M4",
+          "Slt.e1_M5",
+          "Slt.e1_TM1",
+          "Slt.e1_TM2",
+          "TGO.f",
+          "TM1.a",
+          "TM1.b",
+          "TM1Fil.a1",
+          "TM1Fil.c",
+          "TM2.a",
+          "TM2.b",
+          "TM2.bR",
+          "TM2Fil.a1",
+          "TM2Fil.c",
+          "TV1.a",
+          "TV1.b",
+          "TV1.c",
+          "TV1.d",
+          "TV2.a",
+          "TV2.b",
+          "TV2.c",
+          "TV2.d",
+          "V1.a",
+          "V1.b",
+          "V1.c",
+          "V2.a",
+          "V2.b",
+          "V2.c",
+          "V3.a",
+          "V3.b",
+          "V3.c",
+          "V4.a",
+          "V4.b",
+          "V4.c",
+          "activ_drw_Acute",
+          "activ_drw_Angle45",
+          "activ_drw_Offgrid",
+          "activ_filler_Acute",
+          "activ_filler_Offgrid",
+          "activ_iopc_Acute",
+          "activ_iopc_Offgrid",
+          "activ_mask_Acute",
+          "activ_mask_Offgrid",
+          "activ_nofill_Acute",
+          "activ_nofill_Offgrid",
+          "activ_noqrc_Acute",
+          "activ_noqrc_Offgrid",
+          "activ_opc_Acute",
+          "activ_opc_Offgrid",
+          "activ_pin_Acute",
+          "activ_pin_Offgrid",
+          "alcustop_drw_Acute",
+          "alcustop_drw_Offgrid",
+          "antmetal1_drw_Acute",
+          "antmetal1_drw_Offgrid",
+          "backmetal1_diffprb_Acute",
+          "backmetal1_diffprb_Offgrid",
+          "backmetal1_drw_Acute",
+          "backmetal1_drw_Offgrid",
+          "backmetal1_filler_Acute",
+          "backmetal1_filler_Offgrid",
+          "backmetal1_iprobe_Acute",
+          "backmetal1_iprobe_Offgrid",
+          "backmetal1_mask_Acute",
+          "backmetal1_mask_Offgrid",
+          "backmetal1_nofill_Acute",
+          "backmetal1_nofill_Offgrid",
+          "backmetal1_noqrc_Acute",
+          "backmetal1_noqrc_Offgrid",
+          "backmetal1_opc_Acute",
+          "backmetal1_opc_Offgrid",
+          "backmetal1_pin_Acute",
+          "backmetal1_pin_Offgrid",
+          "backmetal1_res_Acute",
+          "backmetal1_res_Offgrid",
+          "backmetal1_slit_Acute",
+          "backmetal1_slit_Offgrid",
+          "backpassiv_drw_Acute",
+          "backpassiv_drw_Offgrid",
+          "baspoly_drw_Acute",
+          "baspoly_drw_Offgrid",
+          "baspoly_pin_Acute",
+          "baspoly_pin_Offgrid",
+          "biwind_drw_Acute",
+          "biwind_drw_Offgrid",
+          "biwind_opc_Acute",
+          "biwind_opc_Offgrid",
+          "colopen_drw_Acute",
+          "colopen_drw_Offgrid",
+          "colwind_drw_Acute",
+          "colwind_drw_Offgrid",
+          "cont_drw_Acute",
+          "cont_drw_Angle90",
+          "cont_drw_Offgrid",
+          "cont_opc_Acute",
+          "cont_opc_Offgrid",
+          "ctrgat_drw_Acute",
+          "ctrgat_drw_Offgrid",
+          "deepco_drw_Acute",
+          "deepco_drw_Offgrid",
+          "deepvia_drw_Acute",
+          "deepvia_drw_Offgrid",
+          "empoly_drw_Acute",
+          "empoly_drw_Offgrid",
+          "emwihv_drw_Acute",
+          "emwihv_drw_Offgrid",
+          "emwind_drw_Acute",
+          "emwind_drw_Offgrid",
+          "emwind_opc_Acute",
+          "emwind_opc_Offgrid",
+          "exchange0_drw_Acute",
+          "exchange0_drw_Offgrid",
+          "exchange0_pin_Acute",
+          "exchange0_pin_Offgrid",
+          "exchange1_drw_Acute",
+          "exchange1_drw_Offgrid",
+          "exchange1_pin_Acute",
+          "exchange1_pin_Offgrid",
+          "exchange2_drw_Acute",
+          "exchange2_drw_Offgrid",
+          "exchange2_pin_Acute",
+          "exchange2_pin_Offgrid",
+          "exchange3_drw_Acute",
+          "exchange3_drw_Offgrid",
+          "exchange3_pin_Acute",
+          "exchange3_pin_Offgrid",
+          "exchange4_drw_Acute",
+          "exchange4_drw_Offgrid",
+          "exchange4_pin_Acute",
+          "exchange4_pin_Offgrid",
+          "extblock_drw_Acute",
+          "extblock_drw_Offgrid",
+          "fbe_drw_Acute",
+          "fbe_drw_Offgrid",
+          "fgetch_drw_Acute",
+          "fgetch_drw_Offgrid",
+          "fgimp_drw_Acute",
+          "fgimp_drw_Offgrid",
+          "flm_drw_Acute",
+          "flm_drw_Offgrid",
+          "forbidden.baspoly",
+          "forbidden.biwind",
+          "forbidden.colwind",
+          "forbidden.deepco",
+          "forbidden.empoly",
+          "forbidden.flash",
+          "forbidden.ldmos",
+          "forbidden.nodrc",
+          "forbidden.pbiwind",
+          "forbidden.pempoly",
+          "forbidden.pemwind",
+          "gatpoly_drw_Acute",
+          "gatpoly_drw_Angle45",
+          "gatpoly_drw_Offgrid",
+          "gatpoly_filler_Acute",
+          "gatpoly_filler_Offgrid",
+          "gatpoly_iopc_Acute",
+          "gatpoly_iopc_Offgrid",
+          "gatpoly_nofill_Acute",
+          "gatpoly_nofill_Offgrid",
+          "gatpoly_noqrc_Acute",
+          "gatpoly_noqrc_Offgrid",
+          "gatpoly_opc_Acute",
+          "gatpoly_opc_Offgrid",
+          "gatpoly_pin_Acute",
+          "gatpoly_pin_Offgrid",
+          "graphgate_drw_Acute",
+          "graphgate_drw_Offgrid",
+          "hafniumox_drw_Acute",
+          "hafniumox_drw_Offgrid",
+          "ic_drw_Acute",
+          "ic_drw_Offgrid",
+          "inldpwl_drw_Acute",
+          "inldpwl_drw_Offgrid",
+          "isonwell_drw_Acute",
+          "isonwell_drw_Offgrid",
+          "lbe_drw_Acute",
+          "lbe_drw_Offgrid",
+          "ldmos_drw_Acute",
+          "ldmos_drw_Offgrid",
+          "mempad_drw_Acute",
+          "mempad_drw_Offgrid",
+          "memvia_drw_Acute",
+          "memvia_drw_Offgrid",
+          "metal1_diffprb_Acute",
+          "metal1_diffprb_Offgrid",
+          "metal1_drw_Acute",
+          "metal1_drw_Angle45",
+          "metal1_drw_Offgrid",
+          "metal1_filler_Acute",
+          "metal1_filler_Offgrid",
+          "metal1_iprobe_Acute",
+          "metal1_iprobe_Offgrid",
+          "metal1_mask_Acute",
+          "metal1_mask_Offgrid",
+          "metal1_nofill_Acute",
+          "metal1_nofill_Offgrid",
+          "metal1_noqrc_Acute",
+          "metal1_noqrc_Offgrid",
+          "metal1_opc_Acute",
+          "metal1_opc_Offgrid",
+          "metal1_pin_Acute",
+          "metal1_pin_Offgrid",
+          "metal1_res_Acute",
+          "metal1_res_Offgrid",
+          "metal1_slit_Acute",
+          "metal1_slit_Offgrid",
+          "metal2_diffprb_Acute",
+          "metal2_diffprb_Offgrid",
+          "metal2_drw_Acute",
+          "metal2_drw_Angle45",
+          "metal2_drw_Offgrid",
+          "metal2_filler_Acute",
+          "metal2_filler_Offgrid",
+          "metal2_iprobe_Acute",
+          "metal2_iprobe_Offgrid",
+          "metal2_mask_Acute",
+          "metal2_mask_Offgrid",
+          "metal2_nofill_Acute",
+          "metal2_nofill_Offgrid",
+          "metal2_noqrc_Acute",
+          "metal2_noqrc_Offgrid",
+          "metal2_opc_Acute",
+          "metal2_opc_Offgrid",
+          "metal2_pin_Acute",
+          "metal2_pin_Offgrid",
+          "metal2_res_Acute",
+          "metal2_res_Offgrid",
+          "metal2_slit_Acute",
+          "metal2_slit_Offgrid",
+          "metal3_diffprb_Acute",
+          "metal3_diffprb_Offgrid",
+          "metal3_drw_Acute",
+          "metal3_drw_Angle45",
+          "metal3_drw_Offgrid",
+          "metal3_filler_Acute",
+          "metal3_filler_Offgrid",
+          "metal3_iprobe_Acute",
+          "metal3_iprobe_Offgrid",
+          "metal3_mask_Acute",
+          "metal3_mask_Offgrid",
+          "metal3_nofill_Acute",
+          "metal3_nofill_Offgrid",
+          "metal3_noqrc_Acute",
+          "metal3_noqrc_Offgrid",
+          "metal3_opc_Acute",
+          "metal3_opc_Offgrid",
+          "metal3_pin_Acute",
+          "metal3_pin_Offgrid",
+          "metal3_res_Acute",
+          "metal3_res_Offgrid",
+          "metal3_slit_Acute",
+          "metal3_slit_Offgrid",
+          "metal4_diffprb_Acute",
+          "metal4_diffprb_Offgrid",
+          "metal4_drw_Acute",
+          "metal4_drw_Angle45",
+          "metal4_drw_Offgrid",
+          "metal4_filler_Acute",
+          "metal4_filler_Offgrid",
+          "metal4_iprobe_Acute",
+          "metal4_iprobe_Offgrid",
+          "metal4_mask_Acute",
+          "metal4_mask_Offgrid",
+          "metal4_nofill_Acute",
+          "metal4_nofill_Offgrid",
+          "metal4_noqrc_Acute",
+          "metal4_noqrc_Offgrid",
+          "metal4_opc_Acute",
+          "metal4_opc_Offgrid",
+          "metal4_pin_Acute",
+          "metal4_pin_Offgrid",
+          "metal4_res_Acute",
+          "metal4_res_Offgrid",
+          "metal4_slit_Acute",
+          "metal4_slit_Offgrid",
+          "metal5_diffprb_Acute",
+          "metal5_diffprb_Offgrid",
+          "metal5_drw_Acute",
+          "metal5_drw_Angle45",
+          "metal5_drw_Offgrid",
+          "metal5_filler_Acute",
+          "metal5_filler_Offgrid",
+          "metal5_iprobe_Acute",
+          "metal5_iprobe_Offgrid",
+          "metal5_mask_Acute",
+          "metal5_mask_Offgrid",
+          "metal5_nofill_Acute",
+          "metal5_nofill_Offgrid",
+          "metal5_noqrc_Acute",
+          "metal5_noqrc_Offgrid",
+          "metal5_opc_Acute",
+          "metal5_opc_Offgrid",
+          "metal5_pin_Acute",
+          "metal5_pin_Offgrid",
+          "metal5_res_Acute",
+          "metal5_res_Offgrid",
+          "metal5_slit_Acute",
+          "metal5_slit_Offgrid",
+          "mim_drw_Acute",
+          "mim_drw_Offgrid",
+          "nbulay_block_Acute",
+          "nbulay_block_Offgrid",
+          "nbulay_drw_Acute",
+          "nbulay_drw_Offgrid",
+          "nbulay_pin_Acute",
+          "nbulay_pin_Offgrid",
+          "nbulaycut_drw_Acute",
+          "nbulaycut_drw_Offgrid",
+          "next_drw_Acute",
+          "next_drw_Offgrid",
+          "nexthv_drw_Acute",
+          "nexthv_drw_Offgrid",
+          "nldb_drw_Acute",
+          "nldb_drw_Offgrid",
+          "nldd_drw_Acute",
+          "nldd_drw_Offgrid",
+          "npn13G2.bR",
+          "npn13G2L.cR",
+          "npn13G2V.cR",
+          "nsd_block_Acute",
+          "nsd_block_Offgrid",
+          "nsd_drw_Acute",
+          "nsd_drw_Offgrid",
+          "nwell_drw_Acute",
+          "nwell_drw_Offgrid",
+          "nwell_pin_Acute",
+          "nwell_pin_Offgrid",
+          "pSD.c1",
+          "padb.f",
+          "padc.f",
+          "passiv_drw_Acute",
+          "passiv_drw_Offgrid",
+          "passiv_pdl_Acute",
+          "passiv_pdl_Offgrid",
+          "passiv_pillar_Acute",
+          "passiv_pillar_Offgrid",
+          "passiv_pin_Acute",
+          "passiv_pin_Offgrid",
+          "passiv_sbump_Acute",
+          "passiv_sbump_Offgrid",
+          "pbiwind_drw_Acute",
+          "pbiwind_drw_Offgrid",
+          "pempoly_drw_Acute",
+          "pempoly_drw_Offgrid",
+          "pemwind_drw_Acute",
+          "pemwind_drw_Offgrid",
+          "pext_drw_Acute",
+          "pext_drw_Offgrid",
+          "pexthv_drw_Acute",
+          "pexthv_drw_Offgrid",
+          "pldb_drw_Acute",
+          "pldb_drw_Offgrid",
+          "pldd_drw_Acute",
+          "pldd_drw_Offgrid",
+          "polyres_drw_Acute",
+          "polyres_drw_Offgrid",
+          "polyres_pin_Acute",
+          "polyres_pin_Offgrid",
+          "prboundary_drw_Acute",
+          "prboundary_drw_Offgrid",
+          "psd_drw_Acute",
+          "psd_drw_Offgrid",
+          "pwell_block_Acute",
+          "pwell_block_Offgrid",
+          "pwell_drw_Acute",
+          "pwell_drw_Offgrid",
+          "pwell_pin_Acute",
+          "pwell_pin_Offgrid",
+          "rfmem_drw_Acute",
+          "rfmem_drw_Offgrid",
+          "salblock_drw_Acute",
+          "salblock_drw_Offgrid",
+          "sensor_drw_Acute",
+          "sensor_drw_Offgrid",
+          "snsarms_drw_Acute",
+          "snsarms_drw_Offgrid",
+          "snsbotvia_drw_Acute",
+          "snsbotvia_drw_Offgrid",
+          "snscmosvia_drw_Acute",
+          "snscmosvia_drw_Offgrid",
+          "snsring_drw_Acute",
+          "snsring_drw_Offgrid",
+          "snstopvia_drw_Acute",
+          "snstopvia_drw_Offgrid",
+          "substrate_drw_Acute",
+          "substrate_drw_Offgrid",
+          "thickgateox_drw_Acute",
+          "thickgateox_drw_Offgrid",
+          "thinfilmres_drw_Acute",
+          "thinfilmres_drw_Offgrid",
+          "topmetal1_diffprb_Acute",
+          "topmetal1_diffprb_Offgrid",
+          "topmetal1_drw_Acute",
+          "topmetal1_drw_Angle45",
+          "topmetal1_drw_Offgrid",
+          "topmetal1_filler_Acute",
+          "topmetal1_filler_Offgrid",
+          "topmetal1_iprobe_Acute",
+          "topmetal1_iprobe_Offgrid",
+          "topmetal1_mask_Acute",
+          "topmetal1_mask_Offgrid",
+          "topmetal1_nofill_Acute",
+          "topmetal1_nofill_Offgrid",
+          "topmetal1_noqrc_Acute",
+          "topmetal1_noqrc_Offgrid",
+          "topmetal1_pin_Acute",
+          "topmetal1_pin_Offgrid",
+          "topmetal1_res_Acute",
+          "topmetal1_res_Offgrid",
+          "topmetal1_slit_Acute",
+          "topmetal1_slit_Offgrid",
+          "topmetal2_diffprb_Acute",
+          "topmetal2_diffprb_Offgrid",
+          "topmetal2_drw_Acute",
+          "topmetal2_drw_Angle45",
+          "topmetal2_drw_Offgrid",
+          "topmetal2_filler_Acute",
+          "topmetal2_filler_Offgrid",
+          "topmetal2_iprobe_Acute",
+          "topmetal2_iprobe_Offgrid",
+          "topmetal2_mask_Acute",
+          "topmetal2_mask_Offgrid",
+          "topmetal2_nofill_Acute",
+          "topmetal2_nofill_Offgrid",
+          "topmetal2_noqrc_Acute",
+          "topmetal2_noqrc_Offgrid",
+          "topmetal2_pin_Acute",
+          "topmetal2_pin_Offgrid",
+          "topmetal2_res_Acute",
+          "topmetal2_res_Offgrid",
+          "topmetal2_slit_Acute",
+          "topmetal2_slit_Offgrid",
+          "topvia1_drw_Acute",
+          "topvia1_drw_Angle90",
+          "topvia1_drw_Offgrid",
+          "topvia2_drw_Acute",
+          "topvia2_drw_Angle90",
+          "topvia2_drw_Offgrid",
+          "via1_drw_Acute",
+          "via1_drw_Angle90",
+          "via1_drw_Offgrid",
+          "via2_drw_Acute",
+          "via2_drw_Angle90",
+          "via2_drw_Offgrid",
+          "via3_drw_Acute",
+          "via3_drw_Angle90",
+          "via3_drw_Offgrid",
+          "via4_drw_Acute",
+          "via4_drw_Angle90",
+          "via4_drw_Offgrid",
+          "vmim_drw_Acute",
+          "vmim_drw_Angle90",
+          "vmim_drw_Offgrid"
+        ],
+        "skipped": [],
+        "inapplicable": [],
+        "unknown": [],
+        "nothing_checked": false,
+        "nothing_checked_reasons": []
+      },
+      "violations": [],
+      "coverage_assertion": {
+        "kind": "expected_rule_categories",
+        "expected": 590,
+        "observed": 590,
+        "satisfied": true
+      },
+      "provenance": {
+        "klt_version": "0.9.2.dev420+gf186e14125ed",
+        "klt_git_commit": "f186e14125edbe7de06de1af710e3d4c2c87bb7e",
+        "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@f186e14125edbe7de06de1af710e3d4c2c87bb7e",
+        "klayout_version": "0.30.13",
+        "pdk": null,
+        "deck": {
+          "name": "ihp-sg13g2.drc",
+          "content_hash": "sha256:0620b737538af7c86dfb7c6ca0ba3a38f8410b0d51412978ca977ea3df3fb693",
+          "released": false,
+          "options": {
+            "threads": "2"
+          }
+        },
+        "input": {
+          "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+          "role": "layout"
+        },
+        "klayout_version_mismatch": true
+      }
+    }
+  }
+}

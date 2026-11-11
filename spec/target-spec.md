@@ -131,6 +131,35 @@ and `spec/decision-records/DR-004-target-spec-ratification-pass-2.md`.
 
 ---
 
+## Output interface statement
+
+Added per `spec/decision-records/DR-008-downstream-clock-swing-statement.md`.
+This is a statement, not a new requirement: **no cell of row 7 or any other
+row is changed by it.**
+
+- **Swing**: graded as `Vpp_diff` on `v(OUTP) - v(OUTN)` at the tank nodes
+  (row 7). For the antiphase pair the per-node swing is `Vpp_diff / 2`, so the
+  ratified 0.40 Vpp_diff floor is 0.20 V per node and the 0.65 stretch is
+  0.325 V per node.
+- **Load**: none beyond the netlist's own tank (row 7: `R_p,diff` 3.418 kOhm
+  at 5.0 GHz). There is no output buffer in v1 and no 50 Ohm claim.
+- **Common mode**: the nodes sit at about the supply rail (`.ic` 3.305 V /
+  3.295 V, `sim/oscillator-core/klt-sim/README.md`), not near 0.6 V. It is not
+  traced across corners. A consumer must AC-couple, and any coupling
+  capacitance it adds must be declared per row 7.
+- **Comparison to a downstream need of 0.8 Vpp_diff (>= 0.4 V per side)**:
+  *not met by the ratified floor* (0.40 Vpp_diff, row 7; its own arithmetic
+  gives 0.492 at the row-5 Q floor). *Met at nominal by pilot data* (0.808 /
+  1.098 Vpp_diff at the band edges, row 7; +/-0.275 V per node, i.e.
+  1.10 Vpp_diff, `design/README.md`), with <= ~1 % margin at the low edge;
+  pilot numbers grade no row. *Not graded over corners*: no committed record
+  checks 0.8 Vpp_diff across the row-10 set, and the consumer reports its own
+  slow-corner need as higher than 0.8. The downstream figure is taken from
+  sg13g2-serdes (not re-verified here) and is **not adopted into row 7**; see
+  DR-008.
+
+---
+
 ## Sources
 
 - This repo's own `CLAUDE.md` — "Tank first," phase-noise measurement-method

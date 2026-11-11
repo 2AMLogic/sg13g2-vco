@@ -883,6 +883,66 @@ scoping gap stays open for other layouts; this one no longer leans on it.)
 - **Density fill is deferred by design**, not forgotten: the 9 fill-rule
   findings are recorded above and belong to the fill/chip-assembly phase.
 
+### 2026-11-10 (issue #315): `nwell.enclosing.pactiv.1` x64 is a curated-deck artefact
+
+A downstream integrator reported 64 x `nwell.enclosing.pactiv.1` (32 + 32,
+source cell `SVaricap`, the two varactor banks) from the curated `sg13g2`
+deck and asked whether they are real. They are not an integration effect:
+the same 64 reproduce on the standalone `layout/vco.gds`. **Verdict: artefact
+of the curated rule, not a layout defect.** Nothing in `layout/vco.gds`, the
+waivers or the spec changed. (The same 64 were first seen 2026-10-27 under
+klt 0.8.0 and noted only in `.github/klt-friction-ledger.json`.)
+
+Three runs, one at a time, klt `0.9.2.dev420+gf186e14125ed`, input
+`sha256:937e5b16...ca1b3c6` (unchanged `layout/vco.gds`), standalone
+KLayout 0.30.12 for the native legs (klt's own `klayout` module is 0.30.13,
+so every report records `klayout_version_mismatch: true`; the native deck
+verdicts do not depend on the difference but it is not the pinned-0.30.12
+match the §13 record has). The PDK is the one `drc.sh` pins (`ihp-sg13g2.drc`
+`sha256:0620b737...fb693`).
+
+| Report | Command | Result |
+|---|---|---|
+| `layout/drc/vco-drc-both.json` | `klt drc layout/vco.gds --engine both --deck sg13g2 --top vco --deck-file <PDK>/libs.tech/klayout/tech/drc/ihp-sg13g2.drc --deck-var threads=2 --expect-rule-categories 590 --format json` | curated (deck `sha256:1c95db40...6dd15`): `violations`, 64 x `nwell.enclosing.pactiv.1`, rollup `SVaricap` 32 + `SVaricap$1` 32; native: `clean`, 0, 590/590 categories asserted. The crosscheck itself says `comparison.state: not_comparable` (no rule mapping between the engines), so the two verdicts are read side by side, not reconciled by klt. |
+| `layout/drc/vco-drc-maximal.json` | `klt drc layout/vco.gds --engine klayout --top vco --deck-file <PDK>/libs.tech/klayout/tech/drc/rule_decks/sg13g2_maximal.drc --deck-var threads=2 --format json` (deck `sha256:95166123...2dbd`) | `violations`: 4 x `NW.e` only, the PCell-internal ones recorded above; the `NW.c` category is present among 272 and reports **0**. |
+| `layout/drc/vco-drc-maximal-nocarve.json` | as above on a scratch copy of the maximal deck (`sha256:f71db44f...6ff9d2`) with exactly one line changed: `lNw_c = PActLV.ext_not(PActLV.ext_interacting(SVaricap))` -> `lNw_c = PActLV` | 12: 4 x `NW.e` (unchanged) + **8 x `NW.c`**. |
+
+Evidence for the call. The curated rule is a transcription of the
+foundry's `NW.c` (`sg13g2_maximal.drc`: `lNw_c.ext_enclosed(NWell_Nsram,
+0.31.um, ...)`), but the foundry first drops every P+ Activ that interacts
+with a recognised `SVaricap` (`lNw_c = PActLV.ext_not(PActLV.ext_interacting(SVaricap))`);
+the curated rule applies unconditionally. Removing only that carve-out from the
+foundry's own deck makes the foundry's `NW.c` fire on this stream too, so the
+carve-out, not a difference in the geometry check, is what separates 0 from
+non-zero. (8 vs 64 is counting granularity: the foundry deck reports merged
+edge-pair markers, the curated deck one marker per edge violation; the
+counts are not comparable and are not claimed to be.) All 64 curated hits
+are attributed to source cell `SVaricap`, the PDK device.
+
+Limits, stated plainly:
+
+- IHP's *primary* runset (`ihp-sg13g2.drc`, the report of record in §13)
+  has no `NW.c` rule at all, so its zero says nothing about this rule; the
+  evidence is the maximal deck, which the PDK README itself calls "not
+  verified or tested" (§12, optional-decks table).
+- The foundry carve-out keys on an `SVaricap` text label on the device
+  (as the PDK PCell emits it). That the carve-out applies here rests on the
+  maximal run's `NW.c` = 0 and the no-carve-out control; the label geometry
+  was not separately inspected.
+- This establishes that the *curated rule* is wrong for `SVaricap`, relative
+  to the foundry deck. It does not by itself establish that the varactor
+  banks are silicon-clean for NW.c: no foundry sign-off DRC (Calibre/ICV)
+  was run, as everywhere else in this record.
+- Reproduction of the control: copy the maximal deck to scratch, apply the
+  one-line change above, run the third command. The scratch deck is not
+  committed (it is derived from the PDK deck by that one line).
+
+Upstream gap filed per the friction protocol: 2AMLogic/klayout-tools#5212
+(generic: curated rule lacks the foundry `SVaricap` carve-out). Ledger
+`#2688` note updated to point here. `layout/drc.sh` is unchanged: these runs
+are diagnostics, not a new gate, and the committed `layout/drc/vco-drc.json`
+(klt 0.6.0) remains stale relative to the curated-deck history above.
+
 ## 13. DRC closure record (2026-10-07, issue #61)
 
 *Appended. §12 is kept unchanged as the record of the earlier passes. Where
@@ -1645,3 +1705,70 @@ not this block.
 > therefore names that net, e.g. `LA,VDD`. Strict top-port mode
 > (`flag_missing_ports`) then logs `Port mismatch 'LA,VDD' vs. 'VDD'` even
 > when the cross-reference pairs the nets.
+
+## 15. VCTRL chip-level pin on TopMetal2 (2026-11-10, issue #314)
+
+**Change.** `scripts/floorplan.py` adds one `SG13_dev/via_stack` (Metal3 →
+TopMetal2, `vs_m3_tm2`, instance `VS_VCTRL_PIN`) at (−66.0, −57.0) on the
+Metal3 `VCTRL` trunk, a 4.0 µm TopMetal2 strap from the stack down to
+y = −106.0, and a second `VCTRL` label on it (134/25 at (−66.0, −104.0)).
+Nothing else was edited: no device, no other route, no runset.
+
+**Pin vs. bbox.** The artifact bbox is unchanged
+(x ±305.13, y −106.03…290.26); the strap's outboard end is 0.03 µm inside the
+bottom edge. A parent needs no Metal1-5 inside the bbox to reach it.
+
+**New stream.** `layout/vco.gds` @
+`sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e`
+(was `937e5b16…`, which regenerated byte-identically from `main` before the
+edit, so the whole difference is this change). Generated with `klt 0.6.0`
+(the tool the committed manifest records) and the PDK at
+`~/share/pdk/ihp-sg13g2`; `layout/generate.sh` connectivity stage passes
+(9 nets distinct, no dead metal).
+
+**Evidence refreshed to the new stream.**
+- IHP runset DRC (`drc/vco-drc-ihp.json`, `-assertion.json`): `status: clean`,
+  0 findings, assertion 590/590, controls discriminating. Re-run under
+  `klt 0.8.0` + KLayout 0.30.12 (reports now carry that tool's revision).
+- LVS (IHP `sg13g2.lvs` + label-order step, `build/lvs/run-lo-record`):
+  `match`, nets 10/10, pins 9/9, devices 43/43, same as §14.6.
+- `signoff/manifest.json` / `t1-report.json`: the input hash of items 2 and 3
+  moves to the new digest; inventories 1/9/10 unchanged (`--regen` is a no-op).
+
+**Curated-deck and klt-LVS records, also regenerated (under `klt 0.8.0`).**
+`drc/vco-drc.json`, `drc/vco-cnt-c-control.json`, `lvs/vco-lvs-ihp.json` and
+`lvs/vco-lvs-record.json` were regenerated with `drc.sh` / `lvs.sh` against
+`c65cad9b…`; each now cites that digest and none cites `937e5b16…`.
+- `drc/vco-drc.json`: 8 × `activ.enclosing.cont.1` became 64 ×
+  `nwell.enclosing.pactiv.1`. This is **not a regression from this change**:
+  `klt 0.8.0` reports the same 64 on the unmodified `main` stream, and the
+  main-branch entry "2026-11-10 (issue #315): `nwell.enclosing.pactiv.1` x64
+  is a curated-deck artefact" (§12, commit 70cf6b4) diagnoses them as a missing
+  carve-out in the curated rule, not a layout defect.
+- `drc/vco-cnt-c-control.json`: now reads `INCONCLUSIVE / CHANGED` (the control
+  still shows 64 violations of that rule, so the old `Cnt.c` explanation no
+  longer applies as written). The same §12 entry is the diagnosis.
+- `lvs.sh` was changed to accept `klt 0.8.0`'s wording of the inductor refusal
+  (`subcircuits 'inductor', 'sg13_hv_svaricap' are not known devices`) as well
+  as the older `'inductor' is not a known device`; it is the same refusal
+  (exit 1, inductor unsupported), so the gate's meaning is unchanged.
+- `lvs/vco-lvs-record.json` now records `klayout_python_module` 0.30.13
+  against engine 0.30.12 (the `drc.sh` native env pulls the newer module), and
+  `klt 0.8.0` recognizes 4 of 42 devices (was 1) on inline extraction; the
+  klt leg still cannot produce a report for this block (2AMLogic/klayout-tools#2849).
+
+**Keep-out check.** `klt keepout-check` (0.8.0) `--forbidden
+[[8,0],[10,0],[30,0],[50,0],[67,0]] --margin 20 --cells vco` on a stub parent
+that instantiates `vco` and adds only a TopMetal2 rectangle overlapping the
+pin's bottom end: `clean`, 0 violations. The check never counts the guarded
+cell's own shapes and the stub adds no Metal1-5, so it shows the parent route
+needs none; it does not test the VCO's own metal.
+
+**Parasitic estimate (not measured).** Added route: 4.0 × 51.5 µm ≈ 206 µm² of
+TopMetal2 plus one 4-layer via stack. At roughly 0.02 fF/µm² to substrate
+(order-of-magnitude, no extraction was run) that is ≈ 4–5 fF on `VCTRL`, a
+quasi-DC control node already loaded by 32 varactors; series resistance of the
+strap is well under 1 Ω. No simulation was re-run: this is a passive
+appendage on `VCTRL` with no effect on the tank, and the estimate is the
+basis for that statement, not a measurement.
+

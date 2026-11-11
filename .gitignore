@@ -104,3 +104,6 @@ flow/build/
 
 # EM-extraction staging directories (removed on completion; see its README)
 sim/inductor-model/em-extraction/.stage-*/
+
+# reserve_record_id O_EXCL lock files (never deleted; not evidence)
+sim/**/corners/.*.lock

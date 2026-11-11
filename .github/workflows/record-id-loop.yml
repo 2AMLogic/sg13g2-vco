@@ -1,0 +1,51 @@
+# Confirmation loop for the record-reservation self-test (issue #312).
+#
+# `record-id-selftest` failed intermittently on ubuntu-latest, where
+# /usr/bin/mkdir is uutils coreutils. reserve_record_id now arbitrates with a
+# noclobber (O_EXCL) lock, but the fix was never measured on the runner image.
+# This job runs the concurrent self-test 50 consecutive times there and logs
+# the `mkdir --version` line so the result can be recorded as evidence.
+#
+# It runs only when this file changes, or on demand (workflow_dispatch), so it
+# adds no cost to ordinary PRs. No PDK and no simulator are needed.
+
+name: record-id-loop
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/record-id-loop.yml
+
+permissions:
+  contents: read
+
+jobs:
+  loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record mkdir implementation
+        run: |
+          command -v mkdir
+          mkdir --version | head -n 1
+          bash --version | head -n 1
+
+      - name: 50 consecutive record-id-selftest loops
+        run: |
+          pass=0
+          fail=0
+          for i in $(seq 1 50); do
+            if .github/scripts/check-all.sh record-id-selftest >"loop-$i.log" 2>&1; then
+              pass=$((pass + 1))
+            else
+              fail=$((fail + 1))
+              echo "::group::loop $i FAILED"
+              cat "loop-$i.log"
+              echo "::endgroup::"
+            fi
+          done
+          echo "loops=50 passed=${pass} failed=${fail}"
+          [ "${fail}" -eq 0 ]

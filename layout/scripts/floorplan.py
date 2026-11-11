@@ -166,6 +166,10 @@ DEVICES = {
                   {"b_layer": "Metal1", "t_layer": "TopMetal2",
                    "vn_columns": 2, "vn_rows": 2, "vt1_columns": 2,
                    "vt1_rows": 2, "vt2_columns": 2, "vt2_rows": 2}),
+    "vs_m3_tm2": ("via_stack", "via_stack",
+                  {"b_layer": "Metal3", "t_layer": "TopMetal2",
+                   "vn_columns": 2, "vn_rows": 2, "vt1_columns": 2,
+                   "vt1_rows": 2, "vt2_columns": 2, "vt2_rows": 2}),
     "vs_tm1_tm2": ("via_stack", "via_stack",
                    {"b_layer": "TopMetal1", "t_layer": "TopMetal2",
                     "vt2_columns": 2, "vt2_rows": 2}),
@@ -203,6 +207,14 @@ BANK_Y = -52.0
 BANK_P_X0 = -68.0
 BANK_N_X0 = -(BANK_P_X0 + VAR_N * VAR_PITCH)   # +33.6: mirror of bank P
 VCTRL_M3_Y = (-58.0, -56.0)      # VCTRL Metal3 trunk under both banks
+# VCTRL chip-level pin (#314): a Metal3->TopMetal2 stack on the trunk, then a
+# TopMetal2 strap straight down to the guard ring's outer (bottom) edge, which
+# is the artifact bbox bottom, so a parent reaches VCTRL on TopMetal2 without
+# any Metal1-5 inside the bbox.  TopMetal2 elsewhere is only the VDD trunk
+# (y -11.5..-3.5) and the RREF spur (x 93..97): nothing to cross or to space to.
+VCTRL_PIN_X = -66.0              # stack centre / strap centreline
+VCTRL_PIN_W = 4.0                # TopMetal2 strap width (min 2.00)
+VCTRL_PIN_Y0 = -106.0            # strap's outboard end = ring outer edge
 
 Q12_Y = -72.0                    # cross-coupled pair
 Q1_ORG_X = -14.0
@@ -554,6 +566,11 @@ def wiring_request(build):
     s.append(rect(METAL3, BANK_P_X0 - 2.0, VCTRL_M3_Y[0], -BANK_P_X0 + 2.0,
                   VCTRL_M3_Y[1], "VCTRL"))
     t.append(label(METAL3, "VCTRL", 0.0, sum(VCTRL_M3_Y) / 2.0))
+    # chip-level pin: TopMetal2 strap from the stack down to the bbox edge
+    s.append(rect(TOPMETAL2, VCTRL_PIN_X - VCTRL_PIN_W / 2.0, VCTRL_PIN_Y0,
+                  VCTRL_PIN_X + VCTRL_PIN_W / 2.0,
+                  sum(VCTRL_M3_Y) / 2.0 + 2.5, "VCTRL"))
+    t.append(label(TOPMETAL2, "VCTRL", VCTRL_PIN_X, VCTRL_PIN_Y0 + 2.0))
 
     # ---------------------------------------------------------------- TAIL --
     # Q1.E / Q2.E are the npn PCell's own Metal2 pads, so the pair's emitter
@@ -613,7 +630,8 @@ def wiring_request(build):
     t.append(label(METAL1, "0", (RING[0] + RING[2]) / 2.0,
                    ring_m1[1] + (RING_W - 2 * PTAP_M1_INSET[1]) / 2.0))
 
-    assert len(t) == len(NETS), "expected one label per net, got %d" % len(t)
+    # one label per net, plus VCTRL's second label on its TopMetal2 chip pin
+    assert len(t) == len(NETS) + 1, "expected one label per net + the VCTRL pin, got %d" % len(t)
     assert {lb["text"] for lb in t} == set(NETS)
     for name in ("rte", "rre", "rref", "cmim", "ind", "npn_le1", "npn_le2"):
         assert name  # all port records were loaded above
@@ -786,6 +804,8 @@ def geometry(build):
         ("VS_RE", "vs_m1_m2", g["RRE_HI"]),
         ("VS_RING_RTE", "vs_m1_m3", (g["VS_RTE_LO"][0], RING[1] + RING_W / 2.0)),
         ("VS_RING_RRE", "vs_m1_m3", (g["VS_RRE_LO"][0], RING[1] + RING_W / 2.0)),
+        ("VS_VCTRL_PIN", "vs_m3_tm2",
+         (VCTRL_PIN_X, sum(VCTRL_M3_Y) / 2.0)),
         ("VS_VCTRL_P1", "vs_m1_m3", g["VS_VCTRL_P1"]),
         ("VS_VCTRL_P2", "vs_m1_m3", g["VS_VCTRL_P2"]),
         ("VS_VCTRL_N1", "vs_m1_m3", g["VS_VCTRL_N1"]),

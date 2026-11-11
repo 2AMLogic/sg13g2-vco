@@ -1,0 +1,321 @@
+
+
+The temperature limiting function received NaN.
+Please check your power dissipation and improve your heat sink Rth!
+    This message will be shown only once.
+
+Note: Starting dynamic gmin stepping
+Note: Dynamic gmin stepping completed
+
+Note: No compatibility mode selected!
+
+
+Circuit: * issue #309 single-unit probe tran-rd-ramp-125 (temp 125)
+
+Doing analysis at TEMP = 125.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                          0
+xl1.n02                                  0.005
+xl1.n03                                  0.005
+xl1.n04                                  0.005
+xl1.n05                                  0.005
+xl1.n06                                  0.005
+xl1.n07                                  0.005
+xl1.n08                                  0.005
+xl1.n09                                  0.005
+xl1.n10                                  0.005
+xl1.n11                                  0.005
+xl1.n12                                  0.005
+outp                                     0.005
+xl1.n20                                      0
+xl1.n21                                      0
+xl2.n02                                      0
+xl2.n03                                      0
+xl2.n04                                      0
+xl2.n05                                      0
+xl2.n06                                      0
+xl2.n07                                      0
+xl2.n08                                      0
+xl2.n09                                      0
+xl2.n10                                      0
+xl2.n11                                      0
+xl2.n12                                      0
+outn                                         0
+xl2.n20                                      0
+xl2.n21                                      0
+xc1.1                                    0.005
+vctrl                                     1.65
+xcvp1.w0                                 0.005
+xcvp1.2                                  0.005
+xcvp1.4                                      0
+xcvp1.bi1                                0.005
+xcvp1.bi2                                0.005
+xcvp1.w1                           1.69045e-12
+xcvp1.g2a                                 1.65
+xcvp2.w0                                 0.005
+xcvp2.2                                  0.005
+xcvp2.4                                      0
+xcvp2.bi1                                0.005
+xcvp2.bi2                                0.005
+xcvp2.w1                           1.69045e-12
+xcvp2.g2a                                 1.65
+xcvp3.w0                                 0.005
+xcvp3.2                                  0.005
+xcvp3.4                                      0
+xcvp3.bi1                                0.005
+xcvp3.bi2                                0.005
+xcvp3.w1                           1.69045e-12
+xcvp3.g2a                                 1.65
+xcvp4.w0                                 0.005
+xcvp4.2                                  0.005
+xcvp4.4                                      0
+xcvp4.bi1                                0.005
+xcvp4.bi2                                0.005
+xcvp4.w1                           1.69045e-12
+xcvp4.g2a                                 1.65
+xcvp5.w0                                 0.005
+xcvp5.2                                  0.005
+xcvp5.4                                      0
+xcvp5.bi1                                0.005
+xcvp5.bi2                                0.005
+xcvp5.w1                           1.69045e-12
+xcvp5.g2a                                 1.65
+xcvp6.w0                                 0.005
+xcvp6.2                                  0.005
+xcvp6.4                                      0
+xcvp6.bi1                                0.005
+xcvp6.bi2                                0.005
+xcvp6.w1                           1.69045e-12
+xcvp6.g2a                                 1.65
+xcvp7.w0                                 0.005
+xcvp7.2                                  0.005
+xcvp7.4                                      0
+xcvp7.bi1                                0.005
+xcvp7.bi2                                0.005
+xcvp7.w1                           1.69045e-12
+xcvp7.g2a                                 1.65
+xcvp8.w0                                 0.005
+xcvp8.2                                  0.005
+xcvp8.4                                      0
+xcvp8.bi1                                0.005
+xcvp8.bi2                                0.005
+xcvp8.w1                           1.69045e-12
+xcvp8.g2a                                 1.65
+xcvp9.w0                                 0.005
+xcvp9.2                                  0.005
+xcvp9.4                                      0
+xcvp9.bi1                                0.005
+xcvp9.bi2                                0.005
+xcvp9.w1                           1.69045e-12
+xcvp9.g2a                                 1.65
+xcvp10.w0                                0.005
+xcvp10.2                                 0.005
+xcvp10.4                                     0
+xcvp10.bi1                               0.005
+xcvp10.bi2                               0.005
+xcvp10.w1                          1.69045e-12
+xcvp10.g2a                                1.65
+xcvp11.w0                                0.005
+xcvp11.2                                 0.005
+xcvp11.4                                     0
+xcvp11.bi1                               0.005
+xcvp11.bi2                               0.005
+xcvp11.w1                          1.69045e-12
+xcvp11.g2a                                1.65
+xcvp12.w0                                0.005
+xcvp12.2                                 0.005
+xcvp12.4                                     0
+xcvp12.bi1                               0.005
+xcvp12.bi2                               0.005
+xcvp12.w1                          1.69045e-12
+xcvp12.g2a                                1.65
+xcvp13.w0                                0.005
+xcvp13.2                                 0.005
+xcvp13.4                                     0
+xcvp13.bi1                               0.005
+xcvp13.bi2                               0.005
+xcvp13.w1                          1.69045e-12
+xcvp13.g2a                                1.65
+xcvp14.w0                                0.005
+xcvp14.2                                 0.005
+xcvp14.4                                     0
+xcvp14.bi1                               0.005
+xcvp14.bi2                               0.005
+xcvp14.w1                          1.69045e-12
+xcvp14.g2a                                1.65
+xcvp15.w0                                0.005
+xcvp15.2                                 0.005
+xcvp15.4                                     0
+xcvp15.bi1                               0.005
+xcvp15.bi2                               0.005
+xcvp15.w1                          1.69045e-12
+xcvp15.g2a                                1.65
+xcvp16.w0                                0.005
+xcvp16.2                                 0.005
+xcvp16.4                                     0
+xcvp16.bi1                               0.005
+xcvp16.bi2                               0.005
+xcvp16.w1                          1.69045e-12
+xcvp16.g2a                                1.65
+xcvn1.w0                                     0
+xcvn1.2                                      0
+xcvn1.4                                      0
+xcvn1.bi1                                    0
+xcvn1.bi2                                    0
+xcvn1.w1                                     0
+xcvn1.g2a                                 1.65
+xcvn2.w0                                     0
+xcvn2.2                                      0
+xcvn2.4                                      0
+xcvn2.bi1                                    0
+xcvn2.bi2                                    0
+xcvn2.w1                                     0
+xcvn2.g2a                                 1.65
+xcvn3.w0                                     0
+xcvn3.2                                      0
+xcvn3.4                                      0
+xcvn3.bi1                                    0
+xcvn3.bi2                                    0
+xcvn3.w1                                     0
+xcvn3.g2a                                 1.65
+xcvn4.w0                                     0
+xcvn4.2                                      0
+xcvn4.4                                      0
+xcvn4.bi1                                    0
+xcvn4.bi2                                    0
+xcvn4.w1                                     0
+xcvn4.g2a                                 1.65
+xcvn5.w0                                     0
+xcvn5.2                                      0
+xcvn5.4                                      0
+xcvn5.bi1                                    0
+xcvn5.bi2                                    0
+xcvn5.w1                                     0
+xcvn5.g2a                                 1.65
+xcvn6.w0                                     0
+xcvn6.2                                      0
+xcvn6.4                                      0
+xcvn6.bi1                                    0
+xcvn6.bi2                                    0
+xcvn6.w1                                     0
+xcvn6.g2a                                 1.65
+xcvn7.w0                                     0
+xcvn7.2                                      0
+xcvn7.4                                      0
+xcvn7.bi1                                    0
+xcvn7.bi2                                    0
+xcvn7.w1                                     0
+xcvn7.g2a                                 1.65
+xcvn8.w0                                     0
+xcvn8.2                                      0
+xcvn8.4                                      0
+xcvn8.bi1                                    0
+xcvn8.bi2                                    0
+xcvn8.w1                                     0
+xcvn8.g2a                                 1.65
+xcvn9.w0                                     0
+xcvn9.2                                      0
+xcvn9.4                                      0
+xcvn9.bi1                                    0
+xcvn9.bi2                                    0
+xcvn9.w1                                     0
+xcvn9.g2a                                 1.65
+xcvn10.w0                                    0
+xcvn10.2                                     0
+xcvn10.4                                     0
+xcvn10.bi1                                   0
+xcvn10.bi2                                   0
+xcvn10.w1                                    0
+xcvn10.g2a                                1.65
+xcvn11.w0                                    0
+xcvn11.2                                     0
+xcvn11.4                                     0
+xcvn11.bi1                                   0
+xcvn11.bi2                                   0
+xcvn11.w1                                    0
+xcvn11.g2a                                1.65
+xcvn12.w0                                    0
+xcvn12.2                                     0
+xcvn12.4                                     0
+xcvn12.bi1                                   0
+xcvn12.bi2                                   0
+xcvn12.w1                                    0
+xcvn12.g2a                                1.65
+xcvn13.w0                                    0
+xcvn13.2                                     0
+xcvn13.4                                     0
+xcvn13.bi1                                   0
+xcvn13.bi2                                   0
+xcvn13.w1                                    0
+xcvn13.g2a                                1.65
+xcvn14.w0                                    0
+xcvn14.2                                     0
+xcvn14.4                                     0
+xcvn14.bi1                                   0
+xcvn14.bi2                                   0
+xcvn14.w1                                    0
+xcvn14.g2a                                1.65
+xcvn15.w0                                    0
+xcvn15.2                                     0
+xcvn15.4                                     0
+xcvn15.bi1                                   0
+xcvn15.bi2                                   0
+xcvn15.w1                                    0
+xcvn15.g2a                                1.65
+xcvn16.w0                                    0
+xcvn16.2                                     0
+xcvn16.4                                     0
+xcvn16.bi1                                   0
+xcvn16.bi2                                   0
+xcvn16.w1                                    0
+xcvn16.g2a                                1.65
+tail                               4.01568e-05
+xq1.s1                             1.34486e-09
+xq1.t                              2.88399e-10
+xq2.s1                             1.13732e-14
+xq2.t                              1.10427e-11
+nbias                               5.3484e-11
+te                                  1.9105e-12
+xq3.s1                             4.17697e-11
+xq3.t                               1.9916e-14
+re                                 3.49339e-18
+xq4.s1                             1.54496e-17
+xq4.t                               3.4258e-26
+vdiff                                    0.005
+bvdiff#branch                                0
+l.xl2.lmain#branch                           0
+l.xl2.lk10#branch                            0
+l.xl2.lk9#branch                             0
+l.xl2.lk8#branch                             0
+l.xl2.lk7#branch                             0
+l.xl2.lk6#branch                             0
+l.xl2.lk5#branch                             0
+l.xl2.lk4#branch                             0
+l.xl2.lk3#branch                             0
+l.xl2.lk2#branch                             0
+l.xl2.lk1#branch                             0
+l.xl1.lmain#branch                -0.000848826
+l.xl1.lk10#branch                 -0.000848826
+l.xl1.lk9#branch                  -0.000848826
+l.xl1.lk8#branch                  -0.000848826
+l.xl1.lk7#branch                  -0.000848826
+l.xl1.lk6#branch                  -0.000848826
+l.xl1.lk5#branch                  -0.000848826
+l.xl1.lk4#branch                  -0.000848826
+l.xl1.lk3#branch                  -0.000848826
+l.xl1.lk2#branch                  -0.000848826
+l.xl1.lk1#branch                  -0.000848826
+vct#branch                                   0
+vsup#branch                        0.000848826
+
+ Reference value :  0.00000e+00 Reference value :  1.22560e-10 Reference value :  2.38560e-10 Reference value :  3.64560e-10 Reference value :  4.76560e-10 Reference value :  6.17000e-10 Reference value :  7.29000e-10 Reference value :  8.31000e-10 Reference value :  9.45000e-10 Reference value :  1.05900e-09 Reference value :  1.17100e-09 Reference value :  1.27500e-09 Reference value :  1.38300e-09 Reference value :  1.48700e-09 Reference value :  1.59300e-09 Reference value :  1.69100e-09 Reference value :  1.79300e-09 Reference value :  1.89300e-09 Reference value :  1.98900e-09
+No. of Data Rows : 1012
+vdiff_pp = 4.490852e-01
+ngspice-46 done

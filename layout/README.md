@@ -33,10 +33,29 @@ dominated by the two `p11` spirals.
 | SiGe HBT | 4 | `SG13_dev/npn13G2V` |
 | Resistor | 3 | `SG13_dev/rppd` — see `PROVENANCE.md` §5 for why |
 | Guard-ring tap | 4 | `SG13_dev/ptap1` |
-| Via ladder | 54 | `SG13_dev/via_stack` |
+| Via ladder | 55 | `SG13_dev/via_stack` |
 
-All 9 nets of `design/vco.spice` are routed and labelled: `VDD`, `OUTP`,
+All 9 nets of `design/vco.spice` are routed and labelled (`VCTRL` carries a
+second label, on its TopMetal2 chip-level pin, below): `VDD`, `OUTP`,
 `OUTN`, `VCTRL`, `TAIL`, `TE`, `NBIAS`, `RE`, `0`.
+
+## Chip-level pin: VCTRL on TopMetal2 (issue #314)
+
+A parent that keeps Metal1-5 out of a region around the block can reach every
+signal the chip needs from outside the bbox only on TopMetal1/TopMetal2.
+`OUTP`/`OUTN` are TopMetal1 and `VDD` is TopMetal2; `VCTRL` is now a TopMetal2
+pin too (it was a Metal3 label inside the core only).
+
+| Pin | Layer (GDS) | Shape (µm, in `vco` coordinates) | Label | Distance to artifact bbox edge |
+|---|---|---|---|---|
+| `VCTRL` | TopMetal2 `134/0` | x −68.0…−64.0, y −106.0…−54.5 (4.0 µm wide strap) | `VCTRL` on `134/25` at (−66.0, −104.0) | **0.03 µm** to the bottom edge (bbox y0 = −106.03; the strap's outboard end is the guard ring's outer edge, y = −106.0) |
+
+Land on the strap's bottom end (y −106…−104). It reaches the existing Metal3
+`VCTRL` trunk through one new Metal3→TopMetal2 `via_stack` (`VS_VCTRL_PIN`,
+at (−66.0, −57.0)); no other shape of the block changed, the artifact bbox is
+unchanged, and the strap adds no Metal1-5 outside that stack. The nearest
+other TopMetal2 is the `VDD` trunk (y −11.5…−3.5, 42.5 µm above the strap's
+top) and the RREF spur (x 93…97).
 
 The tank is **two independent 3-terminal spirals sharing `VDD`**
 (`XL1 VDD OUTP 0`, `XL2 VDD OUTN 0`), not one centre-tapped differential coil.

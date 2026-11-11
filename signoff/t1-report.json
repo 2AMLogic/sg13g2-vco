@@ -33,7 +33,7 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:32f560d29d77c1fda4c2ff6591bf051d8babc68529e9e0b8585a15c3ab0172e2",
+        "content_hash": "sha256:c1c0fbbba7fdb450c9d2853341089966b4841d0c21829c5148ff0645a10e272d",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
@@ -42,7 +42,7 @@
             "path": "signoff/evidence/inventory-1-design-sources.json",
             "scope": "repo"
           },
-          "content_hash": "sha256:32f560d29d77c1fda4c2ff6591bf051d8babc68529e9e0b8585a15c3ab0172e2",
+          "content_hash": "sha256:c1c0fbbba7fdb450c9d2853341089966b4841d0c21829c5148ff0645a10e272d",
           "input_verified": true,
           "summary": "Audited inventory for T1 item 1 (Design sources): 3 files (schematic design/vco.sch, derived netlist design/vco.spice and the regeneration script), each listed with its sha256; signoff/inventories.py --check re-derives the inventory from the live tree in CI. The netlist freshness gate 'design/netlist.sh --check' needs xschem and an IHP-Open-PDK install, which the signoff CI does not have: it did NOT run there, so this envelope does not assert the netlist is regenerated from the schematic -- only that both files are the bytes inventoried. Run the gate where xschem and the PDK exist.",
           "source": "signoff/evidence/inventory-1-design-sources.json"
@@ -64,7 +64,7 @@
         "command": null,
         "kind": "drc",
         "check_status": "clean",
-        "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+        "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
         "input_verified": true,
         "exit_status": 0,
         "coverage": {
@@ -89,7 +89,7 @@
         "command": null,
         "kind": "drc",
         "check_status": "clean",
-        "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+        "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
         "input_verified": true,
         "exit_status": 0,
         "coverage": {
@@ -178,7 +178,7 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:dc334e2fa7d937a567b6f59c0e143936c93d672a267b61b3f41ee15298244eff",
+        "content_hash": "sha256:eb0a692f815ad0ce63f19666b71dadad4d57b6b897887ad046d38352030db1f5",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
@@ -187,7 +187,7 @@
             "path": "signoff/evidence/inventory-9-testbenches.json",
             "scope": "repo"
           },
-          "content_hash": "sha256:dc334e2fa7d937a567b6f59c0e143936c93d672a267b61b3f41ee15298244eff",
+          "content_hash": "sha256:eb0a692f815ad0ce63f19666b71dadad4d57b6b897887ad046d38352030db1f5",
           "input_verified": true,
           "summary": "Audited inventory for T1 item 9 (Testbenches shipped): 13 testbench templates under sim/*/testbench/, each with its sha256, the runner script(s) that reference it, the pinned PDK release (sim/pdk.json) and the pinned klt version. Benches whose graded run is blocked (#50, #53, #94) are listed as shipped-but-not-yet-graded. This proves the benches ship and their bytes are unchanged; it does not run a simulation or grade any specification row.",
           "source": "signoff/evidence/inventory-9-testbenches.json"
@@ -209,7 +209,7 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:bdf41e431cc4f5aaff36dd8ed157f954dac8047849620b48d07503ff2c5c6d2f",
+        "content_hash": "sha256:3dcd61e9065b3b486e03950069becbf83bef84da8a1aa5628414acdd36172b44",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
@@ -218,9 +218,9 @@
             "path": "signoff/evidence/inventory-10-repo-hygiene.json",
             "scope": "repo"
           },
-          "content_hash": "sha256:bdf41e431cc4f5aaff36dd8ed157f954dac8047849620b48d07503ff2c5c6d2f",
+          "content_hash": "sha256:3dcd61e9065b3b486e03950069becbf83bef84da8a1aa5628414acdd36172b44",
           "input_verified": true,
-          "summary": "Audited inventory for T1 item 10 (Repo hygiene): 10 files (README.md, LICENSE, the ratified spec and its DR-003/DR-004 decision records, the CI workflows and the shared gate runner), each with its sha256, plus the CI command that validates harness and evidence formats ('.github/scripts/check-all.sh test'). signoff/inventories.py --check re-derives the inventory from the live tree in CI.",
+          "summary": "Audited inventory for T1 item 10 (Repo hygiene): 11 files (README.md, LICENSE, the ratified spec and its DR-003/DR-004 decision records, the CI workflows and the shared gate runner), each with its sha256, plus the CI command that validates harness and evidence formats ('.github/scripts/check-all.sh test'). signoff/inventories.py --check re-derives the inventory from the live tree in CI.",
           "source": "signoff/evidence/inventory-10-repo-hygiene.json"
         }
       }

@@ -3,7 +3,7 @@
   "kind": "generic",
   "t1_item": 10,
   "status": "pass",
-  "summary": "Audited inventory for T1 item 10 (Repo hygiene): 10 files (README.md, LICENSE, the ratified spec and its DR-003/DR-004 decision records, the CI workflows and the shared gate runner), each with its sha256, plus the CI command that validates harness and evidence formats ('.github/scripts/check-all.sh test'). signoff/inventories.py --check re-derives the inventory from the live tree in CI.",
+  "summary": "Audited inventory for T1 item 10 (Repo hygiene): 11 files (README.md, LICENSE, the ratified spec and its DR-003/DR-004 decision records, the CI workflows and the shared gate runner), each with its sha256, plus the CI command that validates harness and evidence formats ('.github/scripts/check-all.sh test'). signoff/inventories.py --check re-derives the inventory from the live tree in CI.",
   "source": "signoff/evidence/inventory-10-repo-hygiene.json",
   "provenance": {
     "klt_version": null,
@@ -15,7 +15,7 @@
         "path": "signoff/evidence/inventory-10-repo-hygiene.json",
         "scope": "repo"
       },
-      "content_hash": "sha256:bdf41e431cc4f5aaff36dd8ed157f954dac8047849620b48d07503ff2c5c6d2f"
+      "content_hash": "sha256:3dcd61e9065b3b486e03950069becbf83bef84da8a1aa5628414acdd36172b44"
     }
   }
 }

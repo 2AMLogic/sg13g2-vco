@@ -1,20 +1,22 @@
 {
   "committed_stream": {
     "rule_counts": {
-      "activ.enclosing.cont.1": 8
+      "nwell.enclosing.pactiv.1": 64
     },
     "status": "violations",
-    "violation_count": 8
+    "violation_count": 64
   },
-  "conclusion": "the one dropped rule term accounts for every remaining violation and introduces none of its own: supplying it alone takes the identical deck from 8 violation(s) to clean. The layout satisfies IHP's Cnt.c as written; klt's approximation of it does not.",
+  "conclusion": "INCONCLUSIVE / CHANGED: the control stream still reports 64 violation(s) ({'nwell.enclosing.pactiv.1': 64}). The remaining violations are NOT fully explained by the dropped activ_mask term and must be re-diagnosed before any of them is called a false positive.",
   "control_stream_with_activ_mask_joined": {
-    "rule_counts": {},
-    "status": "clean",
-    "violation_count": 0
+    "rule_counts": {
+      "nwell.enclosing.pactiv.1": 64
+    },
+    "status": "violations",
+    "violation_count": 64
   },
-  "deck_content_hash": "sha256:894326a4e37fb24fef2f7ffc6ae1da55a0e262b0f0bc1c09adc4862909278fda",
+  "deck_content_hash": "sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15",
   "layout": {
-    "content_hash": "sha256:937e5b16c3b2bd5555138287a71f5d5673f91db4317a00016c986a568ca1b3c6",
+    "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
     "file": "layout/vco.gds"
   },
   "method": "single-variable control: the same deck (same content_hash), same engine and same layout are re-run against a diagnostic copy of the stream in which Activ:mask (1/20) has been copied onto Activ:drawing (1/0) -- i.e. carrying the `.join(activ_mask)` term that IHP's own Cnt.c has and klt's approximation drops, and carrying no other change. The control stream is scratch (layout/build/drc/), never committed: it is an experiment, not a layout.",

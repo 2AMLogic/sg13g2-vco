@@ -84,8 +84,14 @@ for entry in (manifest.get("evidence") or {}).values():
         env = json.load(open(os.path.join(root, rel)))
     except (OSError, ValueError):
         continue
-    if isinstance(env, dict) and isinstance(env.get("file"), str):
-        copy(env["file"])
+    if isinstance(env, dict):
+        # Envelope schema 2 carries `file` as a repo-relative string;
+        # schema 3 carries {"path": ..., "scope": ...}.
+        src = env.get("file")
+        if isinstance(src, dict):
+            src = src.get("path")
+        if isinstance(src, str):
+            copy(src)
 PY
   echo "$tree"
 }

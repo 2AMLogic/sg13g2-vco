@@ -1,0 +1,16 @@
+* issue #309 single-unit probe op-fd-is0.0033-125 (temp 125)
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerMOShv.lib mos_tt
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib hbt_typ
+.lib /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerCAP.lib cap_typ
+.include /home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-309/sim/oscillator-core/klt-sim/hot-startup-leakage/body-fd-is0.0033.spice
+.temp 125
+.control
+pre_osdi /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi
+save all
+op
+print vsup#branch l.xl1.lk1#branch l.xl2.lk1#branch
+print @d.xcvp1.dsubw[id] @d.xcvn16.dsubw[id]
+print @q.xq1.qnpn13g2v[ic] @q.xq2.qnpn13g2v[ic] @q.xq3.qnpn13g2v[ic] @q.xq4.qnpn13g2v[ic]
+quit
+.endc
+.end
