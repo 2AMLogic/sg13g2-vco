@@ -12,7 +12,6 @@ fail() { echo "FAIL $1"; fails=$((fails + 1)); }
 has() { if grep -q -- "$3" <<<"$2"; then pass "$1"; else fail "$1: no '$3' in: $2"; fi; }
 hasnt() { if grep -q -- "$3" <<<"$2"; then fail "$1: unexpected '$3'"; else pass "$1"; fi; }
 
-HDR="process,temp_c,status,l_1mhz_dbc,l_10mhz_dbc,l_1mhz_sd_db,inductor_bar_db,n_plateau_min,plateau_ripple_max_s,f0_hz,job_id,raw_log"
 # full(L1) : all 135 corners valid at -L1 dBc/Hz @ 1 MHz (10 MHz = L1 - 20)
 full() { python3 - "$1" <<'PY'
 import sys
