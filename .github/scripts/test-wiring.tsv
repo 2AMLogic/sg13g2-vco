@@ -31,6 +31,7 @@ sim/oscillator-core/tests/test_row3_global.sh	grading-fixtures	.github/scripts/r
 sim/oscillator-core/tests/test_row7.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
 sim/oscillator-core/tests/test_grade_fleet_grid.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
 sim/oscillator-core/tests/test_supply_stage2.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
+sim/phase-noise/tests/test_grade_pn_grid.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
 sim/phase-noise/tests/test_trace_gate.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
 sim/phase-noise/tests/test_validity.sh	grading-fixtures	.github/scripts/run-grading-fixtures.sh
 .github/scripts/test-check-layout-evidence.sh	layout-evidence-selftest	.github/scripts/check-all.sh

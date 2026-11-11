@@ -130,6 +130,11 @@ if ! grep -q '^all cases passed$' "${LOGS}/pn-trace-gate.log"; then
   fail "pn-trace-gate: no 'all cases passed' line in ${LOGS}/pn-trace-gate.log"
 fi
 
+# Graded phase-noise grid completeness (issue #53): grade_pn_grid.py on
+# synthetic per-corner CSVs, no simulator. Needs python3.
+run_fixture pn-grid-grade sim/phase-noise/tests/test_grade_pn_grid.sh
+need_pass_lines pn-grid-grade
+
 if [[ ${FAILS} -gt 0 ]]; then
   echo "grading-fixtures: ${FAILS} failure(s)" >&2
   exit 1
