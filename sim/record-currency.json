@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 36
+    "unknown": 37
   },
   "records": [
     {
@@ -395,6 +395,19 @@
       "path": "sim/phase-noise/records/20261105-200000-6834172.md",
       "reason": "filename-only provenance: the commit 6834172 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261105-200000-6834172",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/phase-noise",
+      "file_count": 1,
+      "filename_commit": {
+        "id": "54ea69e"
+      },
+      "path": "sim/phase-noise/records/20261111-233500-54ea69e-graded-grid-machinery.md",
+      "reason": "filename-only provenance: the commit 54ea69e named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261111-233500-54ea69e",
       "state": "unknown"
     },
     {

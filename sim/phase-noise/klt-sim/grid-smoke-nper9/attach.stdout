@@ -1,0 +1,15 @@
+netlist: sim/phase-noise/klt-sim/grid-smoke-nper9/vco_isf_body.spice
+status: pass
+corners: 2  passed: 2  failed: 0  errored: 0  inconclusive: 0
+engine: ngspice 46
+models_lib: <unresolved>
+pdk: ihp-sg13g2 fetched:0.3.0 (via search root: ~/share/pdk)
+pdk_stamp: not_comparable (worker_stamp_unavailable)
+models_staged: false
+resume: reused 0 checkpointed corner(s)  checkpoint_retained=False  path=sim/phase-noise/klt-sim/grid-smoke-nper9/evidence/checkpoint.json
+
+measurements:
+  vdiff_max [pass]  worst=0.295915 @ tt_typ_typ/1.650V/27C/params:dqd=0,dqt=0 (margin=None)
+
+tt_typ_typ/1.650V/27C/params:dqd=0,dqt=0  [pass]  runtime=5.732s
+tt_typ_typ/1.650V/27C/params:dqd=4e-15,dqt=0  [pass]  runtime=5.724s
