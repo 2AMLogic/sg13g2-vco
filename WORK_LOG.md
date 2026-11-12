@@ -4,6 +4,10 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-12
+
+- **PR #326**: sim: graded phase-noise grid entry point, per-corner generator and completeness grader
+
 ### 2026-11-11
 
 - **PR #322**: refactor(design): netlist via klt netlist instead of raw xschem wrapper

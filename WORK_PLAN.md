@@ -35,7 +35,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#53**: sim: run the graded row-10/11 phase-noise grid for design/vco.sch (spec row 4) and widen the ISF impulse spacing
+_None._
 
 ## PRs Awaiting Review
 
@@ -78,7 +78,7 @@ _None._
 | Very important | 0 |
 | Important | 2 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 8 |
