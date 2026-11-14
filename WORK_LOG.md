@@ -4,6 +4,14 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-14
+
+- **PR #336**: sim: reduce the 135-corner ISF grid per corner, with its own carrier, spacing and port noise
+- **PR #335**: refactor(signoff): consolidate the evidence-envelope scaffolding into _evidence.py
+- **PR #328**: docs: roadmap as of 2026-11-13
+- **Issue #329** (closed): sim/phase-noise: per-corner ISF reduction driver for the 135-corner grid (part of #53)
+- **Issue #334** (closed): Dedup the signoff evidence-envelope scaffolding shared by signoff/characterization.py and signoff/inventories.py
+
 ### 2026-11-12
 
 - **PR #326**: sim: graded phase-noise grid entry point, per-corner generator and completeness grader
