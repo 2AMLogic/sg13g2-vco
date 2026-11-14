@@ -6,6 +6,7 @@
 #   run_pn_sweep.sh --list               # the 135 corners, one per line (PDK-free)
 #   run_pn_sweep.sh --generate OUTDIR    # write the 135 per-corner requests + grid-plan.csv
 #   run_pn_sweep.sh --submit OUTDIR      # submit them (needs PN_SWEEP_ACK_CPU_H >= the estimate)
+#   run_pn_sweep.sh --reduce OUTDIR      # reduce the returned units -> OUTDIR/corners.csv
 #   run_pn_sweep.sh --grade CORNERS.csv  # grade row 4 from a per-corner status table
 #
 # WHY ONE REQUEST PER CORNER. The impulse train's timing is baked into the PWL
@@ -19,6 +20,13 @@
 #
 # SPICE NEVER RUNS HERE. --submit goes to the Spot batch fleet (klt sim --batch-set,
 # --backend batch, --wait-for-capacity 600). There is deliberately no local path.
+#
+# --reduce CLOSES THE LOOP (issue #329). It drives klt-sim/reduce_pn_grid.sh, which reduces
+# each returned corner with the SAME estimator functions run_isf_pilot.sh uses -- each with
+# its own carrier and impulse spacing out of grid-plan.csv, and its own port-noise points
+# out of the grid noise job's per-corner results -- and writes the per-corner table
+# --grade reads. A corner that cannot be reduced is listed with a non-pass status and its
+# cause; none is dropped and none is given a number. No SPICE runs in --reduce either.
 #
 # GRADING RULE. Row 4 is graded only when all 135 corners are present, simulated and
 # valid; anything else prints INCOMPLETE and grades nothing (grade_pn_grid.py).
@@ -54,6 +62,9 @@ case "${1:-}" in
     mapfile -t REQS < <(find "$2" -name request-isf-post79.json | sort)
     klt sim --batch-set "${REQS[@]}" --max-in-flight 4 --capacity-retries 5 \
       --wait-for-capacity 600 --submit-only --format json | tee "$2/batch-receipt.json" ;;
+  --reduce)
+    [[ -n "${2:-}" ]] || { echo "usage: $0 --reduce OUTDIR  (OUTDIR from --generate, with returned evidence)" >&2; exit 2; }
+    "${HERE}/klt-sim/reduce_pn_grid.sh" "$2" ;;
   --grade)
     [[ -n "${2:-}" ]] || { echo "usage: $0 --grade CORNERS.csv" >&2; exit 2; }
     python3 "${HERE}/grade_pn_grid.py" "$2" ;;
@@ -66,6 +77,6 @@ case "${1:-}" in
     echo "MEASURED ON THE FLEET (smoke, job klt-sim-1dfa416c0f4a): one 25.18 ns unit ran in 5.73 s wall,"
     echo "  i.e. ~4400 ps/s, ~400x the 11.19 ps/s local-contended constant above -> ~$(awk -v n=810 'BEGIN{printf "%.1f", n*5.73/3600}') CPU-h;"
     echo "  the binding cost is waveform volume (~300 MB/unit, ~240 GB for 810 units), not compute."
-    echo "nothing was run. --generate OUTDIR, then --submit OUTDIR." ;;
+    echo "nothing was run. --generate OUTDIR, --submit OUTDIR, --reduce OUTDIR, --grade OUTDIR/corners.csv." ;;
   *) echo "error: unknown argument '$1'" >&2; exit 2 ;;
 esac

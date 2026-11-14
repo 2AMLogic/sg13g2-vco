@@ -2,8 +2,9 @@
 # Simulator-free grading-fixture dispatcher (issue #132). The single list of
 # the repo's PDK-free, ngspice-free grading/known-answer fixtures: the emit-
 # tuning, row-3, row-7, waveform-validity (stubbed simulator), DR-004
-# stage-2 supply, phase-noise validity (#137) and raw-trace gate (#157,
-# wired in by #217) fixtures. Shared by `check-all.sh grading-fixtures` (in the
+# stage-2 supply, phase-noise validity (#137), raw-trace gate (#157,
+# wired in by #217) and graded-grid reduction (#329) fixtures. Shared by
+# `check-all.sh grading-fixtures` (in the
 # `test` / `ci` aggregates) and run-method-checks.sh, so the two cannot drift.
 #
 #   .github/scripts/run-grading-fixtures.sh [log-dir]
@@ -134,6 +135,16 @@ fi
 # synthetic per-corner CSVs, no simulator. Needs python3.
 run_fixture pn-grid-grade sim/phase-noise/tests/test_grade_pn_grid.sh
 need_pass_lines pn-grid-grade
+
+# Per-corner ISF reduction for the graded grid (issue #329): run_pn_sweep.sh --reduce over
+# a synthetic returned-grid directory -- one complete corner (a known answer against the
+# phase-noise kernel), one short ensemble, one invalid trace, one unresolvable port-noise
+# value, one with nothing returned. No simulator. Needs python3.
+run_fixture pn-grid-reduce sim/phase-noise/tests/test_reduce_pn_grid.sh
+need_pass_lines pn-grid-reduce
+if ! grep -q '^all cases passed$' "${LOGS}/pn-grid-reduce.log"; then
+  fail "pn-grid-reduce: no 'all cases passed' line in ${LOGS}/pn-grid-reduce.log"
+fi
 
 if [[ ${FAILS} -gt 0 ]]; then
   echo "grading-fixtures: ${FAILS} failure(s)" >&2
