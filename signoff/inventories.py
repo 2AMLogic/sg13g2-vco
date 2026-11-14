@@ -9,27 +9,42 @@ fresh. It does not prove the files the artifact describes have not moved, so
 the artifacts bound here are inventories carrying the sha256 of every member
 file, and this module is both their only writer and their verifier:
 
-* `build_inventory` derives an inventory from the tree and raises when the
-  audit fails (a listed file missing, a testbench with no classification).
+* the `BUILDERS` map's `build_design_sources` / `build_testbenches` /
+  `build_repo_hygiene` each derive one inventory from the tree and raise when
+  the audit fails (a listed file missing, a testbench with no classification).
 * `verify` rebuilds each inventory from the live tree and compares it with the
   committed one member by member, so a changed, deleted or added file fails
   with its name even though the inventory's own bytes did not change. It also
   checks the envelope -> inventory and manifest -> envelope hash bindings.
+
+The envelope shape, the hash convention, the manifest pin and the CLI are
+shared with `signoff/characterization.py` through `signoff/_evidence.py`
+(issue #334); what each inventory *is* stays here.
 
 Pure stdlib. No klt, PDK, xschem or ngspice. Nothing here runs a simulation,
 and `sim/` is only read.
 
     python3 -I signoff/inventories.py --check    # CI: fail on drift (default)
     python3 -I signoff/inventories.py --regen    # rewrite inventories + envelopes
+    (either accepts --root DIR, used by the drift tests)
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import sys
 from pathlib import Path
+
+# The shared scaffolding (issue #334) is a sibling module, and this script runs
+# under `python3 -I`: isolated mode does not put the script's own directory on
+# sys.path, so it is added explicitly before the import.
+_HERE = str(Path(__file__).resolve().parent)
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+import _evidence  # noqa: E402  (needs the sys.path line above)
+from _evidence import dump, sha256_bytes, sha256_of  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -100,10 +115,6 @@ SUMMARY = {
         "re-derives the inventory from the live tree in CI."
     ),
 }
-
-
-def sha256_of(rel: str, root: Path = REPO_ROOT) -> str:
-    return "sha256:" + hashlib.sha256((root / rel).read_bytes()).hexdigest()
 
 
 def member(rel: str, root: Path) -> dict:
@@ -225,30 +236,21 @@ def member_paths(inv: dict) -> dict[str, str]:
     return out
 
 
-def dump(obj: dict) -> str:
-    return json.dumps(obj, indent=2) + "\n"
-
-
 def envelope_for(item: int, inv_text: str, n: int) -> dict:
-    rel = ITEM_INVENTORY[item]
-    return {
-        "schema_version": 1,
-        "kind": "generic",
-        "t1_item": item,
-        "status": "pass",
-        "summary": SUMMARY[item].format(n=n),
-        "source": rel,
-        "provenance": {
-            "klt_version": None,
-            "klayout_version": None,
-            "pdk": None,
-            "deck": None,
-            "input": {
-                "path": {"path": rel, "scope": "repo"},
-                "content_hash": "sha256:" + hashlib.sha256(inv_text.encode()).hexdigest(),
-            },
-        },
-    }
+    """This item's envelope: the shared generic skeleton plus its own summary.
+
+    `status` is unconditionally `pass` because an inventory asserts only what
+    it can audit itself -- that every member file exists and still hashes to
+    the bytes listed. `build_*` raises instead of returning a failing
+    inventory, so reaching here means the audit held.
+    """
+    return _evidence.generic_envelope(
+        item=item,
+        source_rel=ITEM_INVENTORY[item],
+        status="pass",
+        summary=SUMMARY[item].format(n=n),
+        content_hash=sha256_bytes(inv_text.encode()),
+    )
 
 
 def _count(inv: dict) -> int:
@@ -257,22 +259,20 @@ def _count(inv: dict) -> int:
 
 def regen(root: Path = REPO_ROOT) -> None:
     (root / EVIDENCE).mkdir(parents=True, exist_ok=True)
-    manifest_path = root / MANIFEST
-    manifest = json.loads(manifest_path.read_text())
+    pins: dict[str, dict] = {}
     for item, build in BUILDERS.items():
         inv = build(root)
         text = dump(inv)
         (root / ITEM_INVENTORY[item]).write_text(text)
         env_text = dump(envelope_for(item, text, _count(inv)))
         (root / ITEM_ENVELOPE[item]).write_text(env_text)
-        manifest["evidence"][str(item)] = {
+        pins[str(item)] = {
             "file": ITEM_ENVELOPE[item],
             # The pin is the *bound artifact's* hash (the envelope's
             # provenance.input.content_hash), not the envelope file's own.
-            "content_hash": "sha256:" + hashlib.sha256(text.encode()).hexdigest(),
+            "content_hash": sha256_bytes(text.encode()),
         }
-    manifest["evidence"] = dict(sorted(manifest["evidence"].items(), key=lambda kv: int(kv[0])))
-    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+    _evidence.pin_manifest(root, MANIFEST, pins)
 
 
 def verify(root: Path = REPO_ROOT) -> list[str]:
@@ -311,26 +311,16 @@ def verify(root: Path = REPO_ROOT) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    mode = argv[1] if len(argv) > 1 else "--check"
-    if mode == "--regen":
-        regen()
-        print("regenerated inventories, envelopes and manifest citations for items 1, 9, 10")
-        return 0
-    if mode != "--check":
-        print(__doc__, file=sys.stderr)
-        return 2
-    errors = verify()
-    for e in errors:
-        print(f"FAIL: {e}", file=sys.stderr)
-    if errors:
-        print(
-            "Refresh deliberately with: python3 -I signoff/inventories.py --regen, then re-render "
-            "signoff/t1-report.json (see signoff/README.md).",
-            file=sys.stderr,
-        )
-        return 1
-    print("OK: inventories for T1 items 1, 9, 10 match the live tree")
-    return 0
+    return _evidence.run_cli(
+        argv,
+        script_rel="signoff/inventories.py",
+        doc=__doc__,
+        regen=regen,
+        verify=verify,
+        regen_msg="regenerated inventories, envelopes and manifest citations for items 1, 9, 10",
+        ok_msg="OK: inventories for T1 items 1, 9, 10 match the live tree",
+        root=REPO_ROOT,
+    )
 
 
 if __name__ == "__main__":
