@@ -3,7 +3,6 @@
   "description": "Loom-managed workspace with AI development orchestration",
   "private": true,
   "scripts": {
-    "worktree:return": "./.loom/scripts/worktree-return.sh",
     "check:ci": ".github/scripts/check-all.sh ci",
     "check:all": ".github/scripts/check-all.sh all",
     "check:pr": ".github/scripts/check-all.sh pr-diff",
