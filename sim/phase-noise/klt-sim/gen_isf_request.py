@@ -15,7 +15,10 @@ Graded-grid additions (issue #53; same device section, same estimator):
                       pilot's tt_typ_typ / 27 C
   --grid UNITS_CSV OUTDIR
                       write one request per (process, temp) of the 135-point row-10/11 grid under
-                      OUTDIR/<process>_<T>C/, plus OUTDIR/grid-plan.csv; the per-corner carrier
+                      OUTDIR/<process>_<T>C/, plus OUTDIR/grid-plan.csv (which records each
+                      corner's carrier AND the nper its impulse instants were baked at, so the
+                      reduction driver cannot read it back against a different schedule); the
+                      per-corner carrier
                       (--f0) comes from the sim/oscillator-core fleet grid's units CSV (Vctrl 1.65 V)
                       or, where that corner did not oscillate there, from the same process at 27 C
                       (recorded as f0_source=fallback-27C). Impulse times are baked into the PWL
@@ -142,8 +145,12 @@ def grid(units_csv, out, nper):
     """One request per (process, temp) + grid-plan.csv (the cost the entry point prints)."""
     out.mkdir(parents=True, exist_ok=True)
     f0s = read_f0(units_csv)
+    # `nper` is last on purpose: estimate_cpu_h (run_pn_sweep.sh) sums column 8, and the
+    # reduction driver needs the spacing each corner was GENERATED at -- the impulse
+    # instants are baked into that corner's PWL sources, so reducing it against any other
+    # nper reads the steps at the wrong instants and reports nothing wrong (issue #329).
     plan = [["process", "temp_c", "f0_hz", "f0_source", "tstop_s", "n_units", "n_plateau_expected",
-             "cost_cpu_h"]]
+             "cost_cpu_h", "nper"]]
     for proc in all_process_names():
         for t in TEMPS:
             if (proc, t) in f0s:
@@ -155,7 +162,7 @@ def grid(units_csv, out, nper):
             n, tstop = isf(out / f"{proc}_{t}C", f0, nper, proc, t)
             cost = n * tstop * 1e12 / RATE_PS_PER_S / 3600.0
             plan.append([proc, t, f"{f0:.6e}", src, f"{tstop:.6e}", n,
-                         expected_n_plateau(f0, f0, nper), f"{cost:.3f}"])
+                         expected_n_plateau(f0, f0, nper), f"{cost:.3f}", nper])
     with open(out / "grid-plan.csv", "w", newline="") as fh:
         csv.writer(fh, lineterminator="\n").writerows(plan)
     tot = sum(float(r[7]) for r in plan[1:])

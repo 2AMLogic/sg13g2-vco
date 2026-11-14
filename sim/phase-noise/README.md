@@ -474,10 +474,71 @@ fleet route has run this deck (record `20261105-200000-6834172`), and issue #53 
   prints ~505 CPU-h. On the fleet one 25.18 ns unit (job `klt-sim-1dfa416c0f4a`) ran in
   5.73 s, ~400x faster, so compute is ~1.3 CPU-h for 810 units; the binding cost is
   waveform volume (~300 MB/unit).
-- **Open before the grid can be graded:** the per-corner reduction glue (extracting each
-  corner's traces and the 135-corner port-noise values into `reduce_isf_fleet.sh` inputs);
-  and the 125 C corners, which aborted with `timestep_too_small` in every oscillator-core
-  fleet unit, so row 4 is expected to stay INCOMPLETE until that is resolved.
+- **Open before the grid can be graded:** the 125 C corners, which aborted with
+  `timestep_too_small` in every oscillator-core fleet unit, so row 4 is expected to stay
+  INCOMPLETE until that is resolved. (The per-corner reduction glue this bullet used to
+  also list landed in issue #329 — next section.)
+
+### Update (issue #329): `--reduce`, and how each corner gets its own numbers
+
+`run_pn_sweep.sh --reduce OUTDIR` turns a directory of returned grid units into
+`OUTDIR/corners.csv`, the per-corner table `--grade` reads. It runs no simulation. The
+glue is `klt-sim/reduce_pn_grid.sh`; every number still comes out of
+`klt-sim/reduce_isf_fleet.sh`, i.e. out of the same `sim/lib.sh` `pn_*` and `pn_bench.sh`
+estimator functions `run_isf_pilot.sh` uses. There is no second estimator.
+
+**The carrier is per corner, and it is read, not re-measured.** Each corner's `f0_hz`
+comes from `OUTDIR/grid-plan.csv` — the `oscillator-core` fleet grid's measured `f_osc` at
+`Vctrl` 1.65 V, or that process's 27 C carrier where its 125 C point never oscillated
+(`f0_source=fallback-27C`) — and is handed to the reducer as the **grid-design** carrier
+it rebuilds the impulse schedule from. It is deliberately *not* replaced by the carrier
+the reduction itself measures: the impulse instants are baked into that corner's PWL
+sources at generation time, so reducing against a re-measured carrier would read the
+excess-phase steps at instants the deck never injected at. The measured carrier still
+reaches the output — as the grader's `f0_hz` column (the summary's `f0_measured`) and as
+`f0_grid_error_pct` in the corner's own summary, which is the existing mechanism for the
+measured-vs-design difference.
+
+**The impulse spacing travels the same way, because getting it wrong is silent.**
+`grid-plan.csv` now records the `nper` each corner was generated at, and `--reduce` passes
+it per corner. This is not bookkeeping: reducing the graded grid's `nper = 9` traces at the
+pilot's `nper = 3` default does **not** fail any gate — it publishes a number about **4.6 dB
+too good** and flips the row-4 verdict from "TARGET NOT MET" to "TARGET MET"
+(`tests/test_reduce_pn_grid.sh` pins exactly this). A plan with no `nper` column is
+refused rather than guessed.
+
+**Port noise is resolved per corner, not scraped from the job summary.** The ISF
+transients are one request per corner, but `gen_isf_request.py --noise <port>
+--all-corners` deliberately puts the whole 45 x 3 grid in **one** request per port (a
+`noise` analysis has no carrier dependence). A klt-sim `submit.stdout` summarises each
+measurement as `worst=<v> @ <corner>`, which over that job is an extremum **across**
+corners — scraping it per corner would hand all 135 rows the worst corner's noise, with no
+error. So each corner's own seven `inoise` points are read out of the noise job's
+`report.json` (`klt-sim/fleet_report.py inoise`), and the reducer's existing median over
+the declared band is what turns them into `S_i`. The single-corner `worst=` path is kept,
+and is correct, only for a one-corner job — which is what the pilot submitted.
+
+**A corner is never dropped and never given a number it did not earn.** Every row of
+`grid-plan.csv` produces exactly one row of `corners.csv`. If anything stops a corner's
+reduction — no returned evidence, a unit the fleet failed, an ensemble that came back
+short, an invalid trace, an unresolvable port-noise value — the row carries a non-pass
+status from the grader's own vocabulary (`sim_error` | `no_oscillation` | `invalid`), the
+cause, and its `raw_log`, with every measured column empty. (`INCOMPLETE` is the word the
+grader prints for the **grid**, not a row status.) `corners.csv` is the grader's twelve
+columns in its order, plus `cause` and `f0_source`; the grader checks its own columns are
+present and ignores extras, so it takes this table unchanged.
+
+The 45 125 C corners are **expected** to land on that non-pass path, for the reason the
+bullet above gives, so a `corners.csv` full of non-pass 125 C rows is a correct output
+rather than a failure of the reduction.
+
+Per-corner intermediates go under the run's own `OUTDIR/reduce/`, never under `records/`:
+that tree is append-only committed evidence, 135 corners x 4 CSVs would flood it, and any
+re-run of a corner would abort on its append-only guard. Re-running `--reduce` over the
+same `OUTDIR` is therefore allowed and overwrites. `reduce_isf_fleet.sh`'s own default
+output is still `records/`, still append-only, and its pre-#329 four-positional invocation
+(the one record `20261105-200000-6834172` cites) still runs and still reproduces that
+record's numbers — `tests/test_reduce_pn_grid.sh` checks that too.
 
 ---
 
@@ -520,6 +581,16 @@ phase-noise/
   pn_bench.sh              experiment-local shared driver (sourced, not run)
   run_isf_pilot.sh         the measured ISF + L(df) at ONE declared corner
   run_method_check.sh      known-answer check of the estimator (no PDK)
+  run_pn_sweep.sh          the GRADED 135-corner row-4 entry point (issue #53):
+                           --list / --generate / --submit / --reduce / --grade
+  grade_pn_grid.py         grades row 4 only on a complete, valid 135-corner table
+  klt-sim/                 the batch-fleet route (no SPICE runs locally)
+    gen_isf_request.py     the per-corner requests + grid-plan.csv
+    extract_vdiff.py       returned waveforms -> the reducer's .dat traces
+    fleet_report.py        per-corner unit status / port noise / job id from a report
+    reduce_isf_fleet.sh    ONE corner, with the shared pn_* estimators
+    reduce_pn_grid.sh      drives it over every corner of grid-plan.csv (issue #329)
+  tests/                   simulator-free fixtures (wired into check-all.sh test)
   testbench/
     tb_vco_isf_impulse.spice.tmpl        the impulse-train bench on design/vco.sch
     tb_vco_port_noise.spice.tmpl         input-referred S_i at one injection port

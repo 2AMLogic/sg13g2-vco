@@ -376,6 +376,7 @@ mkfix sim/oscillator-core/tests/test_supply_stage2.sh 'echo "PASS a"; echo "PASS
 mkfix sim/phase-noise/tests/test_validity.sh 'echo "PASS a"; echo "all cases passed"'
 mkfix sim/phase-noise/tests/test_trace_gate.sh 'echo "PASS a"; echo "all cases passed"'
 mkfix sim/phase-noise/tests/test_grade_pn_grid.sh "$PASSL"
+mkfix sim/phase-noise/tests/test_reduce_pn_grid.sh 'echo "PASS a"; echo "all cases passed"'
 cp "$HERE/run-grading-fixtures.sh" "$G/.github/scripts/"
 git -C "$G" init -q -b main
 git -C "$G" config user.email t@t; git -C "$G" config user.name t
