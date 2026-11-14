@@ -5,7 +5,8 @@ klayout-tools and the open xschem + ngspice flow, whose job is to produce
 recorded evidence for each row of its ratified target spec and to surface the
 tool gaps met on the way.
 
-Status as of 2026-11-13, `main` @ `127302d`. The verdict of record is
+Status as of 2026-11-13, `main` @ `127302d`; the upstream klayout-tools
+states cited below were re-read 2026-11-14. The verdict of record is
 [`signoff/t1-report.json`](signoff/t1-report.json); this file grades nothing.
 
 ## Where it stands
@@ -49,30 +50,41 @@ What the unmet items already have behind them:
 - **LVS.** IHP's own runset pairs 43/43 devices, 10/10 nets and 9/9 pins after
   the reviewed label-order step (#80), with negative controls
   (`layout/PROVENANCE.md` §14). Its strict top-port check still logs three
-  port-name findings, and no `klt lvs` report exists: at klt 0.8.0 the curated
-  extraction recognises 4 of 42 devices (ledger entry for klayout-tools#2849).
+  port-name findings (#162), and no `klt lvs` report exists: at klt 0.8.0 — the
+  release this repo pins for claims (`signoff/README.md`) — the curated
+  extraction recognises 4 of 42 devices. The curated deck is not the sanctioned
+  path for this block; the `klayout-runset` engine is (klayout-tools#2870), and
+  it has shipped — see Blocked for what that path still needs.
 
 ## Now
 
 No open issue is ready for dispatch: all 13 are blocked or await a decision.
-The three items below wait on none of those blocks; each is one pull request.
+The four items below wait on none of those blocks; each is one pull request.
 
-1. **Per-corner ISF reduction for the 135-corner grid** (part of #53; no
-   issue of its own). `sim/phase-noise/klt-sim/reduce_isf_fleet.sh` reduces
-   one corner and takes the carrier as an argument; `sim/phase-noise/README.md`
+1. **Per-corner ISF reduction for the 135-corner grid** (#329, part of #53).
+   `sim/phase-noise/klt-sim/reduce_isf_fleet.sh` reduces one corner and takes
+   the carrier as an argument; `sim/phase-noise/README.md`
    lists the per-corner glue as open before the grid can be graded.
    Done when: a driver reduces a directory of returned corners into the CSV
    `grade_pn_grid.py` reads, reports `n_plateau` and `plateau_ripple` per
    corner, and has a simulator-free fixture test wired into `check-all.sh`.
-2. **`klt erc` supply spec for `layout/vco.gds`** (the ERC half of #37, item
-   11). #37 is parked on the layout, which is now committed; the two ERC
+2. **`klt erc` supply spec for `layout/vco.gds`** (#330; the ERC half of #37,
+   item 11). #37 is parked on the layout, which is now committed; the two ERC
    gaps it cites (klayout-tools#2234, #2192) are recorded closed.
    Done when: a supply spec (supplies, stackup, taps) and a `klt erc`
    envelope are committed, or the exact refusal is recorded and added to the
    friction ledger. Item 11 stays `unmet` until item 4's LVS report exists.
-3. **README status paragraph brought to this state.** It predates the 125 °C
-   attribution and #326, and its row-7 wording differs from the graded
+3. **README status paragraph brought to this state** (#331). It predates the
+   125 °C attribution and #326, and its row-7 wording differs from the graded
    record. Done when: it cites the records above and links this file.
+4. **Bump the klt pin to a release carrying the runset digest allowlist**
+   (part of #62, item 4; no issue of its own). Claims are pinned at klt 0.8.0,
+   whose `signoff_runset.PINNED_RUNSETS` is `{}`; 0.9.1 pins the `ihp-sg13g2`
+   runset digest (Blocked, below). This needs no PDK host — only the pinned
+   release and the signoff bundle. Done when: the pin in `signoff/README.md`
+   moves to a release whose allowlist carries the SG13G2 digest, the signoff
+   bundle is re-rendered under it with the graded deltas recorded, and any
+   refusal met on the way is added to the friction ledger.
 
 ## Next
 
@@ -86,9 +98,15 @@ The three items below wait on none of those blocks; each is one pull request.
   --attach` rejects a request after `--submit-only`, so an interrupted batch
   set can double-submit; report that upstream before a long submit. Done
   when: `grade_pn_grid.py` reports the grid complete with a row-4 verdict.
-- **Monte Carlo campaign** (#244, item 6). Needs #50's corner pairing and an
-  installable `klt yield` (klayout-tools#2900, recorded open). Done when: a
-  `klt yield` report is cited in `signoff/manifest.json` for item 6.
+- **Monte Carlo campaign** (#244, item 6). Needs #50's corner pairing. `klt
+  yield` is no longer a blocker: klayout-tools#2900 closed `completed`
+  2026-10-29, `klt-yield-native` 0.1.0 is on PyPI with a
+  `manylinux_2_28_x86_64` wheel, and `uvx --from
+  'klayout-tools[yield]==0.8.0' klt yield --help` resolves and runs on a
+  dispatch host (measured 2026-11-14). `.github/klt-friction-ledger.json`
+  still records #2900 open; that staleness is tracked in #333, not here.
+  Done when: a `klt yield` report is cited in `signoff/manifest.json` for
+  item 6.
 - **Post-layout verification** (#260, item 7). Needs extraction that
   recognises the inductor, varactor and HBT devices, and the #50/#53 grids as
   the schematic side. Done when: a `klt pex` report with its `body_bias`
@@ -115,9 +133,23 @@ The three items below wait on none of those blocks; each is one pull request.
 - **Ratification:** DR-006 (gates #198), DR-007, DR-008.
 - **LVS, #62 and #162:** the ruling of 2026-10-19 requires a clean strict
   top-port result with no name exception, plus a native `klt lvs` report with
-  power-connectivity evidence. Waiting on a fix in the PDK's LVS runset (the
-  report is drafted in `layout/PROVENANCE.md` §14.6, marked not yet filed)
-  and on klayout-tools device recognition. #59 and #37 wait on #62.
+  power-connectivity evidence (the report is drafted in
+  `layout/PROVENANCE.md` §14.6, marked not yet filed). **This is no longer
+  waiting on klayout-tools.** #2849 closed `not_planned` 2026-10-17 when the
+  `klayout-runset` engine landed, and its successors #3206, #2870 and #2864
+  are all closed `completed`; `klt lvs --deck-file` for `request.engine
+  'klayout-runset'` is present already at the pinned klt 0.8.0, and the digest
+  allowlist is no longer empty — klt 0.9.1 pins `ihp-sg13g2` at IHP-Open-PDK
+  `v0.3.0` (`sha256:e01bcb1e…` over
+  `ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs`, reviewed in
+  klayout-tools#4309), where 0.8.0's `PINNED_RUNSETS` is `{}` (both measured
+  2026-11-14 with `uvx --from klayout-tools==<v>`). What remains is in-repo:
+  the pin bump of Now item 4, a PDK host to run the runset engine (#266), and
+  #162's three port-name findings. The repo's recorded runset hash
+  (`fd11fced…`) covers a different file set than the allowlist digest
+  (`sg13g2.lvs` alone, per `layout/lvs/vco-lvs-ihp.json`'s `hash_scope`), so a
+  pinnable report must be produced against the allowlisted revision. #59 and
+  #37 wait on #62.
 - **PDK on dispatch hosts, #266:** `layout/drc.sh`, `layout/lvs.sh` and
   `klt netlist design/vco.sch --check` need the IHP PDK and KLayout 0.30.12.
 
