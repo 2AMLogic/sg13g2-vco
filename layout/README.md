@@ -14,6 +14,8 @@ Layout (klayout-tools driven) and DRC/LVS signoff artifacts.
 | `drc/` | The committed `klt drc` / `klt ring-check` reports and the native run's assertion record (`PROVENANCE.md` §12–§13) |
 | `lvs.sh` | Re-runs the LVS evidence: derives the reference from `design/vco.spice`, runs IHP's own LVS runset as shipped (with control C1 and three negative controls) and with the reviewed label-order inductor terminal step (#80; with the fidelity control R0 and seven negative controls), and records why `klt lvs` (0.8.0, the CI pin and newest release) cannot run this compare. Fails on any verdict drift |
 | `lvs/` | The derived LVS reference and its per-line trace, the runset's device-aware extraction, the compare of record and the run record (`PROVENANCE.md` §14) |
+| `erc.sh` | Re-runs the ERC supply-spec evidence (`klt erc` at the pinned 0.8.0): both supplies one electrical island, the guard-ring substrate tie checked, and the AC3 negative control (one `ptap1` bar deleted) rejected. Fails on any verdict drift (#330, `PROVENANCE.md` §16) |
+| `erc/` | The committed supply spec, the `klt erc` envelope of record and the negative-control record (`PROVENANCE.md` §16) |
 | `scripts/` | The generation stages `generate.sh` drives (incl. the `snap_grid.py` mask-grid step), plus `drc.sh`'s controls, the static rule-category review (`ihp_deck_categories.py`, `ihp_deck_facts.py`), the pinned native-DRC environment (`native_drc_env.sh`), and `lvs.sh`'s reference derivation (`lvs_reference.py`), `.lvsdb` reader (`lvsdb_summary.py`), label-order step (`lvs_label_order.rb`, #80) and negative-control helpers (`lvs_break.py`, `lvs_inductor_ctl.py`) |
 | `build/` | Scratch (gitignored, like `sim/build/` and `design/build/`) |
 
@@ -107,6 +109,26 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     `klayout-tools#2688`), not from the layout.
 - **Guard-ring continuity is verified on all three of its layers** (Activ,
   pSD, Metal1), each against a negative control that breaks it (§12).
+- **ERC supply evidence (#330): `klt erc` reports `erc_status: clean` — both
+  supplies one electrical island, the substrate tie checked** (`PROVENANCE.md`
+  §16).
+  - *Report of record*: `erc/vco-erc.json` — `klt erc` at the pinned 0.8.0
+    against the committed supply spec (`erc/vco-erc-spec.json`): `VDD` and
+    `0` each resolve to exactly one island with zero findings, and the
+    guard-ring substrate tie (native-substrate form: asserted region +
+    Activ ∩ pSD taps, since sg13g2 draws no PWell) is reported as checked
+    work resting on `checked_by_well_assertion`. The roles measurement
+    carries the severed-rail negative (nothing unlabelled outside the four
+    declared PCell-provided p+ carve-outs), and the spec's own layer
+    coverage is complete under the `sg13g2` deck.
+  - *Negative control*: one `ptap1` bar deleted (`scripts/break_ring.py`)
+    flips the verdict to `violations` with `erc.missing_tie` and
+    `erc.unconnected_net` naming `0` — that bar also carries the layout's
+    only `0` label text (`erc/vco-erc-control.json`).
+  - *Signoff*: item 11 cites this envelope plus `klt lvs`'s recorded
+    refusal of the compare and renders `unmet` / `check_errored` — `met`
+    stays gated on item 4's LVS report (#62); see §16.6 for the exact
+    states.
 - **LVS (issues #62, #80): run, device-aware. The compare of record is
   `match` on the cross-reference, with three strict-port NAME findings
   recorded; IHP's runset as shipped gives `mismatch`** (`PROVENANCE.md` §14,
@@ -201,3 +223,21 @@ writes `lvs/` only after every expectation holds: the runset-as-shipped
 R0, every negative control (as shipped and through the step), the supply
 pairing, and klt's refusal (at 0.8.0). Any drift fails the run and leaves the record untouched. Two
 consecutive runs produce byte-identical files.
+
+## Reproducing the ERC evidence
+
+```sh
+# the tagged klt release CI pins (0.8.0), in a throwaway venv — never the host's
+uv venv layout/build/klt-0.8.0
+VIRTUAL_ENV=layout/build/klt-0.8.0 uv pip install klayout-tools==0.8.0
+layout/erc.sh
+```
+
+`erc.sh` provisions the pinned venv itself if it is missing (under the
+gitignored `layout/build/`, like `drc.sh`'s and `lvs.sh`'s environments) and
+needs `klayout` on PATH only for the negative-control stream. It validates
+the committed spec, runs `klt erc` against the committed stream, re-runs the
+same invocation on a copy with one `ptap1` guard-ring bar deleted (which
+must be rejected), re-hashes the committed envelope (`klt erc --check`), and
+re-derives every verdict `PROVENANCE.md` §16 records. Any drift fails the
+run. Two consecutive runs produce byte-identical files.

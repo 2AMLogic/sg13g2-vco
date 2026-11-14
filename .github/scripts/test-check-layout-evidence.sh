@@ -30,8 +30,8 @@ fresh_tree() {
   n=$((n + 1))
   t="$TMP/case$n"
   mkdir -p "$t/layout"
-  cp -R "$ROOT/layout/drc" "$ROOT/layout/lvs" "$ROOT/layout/vco.gds" \
-    "$ROOT/layout/vco_manifest.json" "$t/layout/"
+  cp -R "$ROOT/layout/drc" "$ROOT/layout/lvs" "$ROOT/layout/erc" \
+    "$ROOT/layout/vco.gds" "$ROOT/layout/vco_manifest.json" "$t/layout/"
 }
 
 # set_digest FILE JSON_KEY... VALUE : set a record field, then verify it took.

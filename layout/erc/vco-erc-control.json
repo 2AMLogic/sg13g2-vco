@@ -1,0 +1,35 @@
+{
+  "committed_layout": {
+    "erc_status": "clean",
+    "finding_count": 0,
+    "rules": [],
+    "supply_islands": {
+      "0": 1,
+      "VDD": 1
+    }
+  },
+  "evidence": "the supply verdict is VERIFIED: clean on the committed layout, rejected (violations, findings naming `0`) on the negative control",
+  "file": "layout/vco.gds",
+  "invocation": "klt erc <file> layout/erc/vco-erc-spec.json --top vco --deck sg13g2 --format json",
+  "negative_control": {
+    "break": "deletes one of the guard ring's four SG13_dev/ptap1 bars",
+    "observed": "that bar carries the layout's only `0` label text, so the control removes the net's label together with its substrate tie: erc.missing_tie (tap no longer wired to `0`), erc.unconnected_net (`0` matches no labelled geometry) and the roles measurement (unlabelled remainder on every owned role) all fire together",
+    "script": "layout/scripts/break_ring.py"
+  },
+  "negative_control_verdict": {
+    "erc_status": "violations",
+    "finding_count": 4,
+    "rules": [
+      "erc.missing_tie",
+      "erc.unconnected_net",
+      "erc.unlabelled_conductor"
+    ],
+    "supply_islands": {
+      "0": 0,
+      "VDD": 1
+    }
+  },
+  "rejected": true,
+  "schema_version": 1,
+  "spec": "layout/erc/vco-erc-spec.json"
+}
