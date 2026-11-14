@@ -2,13 +2,18 @@
 
 Each case runs in a throwaway copy of the files the inventories read, never in
 the real tree. A drift gate that cannot fail is indistinguishable from no gate.
+
+The drift cases drive the real `--check` / `--regen` CLI with `--root` rather
+than calling `verify()` / `regen()` in-process, so the entry point CI invokes
+is covered too (issue #334; before it, `main()` parsed no `--root` and these
+cases had to bypass it).
 """
 import os
 import shutil
 import tempfile
 import unittest
 
-from _loader import ROOT, load_module
+from _loader import ROOT, load_module, run_script
 
 inv = load_module("signoff_inventories", "signoff/inventories.py")
 
@@ -31,7 +36,12 @@ class InventoryDrift(unittest.TestCase):
         copy_tree(self.root)
 
     def check(self):
-        return inv.verify(inv.Path(self.root))
+        """Run `--check --root <tmp>` and return the drift messages it named."""
+        proc = run_script("signoff/inventories.py", "--check", "--root", self.root)
+        fails = [l[len("FAIL: "):] for l in proc.stderr.splitlines() if l.startswith("FAIL: ")]
+        # The exit code must agree with what was reported: 1 on drift, 0 clean.
+        self.assertEqual(proc.returncode, 1 if fails else 0, proc.stderr)
+        return fails
 
     def edit(self, rel, text="\n* drift\n"):
         with open(os.path.join(self.root, rel), "a") as f:
@@ -63,8 +73,27 @@ class InventoryDrift(unittest.TestCase):
 
     def test_regen_after_edit_passes(self):
         self.edit("design/vco.sch")
-        inv.regen(inv.Path(self.root))
+        proc = run_script("signoff/inventories.py", "--regen", "--root", self.root)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertEqual(self.check(), [])
+
+    def test_cli_root_is_honored_not_silently_ignored(self):
+        """`--root` must grade the named tree, not the repository it lives in.
+
+        Before issue #334, `main()` parsed no `--root`: `--check --root <tmp>`
+        graded the real tree instead and so passed however drifted <tmp> was.
+        """
+        self.edit("README.md")
+        proc = run_script("signoff/inventories.py", "--check", "--root", self.root)
+        self.assertEqual(proc.returncode, 1, proc.stderr)
+        self.assertIn("README.md", proc.stderr)
+        # The real tree is clean -- exactly what a --root-ignoring CLI reports.
+        self.assertEqual(run_script("signoff/inventories.py", "--check").returncode, 0)
+
+    def test_cli_rejects_unknown_mode(self):
+        proc = run_script("signoff/inventories.py", "--bogus")
+        self.assertEqual(proc.returncode, 2, proc.stderr)
+        self.assertIn("Audited inventories", proc.stderr)
 
     def test_hand_edited_envelope_fails(self):
         self.edit(inv.ITEM_INVENTORY[10], "\n")

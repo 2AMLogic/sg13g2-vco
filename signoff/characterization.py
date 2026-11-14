@@ -23,6 +23,10 @@ on". This module is its only writer and verifier:
   longer matches, so a changed record state, spec target or dropped row fails
   by name.
 
+The envelope shape, the hash convention, the manifest pin and the CLI are
+shared with `signoff/inventories.py` through `signoff/_evidence.py`
+(issue #334); the row grading and the derived `status` stay here.
+
 Pure stdlib. Reads `sim/` and never writes there.
 
     python3 -I signoff/characterization.py --check   # CI: fail on drift (default)
@@ -33,13 +37,22 @@ Pure stdlib. Reads `sim/` and never writes there.
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import math
 import operator
 import re
 import sys
 from pathlib import Path
+
+# The shared scaffolding (issue #334) is a sibling module, and this script runs
+# under `python3 -I`: isolated mode does not put the script's own directory on
+# sys.path, so it is added explicitly before the import.
+_HERE = str(Path(__file__).resolve().parent)
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+import _evidence  # noqa: E402  (needs the sys.path line above)
+from _evidence import dump, sha256_bytes, sha256_of  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -52,14 +65,6 @@ CURRENCY = "sim/record-currency.json"
 
 OPS = {">=": operator.ge, "<=": operator.le}
 AGG = {"min": min, "max": max}
-
-
-def sha256_bytes(data: bytes) -> str:
-    return "sha256:" + hashlib.sha256(data).hexdigest()
-
-
-def sha256_of(rel: str, root: Path) -> str:
-    return sha256_bytes((root / rel).read_bytes())
 
 
 def _cells(line: str) -> list[str]:
@@ -215,17 +220,13 @@ def build_report(root: Path) -> tuple[str, str]:
     return body, status
 
 
-def dump(obj: dict) -> str:
-    return json.dumps(obj, indent=2) + "\n"
-
-
 def envelope_for(report_text: str, status: str, counts_line: str) -> dict:
-    return {
-        "schema_version": 1,
-        "kind": "generic",
-        "t1_item": 8,
-        "status": status,
-        "summary": (
+    """The item 8 envelope: the shared generic skeleton plus item 8's own summary."""
+    return _evidence.generic_envelope(
+        item=8,
+        source_rel=REPORT,
+        status=status,
+        summary=(
             "Aggregated characterization report for T1 item 8: one line per ratified spec row "
             f"(signoff/characterization.md), generated from spec/target-spec.md and "
             "sim/record-currency.json. " + counts_line.rstrip(".") + "." + " A row grades only from a record "
@@ -233,18 +234,8 @@ def envelope_for(report_text: str, status: str, counts_line: str) -> dict:
             "A `fail` here means the graded evidence is not yet current and passing, "
             "not that a row was measured and missed."
         ),
-        "source": REPORT,
-        "provenance": {
-            "klt_version": None,
-            "klayout_version": None,
-            "pdk": None,
-            "deck": None,
-            "input": {
-                "path": {"path": REPORT, "scope": "repo"},
-                "content_hash": sha256_bytes(report_text.encode()),
-            },
-        },
-    }
+        content_hash=sha256_bytes(report_text.encode()),
+    )
 
 
 def _counts_line(report_text: str) -> str:
@@ -257,10 +248,9 @@ def regen(root: Path = REPO_ROOT) -> None:
     (root / REPORT).write_text(text)
     (root / ENVELOPE).parent.mkdir(parents=True, exist_ok=True)
     (root / ENVELOPE).write_text(dump(envelope_for(text, status, _counts_line(text))))
-    manifest = json.loads((root / MANIFEST).read_text())
-    manifest["evidence"]["8"] = {"file": ENVELOPE, "content_hash": sha256_bytes(text.encode())}
-    manifest["evidence"] = dict(sorted(manifest["evidence"].items(), key=lambda kv: int(kv[0])))
-    (root / MANIFEST).write_text(json.dumps(manifest, indent=2) + "\n")
+    _evidence.pin_manifest(
+        root, MANIFEST, {"8": {"file": ENVELOPE, "content_hash": sha256_bytes(text.encode())}}
+    )
 
 
 def verify(root: Path = REPO_ROOT) -> list[str]:
@@ -303,32 +293,16 @@ def verify(root: Path = REPO_ROOT) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    args = argv[1:]
-    root = REPO_ROOT
-    if "--root" in args:
-        i = args.index("--root")
-        root = Path(args[i + 1]).resolve()
-        del args[i : i + 2]
-    mode = args[0] if args else "--check"
-    if mode == "--regen":
-        regen(root)
-        print("regenerated signoff/characterization.md, the item 8 envelope and its manifest pin")
-        return 0
-    if mode != "--check":
-        print(__doc__, file=sys.stderr)
-        return 2
-    errors = verify(root)
-    for e in errors:
-        print(f"FAIL: {e}", file=sys.stderr)
-    if errors:
-        print(
-            "Refresh deliberately with: python3 -I signoff/characterization.py --regen, then re-render "
-            "signoff/t1-report.json (see signoff/README.md).",
-            file=sys.stderr,
-        )
-        return 1
-    print("OK: signoff/characterization.md matches its inputs (T1 item 8)")
-    return 0
+    return _evidence.run_cli(
+        argv,
+        script_rel="signoff/characterization.py",
+        doc=__doc__,
+        regen=regen,
+        verify=verify,
+        regen_msg="regenerated signoff/characterization.md, the item 8 envelope and its manifest pin",
+        ok_msg="OK: signoff/characterization.md matches its inputs (T1 item 8)",
+        root=REPO_ROOT,
+    )
 
 
 if __name__ == "__main__":
