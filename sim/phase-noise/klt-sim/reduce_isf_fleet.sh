@@ -150,7 +150,10 @@ for q in "tank ${SI_TANK_SQRT}" "tail ${SI_TAIL_SQRT}"; do
 done
 SI_TANK="$(awk -v s="${SI_TANK_SQRT}" 'BEGIN{ printf "%.8e", s*s }')"
 SI_TAIL="$(awk -v s="${SI_TAIL_SQRT}" 'BEGIN{ printf "%.8e", s*s }')"
-NOISE_FLAT_TANK="$(spread tank)"; NOISE_FLAT_TAIL="$(spread tail)"
+# shellcheck disable=SC2034  # read by pn_summary_rows_common (pn_bench.sh)
+NOISE_FLAT_TANK="$(spread tank)"
+# shellcheck disable=SC2034  # read by pn_summary_rows_common (pn_bench.sh)
+NOISE_FLAT_TAIL="$(spread tail)"
 echo "[pnoise] tank median ${SI_TANK_SQRT} A/sqrt(Hz), tail ${SI_TAIL_SQRT}"
 
 dat() { echo "${TR}/dqd_${1}_dqt_${2}.dat"; }
@@ -196,43 +199,15 @@ run_realization() {
 idx=0; for dq in ${PN_TANK_DQ_LIST}; do idx=$((idx+1)); run_realization tank "${idx}" "${dq}" "$(dat "${dq}" 0)"; done
 idx=0; for dq in ${PN_TAIL_DQ_LIST}; do idx=$((idx+1)); run_realization tail "${idx}" "${dq}" "$(dat 0 "${dq}")"; done
 
-if ! REDUCED="$(pn_reduce_ensemble "${REAL_CSV}" "$(echo "${PN_TANK_DQ_LIST}" | wc -w | tr -d ' ')" "$(echo "${PN_TAIL_DQ_LIST}" | wc -w | tr -d ' ')" "${PN_N_IMP}")"; then
+if ! pn_reduce_ports "${REAL_CSV}"; then
   echo "error: ensemble incomplete or non-finite; no summary published" >&2; exit 1; fi
-read -r GQ_MEAN GQ_SD GQ_N L1_MEAN L1_SD L1_MIN L1_MAX L10_MEAN L10_SD <<<"${REDUCED}"
-GQ_TAIL="$(awk -F, 'NR>1 && $1=="tail" { print $6; exit }' "${REAL_CSV}")"
-L1_TAIL="$(awk -F, 'NR>1 && $1=="tail" { print $16; exit }' "${REAL_CSV}")"
-PORT_RATIO_DB="$(awk -v a="${GQ_TAIL}" -v b="${GQ_MEAN}" 'BEGIN{ if (a=="nan"||b=="nan"||a<=0||b<=0) print "nan"; else printf "%.2f", 20*log(a/b)/log(10) }')"
-LINEARITY_PCT="$(awk -F, 'NR>1 && $1=="tank" { q=$3+0; if (q<0) q=-q; key=sprintf("%.4g", q); s[key]+=$6; c[key]++ }
-  END { n=0; for (k in s) { n++; m[n]=s[k]/c[k] } if (n<2) { print "nan"; exit }
-    lo=m[1]; hi=m[1]; for (i=1;i<=n;i++) { if (m[i]<lo) lo=m[i]; if (m[i]>hi) hi=m[i] }
-    printf "%.3f", 100*(hi-lo)/(0.5*(hi+lo)) }' "${REAL_CSV}")"
-read -r IND_BAR_Q_DB IND_BAR_FIT_DB IND_BAR_DB <<<"$(pn_ind_bar_db)"
 {
-  echo "mos,${MOS_SEC},,process model section"; echo "cap,cap_${CAP_SEC},,process model section"; echo "hbt,hbt_${HBT_SEC},,process model section"
-  echo "temp_c,${ARG_TEMP},C,simulation temperature"; echo "vctrl_v,${PN_VCTRL},V,control voltage"; echo "vsup_v,3.3,V,supply rail simulated"
+  pn_summary_rows_common head "${MOS_SEC}" "cap_${CAP_SEC}" "hbt_${HBT_SEC}" "${ARG_TEMP}" "3.3" "supply rail simulated"
   echo "imp_nper,${PN_IMP_NPER},periods,integer part of the impulse spacing the deck was generated at"
   echo "f0_nominal,${PN_F0_NOM},Hz,the carrier the impulse spacing was designed around (grid-design parameter)"
-  echo "f0_measured,${F0_MEAS},Hz,crossing-counted over the reference run"
-  echo "vpp_diff,${VPP_MEAS},V,peak-to-peak of v(OUTP)-v(OUTN) over the measurement window"
+  pn_summary_rows_common mid
   echo "f0_grid_error_pct,${F0_GRID_ERR_PCT},%,measured carrier vs the nominal the impulse spacing was designed around"
-  echo "si_tank,${SI_TANK},A^2/Hz,input-referred one-sided noise current at the differential tank port"
-  echo "si_tail,${SI_TAIL},A^2/Hz,input-referred one-sided noise current at the tail node"
-  echo "si_tank_band_spread_pct,${NOISE_FLAT_TANK},%,peak-to-peak over ${PN_NOISE_FSTART}..${PN_NOISE_FSTOP} Hz"
-  echo "si_tail_band_spread_pct,${NOISE_FLAT_TAIL},%,peak-to-peak over ${PN_NOISE_FSTART}..${PN_NOISE_FSTOP} Hz"
-  echo "gq_rms_tank_mean,${GQ_MEAN},rad/C,mean over ${GQ_N} realisations"
-  echo "gq_rms_tank_sd,${GQ_SD},rad/C,sample standard deviation over ${GQ_N} realisations"
-  echo "gq_rms_tail,${GQ_TAIL},rad/C,single realisation"
-  echo "isf_linearity_spread_pct,${LINEARITY_PCT},%,spread of Gq_rms between the two injected-charge magnitudes"
-  echo "l_1mhz_mean,${L1_MEAN},dBc/Hz,mean over the tank-port realisations"
-  echo "l_1mhz_sd,${L1_SD},dBc/Hz,sample standard deviation over the tank-port realisations"
-  echo "l_1mhz_min,${L1_MIN},dBc/Hz,best realisation"; echo "l_1mhz_max,${L1_MAX},dBc/Hz,worst realisation"
-  echo "l_10mhz_mean,${L10_MEAN},dBc/Hz,mean over the tank-port realisations"
-  echo "l_10mhz_sd,${L10_SD},dBc/Hz,sample standard deviation over the tank-port realisations"
-  echo "l_1mhz_tail_port,${L1_TAIL},dBc/Hz,the same circuit noise weighted by the TAIL port ISF instead"
-  echo "port_isf_ratio_db,${PORT_RATIO_DB},dB,20*log10(Gq_rms tail / Gq_rms tank)"
-  echo "inductor_bar_q,${IND_BAR_Q_DB},dB,propagated from the EM model's +-${PN_IND_Q_BAR_PCT}% Q bar"
-  echo "inductor_bar_fit,${IND_BAR_FIT_DB},dB,propagated from the EM model's ${PN_IND_FIT_BAR_PCT}% rms fit residual"
-  echo "inductor_bar_total,${IND_BAR_DB},dB,the two added in quadrature"
+  pn_summary_rows_common tail
 } >> "${SUMMARY_CSV}"
 echo "wrote ${SUMMARY_CSV}"
 echo "verdict 1 MHz (row-4 orientation only): $(pn_verdict "${L1_MEAN}" "${PN_ROW4_1M_TARGET}" "${PN_ROW4_1M_STRETCH}")"
