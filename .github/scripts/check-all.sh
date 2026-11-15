@@ -15,6 +15,13 @@
 #   lint                  .github/scripts/lint-shell.sh [file...]   shellcheck
 #   signoff-selftest      .github/scripts/test-check-signoff.sh     pinned klt
 #   signoff               .github/scripts/check-signoff.sh          pinned klt
+#   regen-signoff-selftest .github/scripts/test-regen-signoff.sh    git python3
+#                         (issue #360: regen-signoff.sh is the one guarded,
+#                         atomic regen of signoff/t1-report.json; its
+#                         self-test proves a mismatched/unavailable klt, a
+#                         failing render and a failing payload gate all leave
+#                         the committed record byte-identical, and covers the
+#                         uvx fallback path — stubbed tools, disposable tree)
 #   signoff-inventories   .github/scripts/check-signoff-inventories.sh  python3
 #                         (issue #243: the T1 item 1/9/10 inventories, their
 #                         envelopes and manifest pins == the live tree; the
@@ -96,7 +103,8 @@
 #   method [artifact-dir]  ngspice-42 check, then run-method-checks.sh
 #
 # Aggregates:
-#   test  = lint-selftest signoff-selftest signoff-inventories signoff-characterization
+#   test  = lint-selftest signoff-selftest regen-signoff-selftest
+#           signoff-inventories signoff-characterization
 #           append-only-selftest
 #           record-id-selftest tank-ab-selftest local-grid-guard-selftest
 #           osdi-staging-selftest spec-dr-selftest runner-selftest
@@ -244,7 +252,7 @@ klayout_wheel() {
   local py="${PYTHON:-python3}"
   if ! command -v "$py" >/dev/null 2>&1 ||
      ! "$py" -I -c 'import klayout.db' >/dev/null 2>&1; then
-    echo "klayout pip wheel not importable (pip install klayout==$(cat "$ROOT/.github/klayout-pip-version" 2>/dev/null))"
+    echo "klayout pip wheel not importable (install the pinned wheel: klayout==$(cat "$ROOT/.github/klayout-pip-version" 2>/dev/null))"
     return 1
   fi
 }
@@ -281,6 +289,8 @@ gate() {
       need_tools "$g" klt python3 git && run_gate "$g" "$SCRIPTS/test-check-signoff.sh" "$@" ;;
     signoff)
       need_tools "$g" klt python3 && run_gate "$g" "$SCRIPTS/check-signoff.sh" "$@" ;;
+    regen-signoff-selftest)
+      need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-regen-signoff.sh" "$@" ;;
     signoff-inventories)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-signoff-inventories.sh" "$@" ;;
     signoff-characterization)
@@ -388,6 +398,7 @@ reject_opts() {
 agg_test() {
   gate lint-selftest
   gate signoff-selftest
+  gate regen-signoff-selftest
   gate signoff-inventories
   gate signoff-characterization
   gate append-only-selftest

@@ -7,11 +7,10 @@
 # byte-for-byte against signoff/t1-report.json. Any drift — a manifest
 # citation whose artifact changed, a reworded checklist, a stale record —
 # fails here instead of rotting. Refreshing the record is a deliberate
-# act:
+# act with a guarded entry point (it renders at the pin and only writes
+# on a clean, gated render):
 #
-#   klt signoff --manifest signoff/manifest.json \
-#     --tiers-doc signoff/design-evidence-tiers.md --format json \
-#     > signoff/t1-report.json
+#   .github/scripts/regen-signoff.sh
 #
 # "Runs clean" follows docs/cli/signoff.md's exit-code contract: 0 (all
 # T1 items met) and 3 (ran successfully, at least one item unmet) are
@@ -25,9 +24,9 @@
 # Simulation citations: manifest evidence under sim/**/records/ must be
 # "current" per .github/scripts/record_currency.py (see the check below).
 #
-# Requirements: python3 and klt on PATH at exactly the version in .github/klt-version
-# (see signoff/README.md for the pinned install). Headless — needs no PDK, no KLayout project, no network
-# beyond the pip install that put klt there.
+# Requirements: python3, and klt on PATH at exactly the version in .github/klt-version
+# (see signoff/README.md; regen-signoff.sh selects that release itself, so no
+# host-wide install is needed). Headless — needs no PDK, no KLayout project, no network.
 
 set -u
 
@@ -48,21 +47,13 @@ fail() {
   exit 1
 }
 
-# The pin lives in exactly one place: .github/klt-version, next to this
-# script's repo (not --root, which may be a throwaway tree).
-VERSION_FILE="$(cd "$(dirname "$0")/.." && pwd)/klt-version"
-[ -f "$VERSION_FILE" ] || fail "missing pin file $VERSION_FILE"
-PIN="$(tr -d '[:space:]' < "$VERSION_FILE")"
-[ -n "$PIN" ] || fail "pin file $VERSION_FILE is empty"
-
-command -v klt >/dev/null 2>&1 || \
-  fail "klt not on PATH — install the pinned release (see signoff/README.md): python3 -m pip install klayout-tools==$PIN"
-
-# A mismatched host klt must not silently grade the record.
-KLT_ACTUAL="$(klt --version 2>/dev/null | awk '{print $NF; exit}')"
-if [ "$KLT_ACTUAL" != "$PIN" ]; then
-  fail "klt version mismatch: PATH has '${KLT_ACTUAL:-unknown}', pin (.github/klt-version) is '$PIN' — use: uvx --from \"klayout-tools==$PIN\" bash .github/scripts/check-signoff.sh"
-fi
+# The pin lives in exactly one place: the sourced klt-pin.sh helper next to
+# this script (not --root, which may be a throwaway tree). Assert mode: the
+# checker grades only with the pinned release and never falls back.
+# shellcheck source=./klt-pin.sh
+. "$(cd "$(dirname "$0")" && pwd)/klt-pin.sh" || exit 1
+klt_pin_read || exit 1
+klt_pin_assert || exit 1
 
 # The classifier lives next to this script (not under --root); resolve it
 # before the cd below so a relative $0 still works.
@@ -135,7 +126,5 @@ echo "" >&2
 diff "$RECORD" "$tmp" >&2 || true
 echo "" >&2
 echo "If the change is deliberate, refresh the verdict of record and commit it:" >&2
-echo "  klt signoff --manifest signoff/manifest.json \\" >&2
-echo "    --tiers-doc signoff/design-evidence-tiers.md --format json \\" >&2
-echo "    > signoff/t1-report.json" >&2
+echo "  .github/scripts/regen-signoff.sh" >&2
 exit 1

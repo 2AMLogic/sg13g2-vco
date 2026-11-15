@@ -353,6 +353,17 @@
       "klt_version_verified": "0.8.0",
       "workarounds": [],
       "note": "Closed completed 2026-10-27, but the fix is NOT in the pinned release: measured 2026-11-14, signoff_runset.PINNED_RUNSETS is {} at 0.8.0 and carries 3 entries at 0.9.1, including ihp-sg13g2 at IHP-Open-PDK v0.3.0 (sha256:e01bcb1e..., path ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs). Clearing it here needs the klt pin bump (ROADMAP.md Now item 4); cited from ROADMAP.md."
+    },
+    {
+      "number": 5867,
+      "gap": "klt signoff --manifest cannot write the tier-report render to a file (-o/--output is scoped to --attest), so callers redirect stdout destructively and a failing render truncates the committed record.",
+      "status": "open",
+      "status_checked_on": "2026-11-15",
+      "klt_version_verified": "0.8.0",
+      "workarounds": [
+        ".github/scripts/regen-signoff.sh"
+      ],
+      "note": "Workaround renders to a temp file, gates the payload and only then moves it over the record (issue #360); cited from .github/scripts/regen-signoff.sh. Filed at the 0.8.0 pin, so the pin-keyed re-check trigger never fires for it (#333)."
     }
   ]
 }

@@ -8,10 +8,7 @@
 # manifest pin no longer matches. Refresh deliberately with:
 #
 #   python3 -I signoff/characterization.py --regen
-#   uvx --from "klayout-tools==$(cat .github/klt-version)" klt signoff \
-#     --manifest signoff/manifest.json \
-#     --tiers-doc signoff/design-evidence-tiers.md --format json \
-#     > signoff/t1-report.json
+#   .github/scripts/regen-signoff.sh
 #
 # Stdlib python3 only: no klt, PDK or simulator. The drift self-test is
 # py-tests (tests/stdlib/test_signoff_characterization.py).
