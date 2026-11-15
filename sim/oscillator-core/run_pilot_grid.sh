@@ -17,7 +17,7 @@
 # bench produces, over a corner set that is a small, explicitly declared SUBSET
 # of the spec/target-spec.md row-10/11 grid.
 #
-# **It does not grade any spec row.** Rows 1, 2, 3, 6 and 8 are all stated at
+# **It does not grade any spec row.** Rows 1, 2, 3, 6, 7 and 8 are all stated at
 # or over the row-10 corner set; row 6 in particular says "at every bound
 # corner of the row-10 set" in so many words. A number measured at the nominal
 # process corner and two temperatures is evidence about the circuit, not a
@@ -239,8 +239,8 @@ MARGIN_SUMMARY="$(awk -F, 'NR > 1 { printf "bracket [%s, %s] against bound %s ->
   echo "  \`f_osc(Vctrl)\`, tuning ratio, \`Kvco\` curve, startup settling time,"
   echo "  large-signal supply current and row-6 margin proxy MEASURE at the"
   echo "  nominal process corner over the three row-11 temperatures."
-  echo "- **This record grades NO \`spec/target-spec.md\` row.** Rows 1, 2, 3, 6"
-  echo "  and 8 are stated over the row-10 corner set (row 6: \"at every bound"
+  echo "- **This record grades NO \`spec/target-spec.md\` row.** Rows 1, 2, 3, 6,"
+  echo "  7 and 8 are stated over the row-10 corner set (row 6: \"at every bound"
   echo "  corner\" of it). This is the typical process corner only. The numbers"
   echo "  below are findings about the circuit, quoted against the row bounds"
   echo "  for orientation; the graded entry point is \`run_pvt_sweep.sh\`, and"
