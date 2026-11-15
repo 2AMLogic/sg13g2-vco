@@ -1,0 +1,111 @@
+{
+  "samples": "yield-samples-process-f0_bandcentre_hz.json",
+  "limits": "yield-limits.json",
+  "source": {
+    "kind": "sample-set",
+    "netlist": null,
+    "monte_carlo": null,
+    "sample_count": 400
+  },
+  "schema_version": 1,
+  "confidence": 0.95,
+  "target_ci_halfwidth": 0.01,
+  "min_samples": 2,
+  "status": "fail",
+  "measurement_count": 1,
+  "measurements": [
+    {
+      "name": "f0_bandcentre_hz",
+      "unit": "Hz",
+      "n": 400,
+      "errored": 0,
+      "failed_unmeasurable": 0,
+      "censored": 0,
+      "inconclusive": 0,
+      "limits": {
+        "min": 4500000000.0,
+        "max": 5500000000.0,
+        "target_yield": 0.99
+      },
+      "source_corners": [],
+      "distribution": {
+        "model": "normal",
+        "mean": 4000420083.1884913,
+        "stddev": 8521731.166391784,
+        "min": 3980378037.21825,
+        "max": 4025243117.498118,
+        "median": 4000433138.0831804,
+        "skewness": 0.04877971980702053,
+        "excess_kurtosis": -0.39605303684102955,
+        "normality": {
+          "test": "anderson-darling",
+          "statistic": 0.3292962381088998,
+          "critical_value": 0.787,
+          "significance": 0.05,
+          "verdict": "consistent"
+        }
+      },
+      "yield": {
+        "empirical": {
+          "method": "clopper-pearson",
+          "estimate": 0.0,
+          "confidence": 0.95,
+          "confidence_interval": {
+            "low": 0.0,
+            "high": 0.009179804583664908
+          },
+          "n": 400
+        },
+        "normal": {
+          "method": "normal-delta",
+          "estimate": 0.0,
+          "confidence": 0.95,
+          "confidence_interval": {
+            "low": 0.0,
+            "high": 0.0
+          },
+          "n": 400
+        },
+        "variance_reduced": null
+      },
+      "capability": {
+        "cp": 19.557841407151027,
+        "cpk": -19.54140956639438,
+        "cpk_confidence_interval": {
+          "low": -20.897624574240286,
+          "high": -18.18519455854847
+        },
+        "sigma_to_spec": -58.624228699183135,
+        "sigma_to_spec_confidence_interval": {
+          "low": -62.69287372272086,
+          "high": -54.55558367564541
+        },
+        "limiting_side": "lower"
+      },
+      "sample_size": {
+        "n": 400,
+        "observed_ci_halfwidth": 0.004589902291832454,
+        "target_ci_halfwidth": 0.01,
+        "required_n": 183,
+        "required_n_for_target": null,
+        "verdict": "sufficient",
+        "method": "clopper-pearson-zero-failures",
+        "variance_reduced": null
+      },
+      "negative_control": null,
+      "analytic_cross_check": null,
+      "sampling": {
+        "strategy": "plain_random",
+        "replicates": null,
+        "effective_sample_size": null
+      },
+      "status": "fail",
+      "warnings": [
+        "measurement 'f0_bandcentre_hz': the observed pass rate (0.000000) is at or below the 0.99 target, so no sample count can support the claim -- this is the design falling short, not the campaign"
+      ]
+    }
+  ],
+  "warnings": [
+    "no measurement declared a negative_control -- this campaign has no seeded, known-bad variant demonstrating that the statistics above can actually detect a degraded design; see docs/cli/yield.md#negative-control"
+  ]
+}

@@ -353,6 +353,17 @@
       "klt_version_verified": "0.8.0",
       "workarounds": [],
       "note": "Closed completed 2026-10-27, but the fix is NOT in the pinned release: measured 2026-11-14, signoff_runset.PINNED_RUNSETS is {} at 0.8.0 and carries 3 entries at 0.9.1, including ihp-sg13g2 at IHP-Open-PDK v0.3.0 (sha256:e01bcb1e..., path ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs). Clearing it here needs the klt pin bump (ROADMAP.md Now item 4); cited from ROADMAP.md."
+    },
+    {
+      "number": 5853,
+      "gap": "klt sim batch/remote has no runner-side simulator selection or version requirement; the request's engine_version pin (klayout-tools#3041) is checked only against the version the runner's report carried, after the run. A runner image that changes its simulator major re-runs previously validated routes on a different solver, and the first signal is per-unit aborts that look like design failures.",
+      "status": "open",
+      "status_checked_on": "2026-11-15",
+      "klt_version_verified": "0.8.0",
+      "workarounds": [
+        "sim/oscillator-core/yield/"
+      ],
+      "note": "Workaround exercised at 0.8.0: every anchor-1 campaign request carries engine_version \"47\" (fail-closed post-run) and the run record (records/20261115-*) documents the ngspice-47 VBIC self-heating abort that the image change produced, with the selft=0 bench decision and its measured bound. A pre-submit runner-side selector (klayout-tools#5853) would have refused the first submission instead."
     }
   ]
 }
