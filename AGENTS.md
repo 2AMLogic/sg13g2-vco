@@ -5,12 +5,12 @@
   `signoff/evidence/inventory-*.json` (includes `README.md`, the CI
   workflows and every `sim/*/testbench/*`). Editing any member — **even a
   pure prose fix** — turns CI red until you run, verbatim from
-  `.github/scripts/check-signoff-inventories.sh` (with `klt` at the
-  `.github/klt-version` pin):
+  `.github/scripts/check-signoff-inventories.sh`:
 
   ```bash
   python3 -I signoff/inventories.py --regen
-  klt signoff --manifest signoff/manifest.json \
+  uvx --from "klayout-tools==$(cat .github/klt-version)" klt signoff \
+    --manifest signoff/manifest.json \
     --tiers-doc signoff/design-evidence-tiers.md --format json \
     > signoff/t1-report.json
   ```
