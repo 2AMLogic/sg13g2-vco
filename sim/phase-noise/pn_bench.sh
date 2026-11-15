@@ -294,3 +294,116 @@ pn_verdict() {
     print "TARGET NOT MET"
   }'
 }
+
+# --------------------------------------------------------------------------
+# pn_reduce_ports <real_csv>
+# The ONE definition of the ISF reduce-and-publish prerequisites that
+# run_isf_pilot.sh and klt-sim/reduce_isf_fleet.sh share (issue #341). Both
+# used to carry byte-identical copies of this block -- two definitions of the
+# published schema, where a fix to a column index or a guard landed in one
+# copy and silently not the other, for records that claim the same metric
+# names. The same argument pn_bench.sh's header makes for reusing
+# osc_bench.sh applies one level up: a pilot L(1 MHz) and a per-corner grid
+# L(1 MHz) are only comparable if they were reduced and labelled by the same
+# code.
+#
+# Runs the ensemble coverage/finiteness guard first (issue #137): on an
+# incomplete or non-finite ensemble it returns 1 and prints nothing, so the
+# caller keeps its own error text and exits without publishing. On success it
+# sets globally (as the callers of pn_reduce_ensemble already rely on):
+#
+#   GQ_MEAN GQ_SD GQ_N L1_MEAN L1_SD L1_MIN L1_MAX L10_MEAN L10_SD
+#   GQ_TAIL L1_TAIL PORT_RATIO_DB LINEARITY_PCT
+#   IND_BAR_Q_DB IND_BAR_FIT_DB IND_BAR_DB
+#
+# The REAL_CSV column layout is asserted HERE, once, by name:
+#   col 1 = port ("tank"/"tail"), col 3 = injected charge dq_c,
+#   col 6 = gq_rms_trapz, col 16 = l_1mhz_dbc
+# (the header both emitters write into the file). The no-op
+# `if (q < qmin || qmin==0) { }` one copy carried is NOT reproduced: an if
+# with an empty body over a never-assigned qmin cannot affect the result.
+# --------------------------------------------------------------------------
+pn_reduce_ports() {
+  if ! REDUCED="$(pn_reduce_ensemble "${1}" \
+        "$(echo "${PN_TANK_DQ_LIST}" | wc -w | tr -d ' ')" \
+        "$(echo "${PN_TAIL_DQ_LIST}" | wc -w | tr -d ' ')" "${PN_N_IMP}")"; then
+    return 1
+  fi
+  read -r GQ_MEAN GQ_SD GQ_N L1_MEAN L1_SD L1_MIN L1_MAX L10_MEAN L10_SD <<<"${REDUCED}"
+
+  GQ_TAIL="$(awk -F, -v col=6 'NR>1 && $1=="tail" { print $col; exit }' "${1}")"
+  L1_TAIL="$(awk -F, -v col=16 'NR>1 && $1=="tail" { print $col; exit }' "${1}")"
+  PORT_RATIO_DB="$(awk -v a="${GQ_TAIL}" -v b="${GQ_MEAN}" \
+    'BEGIN{ if (a=="nan"||b=="nan"||a<=0||b<=0) print "nan"; else printf "%.2f", 20*log(a/b)/log(10) }')"
+  LINEARITY_PCT="$(awk -F, -v col_dq=3 -v col_gq=6 'NR>1 && $1=="tank" {
+      q=$col_dq+0; if (q<0) q=-q
+      key=sprintf("%.4g", q); s[key]+=$col_gq; c[key]++
+    }
+    END {
+      n=0; for (k in s) { n++; m[n]=s[k]/c[k] }
+      if (n<2) { print "nan"; exit }
+      lo=m[1]; hi=m[1]
+      for (i=1;i<=n;i++) { if (m[i]<lo) lo=m[i]; if (m[i]>hi) hi=m[i] }
+      printf "%.3f", 100*(hi-lo)/(0.5*(hi+lo))
+    }' "${1}")"
+
+  read -r IND_BAR_Q_DB IND_BAR_FIT_DB IND_BAR_DB <<<"$(pn_ind_bar_db)"
+}
+
+# --------------------------------------------------------------------------
+# pn_summary_rows_common <head|mid|tail> [mos cap hbt temp_c vsup_v vsup_desc]
+# The 27 summary rows the two ISF emitters publish identically, written down
+# ONCE (issue #341): this is the column contract every record under
+# sim/phase-noise/records/ is read against, and it had two independent
+# definitions. Emitted to stdout in publish order, split into the three
+# contiguous runs both callers share (each caller keeps its own extra rows,
+# in its own order, around these):
+#
+#   head: the corner preamble (mos .. vsup_v). Takes the caller's model
+#         sections, temperature and supply rail as arguments; the rail's
+#         description is a parameter too -- the pilot's names the startup
+#         .ic it is centred on, the fleet reducer's does not. Those are
+#         published strings, not variants to unify.
+#   mid:  f0_measured, vpp_diff.
+#   tail: the estimator rows (si_tank .. inductor_bar_total).
+#
+# Number formats (%.2f, %.3f, %e) and description strings are part of the
+# published contract: change nothing here without a decision record.
+# --------------------------------------------------------------------------
+pn_summary_rows_common() {
+  case "${1}" in
+  head)
+    echo "mos,${2},,process model section"
+    echo "cap,${3},,process model section"
+    echo "hbt,${4},,process model section"
+    echo "temp_c,${5},C,simulation temperature"
+    echo "vctrl_v,${PN_VCTRL},V,control voltage"
+    echo "vsup_v,${6},V,${7}"
+    ;;
+  mid)
+    echo "f0_measured,${F0_MEAS},Hz,crossing-counted over the reference run"
+    echo "vpp_diff,${VPP_MEAS},V,peak-to-peak of v(OUTP)-v(OUTN) over the measurement window"
+    ;;
+  tail)
+    echo "si_tank,${SI_TANK},A^2/Hz,input-referred one-sided noise current at the differential tank port"
+    echo "si_tail,${SI_TAIL},A^2/Hz,input-referred one-sided noise current at the tail node"
+    echo "si_tank_band_spread_pct,${NOISE_FLAT_TANK},%,peak-to-peak over ${PN_NOISE_FSTART}..${PN_NOISE_FSTOP} Hz"
+    echo "si_tail_band_spread_pct,${NOISE_FLAT_TAIL},%,peak-to-peak over ${PN_NOISE_FSTART}..${PN_NOISE_FSTOP} Hz"
+    echo "gq_rms_tank_mean,${GQ_MEAN},rad/C,mean over ${GQ_N} realisations"
+    echo "gq_rms_tank_sd,${GQ_SD},rad/C,sample standard deviation over ${GQ_N} realisations"
+    echo "gq_rms_tail,${GQ_TAIL},rad/C,single realisation"
+    echo "isf_linearity_spread_pct,${LINEARITY_PCT},%,spread of Gq_rms between the two injected-charge magnitudes"
+    echo "l_1mhz_mean,${L1_MEAN},dBc/Hz,mean over the tank-port realisations"
+    echo "l_1mhz_sd,${L1_SD},dBc/Hz,sample standard deviation over the tank-port realisations"
+    echo "l_1mhz_min,${L1_MIN},dBc/Hz,best realisation"
+    echo "l_1mhz_max,${L1_MAX},dBc/Hz,worst realisation"
+    echo "l_10mhz_mean,${L10_MEAN},dBc/Hz,mean over the tank-port realisations"
+    echo "l_10mhz_sd,${L10_SD},dBc/Hz,sample standard deviation over the tank-port realisations"
+    echo "l_1mhz_tail_port,${L1_TAIL},dBc/Hz,the same circuit noise weighted by the TAIL port ISF instead"
+    echo "port_isf_ratio_db,${PORT_RATIO_DB},dB,20*log10(Gq_rms tail / Gq_rms tank)"
+    echo "inductor_bar_q,${IND_BAR_Q_DB},dB,propagated from the EM model's +-${PN_IND_Q_BAR_PCT}% Q bar"
+    echo "inductor_bar_fit,${IND_BAR_FIT_DB},dB,propagated from the EM model's ${PN_IND_FIT_BAR_PCT}% rms fit residual"
+    echo "inductor_bar_total,${IND_BAR_DB},dB,the two added in quadrature"
+    ;;
+  esac
+}

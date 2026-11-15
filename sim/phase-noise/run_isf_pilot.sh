@@ -265,37 +265,17 @@ T_WALL_TOTAL=$(( $(date +%s) - T_WALL_START ))
 # ============================================================ reduce
 # Mean and SAMPLE standard deviation over the tank-port realisations. This is
 # the estimate's variance as this experiment defines it -- see README.md,
-# "What the variance here is, and what it is not".
-# Validate required coverage and finiteness BEFORE any statistic is formed
-# (issue #137). A bad realization stays in ${REAL_CSV} and the logs as
-# diagnostics, is named on stderr, and the run exits non-zero without
+# "What the variance here is, and what it is not". The block itself --
+# coverage/finiteness guard, tail-port extraction, port ratio, linearity
+# spread, inductor bars -- is the SHARED pn_reduce_ports (pn_bench.sh,
+# issue #341); the fleet reducer runs the same one. It returns 1 and prints
+# nothing on an incomplete or non-finite ensemble: a bad realization stays in
+# ${REAL_CSV} and the logs as diagnostics, and this exits non-zero without
 # publishing a summary.
-if ! REDUCED="$(pn_reduce_ensemble "${REAL_CSV}" \
-      "$(echo "${PN_TANK_DQ_LIST}" | wc -w | tr -d ' ')" \
-      "$(echo "${PN_TAIL_DQ_LIST}" | wc -w | tr -d ' ')" "${PN_N_IMP}")"; then
+if ! pn_reduce_ports "${REAL_CSV}"; then
   echo "error: the realization ensemble is incomplete or contains non-finite values; no summary published (diagnostics: ${REAL_CSV}, ${ISF_CSV}, ${LOG_DIR})." >&2
   exit 1
 fi
-read -r GQ_MEAN GQ_SD GQ_N L1_MEAN L1_SD L1_MIN L1_MAX L10_MEAN L10_SD <<<"${REDUCED}"
-
-GQ_TAIL="$(awk -F, 'NR>1 && $1=="tail" { print $6; exit }' "${REAL_CSV}")"
-L1_TAIL="$(awk -F, 'NR>1 && $1=="tail" { print $16; exit }' "${REAL_CSV}")"
-PORT_RATIO_DB="$(awk -v a="${GQ_TAIL}" -v b="${GQ_MEAN}" \
-  'BEGIN{ if (a=="nan"||b=="nan"||a<=0||b<=0) print "nan"; else printf "%.2f", 20*log(a/b)/log(10) }')"
-LINEARITY_PCT="$(awk -F, 'NR>1 && $1=="tank" {
-    q=$3+0; if (q<0) q=-q
-    if (q < qmin || qmin==0) { }
-    key=sprintf("%.4g", q); s[key]+=$6; c[key]++
-  }
-  END {
-    n=0; for (k in s) { n++; m[n]=s[k]/c[k] }
-    if (n<2) { print "nan"; exit }
-    lo=m[1]; hi=m[1]
-    for (i=1;i<=n;i++) { if (m[i]<lo) lo=m[i]; if (m[i]>hi) hi=m[i] }
-    printf "%.3f", 100*(hi-lo)/(0.5*(hi+lo))
-  }' "${REAL_CSV}")"
-
-read -r IND_BAR_Q_DB IND_BAR_FIT_DB IND_BAR_DB <<<"$(pn_ind_bar_db)"
 
 V1="$(pn_verdict "${L1_MEAN}" "${PN_ROW4_1M_TARGET}" "${PN_ROW4_1M_STRETCH}")"
 V10="$(pn_verdict "${L10_MEAN}" "${PN_ROW4_10M_TARGET}" "${PN_ROW4_10M_STRETCH}")"
@@ -306,33 +286,10 @@ RATE_PS_PER_S="$(awk -v t="${T_WALL_REF}" -v ts="${PN_TSTOP_S}" \
 GRID_HOURS="$(awk -v t="${T_WALL_TOTAL}" -v n="${N_RUNS}" 'BEGIN{ printf "%.0f", 135*t/3600 }')"
 
 {
-  echo "mos,${PILOT_MOS},,process model section"
-  echo "cap,${PILOT_CAP},,process model section"
-  echo "hbt,${PILOT_HBT},,process model section"
-  echo "temp_c,${PILOT_TEMP},C,simulation temperature"
-  echo "vctrl_v,${PN_VCTRL},V,control voltage"
-  echo "vsup_v,$(osc_rail),V,supply rail simulated (startup .ic centred on it)"
-  echo "f0_measured,${F0_MEAS},Hz,crossing-counted over the reference run"
-  echo "vpp_diff,${VPP_MEAS},V,peak-to-peak of v(OUTP)-v(OUTN) over the measurement window"
-  echo "si_tank,${SI_TANK},A^2/Hz,input-referred one-sided noise current at the differential tank port"
-  echo "si_tail,${SI_TAIL},A^2/Hz,input-referred one-sided noise current at the tail node"
-  echo "si_tank_band_spread_pct,${NOISE_FLAT_TANK},%,peak-to-peak over ${PN_NOISE_FSTART}..${PN_NOISE_FSTOP} Hz"
-  echo "si_tail_band_spread_pct,${NOISE_FLAT_TAIL},%,peak-to-peak over ${PN_NOISE_FSTART}..${PN_NOISE_FSTOP} Hz"
-  echo "gq_rms_tank_mean,${GQ_MEAN},rad/C,mean over ${GQ_N} realisations"
-  echo "gq_rms_tank_sd,${GQ_SD},rad/C,sample standard deviation over ${GQ_N} realisations"
-  echo "gq_rms_tail,${GQ_TAIL},rad/C,single realisation"
-  echo "isf_linearity_spread_pct,${LINEARITY_PCT},%,spread of Gq_rms between the two injected-charge magnitudes"
-  echo "l_1mhz_mean,${L1_MEAN},dBc/Hz,mean over the tank-port realisations"
-  echo "l_1mhz_sd,${L1_SD},dBc/Hz,sample standard deviation over the tank-port realisations"
-  echo "l_1mhz_min,${L1_MIN},dBc/Hz,best realisation"
-  echo "l_1mhz_max,${L1_MAX},dBc/Hz,worst realisation"
-  echo "l_10mhz_mean,${L10_MEAN},dBc/Hz,mean over the tank-port realisations"
-  echo "l_10mhz_sd,${L10_SD},dBc/Hz,sample standard deviation over the tank-port realisations"
-  echo "l_1mhz_tail_port,${L1_TAIL},dBc/Hz,the same circuit noise weighted by the TAIL port ISF instead"
-  echo "port_isf_ratio_db,${PORT_RATIO_DB},dB,20*log10(Gq_rms tail / Gq_rms tank)"
-  echo "inductor_bar_q,${IND_BAR_Q_DB},dB,propagated from the EM model's +-${PN_IND_Q_BAR_PCT}% Q bar"
-  echo "inductor_bar_fit,${IND_BAR_FIT_DB},dB,propagated from the EM model's ${PN_IND_FIT_BAR_PCT}% rms fit residual"
-  echo "inductor_bar_total,${IND_BAR_DB},dB,the two added in quadrature"
+  pn_summary_rows_common head "${PILOT_MOS}" "${PILOT_CAP}" "${PILOT_HBT}" "${PILOT_TEMP}" \
+    "$(osc_rail)" "supply rail simulated (startup .ic centred on it)"
+  pn_summary_rows_common mid
+  pn_summary_rows_common tail
   echo "rate_ps_per_wallclock_s,${RATE_PS_PER_S},ps/s,measured on the reference transient"
   echo "wall_clock_total_s,${T_WALL_TOTAL},s,all ${N_RUNS} transients of this record"
 } >> "${SUMMARY_CSV}"
