@@ -395,7 +395,7 @@ analysis). Nothing is rewritten. `design/` is read-only to this experiment.
 `run_pilot_grid.sh`, record `20260926-010627-e391693`. **A declared subset of
 the corner grid: the typical process corner (`mos_tt` / `cap_typ` /
 `hbt_typ`) only**, over the three row-11 temperatures — 13 transients plus a
-9-rung margin ladder. It therefore grades **no** spec row: rows 1, 2, 3, 6 and
+9-rung margin ladder. It therefore grades **no** spec row: rows 1, 2, 3, 6, 7 and
 8 are all stated over the row-10 corner set, and row 6 over every *bound*
 corner of it. The numbers below are findings about the circuit, quoted against
 the row bounds for orientation.
@@ -625,7 +625,7 @@ are historical evidence and are not rewritten. PDK-free check:
 
 ## What this does **not** show
 
-- **No graded PVT verdict.** The row 1 / 2 / 3 / 6 / 8 verdicts this bench is
+- **No graded PVT verdict.** The row 1 / 2 / 3 / 6 / 7 / 8 verdicts this bench is
   built to produce require `run_pvt_sweep.sh` to have run over the row-10/11
   grid. It has not (#50). Everything measured here is at the **typical**
   process corner: **whether the sizing still lands in the row-1 band at
