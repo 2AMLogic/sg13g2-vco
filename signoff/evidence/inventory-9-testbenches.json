@@ -169,7 +169,7 @@
     },
     {
       "path": "sim/oscillator-core/run_pilot_grid.sh",
-      "sha256": "sha256:84f6bba654df13aada5c0e787f18dcbcd3006946c6bed4454b2f458015b04d13",
+      "sha256": "sha256:558f1f5488d449eea7414597df2963a4faca6ceb27a674162c38815d299c239d",
       "cold_start_documented": true
     },
     {
