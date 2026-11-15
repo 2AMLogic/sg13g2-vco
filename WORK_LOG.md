@@ -6,6 +6,10 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-15
 
+- **PR #350**: docs: point agent instructions at the signoff inventory regen requirement
+- **PR #345**: docs: correct README status paragraph against graded records and link ROADMAP.md
+- **Issue #347** (closed): docs: warn that editing README.md requires regenerating the T1 item 10 signoff inventory
+- **Issue #331** (closed): docs: bring the README status paragraph up to the records on main and link ROADMAP.md
 - **PR #348**: fix(friction): enumerate tracked files with git only in check_klt_friction
 - **PR #344**: sim: consolidate the duplicated ISF reduce-and-publish block into pn_bench.sh
 - **PR #343**: layout: add klt erc supply-spec evidence for vco.gds (ERC half of T1 item 11)
