@@ -1,30 +1,43 @@
 {
   "_comment": [
-    "PLAN, NOT RUN. Planned by issue #244; no sample has been simulated and no yield claim is made.",
-    "Not runnable yet: (1) the full-oscillator route does not exist (#94: the OSDI varactor cannot run locally or on the batch backend);",
-    "(2) the pinned klt 0.6.0 predates the monte_carlo seed fixes (README.md, 'Preconditions'); (3) the generated inputs below do not exist yet.",
-    "@@MODELS_DIR@@ and @@IND_MODEL@@ are the tokens the ngspice templates in ../testbench/ carry. vco_core_body.spice is the circuit body derived from",
-    "design/vco.spice; corners_mc_sg13g2.lib is a nested-.lib aggregator exposing the *_stat and *_mismatch sections (recipe: ../klt-sim/README.md).",
-    "Seed 244 was fixed before any run and is not to be tuned. N=400 and the analysis limits are argued in README.md, 'Sample size'.",
-    "Per-sample measurements are raw; the derived rows (f0 band centre, tuning ratio, swing = vdiff_max - vdiff_min, ...) are assembled per sample",
-    "from the paired Vctrl points into a klt yield sample-set document by the run step (README.md, 'Analysis').",
-    "Anchor: as request-nominal-process.json. Per-instance mismatch only: npn13G2v area (agauss 0.1), cap_cmim area (agauss 0.01), and",
-    "sg13_hv_svaricap w/l (agauss 3 nm) on each of the 32 varactor cells are independent draws. Global process is held at typical."
+    "Anchor 1, per-instance mismatch. Same axes, seed and run-step changes as request-nominal-process.json (read that",
+    "file's _comment first); only the sections and the vary axis differ, so the two requests are two instruments on the",
+    "same draw grid, and their variances are NOT added (PDK gap G3: no joint process+mismatch section exists).",
+    "Sections are the PDK's own mismatch bundles: *_mismatch in cornerHBT/MOShv/CAP.lib pull the *_mod_mismatch libraries,",
+    "whose per-instance agauss() terms (npn13G2v qarea sigma 0.1; cap_cmim cap_carea_mm sigma 0.01; sg13_hv_svaricap w/l",
+    "sigma 3 nm per cell) are ACTIVE here (mm_ok=1 is each mismatch subckt's own default). Global process is held at the",
+    "typical sections (plain *_mod libraries, no gauss() params), so under vary=\"mismatch\" the process_seed component is",
+    "the constant \"fixed\" and only the mismatch component (via the combined rndseed ngspice receives) moves per sample.",
+    "The 32 svaricap cells are 32 independent w/l draws per sample.",
+    "engine_version 47 is a fail-closed pin (issue #3041): the fleet runner image carries ngspice-47 since",
+    "~2026-11-13; ngspice-46 aborts nothing here but 47 WITHOUT the selft=0 overlay NaNs at the first",
+    "timepoint (see vco_core_body_selft0.spice header and the run record). If the image's solver changes",
+    "again, every unit fails the pin instead of producing numbers nobody can reproduce."
   ],
-  "netlist": "vco_core_body.spice",
+  "netlist": "vco_core_body_selft0.spice",
   "netlist_source": "schematic",
   "engine": "ngspice",
   "models": {
-    "lib": "corners_mc_sg13g2.lib"
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
   },
   "corners": {
     "process": [
       {
         "name": "tt_mismatch",
         "sections": [
-          "hbt_typ_mismatch",
-          "mos_tt_mismatch",
-          "cap_typ_mismatch"
+          {
+            "section": "hbt_typ_mismatch",
+            "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+          },
+          {
+            "section": "mos_tt_mismatch",
+            "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+          },
+          {
+            "section": "cap_typ_mismatch",
+            "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+          }
         ]
       }
     ],
@@ -41,41 +54,51 @@
   "monte_carlo": {
     "n": 400,
     "seed": 244,
-    "vary": "mismatch"
+    "vary": "mismatch",
+    "seed_scope": "shared"
   },
   "analysis": {
     "kind": "tran",
-    "args": "1p 5n 0 2p"
+    "args": "1p 20n 0 2p"
   },
   "measurements": [
     {
-      "name": "t_10_periods",
+      "name": "t_cross_1",
       "unit": "s",
-      "spice": ".meas tran t_10_periods TRIG v(vdiff) VAL=0 RISE=11 TARG v(vdiff) VAL=0 RISE=21"
+      "spice": ".meas tran t_cross_1 WHEN v(vdiff)=0 RISE=1 TD=10n"
+    },
+    {
+      "name": "t_cross_11",
+      "unit": "s",
+      "spice": ".meas tran t_cross_11 WHEN v(vdiff)=0 RISE=11 TD=10n"
     },
     {
       "name": "vdiff_max",
       "unit": "V",
-      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=2.5n TO=5n"
+      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
     },
     {
       "name": "vdiff_min",
       "unit": "V",
-      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=2.5n TO=5n"
+      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
     },
     {
       "name": "isup_avg",
       "unit": "A",
-      "spice": ".meas tran isup_avg AVG i(vsup) FROM=2.5n TO=5n"
+      "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
     },
     {
       "name": "vtail_avg",
       "unit": "V",
-      "spice": ".meas tran vtail_avg AVG v(tail) FROM=2.5n TO=5n"
+      "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
     }
   ],
   "options": {
-    "timeout_s": 3600,
-    "keep_artifacts": true
-  }
+    "timeout_s": 3000,
+    "keep_artifacts": false,
+    "osdi_preload": [
+      "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+    ]
+  },
+  "engine_version": "47"
 }

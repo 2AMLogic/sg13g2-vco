@@ -14,6 +14,50 @@
       "file": "layout/drc/vco-drc-ihp.json",
       "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e"
     },
+    "6": [
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-f0_bandcentre_hz.json",
+        "content_hash": "sha256:04f4832abc16ada50e2c98c05d8c695005524c1a10e6e5b6480225a2185115c2",
+        "rows": [
+          "1"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-tuning_ratio.json",
+        "content_hash": "sha256:3ebcbfe4553949ae26b1f816d287d3d494f4d543d36ee89b56700ce0f80dc4cd",
+        "rows": [
+          "2"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-swing_worst_v.json",
+        "content_hash": "sha256:a3a873427827610e90327811c37ac7505852c74cd6a2db2523f6ec34e7f29028",
+        "rows": [
+          "7"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-f0_bandcentre_hz.json",
+        "content_hash": "sha256:406b131490ceb20eac0e8028a171182a8d530f70d80a56ea4b6afe1985f154c0",
+        "rows": [
+          "1"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-tuning_ratio.json",
+        "content_hash": "sha256:48764ee012b83e6682165504ab676a87ba0d48ff1a7a7abfc0120ae349c56286",
+        "rows": [
+          "2"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-swing_worst_v.json",
+        "content_hash": "sha256:a2679054f67e8b93d96a897eb3e134b4bbcc42fd569a1f9411eea5a94051e55d",
+        "rows": [
+          "7"
+        ]
+      }
+    ],
     "8": {
       "file": "signoff/evidence/t1-item-8-characterization.json",
       "content_hash": "sha256:9e007efcf95437bd39795d4a7a60c20c1b7e90969d7f5c1cb50c3141296326f8"

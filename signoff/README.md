@@ -194,14 +194,21 @@ evidence (issue #244):
   declared with a `gap` reason, and every row carries `"ratified": false`
   because DR-007 is still **proposed**: evidence against an unratified limit
   never grades `met`. Flip `ratified` to `true` when DR-007 is ratified.
-- **It does not change the report yet (checked 2026-11-05, klt 0.8.0 via
-  `uvx --from klayout-tools==0.8.0`).** The render of the manifest with the
-  field is byte-identical to the committed `t1-report.json`: item 6 still
-  reads `unmet` / `no_evidence`, because `spec_rows` is graded only against a
-  cited evidence entry and none exists (no `klt yield` report is cited). Item 6
-  will read `partial_coverage` with `uncovered_rows` and `declared_gaps` once
-  an item 6 citation is added. That citation is the campaign run, which waits
-  on #50's grid.
+- **The run landed and item 6 now cites it (2026-11-15).** `sim/oscillator-core/yield/`
+  ran the anchor-1 campaign (3216 fleet units: seed control, process and
+  mismatch instruments at N = 400, seed 244, `seed_scope: shared`, plus both
+  negative controls; record `sim/oscillator-core/records/20261115-190000-0b056b1-yield-anchor1-run.md`).
+  `signoff/manifest.json` item 6 cites the six `klt yield` envelopes
+  (multi-citation, rows tagged 1 / 2 / 7), and `signoff/t1-report.json` is
+  re-rendered at the pin. Item 6 reads `unmet` / `check_failed` with the
+  full detail: `failed_rows` 1 and 2 — the DR-006 shortfall, sampled (band
+  centre 4.00 GHz against the 4.5 GHz floor; ratio 1.109 against 1.15) —
+  `uncovered_rows` 3, 5, 6, 9 (stages S2–S4 unrun), `declared_gaps` row 4,
+  and every declared row under `unratified_rows` because DR-007 is still
+  **proposed**: the row-7 evidence itself is a 400/400 pass with its
+  negative control detected and `sample_size.verdict = sufficient`, but the
+  #295 policy (evidence never grades `met` against an unratified limit)
+  keeps it provisional. Flip `ratified` to `true` when DR-007 is ratified.
 - **Citing evidence later:** a `klt yield` report only counts if its own
   `sample_size.verdict` is not `insufficient` and its negative control is
   detected (`sim/oscillator-core/yield/README.md`). Item 6 is not met by any
