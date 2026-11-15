@@ -97,6 +97,30 @@ def api_get(url, token):
         return json.loads(resp.read().decode("utf-8"))
 
 
+def reduce_state(issue, pull):
+    """Pure payload->state reduction (issue payload, pull payload) -> state.
+
+    The three-way mapping, derived here so the self-test can drive it from
+    fixture payloads with no network:
+
+        payload state "open"          => "open"   (issues AND PRs; a
+                                                   merged PR is never open)
+        non-PR closed                 => "closed"
+        closed PR with merged == true => "merged" (+ merged_at)
+        closed PR with merged == false => "closed" (+ closed_at)
+
+    pull is the /pulls/N payload for PR-shaped items, None otherwise.
+    """
+    state = issue["state"]
+    if state == "open":
+        return "open", ""
+    if pull is None:
+        return state, ""
+    if pull["merged"]:
+        return "merged", str(pull.get("merged_at") or "")
+    return "closed", str(pull.get("closed_at") or "")
+
+
 def fetch_state(number, upstream, token, api_root):
     """Reduce the upstream item to "open" | "closed" | "merged".
 
@@ -115,16 +139,16 @@ def fetch_state(number, upstream, token, api_root):
     issue = get("/issues/%d" % number)
     if not isinstance(issue, dict) or "state" not in issue:
         raise Unreadable("issues/%d: unexpected payload" % number)
-    if not isinstance(issue.get("pull_request"), dict):
-        return issue["state"], ""
-    # A PR's issues-endpoint state is "closed" whether merged or not;
-    # the ledger's "merged" status needs the pulls endpoint.
-    pull = get("/pulls/%d" % number)
-    if not isinstance(pull, dict) or not isinstance(pull.get("merged"), bool):
-        raise Unreadable("pulls/%d: unexpected payload" % number)
-    if pull["merged"]:
-        return "merged", str(pull.get("merged_at") or "")
-    return "closed", str(pull.get("closed_at") or "")
+    pull = None
+    # Only a CLOSED PR needs the pulls endpoint, to tell merged from
+    # closed-unmerged; its issues-endpoint state is "closed" either way.
+    # An open PR (issues endpoint says "open", merged == false) reduces
+    # to "open" above, so this also drops a request per open-PR entry.
+    if isinstance(issue.get("pull_request"), dict):
+        pull = get("/pulls/%d" % number)
+        if not isinstance(pull, dict) or not isinstance(pull.get("merged"), bool):
+            raise Unreadable("pulls/%d: unexpected payload" % number)
+    return reduce_state(issue, pull)
 
 
 def states_from_file(path):

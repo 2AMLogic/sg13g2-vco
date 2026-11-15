@@ -13,6 +13,12 @@
 #   6. a number absent from the states file        -> 3
 #   7. disagreement + unreadable together          -> 1, unreadable printed
 #   8. malformed ledger / states file / usage      -> 2
+#   9. reduce_state() on fixture payloads: open issue, closed issue,
+#      open PR -> "open" (was the mis-reduction to "closed"), merged PR,
+#      closed-unmerged PR; ledger "open" agrees with an "open" reduced
+#      from an open-PR payload end to end (agrees() + reduce_state()).
+#  10. --states-file: ledger open vs upstream open (PR-shaped item's
+#      reduced third vocabulary value, end to end)
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CHECKER="$HERE/check-klt-friction-upstream.sh"
@@ -103,6 +109,59 @@ got=0
 "$CHECKER" --root "$TMP/tree" --no-such-flag >/dev/null 2>&1 || got=$?
 if [ "$got" -eq 2 ]; then echo "PASS: unknown flag is a usage error"; pass=$((pass + 1))
 else echo "FAIL: unknown flag exited $got" >&2; fail=$((fail + 1)); fi
+
+# --- reduce_state(): the payload->state reduction, fixture-driven, no
+# network. This is the only place the three-way mapping is derived from
+# API payloads; drive it directly so a mis-reduction (e.g. an open PR
+# reduced to "closed") cannot hide behind the injected --states-file.
+reduce_case() { # name issue-json pull-json-or-'-' want-state
+  local got
+  got="$(python3 -I -c '
+import json, sys
+sys.path.insert(0, sys.argv[1])
+import check_klt_friction_upstream as m
+issue = json.loads(sys.argv[2])
+pull = None if sys.argv[3] == "-" else json.loads(sys.argv[3])
+print(m.reduce_state(issue, pull)[0])
+' "$HERE" "$2" "$3" 2>&1)"
+  if [ "$got" = "$4" ]; then echo "PASS: reduce $1 -> $4"; pass=$((pass + 1))
+  else echo "FAIL: reduce $1 (expected $4, got $got)" >&2; fail=$((fail + 1)); fi
+}
+
+reduce_case "open issue" '{"state": "open"}' - open
+reduce_case "closed issue" '{"state": "closed", "closed_at": "2026-01-01T00:00:00Z"}' - closed
+# An open PR: issues endpoint says "open", pulls says merged=false. The
+# mis-reduction took the closed branch here and reported "closed".
+reduce_case "open PR" '{"state": "open", "pull_request": {"merged_at": null}}' \
+  '{"merged": false, "closed_at": null}' open
+reduce_case "merged PR" '{"state": "closed", "pull_request": {"merged_at": null}}' \
+  '{"merged": true, "merged_at": "2026-01-02T00:00:00Z"}' merged
+reduce_case "closed-unmerged PR" '{"state": "closed", "pull_request": {"merged_at": null}}' \
+  '{"merged": false, "closed_at": "2026-01-03T00:00:00Z"}' closed
+
+# End to end over the vocabulary's third value: ledger "open" vs an
+# upstream "open" reduced from an open-PR payload must agree. Before the
+# fix this pair was a false failure (upstream mis-read as "closed")
+# while the reversed ledger status was a false agreement.
+got="$(python3 -I -c '
+import sys
+sys.path.insert(0, sys.argv[1])
+import check_klt_friction_upstream as m
+issue = {"state": "open", "pull_request": {"merged_at": None}}
+pull = {"merged": False, "closed_at": None}
+state = m.reduce_state(issue, pull)[0]
+print("agree" if m.agrees("open", state) else "disagree:%s" % state)
+' "$HERE" 2>&1)"
+if [ "$got" = "agree" ]; then
+  echo "PASS: ledger open agrees with upstream open reduced from an open PR"
+  pass=$((pass + 1))
+else echo "FAIL: ledger open vs open-PR reduction (got: $got)" >&2; fail=$((fail + 1)); fi
+
+# --states-file end to end: the PR-shaped open value ("7" above) agreeing
+# on the ledger's "open" - the vocabulary's third value covered through
+# the full checker, not just agrees().
+states "$S" '{"7": "open", "8": "closed", "9": "merged"}'
+run_case "ledger open vs upstream open (PR-shaped value) passes" 0 "$TMP/tree" "$S"
 
 echo "test-check-klt-friction-upstream: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]
