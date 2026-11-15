@@ -161,7 +161,12 @@ IND_BAR_Q_DB=0.50 IND_BAR_FIT_DB=0.10 IND_BAR_DB=0.51
 out="$(pn_summary_rows_common taill mos cap hbt 25 3.3 rail 2>"${T}/summary-unknown.err")"; rc=$?
 expect "summary unknown section rc" "${rc}" 1
 expect "summary unknown section stdout empty" "${out}" ""
-if grep -q "unknown section 'taill'" "${T}/summary-unknown.err" \
+# The valid-set grep reads PN_SUMMARY_SECTIONS, so pin its presence first:
+# set -u does not flag "${arr[*]}" on an unset array, and the empty
+# expansion would turn that grep into a vacuous match on any stderr.
+if [[ -z "${PN_SUMMARY_SECTIONS[*]+x}" ]]; then
+  fail "summary section list: PN_SUMMARY_SECTIONS is not set by pn_bench.sh"
+elif grep -q "unknown section 'taill'" "${T}/summary-unknown.err" \
    && grep -qF "${PN_SUMMARY_SECTIONS[*]}" "${T}/summary-unknown.err"; then
   pass "summary unknown section names the bad section and the valid set"
 else
@@ -186,10 +191,15 @@ fi
 # Row counts are the published column contract: 6 / 2 / 19 rows, 27 total.
 # The name list comes from pn_bench.sh's PN_SUMMARY_SECTIONS (the one place
 # the valid names are stated); counts is parallel to it. Guard the list's
-# presence: set -u does not flag "${!arr[@]}" on an unset array, and a
-# silently-empty loop would pin nothing.
+# presence with the + alternate form before any other dereference: set -u
+# does flag "${#arr[@]}" on an unset array, and without set -e (this
+# fixture's mode) that error abandons the whole if compound without taking
+# either branch -- no fail, no assertions, exit 0. It does not flag the
+# + form, so the first arm runs and fails loudly instead.
 counts=(6 2 19)
-if [[ "${#PN_SUMMARY_SECTIONS[@]}" -ne "${#counts[@]}" ]]; then
+if [[ -z "${PN_SUMMARY_SECTIONS[*]+x}" ]]; then
+  fail "summary section list: PN_SUMMARY_SECTIONS is not set by pn_bench.sh"
+elif [[ "${#PN_SUMMARY_SECTIONS[@]}" -ne "${#counts[@]}" ]]; then
   fail "summary section list: got ${#PN_SUMMARY_SECTIONS[@]} name(s), want ${#counts[@]}"
 else
   for i in "${!PN_SUMMARY_SECTIONS[@]}"; do
