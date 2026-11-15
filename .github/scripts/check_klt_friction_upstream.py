@@ -140,10 +140,12 @@ def fetch_state(number, upstream, token, api_root):
     if not isinstance(issue, dict) or "state" not in issue:
         raise Unreadable("issues/%d: unexpected payload" % number)
     pull = None
-    # Only a CLOSED PR needs the pulls endpoint, to tell merged from
-    # closed-unmerged; its issues-endpoint state is "closed" either way.
-    # An open PR (issues endpoint says "open", merged == false) reduces
-    # to "open" above, so this also drops a request per open-PR entry.
+    # The pulls endpoint exists only to tell merged from closed-unmerged;
+    # a PR's issues-endpoint state is "closed" either way. It is read for
+    # every PR-shaped item, open or not: reduce_state() ignores it for an
+    # open PR, which it reduces from the issues payload alone. So an open
+    # PR whose /pulls read is the one that fails is reported UNREADABLE
+    # rather than "open" - incomplete, never a false agreement.
     if isinstance(issue.get("pull_request"), dict):
         pull = get("/pulls/%d" % number)
         if not isinstance(pull, dict) or not isinstance(pull.get("merged"), bool):
