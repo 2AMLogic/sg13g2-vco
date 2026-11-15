@@ -53,10 +53,13 @@ klt_pin_resolve() {
     KLT_ACTUAL="$(klt --version 2>/dev/null | awk '{print $NF; exit}')"
   fi
   if [ "$KLT_ACTUAL" = "$KLT_PIN" ]; then
+    # KLT_CMD is consumed by the sourcing script (regen-signoff.sh).
+    # shellcheck disable=SC2034
     KLT_CMD=(klt)
     return 0
   fi
   if command -v uvx >/dev/null 2>&1; then
+    # shellcheck disable=SC2034
     KLT_CMD=(uvx --from "klayout-tools==$KLT_PIN" klt)
     return 0
   fi
