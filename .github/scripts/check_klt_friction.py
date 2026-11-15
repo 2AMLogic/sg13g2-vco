@@ -14,7 +14,8 @@ evidence is append-only, so the ledger covers their citations instead.
 The upstream tracker is never queried; statuses are hand-maintained.
 
 Usage: check_klt_friction.py [--root DIR]
-Exit 0 clean, 1 violations, 2 usage / unreadable ledger.
+Exit 0 clean, 1 violations, 2 usage / setup error (unreadable ledger,
+git failure).
 """
 import json
 import os
@@ -31,20 +32,14 @@ VERSION = re.compile(r"^\d+(\.\d+)*$")
 
 
 def tracked_files(root):
-    if os.path.isdir(os.path.join(root, ".git")):
-        try:
-            out = subprocess.run(
-                ["git", "-C", root, "ls-files", "-z"],
-                check=True, capture_output=True).stdout
-            return [p for p in out.decode().split("\0") if p]
-        except (OSError, subprocess.CalledProcessError):
-            pass
-    found = []
-    for d, dirs, files in os.walk(root):
-        dirs[:] = [x for x in dirs if x not in (".git", "node_modules", ".loom")]
-        for f in files:
-            found.append(os.path.relpath(os.path.join(d, f), root))
-    return sorted(found)
+    try:
+        res = subprocess.run(["git", "-C", root, "ls-files", "-z"],
+                             capture_output=True)
+    except OSError as exc:
+        raise RuntimeError("git is unavailable: %s" % exc) from exc
+    if res.returncode != 0:
+        raise RuntimeError("git ls-files failed in %s" % root)
+    return [p.decode() for p in res.stdout.split(b"\0") if p]
 
 
 def citations(root):
@@ -131,7 +126,11 @@ def main(argv):
         sys.stderr.write(__doc__.split("Usage:")[1].split("\n")[0].strip() + "\n")
         return 2
     root = os.path.abspath(root)
-    count, errors = check(root)
+    try:
+        count, errors = check(root)
+    except RuntimeError as exc:
+        sys.stderr.write("FAIL: %s\n" % exc)
+        return 2
     if count is None:
         sys.stderr.write("FAIL: %s\n" % errors[0])
         return 2
