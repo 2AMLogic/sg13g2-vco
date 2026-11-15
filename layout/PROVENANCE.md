@@ -38,6 +38,8 @@ at the pinned release. Read §14 before citing any LVS claim.
 - [12. DRC state (issue #61)](#12-drc-state-issue-61)
 - [13. DRC closure record (2026-10-07, issue #61)](#13-drc-closure-record-2026-10-07-issue-61)
 - [14. LVS record (2026-10-08, issue #62)](#14-lvs-record-2026-10-08-issue-62)
+- [15. VCTRL chip-level pin on TopMetal2 (2026-11-10, issue #314)](#15-vctrl-chip-level-pin-on-topmetal2-2026-11-10-issue-314)
+- [16. ERC supply-spec record (2026-11-14, issue #330)](#16-erc-supply-spec-record-2026-11-14-issue-330)
 <!-- /toc -->
 
 ## 1. Tooling and inputs
@@ -1772,3 +1774,206 @@ strap is well under 1 Ω. No simulation was re-run: this is a passive
 appendage on `VCTRL` with no effect on the tank, and the estimate is the
 basis for that statement, not a measurement.
 
+
+## 16. ERC supply-spec record (2026-11-14, issue #330)
+
+This section is the record of the `klt erc` supply-spec run for
+`layout/vco.gds` — the ERC half of T1 item 11 (power delivery, structural).
+Its machine-readable half is `layout/erc/*.json`, rewritten by
+`layout/erc.sh`; every number below is quoted from those files, and
+`erc.sh` fails if any of them drifts. **What this section does not claim:
+an LVS half.** Item 11 is compound (an ERC run *plus* item 4's LVS report);
+the LVS half stays with #62, and §16.6 records exactly what the signoff
+manifest cites for it and why.
+
+### 16.1 The run of record
+
+| | |
+|---|---|
+| Report | `layout/erc/vco-erc.json` |
+| Command | `klt erc layout/vco.gds layout/erc/vco-erc-spec.json --top vco --deck sg13g2 --format json` |
+| Spec | `layout/erc/vco-erc-spec.json` @ `sha256:aad80f38fc231245ae39be41e70f980e4886e050fbd1c3414f04344be418d9b3` |
+| Deck | `sg13g2` @ `sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15` (`released: true`) |
+| Input | `layout/vco.gds` @ `sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e` |
+| Tooling | `klt 0.8.0` (tagged wheel, the one `.github/klt-version` pins), its bundled KLayout module 0.30.13, standalone KLayout 0.30.12 for the control stream |
+| **`erc_status`** | **`clean`, 0 findings** |
+| Overall `status` | `not_checked` (exit 4) — see "Form and the antenna half" below |
+
+Two consecutive `erc.sh` runs produce byte-identical files.
+
+### 16.2 The supply spec
+
+`layout/erc/vco-erc-spec.json` declares (all `(layer, datatype)` pairs as in
+`scripts/floorplan.py` and the deck):
+
+- **`stackup`** — nine conductor roles in fabrication order: `GatPoly` 5/0
+  (`role: "gate"`, `stackup[0]` as `klt erc` requires, with
+  `active_layer: "1/0"` for true gate area), `Activ` 1/0, `Metal1` 8/0,
+  `Metal2` 10/0, `Metal3` 30/0, `Metal4` 50/0, `Metal5` 67/0,
+  `TopMetal1` 126/0, `TopMetal2` 134/0. `label_layer` is declared on the
+  five roles the stream labels sit on (`*/25`: Metal1 5 texts, Metal2 1,
+  Metal3 1, TopMetal1 2, TopMetal2 2 — `provenance.label_layers` in the
+  envelope carries the measured counts). `Metal4` is declared explicitly
+  because `floorplan.py`'s own table omits it while the `via_stack` ladders
+  draw it.
+- **`vias`** — `Cont` 6/0 twice (poly→Metal1 and Activ→Metal1: one drawn
+  layer, two role pairs, distinct names as the schema requires), `Via1`
+  19/0, `Via2` 29/0, `Via3` 49/0, `Via4` 66/0, `TopVia1` 125/0, `TopVia2`
+  133/0, each `between` its adjacent stackup roles.
+- **`nets`** — the two supplies, nothing else (item 11's subject is the
+  supplies; `erc.unconnected_net`/`erc.supply_short` grade declared names
+  only). Both declare `islands: 1` and their owned `roles`:
+  `VDD` owns Metal1…TopMetal2 (its strap and via ladders);
+  `0` owns `Activ` + `Metal1` (the guard ring). Declaring `roles` turns on
+  the severed-rail measurement (#2524): the report's
+  `nets[]` entries then carry the negative rather than the honest `{}` of a
+  spec that never asked.
+- **`ties`** — one entry, `ptap_guard_ring`, in the **native-substrate
+  form**: `"well_layer": null` + `well_boxes` `[-80.0, -106.0, 105.0,
+  -16.0]`, because sg13g2 draws no PWell layer (the deck's layer table has
+  `NWell.drawing` 31/0 and `PWell.block` 46/21 only — #2255 is
+  the only expressible form for this tie). The asserted region is
+  `layout/drc/vco-ring-check.json`'s `region_um`, the guard-ring clip
+  window, for two verified reasons: every drawn `Activ` polygon in the
+  stream lies inside it (so the tie's `well_assertion_coverage` measures
+  `uncovered_tap_fraction: 0.0` — the assertion spans all 1386.238 µm² of
+  drawn tap-layer geometry), and it covers 93.1 % of nothing —
+  `extent_uncovered_fraction: 0.931153` against the top-cell extent, far
+  from the ≥ 99 % whole-die shape the `degenerate_well_assertion` test
+  skips. The tap is `tap_layer: "1/0"` narrowed by `tap_requires: ["14/0"]`
+  (Activ ∩ pSD — the p+ boolean a real ptap is drawn as, #2169;
+  narrowing is non-degenerate here: the asserted region also contains the
+  core's contacted diffusion, which the p+ boolean removes). `connect_to:
+  "Metal1"` (the ring's strap), `net: "0"`.
+- **No `devices[]`** — `--deck sg13g2` auto-carves them, echoed in
+  `provenance.devices` with `source: "deck"`: the `rppd` bodies on GatPoly
+  (101.725 µm² — `RREF`/`RTE`/`RRE` must not conduct VDD↔NBIAS or
+  `0`↔`TE`/`RE` through their poly), and the two `cap_cmim` body markers
+  (36/0, 129/0 — `on: null`, no declared role draws those layers, so
+  nothing to carve).
+
+**The `unlabelled_allowed_boxes` carve-out.** With `0` owning `Activ`, the
+roles measurement surfaced four unlabelled conductor islands (53.56 µm²,
+all 100 % pSD-overlapped, zero `Cont` contacts — measured on the committed
+stream): the p+ substrate regions the `npn13G2V` PCells draw inside their
+own footprint. They are substrate tie material reachable from no label
+because their contact path is the silicon itself — the shared substrate of
+§6, which `klt erc`'s connectivity model does not represent. That model
+boundary is the tool tracker's known false-positive caveat for exactly a
+guard-ring-strapped supply (item 11's notes cite it as issue #2180). They
+are declared away per
+island — the four boxes are the four islands' exact bounding boxes — and
+the declaration echoes in `provenance.net_exclusions` (4 islands, 53.56
+µm²). The measured negative survives: `nets[]` shows
+`unlabelled_islands: 4 = unlabelled_allowed_islands: 4` for `0` (nothing
+outside the carve-out) and `0/0` for `VDD`, so the gating remainder is
+empty on both supplies.
+
+### 16.3 The verdict
+
+- **`erc_status: clean`, zero findings** — no `erc.unconnected_net` (each
+  supply resolves to exactly one electrical island: `VDD` 1/1, `0` 1/1), no
+  `erc.supply_short`, no `erc.missing_tie`, no `erc.unlabelled_conductor`.
+- **The tie was checked, not skipped**: `erc_coverage.checked` includes
+  `erc.missing_tie:["ptap_guard_ring"]`, `skipped[]` is empty (no
+  `degenerate_*` classification), and
+  `checked_by_well_assertion` names it — the well side of this verdict
+  rests on the caller's asserted region, and a grader reading a citation
+  built on this envelope must see that named (item 11's
+  `ties_checked_by_well_assertion`).
+- **Coverage disclosure**: `erc_coverage.layers_in_stream_without_declaration`
+  is **empty** — the run carried `--deck sg13g2`, so the model's layer scope
+  is the deck's routing stack (`provenance.deck` in the envelope records
+  the deck and its hash), and no drawn layer of this stream is left outside
+  the spec's declaration. A rail that moved onto an undeclared level would
+  report loudly here.
+- `erc.floating_gate:["gate0"]` was checked (one gate found — the block has
+  exactly one MOS gate structure per the antenna model) with no finding.
+
+### 16.4 The VDD tie answer (recorded either way, per the issue)
+
+`VDD` declares no `ties[]` entry: it is a TopMetal2 trunk plus via ladders,
+with no well or substrate tap of its own — the block's substrate tie belongs
+entirely to `0`. **Answer: a declared supply that owns no tie fires no
+`erc.missing_tie`.** The rule is per *declared tie* (`_tie_findings` in
+`klayout_tools/erc.py` iterates `ties[]`, and the spec's one tie names
+`net: "0"`), so nothing about `VDD` was papered over — its
+power-delivery evidence is its island count and the short check, both clean
+in §16.3. The flagged risk that a supply without a tie renders
+`erc.missing_tie` does not exist at this pin; this paragraph is the record
+of that check, not a silent omission.
+
+### 16.5 The negative control (AC3)
+
+`layout/erc/vco-erc-control.json` records the same invocation against a
+copy of the stream with one `ptap1` guard-ring bar deleted
+(`scripts/break_ring.py` — the same negative control §12 uses for the
+ring-check, reused unchanged). The control is **rejected**:
+
+| | committed layout | one ptap1 bar deleted |
+|---|---|---|
+| `erc_status` | `clean` | `violations` |
+| findings | 0 | 4 |
+| rules | — | `erc.missing_tie`, `erc.unconnected_net`, `erc.unlabelled_conductor` |
+| `0` islands | 1 | 0 (no labelled geometry) |
+| `VDD` islands | 1 | 1 |
+
+The control moves *two* checks at once, for one measured reason: the
+deleted bar carries the layout's **only `0` label text** (the ptap1 PCell
+labels its own Metal1), so removing it takes away the net's label together
+with its substrate tie — `erc.missing_tie` (the tap is no longer wired to
+`0`), `erc.unconnected_net` (`0` matches no labelled geometry) and the
+roles measurement (the unlabelled remainder on every owned role) all fire.
+`erc.sh` fails if the control's `rejected` flag is ever `false`: a control
+that leaves the verdict clean means the clean verdict cannot fail, and
+§12's standard applies — record it as a failed control, cite nothing.
+
+### 16.6 Form, the antenna half, and the signoff citation
+
+**Form.** The envelope of record is a **full run** (no `--findings-only`):
+at 8.4 KB it commits verbatim, so the compacting flags stay unused and
+`gates[]` carries the real per-gate level accumulation. Its overall
+`status` is `not_checked` because every antenna verdict is `unchecked` —
+no `--pdk` limit table was passed. That is deliberate and stated: antenna
+is item 3's deck evidence (§13: `antenna.drc`, 0 findings), not item 11's
+subject, and item 11 grades `erc_status`/`erc_findings`/`erc_coverage`,
+never the envelope's overall `status` (#1994). `erc.sh`
+captures exit 4 as the expected verdict of this form, not a crash.
+
+**The signoff citation (AC5).** `signoff/manifest.json` item 11 now cites
+two parts:
+
+1. `layout/erc/vco-erc.json`, pinned to the envelope's
+   `provenance.input.content_hash` (the committed GDS's hash) — the ERC
+   half. `klt signoff` accepts it as a well-formed `erc` part: its
+   `gates`/`gate_role` classify it, the pinned hash matches, and the supply
+   spec it names (`layout/erc/vco-erc-spec.json`, re-read and re-hashed by
+   the grader against `provenance.spec.content_hash`) declares both
+   supplies, one computed non-skipped tie, and zero supply-side findings —
+   the exact predicates item 11's ERC half grades.
+2. `layout/lvs/vco-lvs-record.json` at pointer `/klt_leg/lvs/response` —
+   the LVS half: `klt lvs`'s own recorded refusal of this compare (exit 1,
+   0.8.0: it cannot convert a reference carrying inductor/varactor/HBT
+   subcircuits for the `sg13g2` deck — §14 and klayout-tools#2849). The
+   record file's own layout digest is already gated against the committed
+   GDS by `.github/scripts/check-layout-evidence.sh`; the refusal envelope
+   itself records no input artifact, so this part carries no
+   `content_hash` pin — there is nothing inside it to pin.
+
+**Item 11 therefore renders `unmet` / `check_errored`, not `met` and not
+`lvs_did_not_pass`** (verified against `klt signoff` at the 0.8.0 pin,
+2026-11-14). The reason is mechanical: `lvs_did_not_pass` is what a cited
+LVS *report* renders when it ran, did not pass, and the ERC half is
+complete — but no LVS report of this block exists as a `klt`-classifyable
+envelope, and both routes to one are refused at this pin (§14). Citing
+only the ERC envelope renders `wrong_kind` (the item's cited set must
+contain an `lvs` part); citing the compare-of-record file
+(`layout/lvs/vco-lvs-ihp.json`) renders `unrecognized_envelope`,
+which would misdescribe a well-formed record as malformed. The recorded
+refusal is the honest third state: the LVS half is cited, and what it
+says is that the tool refused — which is the truth §14 already records.
+When #62 lands its fresh `klt lvs` report, this citation's second part
+replaces with that report and the reason becomes `lvs_did_not_pass`
+(LVS half ran and did not pass) — and `met` only when that report passes
+with the supplies paired. Until then item 11 stays `unmet` here, as AC5
+requires.

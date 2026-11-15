@@ -25,7 +25,17 @@
     "10": {
       "file": "signoff/evidence/t1-item-10-repo-hygiene.json",
       "content_hash": "sha256:3dcd61e9065b3b486e03950069becbf83bef84da8a1aa5628414acdd36172b44"
-    }
+    },
+    "11": [
+      {
+        "file": "layout/erc/vco-erc.json",
+        "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e"
+      },
+      {
+        "file": "layout/lvs/vco-lvs-record.json",
+        "pointer": "/klt_leg/lvs/response"
+      }
+    ]
   },
   "spec_rows": {
     "6": [

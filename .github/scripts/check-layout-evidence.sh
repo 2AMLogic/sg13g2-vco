@@ -39,6 +39,7 @@ RECORDS = {
     "layout/drc/vco-cnt-c-control.json": ["layout", "content_hash"],
     "layout/lvs/vco-lvs-ihp.json": ["input", "content_hash"],
     "layout/lvs/vco-lvs-record.json": ["inputs", "layout", "content_hash"],
+    "layout/erc/vco-erc.json": ["provenance", "input", "content_hash"],
 }
 
 bad = 0
@@ -59,7 +60,7 @@ for rel, path in RECORDS.items():
 
 if bad:
     print(f"{bad} stale layout record(s): regenerate via layout/generate.sh, "
-          "layout/drc.sh, layout/lvs.sh", file=sys.stderr)
+          "layout/drc.sh, layout/lvs.sh, layout/erc.sh", file=sys.stderr)
     sys.exit(1)
 print(f"OK: {len(RECORDS)} layout records match layout/vco.gds ({actual})")
 PY

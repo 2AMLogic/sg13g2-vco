@@ -76,22 +76,24 @@ def copy(rel):
 
 manifest = json.load(open(os.path.join(root, "signoff", "manifest.json")))
 for entry in (manifest.get("evidence") or {}).values():
-    rel = entry if isinstance(entry, str) else (entry or {}).get("file")
-    if not isinstance(rel, str):
-        continue
-    copy(rel)
-    try:
-        env = json.load(open(os.path.join(root, rel)))
-    except (OSError, ValueError):
-        continue
-    if isinstance(env, dict):
-        # Envelope schema 2 carries `file` as a repo-relative string;
-        # schema 3 carries {"path": ..., "scope": ...}.
-        src = env.get("file")
-        if isinstance(src, dict):
-            src = src.get("path")
-        if isinstance(src, str):
-            copy(src)
+    # An entry is a single citation (str or dict) or a list of them.
+    for one in (entry if isinstance(entry, list) else [entry]):
+        rel = one if isinstance(one, str) else (one or {}).get("file")
+        if not isinstance(rel, str):
+            continue
+        copy(rel)
+        try:
+            env = json.load(open(os.path.join(root, rel)))
+        except (OSError, ValueError):
+            continue
+        if isinstance(env, dict):
+            # Envelope schema 2 carries `file` as a repo-relative string;
+            # schema 3 carries {"path": ..., "scope": ...}.
+            src = env.get("file")
+            if isinstance(src, dict):
+                src = src.get("path")
+            if isinstance(src, str):
+                copy(src)
 PY
   echo "$tree"
 }
