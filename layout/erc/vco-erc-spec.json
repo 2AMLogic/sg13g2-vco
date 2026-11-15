@@ -1,0 +1,130 @@
+{
+  "stackup": [
+    {
+      "name": "GatPoly",
+      "layer": "5/0",
+      "role": "gate",
+      "active_layer": "1/0"
+    },
+    {
+      "name": "Activ",
+      "layer": "1/0"
+    },
+    {
+      "name": "Metal1",
+      "layer": "8/0",
+      "label_layer": "8/25"
+    },
+    {
+      "name": "Metal2",
+      "layer": "10/0",
+      "label_layer": "10/25"
+    },
+    {
+      "name": "Metal3",
+      "layer": "30/0",
+      "label_layer": "30/25"
+    },
+    {
+      "name": "Metal4",
+      "layer": "50/0"
+    },
+    {
+      "name": "Metal5",
+      "layer": "67/0"
+    },
+    {
+      "name": "TopMetal1",
+      "layer": "126/0",
+      "label_layer": "126/25"
+    },
+    {
+      "name": "TopMetal2",
+      "layer": "134/0",
+      "label_layer": "134/25"
+    }
+  ],
+  "vias": [
+    {
+      "name": "ContPoly",
+      "layer": "6/0",
+      "between": ["GatPoly", "Metal1"]
+    },
+    {
+      "name": "ContAct",
+      "layer": "6/0",
+      "between": ["Activ", "Metal1"]
+    },
+    {
+      "name": "Via1",
+      "layer": "19/0",
+      "between": ["Metal1", "Metal2"]
+    },
+    {
+      "name": "Via2",
+      "layer": "29/0",
+      "between": ["Metal2", "Metal3"]
+    },
+    {
+      "name": "Via3",
+      "layer": "49/0",
+      "between": ["Metal3", "Metal4"]
+    },
+    {
+      "name": "Via4",
+      "layer": "66/0",
+      "between": ["Metal4", "Metal5"]
+    },
+    {
+      "name": "TopVia1",
+      "layer": "125/0",
+      "between": ["Metal5", "TopMetal1"]
+    },
+    {
+      "name": "TopVia2",
+      "layer": "133/0",
+      "between": ["TopMetal1", "TopMetal2"]
+    }
+  ],
+  "nets": [
+    {
+      "name": "VDD",
+      "kind": "supply",
+      "islands": 1,
+      "roles": [
+        "Metal1",
+        "Metal2",
+        "Metal3",
+        "Metal4",
+        "Metal5",
+        "TopMetal1",
+        "TopMetal2"
+      ]
+    },
+    {
+      "name": "0",
+      "kind": "supply",
+      "islands": 1,
+      "roles": ["Activ", "Metal1"],
+      "unlabelled_allowed_boxes": [
+        [-3.67, -85.8, 3.67, -78.0],
+        [26.33, -75.8, 33.67, -69.0],
+        [-13.8, -71.8, -6.46, -65.0],
+        [6.46, -71.8, 13.8, -65.0]
+      ]
+    }
+  ],
+  "ties": [
+    {
+      "name": "ptap_guard_ring",
+      "well_layer": null,
+      "well_boxes": [
+        [-80.0, -106.0, 105.0, -16.0]
+      ],
+      "tap_layer": "1/0",
+      "tap_requires": ["14/0"],
+      "connect_to": "Metal1",
+      "net": "0"
+    }
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "schema_version": 2,
+  "file": {
+    "path": "layout/vco.gds",
+    "scope": "repo"
+  },
+  "spec": "layout/erc/vco-erc-spec.json",
+  "pdk": null,
+  "findings_only": false,
+  "gate_role": "GatPoly",
+  "gate_count": 1,
+  "antenna_tables_omitted": false,
+  "gates": [
+    {
+      "gate_id": "gate0",
+      "net": "OUTN,OUTP,VCTRL,VDD",
+      "gate_area_um2": 85.344,
+      "antenna_verdict": "unchecked",
+      "levels": [
+        {
+          "layer": "GatPoly",
+          "step_area_um2": 99.438,
+          "cumulative_area_um2": 99.438,
+          "antenna_ratio": 1.165143,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "Activ",
+          "step_area_um2": 243.4584,
+          "cumulative_area_um2": 342.8964,
+          "antenna_ratio": 4.017815,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "Metal1",
+          "step_area_um2": 167.0142,
+          "cumulative_area_um2": 509.9106,
+          "antenna_ratio": 5.974768,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "Metal2",
+          "step_area_um2": 448.8315,
+          "cumulative_area_um2": 958.7421,
+          "antenna_ratio": 11.233855,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "Metal3",
+          "step_area_um2": 462.625,
+          "cumulative_area_um2": 1421.3671,
+          "antenna_ratio": 16.654564,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "Metal4",
+          "step_area_um2": 1.708,
+          "cumulative_area_um2": 1423.0751,
+          "antenna_ratio": 16.674577,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "Metal5",
+          "step_area_um2": 74.2559,
+          "cumulative_area_um2": 1497.331,
+          "antenna_ratio": 17.544655,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "TopMetal1",
+          "step_area_um2": 5850.1914,
+          "cumulative_area_um2": 7347.5224,
+          "antenna_ratio": 86.093016,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        },
+        {
+          "layer": "TopMetal2",
+          "step_area_um2": 41701.56605,
+          "cumulative_area_um2": 49049.08845,
+          "antenna_ratio": 574.722165,
+          "antenna_ratio_max": null,
+          "antenna_ratio_source": null,
+          "verdict": "unchecked",
+          "remedy": null
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "VDD",
+      "matched_islands": 1,
+      "expected_islands": 1,
+      "roles": [
+        "Metal1",
+        "Metal2",
+        "Metal3",
+        "Metal4",
+        "Metal5",
+        "TopMetal1",
+        "TopMetal2"
+      ],
+      "unlabelled_islands": 0,
+      "unlabelled_area_um2": 0.0,
+      "unlabelled_bbox": null,
+      "unlabelled_allowed_islands": 0
+    },
+    {
+      "name": "0",
+      "matched_islands": 1,
+      "expected_islands": 1,
+      "roles": [
+        "Activ",
+        "Metal1"
+      ],
+      "unlabelled_islands": 4,
+      "unlabelled_area_um2": 53.56,
+      "unlabelled_bbox": {
+        "left": -13800,
+        "bottom": -85800,
+        "right": 33670,
+        "top": -65000
+      },
+      "unlabelled_allowed_islands": 4
+    }
+  ],
+  "erc_findings": [],
+  "erc_finding_count": 0,
+  "erc_status": "clean",
+  "status": "not_checked",
+  "coverage": {
+    "scope": "antenna",
+    "schema_version": 1,
+    "known": true,
+    "checked": [],
+    "skipped": [
+      {
+        "id": "antenna:[\"gate0\",\"Activ\"]",
+        "reason": "missing_antenna_pdk"
+      },
+      {
+        "id": "antenna:[\"gate0\",\"Metal1\"]",
+        "reason": "missing_antenna_pdk"
+      },
+      {
+        "id": "antenna:[\"gate0\",\"Metal2\"]",
+        "reason": "missing_antenna_pdk"
+      },
+      {
+        "id": "antenna:[\"gate0\",\"Metal3\"]",
+        "reason": "missing_antenna_pdk"
+      },
+      {
+        "id": "antenna:[\"gate0\",\"Metal4\"]",
+        "reason": "missing_antenna_pdk"
+      },
+      {
+        "id": "antenna:[\"gate0\",\"Metal5\"]",
+        "reason": "missing_antenna_pdk"
+      },
+      {
+        "id": "antenna:[\"gate0\",\"TopMetal1\"]",
+        "reason": "missing_antenna_pdk"
+      },
+      {
+        "id": "antenna:[\"gate0\",\"TopMetal2\"]",
+        "reason": "missing_antenna_pdk"
+      }
+    ],
+    "inapplicable": [
+      {
+        "id": "antenna:[\"gate0\",\"GatPoly\"]",
+        "reason": "gate_reference_level"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": true,
+    "nothing_checked_reasons": [
+      "gate_reference_level",
+      "missing_antenna_pdk"
+    ]
+  },
+  "erc_coverage": {
+    "scope": "connectivity",
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "erc.floating_gate:[\"gate0\"]",
+      "erc.missing_tie:[\"ptap_guard_ring\"]",
+      "erc.net_connectivity:[\"0\"]",
+      "erc.net_connectivity:[\"VDD\"]"
+    ],
+    "skipped": [],
+    "inapplicable": [],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": [],
+    "checked_by_assertion": [],
+    "checked_by_well_assertion": [
+      "erc.missing_tie:[\"ptap_guard_ring\"]"
+    ],
+    "layers_in_stream_without_declaration": [],
+    "well_assertion_coverage": [
+      {
+        "id": "erc.missing_tie:[\"ptap_guard_ring\"]",
+        "tap_layer": "1/0",
+        "drawn_tap_area_um2": 1386.238,
+        "uncovered_tap_area_um2": 0.0,
+        "uncovered_tap_fraction": 0.0,
+        "extent_uncovered_fraction": 0.931153
+      }
+    ]
+  },
+  "ties_disclosure": null,
+  "provenance": {
+    "klt_version": "0.8.0",
+    "klayout_version": "0.30.13",
+    "pdk": null,
+    "deck": {
+      "name": "sg13g2",
+      "content_hash": "sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15",
+      "released": true
+    },
+    "input": {
+      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
+      "role": "layout"
+    },
+    "spec": {
+      "content_hash": "sha256:aad80f38fc231245ae39be41e70f980e4886e050fbd1c3414f04344be418d9b3"
+    },
+    "devices": [
+      {
+        "name": "rppd",
+        "body_layer": "5/0",
+        "on": "GatPoly",
+        "body_area_um2": 101.725,
+        "source": "deck",
+        "superseded_by": null
+      },
+      {
+        "name": "cap_cmim",
+        "body_layer": "36/0",
+        "on": null,
+        "body_area_um2": 0.0,
+        "source": "deck",
+        "superseded_by": null
+      },
+      {
+        "name": "cap_cmim",
+        "body_layer": "129/0",
+        "on": null,
+        "body_area_um2": 0.0,
+        "source": "deck",
+        "superseded_by": null
+      }
+    ],
+    "net_exclusions": [
+      {
+        "net": "0",
+        "boxes": [
+          [
+            -3.67,
+            -85.8,
+            3.67,
+            -78.0
+          ],
+          [
+            26.33,
+            -75.8,
+            33.67,
+            -69.0
+          ],
+          [
+            -13.8,
+            -71.8,
+            -6.46,
+            -65.0
+          ],
+          [
+            6.46,
+            -71.8,
+            13.8,
+            -65.0
+          ]
+        ],
+        "excluded_islands": 4,
+        "excluded_area_um2": 53.56
+      }
+    ],
+    "label_layers": [
+      {
+        "name": "Metal1",
+        "label_layer": "8/25",
+        "label_text_count": 5
+      },
+      {
+        "name": "Metal2",
+        "label_layer": "10/25",
+        "label_text_count": 1
+      },
+      {
+        "name": "Metal3",
+        "label_layer": "30/25",
+        "label_text_count": 1
+      },
+      {
+        "name": "TopMetal1",
+        "label_layer": "126/25",
+        "label_text_count": 2
+      },
+      {
+        "name": "TopMetal2",
+        "label_layer": "134/25",
+        "label_text_count": 2
+      }
+    ]
+  }
+}
