@@ -74,6 +74,16 @@
 #                         (issue #146: every cited upstream tool-tracker issue
 #                         has a ledger entry, workaround paths exist, entries
 #                         verified against .github/klt-version; offline)
+#   friction-upstream-selftest .github/scripts/test-check-klt-friction-upstream.sh python3
+#   friction-upstream     .github/scripts/check-klt-friction-upstream.sh python3
+#                         (issue #333: the same ledger's status fields
+#                         compared against the live 2AMLogic/klayout-tools
+#                         tracker; checker exit 3 = upstream unreadable: a
+#                         counted skip inside `all` — never a pass, --strict
+#                         fails it — and a failure as a single target. The
+#                         repo's ONLY networked target: in the `all`
+#                         aggregate and .github/workflows/friction-
+#                         upstream.yml, never in the hermetic test/ci)
 #   py-selftest           .github/scripts/test-check-python.sh      python3
 #   py-compile            check-python.sh compile (py_compile, all tracked *.py)
 #   py-tests              check-python.sh tests (stdlib unittest, tests/stdlib)
@@ -93,10 +103,12 @@
 #           test-wiring-selftest test-wiring grader-spec-selftest grader-spec currency-selftest currency
 #           model-inputs-selftest model-inputs
 #           deck-integrity-selftest deck-integrity friction-selftest friction
+#           friction-upstream-selftest
 #           layout-evidence-selftest layout-evidence
 #           grading-fixtures py-selftest py-compile py-tests
 #   ci    = lint + test
-#   all   = ci + signoff + py-numeric (only with numpy+scipy importable)
+#   all   = ci + signoff + friction-upstream (networked; exit 3 = counted
+#           skip) + py-numeric (only with numpy+scipy importable)
 #           + py-klayout (only with the pinned klayout wheel)
 #           + pr-diff (only with --base) + method
 #   pr-diff --base REF [--head REF] = append-only + spec-dr
@@ -119,9 +131,12 @@
 # Missing mandatory tools and child failures are counted as failures; every
 # gate of an aggregate still runs so one run reports them all. Explicit
 # --base/--head refs are verified to resolve to commits; an unavailable ref
-# fails rather than being skipped. Nothing is installed and nothing is
-# fetched by this script (append-only's own CI fallback may fetch the PR base
-# when GITHUB_BASE_REF is set and no --base is given).
+# fails rather than being skipped. The hermetic test and ci aggregates
+# install and fetch nothing (append-only's own CI fallback may fetch the PR
+# base when GITHUB_BASE_REF is set and no --base is given). The all
+# aggregate adds one networked gate, friction-upstream, which reads the
+# public klayout-tools tracker through the checker; the runner itself still
+# installs and fetches nothing beyond forwarding to it.
 #
 # Exit: 0 all requested gates passed (skips allowed unless --strict),
 #       1 a gate failed, a tool was missing, or --strict saw a skip,
@@ -312,6 +327,21 @@ gate() {
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-check-klt-friction.sh" "$@" ;;
     friction)
       need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/check-klt-friction.sh" "$@" ;;
+    friction-upstream-selftest)
+      need_tools "$g" python3 && run_gate "$g" "$SCRIPTS/test-check-klt-friction-upstream.sh" "$@" ;;
+    friction-upstream)
+      # Issue #333: the only networked gate. Checker exit 3 (upstream
+      # unreadable: network, 403/429, 404) is a counted skip inside the
+      # all aggregate — never a pass, --strict fails it — and a failure
+      # as a single target, like every other skip-shaped runner case.
+      if need_tools "$g" python3; then
+        echo "==> $g: $SCRIPTS/check-klt-friction-upstream.sh $*"
+        "$SCRIPTS/check-klt-friction-upstream.sh" "$@"
+        local furc=$?
+        if [ "$furc" -eq 0 ]; then pass "$g"
+        elif [ "$furc" -eq 3 ] && [ "$TARGET" = all ]; then skip "$g" "upstream unreadable (exit 3), states not compared — see .github/workflows/friction-upstream.yml"
+        else failg "$g" "exit $furc"; fi
+      fi ;;
     grading-fixtures)
       need_tools "$g" git awk grep python3 && run_gate "$g" "$SCRIPTS/run-grading-fixtures.sh" "$@" ;;
     py-selftest)
@@ -379,6 +409,7 @@ agg_test() {
   gate deck-integrity
   gate friction-selftest
   gate friction
+  gate friction-upstream-selftest
   gate layout-evidence-selftest
   gate layout-evidence
   gate grading-fixtures
@@ -415,6 +446,9 @@ case "$TARGET" in
     gate lint
     agg_test
     gate signoff
+    # Issue #333: the only networked gate — all may fetch where test/ci
+    # cannot; an unreadable tracker is a counted skip, never a pass.
+    gate friction-upstream
     if why="$(numeric_libs)"; then
       gate py-numeric
     else

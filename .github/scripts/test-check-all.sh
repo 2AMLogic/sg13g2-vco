@@ -49,6 +49,8 @@ for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/check-record-deck-integrity.sh \
          .github/scripts/test-check-klt-friction.sh \
          .github/scripts/check-klt-friction.sh \
+         .github/scripts/test-check-klt-friction-upstream.sh \
+         .github/scripts/check-klt-friction-upstream.sh \
          .github/scripts/test-check-layout-evidence.sh \
          .github/scripts/check-layout-evidence.sh \
          sim/tests/test-reserve-record-id.sh sim/tests/test-tank-ab-reserve.sh \
@@ -110,11 +112,11 @@ for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; d
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|check-signoff-inventories.sh|check-signoff-characterization.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-tank-ab-reserve.sh|test-local-grid-guard.sh|test-build-osdi-staging.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-test-wiring.sh|check-test-wiring.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-record-deck-integrity.sh|check-record-deck-integrity.sh|test-check-klt-friction.sh|check-klt-friction.sh|test-check-layout-evidence.sh|check-layout-evidence.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|check-signoff-inventories.sh|check-signoff-characterization.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-tank-ab-reserve.sh|test-local-grid-guard.sh|test-build-osdi-staging.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-test-wiring.sh|check-test-wiring.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-record-deck-integrity.sh|check-record-deck-integrity.sh|test-check-klt-friction.sh|check-klt-friction.sh|test-check-klt-friction-upstream.sh|test-check-layout-evidence.sh|check-layout-evidence.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
-# 1. test aggregate: twenty-nine gates in workflow order, exit 0
+# 1. test aggregate: thirty gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '29 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '30 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -124,7 +126,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '28 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '29 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -153,6 +155,36 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-klt-friction.sh|" ]; then
   ok "friction target dispatches the ledger gate"; else bad "friction: rc=$RC $(calls)"; fi
 reset; touch "$FAILDIR/check-klt-friction.sh"; run_case "$BIN" friction
 if [ "$RC" -eq 1 ]; then ok "friction failure -> exit 1"; else bad "friction failure: rc=$RC"; fi
+# 4b3b. friction-upstream targets (issue #333): dispatch, failure, and the
+#      exit-3 (upstream unreadable) -> counted-skip mapping that --strict fails
+reset; run_case "$BIN" friction-upstream-selftest
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "test-check-klt-friction-upstream.sh|" ]; then
+  ok "friction-upstream-selftest target dispatches the offline self-test"; else bad "friction-upstream-selftest: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" friction-upstream
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-klt-friction-upstream.sh|" ]; then
+  ok "friction-upstream target dispatches the upstream gate"; else bad "friction-upstream: rc=$RC $(calls)"; fi
+reset; touch "$FAILDIR/check-klt-friction-upstream.sh"; run_case "$BIN" friction-upstream
+if [ "$RC" -eq 1 ]; then ok "friction-upstream failure -> exit 1"; else bad "friction-upstream failure: rc=$RC"; fi
+# swap the checker stub for an exit-3 one: unreadable upstream is a counted
+# skip inside `all` (never a pass; --strict fails it) and a failure as a
+# single target.
+UPG="$F/.github/scripts/check-klt-friction-upstream.sh"
+cp "$UPG" "$T/upg.bak"
+printf '#!/usr/bin/env bash\necho "check-klt-friction-upstream.sh" >> "$CALLS"\nexit 3\n' > "$UPG"
+chmod +x "$UPG"
+reset; run_case "$BIN" friction-upstream
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: friction-upstream' "$OUT" \
+   && ! grep -q 'PASS: friction-upstream' "$OUT"; then
+  ok "checker exit 3 as a single target fails, never reads as passed"; else bad "exit3 single: rc=$RC"; cat "$OUT"; fi
+reset; run_case "$NONG" all
+if [ "$RC" -eq 0 ] && grep -q 'SKIPPED: friction-upstream' "$OUT" \
+   && grep -q 'skipped (NOT passed): friction-upstream' "$OUT" \
+   && grep -q '0 failed, 3 skipped' "$OUT"; then
+  ok "all counts the unreadable upstream gate as a skip"; else bad "all exit3: rc=$RC"; cat "$OUT"; fi
+reset; run_case "$NONG" --strict all
+if [ "$RC" -eq 1 ] && grep -q 'SKIPPED: friction-upstream' "$OUT"; then
+  ok "--strict fails the exit-3 skip inside all"; else bad "exit3 strict all: rc=$RC"; fi
+mv "$T/upg.bak" "$UPG"
 # 4b5. test-wiring targets (issue #228): dispatch, failure, aggregate
 reset; run_case "$BIN" test-wiring-selftest
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "test-check-test-wiring.sh|" ]; then
@@ -163,7 +195,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-test-wiring.sh|" ]; then
 reset; touch "$FAILDIR/check-test-wiring.sh"; run_case "$BIN" test-wiring
 if [ "$RC" -eq 1 ]; then ok "test-wiring failure -> exit 1"; else bad "test-wiring failure: rc=$RC"; fi
 reset; touch "$FAILDIR/check-test-wiring.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: test-wiring' "$OUT" && grep -q '28 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: test-wiring' "$OUT" && grep -q '29 passed, 1 failed' "$OUT" \
    && grep -q '^test-check-grader-spec-agreement.sh$' "$CALLS"; then
   ok "test-wiring failure fails test, later gates still run"; else bad "test-wiring test agg: rc=$RC"; fi
 
@@ -177,7 +209,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-grader-spec-agreement.sh|" ]; then
 reset; touch "$FAILDIR/check-grader-spec-agreement.sh"; run_case "$BIN" grader-spec
 if [ "$RC" -eq 1 ]; then ok "grader-spec failure -> exit 1"; else bad "grader-spec failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-record-currency.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q '28 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
+if [ "$RC" -eq 1 ] && grep -q '29 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
   ok "currency self-test failure fails test, later gates still run"; else bad "currency selftest fail: rc=$RC"; fi
 
 # 4b2. model-inputs targets (issue #139)
@@ -198,7 +230,7 @@ reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$BIN" osdi-staging
 if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT"; then
   ok "osdi-staging-selftest failure -> exit 1"; else bad "osdi-staging failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT" && grep -q '28 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT" && grep -q '29 passed, 1 failed' "$OUT" \
    && grep -q '^test-check-spec-change-has-dr.sh$' "$CALLS"; then
   ok "osdi-staging failure fails test, later gates still run"; else bad "osdi-staging test agg: rc=$RC"; fi
 reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$NONG" ci
@@ -228,7 +260,7 @@ reset; run_case "$NONG" grading-fixtures
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-grading-fixtures.sh|" ]; then
   ok "grading-fixtures target dispatches without ngspice"; else bad "grading-fixtures: rc=$RC $(calls)"; fi
 reset; touch "$FAILDIR/run-grading-fixtures.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '28 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '29 passed, 1 failed' "$OUT" \
    && grep -q '^check-python.sh tests$' "$CALLS"; then
   ok "grading-fixtures failure fails test, later gates still run"; else bad "grading-fixtures fail: rc=$RC"; fi
 

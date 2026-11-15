@@ -7,6 +7,7 @@
 .github/scripts/test-check-all.sh	runner-selftest	.github/scripts/check-all.sh
 .github/scripts/test-check-grader-spec-agreement.sh	grader-spec-selftest	.github/scripts/check-all.sh
 .github/scripts/test-check-klt-friction.sh	friction-selftest	.github/scripts/check-all.sh
+.github/scripts/test-check-klt-friction-upstream.sh	friction-upstream-selftest	.github/scripts/check-all.sh
 .github/scripts/test-check-python.sh	py-selftest	.github/scripts/check-all.sh
 .github/scripts/test-check-signoff.sh	signoff-selftest	.github/scripts/check-all.sh
 .github/scripts/test-check-sim-append-only.sh	append-only-selftest	.github/scripts/check-all.sh

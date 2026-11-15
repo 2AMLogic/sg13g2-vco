@@ -23,6 +23,10 @@
       "sha256": "sha256:27cebbb6976fe9937f3a8a159185100ca053f427a11307ba1aa32f5171752f3e"
     },
     {
+      "path": ".github/workflows/friction-upstream.yml",
+      "sha256": "sha256:a519f436672d44ab23c4b2c5e49ce71be08df37d18d573b459d4b06fffd95d11"
+    },
+    {
       "path": ".github/workflows/lint.yml",
       "sha256": "sha256:4c87b9d49134d26e39daabebf05f12d1eb6680e43cb442519473cd21fca984bb"
     },
@@ -44,7 +48,7 @@
     },
     {
       "path": ".github/scripts/check-all.sh",
-      "sha256": "sha256:a7c72468a5fefac28900caf343cbe879d373bb65ca67eed9f2fedb22eedbff73"
+      "sha256": "sha256:0f91548a8a33d263238fe713c760448d412eaef073bf8079bcc6939697065fdc"
     }
   ],
   "format_validation_command": ".github/scripts/check-all.sh test"

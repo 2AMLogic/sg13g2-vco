@@ -1,0 +1,45 @@
+name: friction-upstream
+
+# Upstream-state gate for the friction ledger (issue #333). The offline
+# friction gate (signoff.yml) validates ledger structure; this job compares
+# each entry's hand-maintained 'status' against the live
+# 2AMLogic/klayout-tools tracker. It is deliberately NOT part of the
+# hermetic `test`/`ci` aggregates (check-all.sh keeps it in `all` only):
+# it runs here, daily and when the ledger or the checker changes, under
+# --strict so an unreadable tracker (rate limit, network, 404) turns the
+# run red instead of green-unverified (ci-principles.md rules 3 and 6).
+# The tracker is public: the repo-scoped GITHUB_TOKEN authenticates the
+# reads (32 entries cost well under its 5000/h budget) and the checker
+# falls back to anonymous — no secret is provisioned for this workflow.
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/klt-friction-ledger.json
+      - .github/scripts/check_klt_friction_upstream.py
+      - .github/scripts/check-klt-friction-upstream.sh
+      - .github/scripts/test-check-klt-friction-upstream.sh
+      - .github/scripts/check-all.sh
+      - .github/workflows/friction-upstream.yml
+
+permissions:
+  contents: read
+
+jobs:
+  friction-upstream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Upstream-state gate self-test (offline)
+        run: .github/scripts/check-all.sh friction-upstream-selftest
+
+      - name: Ledger states match the upstream tracker (strict)
+        run: .github/scripts/check-all.sh --strict friction-upstream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
