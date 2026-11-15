@@ -17,7 +17,24 @@ the cross-reference compare reaches `match`, while its strict top-port check
 still logs three port-name findings (#162; provenance §14.6). That is not LVS
 closure: no `klt lvs` report exists (klayout-tools#2849) and the acceptable
 signoff envelope is still owed (#62; [signoff notes](signoff/README.md)). Simulation numbers in the tree
-predate #79 and are not current; the re-tune closed with no defensible candidate (#93), the decision is pending in [DR-006](spec/decision-records/DR-006-row2-shortfall-bn-substrate-varactor.md) (#184, status proposed), and post-#79 fleet records now exist under #94 (`sim/oscillator-core/records/20261105-*`, `sim/phase-noise/records/20261105-200000-6834172.md`; the PVT grid grades rows 1/2/3/7 as not met, the ISF pilot is one corner and grades nothing). The
+predate #79 and are not current; the re-tune closed with no defensible
+candidate (#93), the decision is pending in
+[DR-006](spec/decision-records/DR-006-row2-shortfall-bn-substrate-varactor.md)
+(#184, status proposed), and post-#79 fleet records now exist under #94
+(`sim/oscillator-core/records/20261105-*`,
+`sim/phase-noise/records/20261105-200000-6834172.md`; across the 90 graded
+curves the PVT grid grades rows 1/2/3 as not met and row 7's swing as met,
+with row 7's BVCEO compliance not graded, while the ISF pilot is one corner
+and grades nothing). The 45 corners at 125 C remain ungraded: the
+first-timepoint start-up abort is traced to a NaN junction capacitance in the
+27 C-referenced `dsubw` diode card — a solver/model artefact, not a
+bias-point effect — with the hot grid still INCOMPLETE
+(`sim/oscillator-core/records/20261110-050317-2287682-hot-startup-leakage-trace.md`,
+#309). The graded row-4 phase-noise grid has its machinery and a two-unit
+fleet smoke but the 135-point grid has not been run, so it grades no spec row
+(`sim/phase-noise/records/20261111-233500-54ea69e-graded-grid-machinery.md`,
+#326). The `VCTRL` TopMetal2 pin is in, with DRC/LVS evidence refreshed under
+klt 0.8.0 (#316). Near-term sequencing is in [ROADMAP.md](ROADMAP.md). The
 [signoff report](signoff/t1-report.json) is the verdict of record.
 
 **Built agent-native.** Every specification, decision record, testbench, and
