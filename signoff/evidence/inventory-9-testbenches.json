@@ -179,7 +179,7 @@
     },
     {
       "path": "sim/phase-noise/pn_bench.sh",
-      "sha256": "sha256:f2af6c00258e46409acd175fbb5a4fcec72dd499310f77b2f9fbc768db9b2e31",
+      "sha256": "sha256:664d036f13440b6873a7b3201c51bd19ed15680e93c3de51417adddb7fd319b7",
       "cold_start_documented": false
     },
     {
