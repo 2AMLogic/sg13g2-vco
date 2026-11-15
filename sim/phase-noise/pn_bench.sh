@@ -369,7 +369,15 @@ pn_reduce_ports() {
 #
 # Number formats (%.2f, %.3f, %e) and description strings are part of the
 # published contract: change nothing here without a decision record.
+#
+# An unrecognized section name is a loud failure -- error to stderr, return 1.
+# A silently-empty section that exits 0 would publish a truncated summary
+# while the driver reports success (issue #346). PN_SUMMARY_SECTIONS below is
+# the canonical list of valid names: the * arm's message and the tests read
+# it, so the names are stated in this one place and cannot drift from the
+# case arms without failing the test that iterates it.
 # --------------------------------------------------------------------------
+PN_SUMMARY_SECTIONS=(head mid tail)
 pn_summary_rows_common() {
   case "${1}" in
   head)
@@ -404,6 +412,10 @@ pn_summary_rows_common() {
     echo "inductor_bar_q,${IND_BAR_Q_DB},dB,propagated from the EM model's +-${PN_IND_Q_BAR_PCT}% Q bar"
     echo "inductor_bar_fit,${IND_BAR_FIT_DB},dB,propagated from the EM model's ${PN_IND_FIT_BAR_PCT}% rms fit residual"
     echo "inductor_bar_total,${IND_BAR_DB},dB,the two added in quadrature"
+    ;;
+  *)
+    echo "pn_summary_rows_common: unknown section '${1}' (expected ${PN_SUMMARY_SECTIONS[*]})" >&2
+    return 1
     ;;
   esac
 }
