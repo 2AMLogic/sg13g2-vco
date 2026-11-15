@@ -9,6 +9,9 @@
 #   5. sim/**/records/ citation            -> read (uncovered fails, covered
 #                                             passes) and never rewritten
 #   6. the real tree                       -> passes
+#   7. git-only enumeration: a non-git tree -> setup error; an uncited
+#                                             citation in an untracked file
+#                                             passes, in a tracked file fails
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
@@ -18,9 +21,9 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 # Built by concatenation so this file is not itself a citation.
 UP="klayout-""tools"
 
-run_case() { # name expect(0|1) tree
-  local got=1
-  "$CHECKER" --root "$3" >/dev/null 2>&1 && got=0
+run_case() { # name expect(0|1|2) tree
+  local got=0
+  "$CHECKER" --root "$3" >/dev/null 2>&1 || got=$?
   if [ "$got" -eq "$2" ]; then echo "PASS: $1"; pass=$((pass + 1))
   else echo "FAIL: $1 (expected $2, got $got)" >&2; fail=$((fail + 1)); fi
 }
@@ -42,7 +45,11 @@ mk() {
  $extra}
 ]}
 JSON
+  git -C "$d" init -q
+  git -C "$d" add -A
 }
+
+stage() { git -C "$1" add -A; }
 
 mk "$TMP/clean" 0.6.0
 run_case "clean tree passes" 0 "$TMP/clean"
@@ -72,10 +79,12 @@ run_case "pin bump makes every entry stale" 1 "$TMP/bumped"
 
 mk "$TMP/rec-bad" 0.6.0
 printf 'frozen: %s#12\n' "$UP" > "$TMP/rec-bad/sim/x/records/r.md"
+stage "$TMP/rec-bad"
 run_case "uncovered citation inside sim records fails" 1 "$TMP/rec-bad"
 
 mk "$TMP/rec-ok" 0.6.0
 printf 'frozen: %s#8\n' "$UP" > "$TMP/rec-ok/sim/x/records/r.md"
+stage "$TMP/rec-ok"
 before="$(cksum < "$TMP/rec-ok/sim/x/records/r.md")"
 run_case "covered citation inside sim records passes" 0 "$TMP/rec-ok"
 after="$(cksum < "$TMP/rec-ok/sim/x/records/r.md")"
@@ -84,7 +93,22 @@ else echo "FAIL: records file was modified" >&2; fail=$((fail + 1)); fi
 
 mk "$TMP/bad-json" 0.6.0
 echo '{' > "$TMP/bad-json/.github/klt-friction-ledger.json"
-run_case "malformed ledger fails" 1 "$TMP/bad-json"
+run_case "malformed ledger is a setup error" 2 "$TMP/bad-json"
+
+# Case 7: the gate must enumerate with git only, like its sibling gates.
+# scratch.md is written after mk()'s git add -A, so it is untracked.
+mk "$TMP/non-git" 0.6.0
+rm -rf "$TMP/non-git/.git"
+run_case "non-git tree is a setup error" 2 "$TMP/non-git"
+
+mk "$TMP/untracked-cited" 0.6.0
+printf 'scratch gap %s#13\n' "$UP" > "$TMP/untracked-cited/layout/scratch.md"
+run_case "uncited citation in untracked file passes" 0 "$TMP/untracked-cited"
+
+mk "$TMP/tracked-cited" 0.6.0
+printf 'scratch gap %s#13\n' "$UP" > "$TMP/tracked-cited/layout/scratch.md"
+stage "$TMP/tracked-cited"
+run_case "same uncited citation in tracked file fails" 1 "$TMP/tracked-cited"
 
 run_case "real tree passes" 0 "$ROOT"
 
