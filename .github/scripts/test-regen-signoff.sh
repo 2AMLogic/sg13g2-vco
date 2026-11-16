@@ -8,7 +8,9 @@
 #   2. leaves the record byte-identical (never 0 bytes) when the render
 #      fails, whichever tool resolved;
 #   3. leaves the record untouched when the render succeeds but fails a
-#      payload gate (wrong block, error envelope, wrong item count);
+#      payload gate (wrong block, error envelope, wrong item count) or the
+#      build-identity gate (#368: non-release, dirty, mistagged, missing or
+#      non-object build block);
 #   4. falls back to uvx on a mismatched ambient klt and lands the pinned
 #      render;
 #   5. uses the ambient klt when it matches the pin (no network needed);
@@ -30,6 +32,14 @@ bad() { fail=$((fail + 1)); echo "FAIL: $1" >&2; }
 
 PIN="0.8.0-test"
 BADVER="9.9.9-mismatch"
+
+# Valid build block for the pin, shared by the success-path stub bodies
+# (#368): the regen payload gate asserts is_release/dirty/git_tag and derives
+# its expectation from the pin (git_tag == "v$PIN"), so the stubs derive
+# theirs the same way — a hardcoded tag here would break on any harness-pin
+# change, and a hardcoded pair that still matched would prove nothing about
+# the derivation.
+STUB_BUILD_BLOCK="$(printf '{"version": "%s", "package_version": "%s", "git_commit": "0123456789abcdef0123456789abcdef01234567", "git_tag": "v%s", "dirty": false, "is_release": true, "grading_ruleset_id": "sha256:stub-grading-ruleset"}' "$PIN" "$PIN" "$PIN")"
 
 # --- stub tools -------------------------------------------------------------
 # bin-a: coreutils + stub python3 + stub klt + stub uvx + the pinned klt the
@@ -67,7 +77,7 @@ EOF
   chmod +x "$d/python3" "$d/klt"
 }
 
-printf '%s\n' '{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11}' > "$T/default-body.json"
+printf '%s\n' '{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11, "build": '"$STUB_BUILD_BLOCK"'}' > "$T/default-body.json"
 export STUB_DEFAULT_BODY="$T/default-body.json"
 
 BIN="$T/bin"; mk_common "$BIN"
@@ -180,27 +190,38 @@ else
 fi
 
 # --- 3. payload-gate failures keep the record -------------------------------
+# Each variant: name|expected-stderr-substring|body-JSON. An empty pattern
+# only asserts non-zero exit and an untouched record; a non-empty one also
+# asserts the failure names its reason (self-diagnosing red run).
 for variant in \
-  'error-envelope:{"error": "manifest unreadable"}' \
-  'wrong-block:{"schema_version": 1, "block": "other-block", "kind": "analog", "t1_item_count": 11}' \
-  'wrong-count:{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 10}'; do
-  name="${variant%%:*}"; body="${variant#*:}"
+  'error-envelope||{"error": "manifest unreadable"}' \
+  'wrong-block||{"schema_version": 1, "block": "other-block", "kind": "analog", "t1_item_count": 11}' \
+  'wrong-count||{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 10}' \
+  'no-build-block|no build block|{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11}' \
+  'build-null|no build block|{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11, "build": null}' \
+  'dev-build|is_release=False|{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11, "build": {"version": "0.8.0-test+gabc", "package_version": "0.8.0-test", "git_commit": "abc", "git_tag": null, "dirty": false, "is_release": false}}' \
+  'dirty-build|dirty=True|{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11, "build": {"version": "0.8.0-test+gabc.dirty", "package_version": "0.8.0-test", "git_commit": "abc", "git_tag": "v0.8.0-test", "dirty": true, "is_release": true}}' \
+  'tag-mismatch|expected v'"$PIN"'|{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11, "build": {"version": "0.8.0-test", "package_version": "0.8.0-test", "git_commit": "abc", "git_tag": "v0.7.0", "dirty": false, "is_release": true}}'; do
+  name="${variant%%|*}"; rest="${variant#*|}"
+  pattern="${rest%%|*}"; body="${rest#*|}"
   printf '%s\n' "$body" > "$T/body-$name"
   r="$T/case3-$name"; repo "$r"
   before="$(record_digest "$r")"
   STUB_KLT_VERSION="$PIN" STUB_BODY_FILE="$T/body-$name" \
     run_wrapper "$r" "$BIN" . "./.github/scripts/regen-signoff.sh"
   rc=$?
-  if [ "$rc" -ne 0 ] && [ "$(record_digest "$r")" = "$before" ]; then
+  if [ "$rc" -ne 0 ] \
+     && { [ -z "$pattern" ] || grep -qF -- "$pattern" "$T/err"; } \
+     && [ "$(record_digest "$r")" = "$before" ]; then
     ok "payload gate ($name): record untouched"
   else
-    bad "case3-$name: rc=$rc"
+    bad "case3-$name: rc=$rc err=$(cat "$T/err")"
   fi
 done
 
 # --- 4. uvx fallback on a mismatched ambient klt lands the pinned render ----
 r="$T/case4"; repo "$r"
-printf '%s\n' '{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11, "note": "pinned render"}' > "$T/body-pinned"
+printf '%s\n' '{"schema_version": 1, "block": "sg13g2-vco", "kind": "analog", "t1_item_count": 11, "note": "pinned render", "build": '"$STUB_BUILD_BLOCK"'}' > "$T/body-pinned"
 STUB_KLT_VERSION="$BADVER" STUB_PINNED_BODY_FILE="$T/body-pinned" \
   run_wrapper "$r" "$BIN" . "./.github/scripts/regen-signoff.sh"
 rc=$?
