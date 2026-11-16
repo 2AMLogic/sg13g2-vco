@@ -60,9 +60,7 @@
         "sim/inductor-model/em-extraction/records/20260910-052657-3896421.md",
         "sim/tank-characterization/records/20260927-081110-f88eb89.md"
       ],
-      "blocked_by": [
-        50
-      ]
+      "blocked_by": []
     },
     {
       "row": 6,
@@ -98,9 +96,7 @@
       "row": 9,
       "kind": "graded",
       "records": [],
-      "blocked_by": [
-        50
-      ]
+      "blocked_by": []
     },
     {
       "row": 10,
