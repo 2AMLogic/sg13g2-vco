@@ -38,6 +38,7 @@ _None._
 Issues currently being built (`loom:building`).
 
 - **#367**: Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz)
+- **#379**: Collapse duplicate design/vco.sch and vco_core.sch into one device source *(curated)*
 
 ## PRs Awaiting Review
 
@@ -68,7 +69,6 @@ Issues carrying `loom:curated`.
 ## Proposed (Architect / Hermit)
 
 - **#198**: sim: bounded bn=substrate varactor cell characterization per DR-006 option (b) (gated on ratification) *(architect)*
-- **#379**: Collapse duplicate design/vco.sch and vco_core.sch into one device source *(hermit)*
 
 ## Epics
 
@@ -85,7 +85,7 @@ _None._
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
-| Curated | 9 |
-| Architect / Hermit proposals | 2 |
+| Curated | 10 |
+| Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
