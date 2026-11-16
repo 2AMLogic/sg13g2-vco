@@ -335,10 +335,19 @@ fields klayout-tools#2175/#2176/#2201 added, and they say this:
 | `build.version` / `build.package_version` | `0.8.0` / `0.8.0` | which `klt` graded this verdict — no longer inferred from the CI install step |
 | `build.git_tag` / `build.is_release` | `v0.8.0` / `true` | the grading build is the tagged PyPI release, not a working copy |
 | `build.dirty` | `false` | no uncommitted tool changes in the grading build |
-| `build.grading_ruleset_id` | `sha256:eb8d2ba5…c25e` | the grading rules themselves are hashed, so a rules change is drift even at an unchanged version string |
+| `build.grading_ruleset_id` | see the record's `build` object (`signoff/t1-report.json`) | the grading rules themselves are hashed, so a rules change is drift even at an unchanged version string |
 | `source_doc_content_hash` | `sha256:a26b9026…efdc7` | the exact checklist bytes graded — matches the vendored doc's SHA-256 above |
 | `build_t1_item_count` vs `t1_item_count` | `11` vs `11` | the build has rules for every row the checklist renders; nothing is graded by a build that lacks rules for it |
 | `items[].graded_by_build` | `true` on all 11 T1 rows | per-row confirmation of the same, including item 11 |
+
+The version cells above are a snapshot of the record at the current pin
+(`0.8.0`, `.github/klt-version`) as of this writing, not a restatement
+of the pin: on the next pin bump the record — not this table — is what
+changes and is authoritative, and the two version cells should then be
+re-read off the new record. The `grading_ruleset_id` is quoted nowhere
+above for exactly that reason: it is an opaque digest that changes with
+every rules release, so the table points at the record's own `build`
+object instead of a value that cannot stay current in prose.
 
 So the three things previously held together by prose plus a CI install
 step — which build graded the record, which checklist it graded against,
@@ -358,7 +367,9 @@ pinned environment — `.github/scripts/regen-signoff.sh` does this itself
 (the ambient `klt` when it matches `.github/klt-version`, else
 `uvx --from "klayout-tools==$(cat .github/klt-version)"`; a throwaway
 uvx environment is enough) — and, before committing, check that the
-record says `"git_tag": "v0.7.0"` and `"is_release": true`.
+record says `"git_tag": "v$(cat .github/klt-version)"` (the tag of the
+pinned release, whatever version that currently is) and
+`"is_release": true`.
 
 ## Sources
 
