@@ -58,9 +58,13 @@
       "kind": "graded",
       "records": [
         "sim/inductor-model/em-extraction/records/20260910-052657-3896421.md",
-        "sim/tank-characterization/records/20260927-081110-f88eb89.md"
+        "sim/tank-characterization/records/20260927-081110-f88eb89.md",
+        "sim/bn-substrate-tank/records/20261009-002323-383f22e"
       ],
-      "blocked_by": []
+      "blocked_by": [
+        362
+      ],
+      "note": "records are orientation only and grade nothing: the first two are component-level (inductor EM extraction; MIM-cap tank, whose record ratifies no spec row), the third is the closest loaded-tank evidence (Q 8.6-11.5 over corrected bn-sub* variants) but omits the bias network and HBT pair, surrogates the OSDI varactor core, runs a declared subset of row 10 and measures f0 at 3.81-4.35 GHz, outside row 1's band; the corner-graded verdict is owed by #362"
     },
     {
       "row": 6,
@@ -96,7 +100,9 @@
       "row": 9,
       "kind": "graded",
       "records": [],
-      "blocked_by": []
+      "blocked_by": [
+        363
+      ]
     },
     {
       "row": 10,
