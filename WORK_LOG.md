@@ -6,6 +6,10 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-16
 
+- **PR #377**: fix: run signoff/layout heredoc gates with python3 -I so PYTHONOPTIMIZE cannot strip their asserts
+- **Issue #374** (closed): check-signoff.sh's payload gate runs under a bare `python3 -`: cwd on sys.path, PYTHONOPTIMIZE can strip its asserts
+- **PR #378**: docs: wire #362/#363 ownership of spec rows 5 and 9 into the signoff row map
+- **Issue #361** (closed): signoff: spec rows 5 (tank Q) and 9 (pushing) have no owning issue after #337's attribution fix
 - **PR #372**: docs: make signoff README build-identity prose pin-derived
 - **Issue #369** (closed): signoff/README.md quotes stale per-pin build-identity values (git_tag v0.7.0, grading_ruleset_id) that no check validates
 - **PR #371**: Gate regen-signoff render on build identity: release, clean, pinned tag
