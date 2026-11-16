@@ -38,13 +38,12 @@ _None._
 Issues currently being built (`loom:building`).
 
 - **#367**: Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz)
-- **#379**: Audit flat device/node-name dependencies on design/vco.spice (read-only; collapse deferred)
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#383**: docs: audit flat device/node-name dependencies on design/vco.spice
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -65,7 +64,6 @@ Issues carrying `loom:curated`.
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
 - **#367**: Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz) *(curated)*
-- **#379**: Audit flat device/node-name dependencies on design/vco.spice (read-only; collapse deferred) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -83,10 +81,10 @@ _None._
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 2 |
-| PRs awaiting review | 1 |
+| In Progress (`loom:building`) | 1 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
-| Curated | 10 |
+| Curated | 9 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

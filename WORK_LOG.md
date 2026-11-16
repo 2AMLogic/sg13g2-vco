@@ -6,6 +6,8 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-16
 
+- **PR #383**: docs: audit flat device/node-name dependencies on design/vco.spice
+- **Issue #379** (closed): Audit flat device/node-name dependencies on design/vco.spice (read-only; collapse deferred)
 - **PR #377**: fix: run signoff/layout heredoc gates with python3 -I so PYTHONOPTIMIZE cannot strip their asserts
 - **Issue #374** (closed): check-signoff.sh's payload gate runs under a bare `python3 -`: cwd on sys.path, PYTHONOPTIMIZE can strip its asserts
 - **PR #378**: docs: wire #362/#363 ownership of spec rows 5 and 9 into the signoff row map
