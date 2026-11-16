@@ -6,6 +6,7 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-16
 
+- **PR #375**: chore(loom): resync installed Loom to v0.19.1302
 - **PR #383**: docs: audit flat device/node-name dependencies on design/vco.spice
 - **Issue #379** (closed): Audit flat device/node-name dependencies on design/vco.spice (read-only; collapse deferred)
 - **PR #377**: fix: run signoff/layout heredoc gates with python3 -I so PYTHONOPTIMIZE cannot strip their asserts
