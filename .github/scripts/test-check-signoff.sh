@@ -54,10 +54,12 @@ run_case() {
 
 fresh_tree() {
   # signoff/ plus every file the manifest cites, and the artifact each cited
-  # klt envelope names as its input (`file`): klt signoff re-hashes that
-  # artifact for `input_verified`, so a tree without it would render a
-  # different report and the pristine case could never pass.  Paths are
-  # repo-root-relative, as the manifest contract requires.
+  # klt envelope names as its input: `file` for sim-record envelopes, and a
+  # yield envelope's `samples`/`limits` documents (relative to the envelope's
+  # own directory).  klt signoff re-hashes those inputs for `input_verified`,
+  # so a tree without them would render a different report and the pristine
+  # case could never pass.  Paths are repo-root-relative, as the manifest
+  # contract requires.
   tree="$(mktemp -d)"
   # klt resolves an artifact-anchored envelope's `scope: "repo"` path against
   # the enclosing git toplevel (issue #243), so the throwaway tree is a repo.
@@ -88,12 +90,19 @@ for entry in (manifest.get("evidence") or {}).values():
             continue
         if isinstance(env, dict):
             # Envelope schema 2 carries `file` as a repo-relative string;
-            # schema 3 carries {"path": ..., "scope": ...}.
+            # schema 3 carries {"path": ..., "scope": ...}.  A klt yield
+            # envelope instead names its backing documents (`samples`,
+            # `limits`) as filenames relative to its own directory.
             src = env.get("file")
             if isinstance(src, dict):
                 src = src.get("path")
             if isinstance(src, str):
                 copy(src)
+            here = os.path.dirname(rel)
+            for key in ("samples", "limits"):
+                doc = env.get(key)
+                if isinstance(doc, str):
+                    copy(os.path.normpath(os.path.join(here, doc)))
 PY
   echo "$tree"
 }

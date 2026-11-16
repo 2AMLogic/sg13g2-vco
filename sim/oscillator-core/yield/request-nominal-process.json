@@ -1,30 +1,58 @@
 {
   "_comment": [
-    "PLAN, NOT RUN. Planned by issue #244; no sample has been simulated and no yield claim is made.",
-    "Not runnable yet: (1) the full-oscillator route does not exist (#94: the OSDI varactor cannot run locally or on the batch backend);",
-    "(2) the pinned klt 0.6.0 predates the monte_carlo seed fixes (README.md, 'Preconditions'); (3) the generated inputs below do not exist yet.",
-    "@@MODELS_DIR@@ and @@IND_MODEL@@ are the tokens the ngspice templates in ../testbench/ carry. vco_core_body.spice is the circuit body derived from",
-    "design/vco.spice; corners_mc_sg13g2.lib is a nested-.lib aggregator exposing the *_stat and *_mismatch sections (recipe: ../klt-sim/README.md).",
-    "Seed 244 was fixed before any run and is not to be tuned. N=400 and the analysis limits are argued in README.md, 'Sample size'.",
-    "Per-sample measurements are raw; the derived rows (f0 band centre, tuning ratio, swing = vdiff_max - vdiff_min, ...) are assembled per sample",
+    "Anchor 1, global process spread. Planned by issue #244; first run 2026-11-15 (see records/20261115-* in ../records/ and README.md 'Status').",
+    "Run-step changes from the 2026-10-17 plan draft (all recorded in README.md):",
+    "(1) models: per-family section bundles with explicit lib paths (the working post-#79 fleet shape,",
+    "    elaborate-post79/request-elaborate-post79.json) instead of the never-generated corners_mc_sg13g2.lib aggregator;",
+    "    the PDK's own sections hbt_typ_stat / mos_tt_stat / cap_typ_stat already exist in cornerHBT/MOShv/CAP.lib,",
+    "    so the aggregator has nothing left to add.",
+    "(2) monte_carlo.seed_scope = \"shared\": klt 0.8.0+ implements klayout-tools#2899 behind this field; the default",
+    "    per_corner keys the seed on the point's position, so sample k at Vctrl=0 and at 3.3 V would be different dies",
+    "    and the paired-endpoint derived rows (band centre, ratio) would be meaningless. shared makes sample k the same",
+    "    die at every point.",
+    "(3) analysis 20 ns / two-WHEN TD=10n estimator: the plan draft's 5 ns tran with a RISE=11->21 TRIG/TARG count cannot",
+    "    work at this design's frequencies (21 crossings need ~5.8 ns at f_min; the 5 ns grid's estimator errored exactly",
+    "    this way, record 20261105-180000-f6c364b). The two-WHEN TD=10n form is the one the elaborate-post79 record",
+    "    validated; its TRIG/TARG+TD alternative is recorded there as defective (TD applies to one clause only).",
+    "(4) osdi_preload: the OSDI varactor is how the fleet loads sg13_hv_svaricap (#290/#291 route).",
+    "Seed 244 was fixed before any run and is not to be tuned. N=400 and the analysis limits are argued in README.md,",
+    "'Sample size'. Derived rows (f0 band centre, tuning ratio, swing = vdiff_max - vdiff_min) are assembled per sample",
     "from the paired Vctrl points into a klt yield sample-set document by the run step (README.md, 'Analysis').",
-    "Anchor: typical process centre, 27 C, nominal 3.3 V rail. Vctrl axis is the two tuning endpoints (rows 1, 2); the mid-window and",
-    "supply-pushing points are a later stage (README.md, 'Stages'). Global statistical sections only: per-instance mismatch is off (mm_ok=0)."
+    "Anchor: PDK statistical centre at 27 C, nominal 3.3 V rail (mos_tt_stat's *_norm centres are the PDK's own stat",
+    "centre, not all 1.0). Vctrl axis is the two tuning endpoints (rows 1, 2); mid-window and supply-pushing points are",
+    "later stages (README.md, 'Stages'). Global statistical sections only: no *_mismatch section is loaded, so every",
+    "per-instance agauss() is absent, not merely variance-0.",
+    "keep_artifacts false: the report carries every per-sample measurement; 800 per-unit artifact trees would be dead",
+    "weight (the seed control, the harness check, keeps its artifacts).",
+    "engine_version 47 is a fail-closed pin (issue #3041): the fleet runner image carries ngspice-47 since",
+    "~2026-11-13; ngspice-46 aborts nothing here but 47 WITHOUT the selft=0 overlay NaNs at the first",
+    "timepoint (see vco_core_body_selft0.spice header and the run record). If the image's solver changes",
+    "again, every unit fails the pin instead of producing numbers nobody can reproduce."
   ],
-  "netlist": "vco_core_body.spice",
+  "netlist": "vco_core_body_selft0.spice",
   "netlist_source": "schematic",
   "engine": "ngspice",
   "models": {
-    "lib": "corners_mc_sg13g2.lib"
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
   },
   "corners": {
     "process": [
       {
         "name": "tt_stat",
         "sections": [
-          "hbt_typ_stat",
-          "mos_tt_stat",
-          "cap_typ_stat"
+          {
+            "section": "hbt_typ_stat",
+            "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+          },
+          {
+            "section": "mos_tt_stat",
+            "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+          },
+          {
+            "section": "cap_typ_stat",
+            "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+          }
         ]
       }
     ],
@@ -41,41 +69,51 @@
   "monte_carlo": {
     "n": 400,
     "seed": 244,
-    "vary": "process"
+    "vary": "process",
+    "seed_scope": "shared"
   },
   "analysis": {
     "kind": "tran",
-    "args": "1p 5n 0 2p"
+    "args": "1p 20n 0 2p"
   },
   "measurements": [
     {
-      "name": "t_10_periods",
+      "name": "t_cross_1",
       "unit": "s",
-      "spice": ".meas tran t_10_periods TRIG v(vdiff) VAL=0 RISE=11 TARG v(vdiff) VAL=0 RISE=21"
+      "spice": ".meas tran t_cross_1 WHEN v(vdiff)=0 RISE=1 TD=10n"
+    },
+    {
+      "name": "t_cross_11",
+      "unit": "s",
+      "spice": ".meas tran t_cross_11 WHEN v(vdiff)=0 RISE=11 TD=10n"
     },
     {
       "name": "vdiff_max",
       "unit": "V",
-      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=2.5n TO=5n"
+      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
     },
     {
       "name": "vdiff_min",
       "unit": "V",
-      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=2.5n TO=5n"
+      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
     },
     {
       "name": "isup_avg",
       "unit": "A",
-      "spice": ".meas tran isup_avg AVG i(vsup) FROM=2.5n TO=5n"
+      "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
     },
     {
       "name": "vtail_avg",
       "unit": "V",
-      "spice": ".meas tran vtail_avg AVG v(tail) FROM=2.5n TO=5n"
+      "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
     }
   ],
   "options": {
-    "timeout_s": 3600,
-    "keep_artifacts": true
-  }
+    "timeout_s": 3000,
+    "keep_artifacts": false,
+    "osdi_preload": [
+      "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+    ]
+  },
+  "engine_version": "47"
 }

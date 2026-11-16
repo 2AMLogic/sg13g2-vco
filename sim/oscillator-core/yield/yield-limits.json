@@ -1,0 +1,11 @@
+{
+  "_comment": "Run-level defaults and per-measurement limits for the anchor-1 yield envelopes (issue #244). target_yield 0.99 and target_ci_halfwidth 0.01 are the sizing argument in README.md 'Sample size' (N=400, zero failures -> Clopper-Pearson lower bound 0.9908; Wald half-width 0.0097 at yield 0.99). Limits are quoted from spec/target-spec.md: row 1 band 4.5-5.5 GHz, row 2 ratio >= 1.15, row 7 swing >= 0.40 V. Per-measurement entries here mirror the inline limits; the inline copy travels with the sample set, this file is the single place the run defaults live.",
+  "confidence": 0.95,
+  "target_ci_halfwidth": 0.01,
+  "target_yield": 0.99,
+  "measurements": {
+    "f0_bandcentre_hz": {"min": 4500000000, "max": 5500000000},
+    "tuning_ratio": {"min": 1.15},
+    "swing_worst_v": {"min": 0.4}
+  }
+}

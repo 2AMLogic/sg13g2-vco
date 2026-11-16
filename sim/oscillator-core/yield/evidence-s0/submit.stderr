@@ -1,0 +1,6 @@
+klt sim: warning: request.batch.max_units_per_job 16 leaves jobs of 16 units, over the 1-unit serial upper bound for the fleet's 3600s whole-job ceiling (bound = options.timeout_s x units, not a runtime estimate; lower options.timeout_s to tighten it); a job still running at the ceiling is killed and every unit is reported batch_job_timeout (shown once per run)
+klt: batch job klt-sim-0b98b44a843f submitting to s3://<bucket>/jobs/klt-sim-0b98b44a843f
+klt sim: batch job klt-sim-0b98b44a843f: submitted
+klt sim: batch job klt-sim-0b98b44a843f launched; re-attach with `klt sim <request> --backend batch --attach klt-sim-0b98b44a843f`
+klt sim: batch job klt-sim-0b98b44a843f state=no status.json yet elapsed=1s
+klt sim: batch job klt-sim-0b98b44a843f: done
