@@ -31,25 +31,27 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#337**: docs: ROADMAP.md and characterization-rows.json disagree on which spec rows #50 owes
+- **#361**: signoff: spec rows 5 (tank Q) and 9 (pushing) have no owning issue after #337's attribution fix
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
-- **#360**: signoff regen path has no version guard: a mismatched klt silently rewrites the verdict-of-record
+- **#367**: Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz)
+- **#374**: check-signoff.sh's payload gate runs under a bare `python3 -`: cwd on sys.path, PYTHONOPTIMIZE can strip its asserts
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-_None._
+- **#373**: docs: quote band-centre mismatch sigma_f0 (3.6 MHz) in yield summary lines
+- **#375**: chore(loom): resync installed Loom to v0.19.1302
 
 ## Approved (Awaiting Merge)
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-- **#366**: signoff: guarded atomic regen for t1-report.json (klt-pin helper + wrapper)
+_None._
 
 ## Proposed
 
@@ -63,8 +65,9 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
-- **#337**: docs: ROADMAP.md and characterization-rows.json disagree on which spec rows #50 owes *(curated)*
-- **#360**: signoff regen path has no version guard: a mismatched klt silently rewrites the verdict-of-record *(curated)*
+- **#361**: signoff: spec rows 5 (tank Q) and 9 (pushing) have no owning issue after #337's attribution fix *(curated)*
+- **#367**: Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz) *(curated)*
+- **#374**: check-signoff.sh's payload gate runs under a bare `python3 -`: cwd on sys.path, PYTHONOPTIMIZE can strip its asserts *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -82,10 +85,10 @@ _None._
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 1 |
-| In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 1 |
-| Curated | 10 |
+| In Progress (`loom:building`) | 2 |
+| PRs awaiting review | 2 |
+| Approved PRs awaiting merge | 0 |
+| Curated | 11 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

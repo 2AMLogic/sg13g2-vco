@@ -4,6 +4,17 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-16
+
+- **PR #372**: docs: make signoff README build-identity prose pin-derived
+- **Issue #369** (closed): signoff/README.md quotes stale per-pin build-identity values (git_tag v0.7.0, grading_ruleset_id) that no check validates
+- **PR #371**: Gate regen-signoff render on build identity: release, clean, pinned tag
+- **Issue #368** (closed): regen-signoff.sh ambient-match path cannot tell a pinned release from a dev build that reports the pin
+- **PR #357**: docs: reconcile the row set owed by #50 across ROADMAP and the signoff row map
+- **Issue #337** (closed): docs: ROADMAP.md and characterization-rows.json disagree on which spec rows #50 owes
+- **PR #366**: signoff: guarded atomic regen for t1-report.json (klt-pin helper + wrapper)
+- **Issue #360** (closed): signoff regen path has no version guard: a mismatched klt silently rewrites the verdict-of-record
+
 ### 2026-11-15
 
 - **PR #364**: sim: run the anchor-1 Monte Carlo yield campaign and cite it for T1 item 6
