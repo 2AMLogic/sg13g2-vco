@@ -6,6 +6,9 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-15
 
+- **PR #364**: sim: run the anchor-1 Monte Carlo yield campaign and cite it for T1 item 6
+- **PR #358**: docs: pin the signoff regen's klt invocation via uvx at the klt-version pin
+- **Issue #352** (closed): docs: the new CLAUDE.md/AGENTS.md signoff bullet states the klt pin but not how to invoke it
 - **PR #353**: fix: pn_summary_rows_common fails loudly on an unknown section name
 - **PR #351**: ci: compare friction-ledger statuses against the klayout-tools tracker
 - **Issue #346** (closed): pn_summary_rows_common emits nothing, and exits 0, on an unrecognized section name
