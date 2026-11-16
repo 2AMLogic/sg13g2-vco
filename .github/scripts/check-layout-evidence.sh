@@ -25,7 +25,7 @@ if [ ! -f "$GDS" ]; then
 fi
 actual="sha256:$(sha256sum "$GDS" | cut -d' ' -f1)"
 
-python3 - "$ROOT" "$actual" <<'PY'
+python3 -I - "$ROOT" "$actual" <<'PY'
 import json, os, sys
 
 root, actual = sys.argv[1], sys.argv[2]
