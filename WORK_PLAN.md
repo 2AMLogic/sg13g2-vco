@@ -37,23 +37,19 @@ Human-approved issues ready for implementation (`loom:issue`).
 
 Issues currently being built (`loom:building`).
 
-- **#333**: ci: klt-friction-ledger.json upstream states go stale (2 of 31 entries wrong), and nothing re-checks them
-- **#346**: pn_summary_rows_common emits nothing, and exits 0, on an unrecognized section name
-- **#354**: docs: run_pilot_grid.sh omits row 7 from the graded row set, in a sha256-pinned file (split from #337)
+- **#360**: signoff regen path has no version guard: a mismatched klt silently rewrites the verdict-of-record
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#351**: ci: compare friction-ledger statuses against the klayout-tools tracker
-- **#353**: fix: pn_summary_rows_common fails loudly on an unknown section name
-- **#355**: fix: include row 7 in run_pilot_grid.sh's graded-row list and refresh signoff pins
+_None._
 
 ## Approved (Awaiting Merge)
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-_None._
+- **#366**: signoff: guarded atomic regen for t1-report.json (klt-pin helper + wrapper)
 
 ## Proposed
 
@@ -67,10 +63,8 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
-- **#333**: ci: klt-friction-ledger.json upstream states go stale (2 of 31 entries wrong), and nothing re-checks them *(curated)*
 - **#337**: docs: ROADMAP.md and characterization-rows.json disagree on which spec rows #50 owes *(curated)*
-- **#346**: pn_summary_rows_common emits nothing, and exits 0, on an unrecognized section name *(curated)*
-- **#354**: docs: run_pilot_grid.sh omits row 7 from the graded row set, in a sha256-pinned file (split from #337) *(curated)*
+- **#360**: signoff regen path has no version guard: a mismatched klt silently rewrites the verdict-of-record *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -88,10 +82,10 @@ _None._
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 1 |
-| In Progress (`loom:building`) | 3 |
-| PRs awaiting review | 3 |
-| Approved PRs awaiting merge | 0 |
-| Curated | 12 |
+| In Progress (`loom:building`) | 1 |
+| PRs awaiting review | 0 |
+| Approved PRs awaiting merge | 1 |
+| Curated | 10 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
