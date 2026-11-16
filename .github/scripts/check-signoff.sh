@@ -76,7 +76,7 @@ rc=$?
 # Report payload gates before drift comparison: a failing manifest whose
 # fresh render accidentally matches a stale committed record must still
 # fail.
-python3 - "$tmp" <<'PY' || payload_rc=1
+python3 -I - "$tmp" <<'PY' || payload_rc=1
 import json, sys
 
 with open(sys.argv[1]) as f:
