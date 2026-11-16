@@ -60,7 +60,7 @@
     ],
     "8": {
       "file": "signoff/evidence/t1-item-8-characterization.json",
-      "content_hash": "sha256:5797b0519a91298df282b9eac711015a02580b8c8a6433f7523cdca732e5e2ac"
+      "content_hash": "sha256:3985de24ef7729f093fd9751c77664794b1b6d9aad630f654b989f6c22c54751"
     },
     "9": {
       "file": "signoff/evidence/t1-item-9-testbenches.json",
