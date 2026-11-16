@@ -140,6 +140,9 @@ t="$(fresh_tree)"
 v="$(mktemp -d)"
 mkdir -p "$v/.github/scripts"
 cp "$CHECKER" "$v/.github/scripts/check-signoff.sh"
+# The pin assertion is a sourced helper (klt-pin.sh) resolving next to $0,
+# so case 5's fixture must copy it beside the copied checker.
+cp "$HERE/klt-pin.sh" "$v/.github/scripts/klt-pin.sh"
 echo "0.0.0-mismatch" > "$v/.github/klt-version"
 if "$v/.github/scripts/check-signoff.sh" --root "$t" 2>"$v/err" >/dev/null; then
   echo "FAIL: version mismatch fails (checker passed)" >&2

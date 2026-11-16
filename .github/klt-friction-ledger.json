@@ -364,6 +364,17 @@
         "sim/oscillator-core/yield/"
       ],
       "note": "Workaround exercised at 0.8.0: every anchor-1 campaign request carries engine_version \"47\" (fail-closed post-run) and the run record (records/20261115-*) documents the ngspice-47 VBIC self-heating abort that the image change produced, with the selft=0 bench decision and its measured bound. A pre-submit runner-side selector (klayout-tools#5853) would have refused the first submission instead."
+    },
+    {
+      "number": 5867,
+      "gap": "klt signoff --manifest cannot write the tier-report render to a file (-o/--output is scoped to --attest), so callers redirect stdout destructively and a failing render truncates the committed record.",
+      "status": "open",
+      "status_checked_on": "2026-11-15",
+      "klt_version_verified": "0.8.0",
+      "workarounds": [
+        ".github/scripts/regen-signoff.sh"
+      ],
+      "note": "Workaround renders to a temp file, gates the payload and only then moves it over the record (issue #360); cited from .github/scripts/regen-signoff.sh. Filed at the 0.8.0 pin, so the pin-keyed re-check trigger never fires for it (#333)."
     }
   ]
 }

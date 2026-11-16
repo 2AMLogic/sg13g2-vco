@@ -123,7 +123,7 @@ run_klayout() {
   fi
   have="$("$PY" -I -c 'import importlib.metadata as m; print(m.version("klayout"))' 2>/dev/null)"
   if [ -z "$have" ]; then
-    echo "MISSING TOOL: klayout pip wheel (pip install klayout==$want)" >&2
+    echo "MISSING TOOL: klayout pip wheel (install the pinned wheel: klayout==$want)" >&2
     return 1
   fi
   if [ "$have" != "$want" ]; then

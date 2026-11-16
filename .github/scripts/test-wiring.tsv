@@ -17,6 +17,7 @@
 .github/scripts/test-model-inputs.sh	model-inputs-selftest	.github/scripts/check-all.sh
 .github/scripts/test-record-currency.sh	currency-selftest	.github/scripts/check-all.sh
 .github/scripts/test-record-deck-integrity.sh	deck-integrity-selftest	.github/scripts/check-all.sh
+.github/scripts/test-regen-signoff.sh	regen-signoff-selftest	.github/scripts/check-all.sh
 sim/tests/test-build-osdi-staging.sh	osdi-staging-selftest	.github/scripts/check-all.sh
 sim/tests/test-local-grid-guard.sh	local-grid-guard-selftest	.github/scripts/check-all.sh
 sim/tests/test-reserve-record-id.sh	record-id-selftest	.github/scripts/check-all.sh

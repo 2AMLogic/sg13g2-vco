@@ -281,17 +281,17 @@ It is refreshed deliberately, in the same commit as whatever change
 re-grades the block:
 
 ```bash
-python3 -m pip install "klayout-tools==$(cat .github/klt-version)"   # the pinned release
-klt signoff --manifest signoff/manifest.json \
-  --tiers-doc signoff/design-evidence-tiers.md --format json \
-  > signoff/t1-report.json
+.github/scripts/regen-signoff.sh
 ```
 
 The pin is stated once, in `.github/klt-version` (see
 `.github/klt-version.md`); CI and the checker both read it, and the
-checker refuses to grade under a different `klt --version`. To render or
-check with the pinned release without a host-wide install:
-`uvx --from "klayout-tools==$(cat .github/klt-version)" klt signoff ...`.
+checker refuses to grade under a different `klt --version`. The regen
+wrapper picks the pinned release itself — the ambient `klt` when it
+matches the pin, `uvx --from "klayout-tools==$(cat .github/klt-version)"`
+otherwise — so no host-wide install is ever needed. To run the checker
+the same way:
+`uvx --from "klayout-tools==$(cat .github/klt-version)" bash .github/scripts/check-signoff.sh`.
 
 `.github/scripts/check-signoff.sh` (self-tested by
 `test-check-signoff.sh`, both run in CI — a checker that cannot fail is
@@ -354,9 +354,11 @@ different bundled checklist (it self-reports the difference as
 different `grading_ruleset_id`). Such a build satisfies a
 pinned-version requirement in an already-provisioned environment
 but renders a record that byte-drifts against CI. Render from a clean
-`python3 -m pip install "klayout-tools==$(cat .github/klt-version)"` (a throwaway venv is
-enough) and, before committing, check that the record says
-`"git_tag": "v0.7.0"` and `"is_release": true`.
+pinned environment — `.github/scripts/regen-signoff.sh` does this itself
+(the ambient `klt` when it matches `.github/klt-version`, else
+`uvx --from "klayout-tools==$(cat .github/klt-version)"`; a throwaway
+uvx environment is enough) — and, before committing, check that the
+record says `"git_tag": "v0.7.0"` and `"is_release": true`.
 
 ## Sources
 

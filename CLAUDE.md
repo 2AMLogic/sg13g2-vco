@@ -31,15 +31,12 @@ on IHP SG13G2, IHP's open-source 130 nm SiGe BiCMOS PDK, designed and verified b
   content by sha256; the authoritative member list is
   `signoff/evidence/inventory-*.json` (includes `README.md`, the CI
   workflows and every `sim/*/testbench/*`). Editing any member — **even a
-  pure prose fix** — turns CI red until you run, verbatim from
-  `.github/scripts/check-signoff-inventories.sh`:
+  pure prose fix** — turns CI red until you run the guarded regen wrapper
+  (it regenerates the inventories and renders the verdict of record at the
+  `.github/klt-version` pin, writing only on a clean, gated render):
 
   ```bash
-  python3 -I signoff/inventories.py --regen
-  uvx --from "klayout-tools==$(cat .github/klt-version)" klt signoff \
-    --manifest signoff/manifest.json \
-    --tiers-doc signoff/design-evidence-tiers.md --format json \
-    > signoff/t1-report.json
+  .github/scripts/regen-signoff.sh
   ```
 
   Editing `spec/target-spec.md` additionally requires
