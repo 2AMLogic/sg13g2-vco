@@ -315,14 +315,14 @@
     {
       "number": 2900,
       "gap": "The documented klayout-tools[yield] install path does not resolve; klt yield's native extension is not on PyPI.",
-      "status": "open",
-      "status_checked_on": "2026-10-27",
+      "status": "closed",
+      "status_checked_on": "2026-11-15",
       "klt_version_verified": "0.6.0",
       "reverified": "0.8.0",
       "workarounds": [
         "sim/oscillator-core/yield/README.md"
       ],
-      "note": "Still open upstream (2026-10-27). `uv pip install 'klayout-tools[yield]==0.8.0'` still fails to resolve: klt-yield-native>=0.1.0,<0.2 is not in the package registry. Workaround KEPT."
+      "note": "Closed completed upstream 2026-10-29 (re-checked 2026-11-15; was recorded open on a 2026-10-27 check). The registry gap cleared without a klt release: klt-yield-native 0.1.0 was published to PyPI on 2026-11-05 with a manylinux_2_28_x86_64 wheel, and `uvx --from 'klayout-tools[yield]==0.8.0' klt yield --help` resolves and runs (measured 2026-11-14, ROADMAP.md). Workaround KEPT: it is the campaign plan whose precondition P3 records this gap, and whether `klt yield` actually serves the Monte Carlo run is decided at run time by #244, not by upstream state alone (compare #4309: closed upstream, fix absent from the 0.8.0 pin)."
     },
     {
       "number": 2908,
@@ -339,10 +339,11 @@
     {
       "number": 5212,
       "gap": "Curated sg13g2 nwell.enclosing.pactiv.1 lacks the foundry SVaricap carve-out, so PDK varactor cells false-positive.",
-      "status": "open",
-      "status_checked_on": "2026-11-10",
+      "status": "closed",
+      "status_checked_on": "2026-11-15",
       "klt_version_verified": "0.8.0",
-      "workarounds": []
+      "workarounds": [],
+      "note": "Closed completed upstream 2026-11-10 (re-checked 2026-11-15). Filed at the 0.8.0 pin, so the pin-keyed re-check trigger never fired for it (#333)."
     },
     {
       "number": 4309,
@@ -352,6 +353,17 @@
       "klt_version_verified": "0.8.0",
       "workarounds": [],
       "note": "Closed completed 2026-10-27, but the fix is NOT in the pinned release: measured 2026-11-14, signoff_runset.PINNED_RUNSETS is {} at 0.8.0 and carries 3 entries at 0.9.1, including ihp-sg13g2 at IHP-Open-PDK v0.3.0 (sha256:e01bcb1e..., path ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs). Clearing it here needs the klt pin bump (ROADMAP.md Now item 4); cited from ROADMAP.md."
+    },
+    {
+      "number": 5853,
+      "gap": "klt sim batch/remote has no runner-side simulator selection or version requirement; the request's engine_version pin (klayout-tools#3041) is checked only against the version the runner's report carried, after the run. A runner image that changes its simulator major re-runs previously validated routes on a different solver, and the first signal is per-unit aborts that look like design failures.",
+      "status": "open",
+      "status_checked_on": "2026-11-15",
+      "klt_version_verified": "0.8.0",
+      "workarounds": [
+        "sim/oscillator-core/yield/"
+      ],
+      "note": "Workaround exercised at 0.8.0: every anchor-1 campaign request carries engine_version \"47\" (fail-closed post-run) and the run record (records/20261115-*) documents the ngspice-47 VBIC self-heating abort that the image change produced, with the selft=0 bench decision and its measured bound. A pre-submit runner-side selector (klayout-tools#5853) would have refused the first submission instead."
     }
   ]
 }

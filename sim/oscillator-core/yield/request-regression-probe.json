@@ -1,0 +1,94 @@
+{
+  "_comment": [
+    "One-unit fleet probe: the PLAIN campaign body (no selft overlay) on the runner's ngspice-47.",
+    "Captures the fleet-side first-timepoint abort that the 2026-11-13 image change produced;",
+    "the 16/16 first S0 submission failed identically. Evidence for records/20261115-*.",
+    "Do not scale this request up: the campaign body is vco_core_body_selft0.spice."
+  ],
+  "netlist": "vco_core_body.spice",
+  "netlist_source": "schematic",
+  "engine": "ngspice",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+  },
+  "corners": {
+    "process": [
+      {
+        "name": "tt_nominal",
+        "sections": [
+          {
+            "section": "hbt_typ",
+            "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+          },
+          {
+            "section": "mos_tt",
+            "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+          },
+          {
+            "section": "cap_typ",
+            "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+          }
+        ]
+      }
+    ],
+    "supply_v": {
+      "vct": [
+        0.0
+      ]
+    },
+    "temperature_c": [
+      27
+    ]
+  },
+  "monte_carlo": {
+    "n": 1,
+    "seed": 244,
+    "vary": "both",
+    "seed_scope": "shared"
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 20n 0 2p"
+  },
+  "measurements": [
+    {
+      "name": "t_cross_1",
+      "unit": "s",
+      "spice": ".meas tran t_cross_1 WHEN v(vdiff)=0 RISE=1 TD=10n"
+    },
+    {
+      "name": "t_cross_11",
+      "unit": "s",
+      "spice": ".meas tran t_cross_11 WHEN v(vdiff)=0 RISE=11 TD=10n"
+    },
+    {
+      "name": "vdiff_max",
+      "unit": "V",
+      "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
+    },
+    {
+      "name": "vdiff_min",
+      "unit": "V",
+      "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
+    },
+    {
+      "name": "isup_avg",
+      "unit": "A",
+      "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
+    },
+    {
+      "name": "vtail_avg",
+      "unit": "V",
+      "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
+    }
+  ],
+  "options": {
+    "timeout_s": 3000,
+    "keep_artifacts": true,
+    "osdi_preload": [
+      "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+    ]
+  },
+  "engine_version": "47"
+}

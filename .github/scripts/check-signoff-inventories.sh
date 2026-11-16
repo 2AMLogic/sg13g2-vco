@@ -8,7 +8,8 @@
 # pin no longer matches its inventory. Refresh deliberately with:
 #
 #   python3 -I signoff/inventories.py --regen
-#   klt signoff --manifest signoff/manifest.json \
+#   uvx --from "klayout-tools==$(cat .github/klt-version)" klt signoff \
+#     --manifest signoff/manifest.json \
 #     --tiers-doc signoff/design-evidence-tiers.md --format json \
 #     > signoff/t1-report.json
 #

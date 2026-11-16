@@ -104,7 +104,9 @@ The four items below wait on none of those blocks; each is one pull request.
   `manylinux_2_28_x86_64` wheel, and `uvx --from
   'klayout-tools[yield]==0.8.0' klt yield --help` resolves and runs on a
   dispatch host (measured 2026-11-14). `.github/klt-friction-ledger.json`
-  still records #2900 open; that staleness is tracked in #333, not here.
+  records #2900 `closed` (corrected in #333, re-checked 2026-11-15), and
+  `check-all.sh friction-upstream` now re-checks every ledger entry against
+  the tracker daily.
   Done when: a `klt yield` report is cited in `signoff/manifest.json` for
   item 6.
 - **Post-layout verification** (#260, item 7). Needs extraction that

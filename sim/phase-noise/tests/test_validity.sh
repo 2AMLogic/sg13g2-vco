@@ -145,5 +145,73 @@ if [[ -n "${rec}" ]]; then
     "1.329958e+13 4.596977e+11 4 -102.2763 0.2953 -102.4447 -101.8343 -122.2763 0.2953"
 fi
 
+# ---- pn_summary_rows_common: the 27-row column contract (issue #346) --------
+# pn_bench.sh leaves the mid/tail arm variables to a measurement run; bind
+# sentinels so set -u does not trip on them during the section dispatch.
+# shellcheck disable=SC2034  # read by pn_summary_rows_common (pn_bench.sh)
+F0_MEAS=6.0e9 VPP_MEAS=0.9 SI_TANK=1e-24 SI_TAIL=1e-26 \
+NOISE_FLAT_TANK=1.0 NOISE_FLAT_TAIL=1.0 GQ_MEAN=1.3e13 GQ_SD=4.6e11 GQ_N=4 \
+GQ_TAIL=1.3e12 LINEARITY_PCT=2.0 L1_MEAN=-102.3 L1_SD=0.30 L1_MIN=-102.4 \
+L1_MAX=-101.8 L10_MEAN=-122.3 L10_SD=0.30 L1_TAIL=-118.1 PORT_RATIO_DB=16 \
+IND_BAR_Q_DB=0.50 IND_BAR_FIT_DB=0.10 IND_BAR_DB=0.51
+
+# An unrecognized section name must fail loudly: the summary rows are
+# append-only published evidence, so a silently-empty section that exits 0
+# would publish a truncated record while the driver reports success.
+out="$(pn_summary_rows_common taill mos cap hbt 25 3.3 rail 2>"${T}/summary-unknown.err")"; rc=$?
+expect "summary unknown section rc" "${rc}" 1
+expect "summary unknown section stdout empty" "${out}" ""
+# The valid-set grep reads PN_SUMMARY_SECTIONS, so pin its presence first:
+# set -u does not flag "${arr[*]}" on an unset array, and the empty
+# expansion would turn that grep into a vacuous match on any stderr.
+if [[ -z "${PN_SUMMARY_SECTIONS[*]+x}" ]]; then
+  fail "summary section list: PN_SUMMARY_SECTIONS is not set by pn_bench.sh"
+elif grep -q "unknown section 'taill'" "${T}/summary-unknown.err" \
+   && grep -qF "${PN_SUMMARY_SECTIONS[*]}" "${T}/summary-unknown.err"; then
+  pass "summary unknown section names the bad section and the valid set"
+else
+  fail "summary unknown section stderr: $(cat "${T}/summary-unknown.err")"
+fi
+
+out="$(pn_summary_rows_common "" 2>"${T}/summary-empty.err")"; rc=$?
+expect "summary empty section rc" "${rc}" 1
+expect "summary empty section stdout empty" "${out}" ""
+
+# No argument at all: "${1}" trips set -u before the case dispatches. That
+# abort is the landed behaviour -- assert it stays loud, not silent.
+out="$(pn_summary_rows_common 2>"${T}/summary-noarg.err")"; rc=$?
+expect "summary no-argument rc" "${rc}" 1
+expect "summary no-argument stdout empty" "${out}" ""
+if grep -q "unbound variable" "${T}/summary-noarg.err"; then
+  pass "summary no-argument trips set -u on \${1}"
+else
+  fail "summary no-argument stderr: $(cat "${T}/summary-noarg.err")"
+fi
+
+# Row counts are the published column contract: 6 / 2 / 19 rows, 27 total.
+# The name list comes from pn_bench.sh's PN_SUMMARY_SECTIONS (the one place
+# the valid names are stated); counts is parallel to it. Guard the list's
+# presence with the + alternate form before any other dereference: set -u
+# does flag "${#arr[@]}" on an unset array, and without set -e (this
+# fixture's mode) that error abandons the whole if compound without taking
+# either branch -- no fail, no assertions, exit 0. It does not flag the
+# + form, so the first arm runs and fails loudly instead.
+counts=(6 2 19)
+if [[ -z "${PN_SUMMARY_SECTIONS[*]+x}" ]]; then
+  fail "summary section list: PN_SUMMARY_SECTIONS is not set by pn_bench.sh"
+elif [[ "${#PN_SUMMARY_SECTIONS[@]}" -ne "${#counts[@]}" ]]; then
+  fail "summary section list: got ${#PN_SUMMARY_SECTIONS[@]} name(s), want ${#counts[@]}"
+else
+  for i in "${!PN_SUMMARY_SECTIONS[@]}"; do
+    s="${PN_SUMMARY_SECTIONS[i]}"
+    if [[ "${s}" == head ]]; then
+      n="$(pn_summary_rows_common "${s}" mos cap hbt 25 3.3 "supply rail simulated" | wc -l)"
+    else
+      n="$(pn_summary_rows_common "${s}" | wc -l)"
+    fi
+    expect "summary rows ${s}" "${n}" "${counts[i]}"
+  done
+fi
+
 if [[ "${fails}" -ne 0 ]]; then echo "${fails} check(s) failed"; exit 1; fi
 echo "all cases passed"

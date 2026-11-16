@@ -6,6 +6,16 @@ engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
 ### 2026-11-15
 
+- **PR #353**: fix: pn_summary_rows_common fails loudly on an unknown section name
+- **PR #351**: ci: compare friction-ledger statuses against the klayout-tools tracker
+- **Issue #346** (closed): pn_summary_rows_common emits nothing, and exits 0, on an unrecognized section name
+- **Issue #333** (closed): ci: klt-friction-ledger.json upstream states go stale (2 of 31 entries wrong), and nothing re-checks them
+- **PR #355**: fix: include row 7 in run_pilot_grid.sh's graded-row list and refresh signoff pins
+- **Issue #354** (closed): docs: run_pilot_grid.sh omits row 7 from the graded row set, in a sha256-pinned file (split from #337)
+- **PR #350**: docs: point agent instructions at the signoff inventory regen requirement
+- **PR #345**: docs: correct README status paragraph against graded records and link ROADMAP.md
+- **Issue #347** (closed): docs: warn that editing README.md requires regenerating the T1 item 10 signoff inventory
+- **Issue #331** (closed): docs: bring the README status paragraph up to the records on main and link ROADMAP.md
 - **PR #348**: fix(friction): enumerate tracked files with git only in check_klt_friction
 - **PR #344**: sim: consolidate the duplicated ISF reduce-and-publish block into pn_bench.sh
 - **PR #343**: layout: add klt erc supply-spec evidence for vco.gds (ERC half of T1 item 11)
