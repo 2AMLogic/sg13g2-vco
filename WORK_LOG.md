@@ -6,6 +6,8 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-17
 
+- **PR #373**: docs: quote band-centre mismatch sigma_f0 (3.6 MHz) in yield summary lines
+- **Issue #367** (closed): Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz)
 - **PR #400**: fix: dedup unmerged git-ls-files paths in signoff inventory candidates
 - **Issue #399** (closed): signoff inventories: git ls-files duplicates an unmerged path, so a conflicted tree can inventory a member 3x
 - **PR #398**: fix: derive signoff inventory candidates from git-tracked files
