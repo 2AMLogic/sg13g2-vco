@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -124,6 +125,34 @@ def member(rel: str, root: Path) -> dict:
 
 
 def _tracked_files(root: Path, pattern: str) -> list[str]:
+    """Files under root matching pattern, from git when root is a checkout.
+
+    The name says tracked, so in a git work tree the candidates come from
+    `git ls-files` (the index) rather than the filesystem: an untracked file
+    that matches a glob must never join an inventory, and one pinned by a
+    stale `--regen` must not make CI invent a path absent from the commit
+    (issue #397). The `:(glob)` magic pathspec reproduces `Path.glob()`
+    semantics (`**` across directories); the plain pathspec does not. Staged
+    but uncommitted files are indexed, so a forgotten `git add` is still seen
+    the way CI's checkout will see it. Filtering by `is_file()` drops a
+    tracked-but-deleted path so a removed member still fails by name. A
+    throwaway `--root` copy with no `.git` (and a root that is not the top of
+    its work tree) falls back to the filesystem glob, which is what the
+    `tests/stdlib` drift cases grade.
+    """
+    try:
+        top = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        top = ""
+    if top and Path(top).resolve() == root.resolve():
+        listed = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "-z", "--", f":(glob){pattern}"],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        return sorted(p for p in listed.split("\0") if p and (root / p).is_file())
     return sorted(
         p.relative_to(root).as_posix() for p in root.glob(pattern) if p.is_file()
     )
