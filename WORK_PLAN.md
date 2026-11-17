@@ -10,7 +10,7 @@ only when label state changes and the Guide debounce window has elapsed.
 
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
 
-_None._
+- **#385**: chore(loom): resync installed Loom to v0.19.1305
 
 ## Very Important
 
@@ -43,13 +43,13 @@ Issues currently being built (`loom:building`).
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#385**: chore(loom): resync installed Loom to v0.19.1305
+_None._
 
 ## Approved (Awaiting Merge)
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-_None._
+- **#385**: chore(loom): resync installed Loom to v0.19.1305
 
 ## Proposed
 
@@ -77,13 +77,13 @@ _None._
 
 | Bucket | Count |
 |------|-------|
-| Operator merge-risk holds | 0 |
+| Operator merge-risk holds | 1 |
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
-| Approved PRs awaiting merge | 0 |
+| PRs awaiting review | 0 |
+| Approved PRs awaiting merge | 1 |
 | Curated | 9 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
