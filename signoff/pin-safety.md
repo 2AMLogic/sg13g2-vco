@@ -32,8 +32,8 @@ by hand anywhere in the flow.
 
 ## The pinned surface (snapshot @ `9e27225`)
 
-Three tiers. Only tier 1 is inventory-pinned; tiers 2 and 3 are pinned by
-other mechanisms and listed so an edit cannot miss them.
+Four tiers. Only tier 1 is inventory-pinned; tiers 2–4 are pinned by other
+mechanisms and listed so an edit cannot miss them.
 
 **Tier 1 — inventory-pinned members (40 files).** Changing any byte of these
 without regenerating fails CI (`check-all.sh signoff-inventories`), naming the
@@ -51,20 +51,36 @@ file:
   all six `.github/workflows/*.yml`, `.github/scripts/check-all.sh`.
 
 **Tier 2 — generator-owned artifacts (never hand-edited):**
-`signoff/evidence/t1-item-{1,9,10}-*.json` (envelopes),
-`signoff/characterization.md`, `signoff/t1-report.json` (the verdict of
+`signoff/evidence/t1-item-{1,8,9,10}-*.json` (envelopes; the item-8 one,
+`t1-item-8-characterization.json`, is additionally manifest-pinned — see
+tier 3), `signoff/characterization.md`, `signoff/t1-report.json` (the verdict of
 record, written only by `.github/scripts/regen-signoff.sh` on a clean, gated
 render).
 
-**Tier 3 — manifest-cited artifacts (pinned by `content_hash` in
-`signoff/manifest.json`, graded by `klt signoff`, not audited by
-`inventories.py`):** `layout/drc/vco-drc-ihp.json` (items 2 and 3, pinned to
-`layout/vco.gds`'s digest), `layout/erc/vco-erc.json` and
-`layout/lvs/vco-lvs-record.json` (item 11), the six
-`sim/oscillator-core/yield/yield-envelope-*.json` citations (item 6), the
-vendored `signoff/design-evidence-tiers.md` (pinned via the report's
-`source_doc_content_hash`), and the ratified spec table (item 8 reads its
-digest as a characterization input).
+**Tier 3 — manifest-cited artifacts (`signoff/manifest.json`, graded by
+`klt signoff`, not audited by `inventories.py`).** The manifest uses two
+citation forms, and they are not equally strong:
+
+- *`content_hash` pins (byte-pinned):* `layout/drc/vco-drc-ihp.json` (items 2
+  and 3, pinned to `layout/vco.gds`'s digest), `layout/erc/vco-erc.json`
+  (item 11), the six `sim/oscillator-core/yield/yield-envelope-*.json`
+  citations (item 6), `signoff/evidence/t1-item-8-characterization.json`
+  (item 8 envelope), and the vendored `signoff/design-evidence-tiers.md`
+  (pinned via the report's `source_doc_content_hash`).
+- *JSON-pointer citations (not byte-pinned):* `layout/lvs/vco-lvs-record.json`
+  is cited as `"pointer": "/klt_leg/lvs/response"` with **no `content_hash`
+  anywhere**. Only the bytes under that pointer reach the render; an edit
+  elsewhere in that file is caught by no digest, so treat the record as
+  ungated except through item-11 grading.
+
+Item 8's characterization inputs (their digests are bound into the tier-2
+render): `characterization.py`
+embeds the digests of **three** inputs — `spec/target-spec.md` (itself a
+tier-1 member),
+`signoff/characterization-rows.json`, and `sim/record-currency.json` —
+rendered into `signoff/characterization.md` (tier 2). An edit to any of the
+three needs `characterization.py --regen`; the wrapper does not run it
+(runbook step 2).
 
 Verified item-6 rule (spot-check at `9e27225`): each item-6 `content_hash`
 equals the sha256 of the **samples document** its envelope names (e.g.
@@ -73,6 +89,30 @@ equals the sha256 of the **samples document** its envelope names (e.g.
 digest — that is what `klt yield` grading verifies. A pin computed from the
 envelope's own bytes grades `stale_evidence` while CI stays green, because
 the stale verdict itself renders reproducibly.
+
+**Tier 4 — byte-pinned under their own gates, outside the manifest.** These
+pins live in evidence files, not `signoff/manifest.json`, and each has a
+dedicated CI gate; an edit to the pinned bytes fails that gate, not
+`inventories.py --check`:
+
+- **36 simulation decks.** Every
+  `sim/*/records/<stamp>/decks/*.spice` is pinned by
+  `environment.netlist_sha256` in its paired
+  `records/<stamp>/reports/*.json`, gated by `check-all.sh deck-integrity`
+  (`check-record-deck-integrity.sh` → `record_currency.py integrity`;
+  at the audit stamp: 36 verified pairs, 0 unchecked unpaired reports).
+  A deck edit without regenerating its report fails the gate, named.
+- **`layout/vco.gds`.** Eight layout records carry its digest —
+  `layout/vco_manifest.json`, `layout/drc/vco-drc.json`,
+  `layout/drc/vco-drc-ihp.json`, `layout/drc/vco-drc-ihp-assertion.json`,
+  `layout/drc/vco-cnt-c-control.json`, `layout/lvs/vco-lvs-ihp.json`,
+  `layout/lvs/vco-lvs-record.json`, `layout/erc/vco-erc.json` — gated by
+  `check-all.sh layout-evidence` (`check-layout-evidence.sh`), which
+  recomputes the GDS digest itself rather than trusting any citation.
+  Note the tier-3/4 split here: `layout/drc/vco-drc-ihp.json` and
+  `layout/erc/vco-erc.json` are *also* manifest-`content_hash`-pinned on
+  their own bytes (tier 3), while the LVS record is pointer-cited only
+  (tier 3) yet still vouches for the GDS digest (tier 4).
 
 ## N/A findings (explicit, so nothing reads as an open question)
 
@@ -86,10 +126,18 @@ the stale verdict itself renders reproducibly.
   existed. The authoritative inventory names are the three per-item files
   above; a runbook or brief that names the aggregate forms is describing
   files that are not there.
-- No inventory pins anything under `layout/` or `sim/*/records/`: those are
-  tier-3 manifest citations. A layout or record edit is not invisible — it is
-  gated by `check-signoff.sh`'s byte-drift assert instead of
-  `inventories.py --check`.
+- No inventory pins anything under `layout/` or `sim/*/records/` — true, but
+  that does not make those edits ungated, and "tier-3 manifest citations"
+  was the wrong disposition. The bytes there are pinned under their own
+  gates (tier 4): the 36 paired sim decks by their reports'
+  `environment.netlist_sha256` (`check-all.sh deck-integrity`), and
+  `layout/vco.gds` by the eight layout records
+  (`check-all.sh layout-evidence`). What *is* tier 3 under those trees is
+  the set of individual record/envelope files whose own bytes carry
+  manifest `content_hash` pins (`layout/drc/vco-drc-ihp.json`,
+  `layout/erc/vco-erc.json`, the item-6 yield envelopes; the LVS record is
+  pointer-cited only). A deck or GDS edit is caught by the tier-4 gates,
+  not by `check-signoff.sh`'s byte-drift assert.
 - `sim/pdk.json`'s `tarball_sha256` pins the upstream PDK release tarball,
   not a repo file; the repo-file pin for `sim/pdk.json` itself is the tier-1
   member hash. They are separate bindings and both hold.
@@ -105,11 +153,13 @@ the stale verdict itself renders reproducibly.
 ### 1. Is the file I am about to touch pinned?
 
 Triage net (regex, deliberately over-inclusive — a hit means "stop and use
-the exact check"; it matched all 40 members at the audit stamp):
+the exact check"; it matched all 40 inventory members at the audit stamp,
+and `layout/` is in the net because that tree carries tier-4 pins no
+inventory knows about):
 
 ```bash
 git diff --name-only origin/main...HEAD \
-  | grep -E '^(design/|sim/|README\.|LICENSE$|spec/|\.github/(workflows|scripts)/)'
+  | grep -E '^(design/|sim/|layout/|README\.|LICENSE$|spec/|\.github/(workflows|scripts)/)'
 ```
 
 Exact answer — the authoritative list, derived live from the inventories:
@@ -125,6 +175,14 @@ Did this branch touch a pinned member (empty output / exit 1 = no):
 git diff --name-only origin/main...HEAD \
   | grep -Fxf <(jq -r '[(.members[]?.path // empty), (.testbenches[]?.path // empty), (.runners[]?.path // empty), (.pdk.pin_file.path // empty)] | .[]' signoff/evidence/inventory-*.json)
 ```
+
+A hit the inventories do not list is still gated when it is a tier-4 or
+tier-3 surface: `layout/vco.gds` → regenerate the affected records
+(`layout/generate.sh`, `layout/drc.sh`, `layout/lvs.sh`, `layout/erc.sh`)
+and run `check-all.sh layout-evidence`; a `sim/*/records/…/decks/*.spice`
+edit → regenerate the paired report so its `environment.netlist_sha256`
+matches, then run `check-all.sh deck-integrity`; a manifest-cited record or
+envelope → tier 3, regrade with `klt signoff` (the wrapper).
 
 ### 2. Make the edit, then regenerate — never hand-write a hash
 
@@ -143,8 +201,11 @@ committed record untouched):
 .github/scripts/regen-signoff.sh
 ```
 
-`spec/target-spec.md` additionally carries the item-8 characterization input
-digest, so it needs one more regeneration before the wrapper:
+Three files carry item-8 characterization input digests —
+`spec/target-spec.md`, `signoff/characterization-rows.json`, and
+`sim/record-currency.json` — and the wrapper does **not** cover them (it
+runs only `inventories.py --regen`). An edit to any of the three needs this
+regeneration first, or `check-all.sh signoff-characterization` goes red:
 
 ```bash
 python3 -I signoff/characterization.py --regen
@@ -168,6 +229,14 @@ git status --short                          # expect: your file(s) + the regener
   changed, added or removed without regenerating fails, named.
 - `check-all.sh signoff-characterization` → `characterization.py --check`:
   a drifted row line fails, named.
+- `check-all.sh deck-integrity` → `check-record-deck-integrity.sh`
+  (`record_currency.py integrity`): a paired report/deck `netlist_sha256`
+  mismatch — or a malformed paired report — fails, named (tier 4; 36
+  verified pairs at the audit stamp).
+- `check-all.sh layout-evidence` → `check-layout-evidence.sh`: a layout
+  record carrying a stale `layout/vco.gds` digest fails, named (tier 4;
+  the checker recomputes the GDS digest itself, 8 records at the audit
+  stamp).
 - `check-signoff.sh` (signoff CI): the committed `t1-report.json` must be
   byte-identical to a fresh render at the pin — a manifest citation whose
   artifact changed fails here.
