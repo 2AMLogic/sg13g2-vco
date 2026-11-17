@@ -158,8 +158,8 @@
           "rows": [
             "7"
           ],
-          "status": "unmet",
-          "reason": "stale_evidence"
+          "status": "met",
+          "reason": null
         },
         {
           "citation": "sim/oscillator-core/yield/yield-envelope-mismatch-f0_bandcentre_hz.json",
@@ -182,23 +182,20 @@
           "rows": [
             "7"
           ],
-          "status": "unmet",
-          "reason": "stale_evidence"
+          "status": "met",
+          "reason": null
         }
       ],
       "detail": {
         "failed_citations": [
           "sim/oscillator-core/yield/yield-envelope-process-f0_bandcentre_hz.json",
           "sim/oscillator-core/yield/yield-envelope-process-tuning_ratio.json",
-          "sim/oscillator-core/yield/yield-envelope-process-swing_worst_v.json",
           "sim/oscillator-core/yield/yield-envelope-mismatch-f0_bandcentre_hz.json",
-          "sim/oscillator-core/yield/yield-envelope-mismatch-tuning_ratio.json",
-          "sim/oscillator-core/yield/yield-envelope-mismatch-swing_worst_v.json"
+          "sim/oscillator-core/yield/yield-envelope-mismatch-tuning_ratio.json"
         ],
         "failed_rows": [
           "1",
-          "2",
-          "7"
+          "2"
         ],
         "uncovered_rows": [
           "3",
@@ -221,7 +218,9 @@
           "7",
           "9"
         ],
-        "row_sources": {}
+        "row_sources": {
+          "7": "asserted"
+        }
       }
     },
     {

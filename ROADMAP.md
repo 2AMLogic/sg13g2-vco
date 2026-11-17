@@ -21,7 +21,7 @@ The graded report (klt 0.8.0, 11-item checklist vendored in
 | 2 Layout | met | `layout/vco.gds`, reproducible via `layout/generate.sh`; TopMetal2 `VCTRL` pin added in #316 |
 | 3 DRC clean | met | IHP-native DRC report, coverage limits in `layout/PROVENANCE.md` §13 (#242) |
 | 4 LVS clean | unmet, `no_evidence` | #62, #162 |
-| 5 Corner verification vs the ratified spec | unmet, `no_evidence` | #50 (rows 1/2/3/6/7/8, per `sim/oscillator-core/README.md`'s row table — #50's title names 1/2/3/6/8 because it predates row 7's grading; DR-004, #112), #53 (row 4) |
+| 5 Corner verification vs the ratified spec | unmet, `no_evidence` | #50 (rows 1/2/3/6/7/8, per `sim/oscillator-core/README.md`'s row table — #50's title names 1/2/3/6/8 because it predates row 7's grading; DR-004, #112), #53 (row 4), #362 (row 5), #363 (row 9) |
 | 6 Monte Carlo evidence | unmet, `no_evidence` | #244 (classification DR-007 and unrun requests are committed) |
 | 7 Post-layout verification | unmet, `no_evidence` | #260 |
 | 8 Characterization report | unmet, `check_failed` | `signoff/characterization.md` exists (#261): 0 pass, 0 fail, 9 pending, 3 condition |

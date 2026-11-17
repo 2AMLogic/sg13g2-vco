@@ -18,6 +18,10 @@
 #      citation gate can then reject: superseded, unknown (filename-only),
 #      missing file, unmapped name, stale committed index. A current record
 #      passes, and the DRC-only manifest (case 1) is unaffected.
+#   12. PYTHONOPTIMIZE=1 + a manifest whose render carries a block the
+#      payload gate must reject, with the record re-rendered to match so
+#      only the payload gate can reject -> check-signoff.sh FAILS (the
+#      gate runs python3 -I, so optimization cannot strip its asserts).
 
 set -u
 
@@ -214,6 +218,36 @@ run_case "stale committed currency index fails" 1 "$t"
 
 t="$(sim_tree "$CUR" "./$RDIR/../records/$REC.md")"; finish_tree "$t"
 run_case "unnormalized current citation path still maps and passes" 0 "$t"
+
+# 12. Payload gate under PYTHONOPTIMIZE=1: a bare `python3 -` puts cwd on
+#     sys.path AND honors PYTHONOPTIMIZE, which strips the gate's asserts —
+#     a gate that cannot run while looking like one that passed. The tree's
+#     manifest carries a block the payload gate must reject, and the
+#     committed record is re-rendered from it so every other gate (klt
+#     runs-clean, currency, byte-for-byte comparison) passes: only the
+#     payload assert can reject, and it must still fire under optimization.
+t="$(fresh_tree)"
+python3 - "$t/signoff/manifest.json" <<'PY'
+import json, sys
+p = sys.argv[1]
+m = json.load(open(p))
+m["block"] = "zzz-payload-canary"
+json.dump(m, open(p, "w"), indent=2)
+PY
+( cd "$t" && klt signoff --manifest signoff/manifest.json \
+    --tiers-doc signoff/design-evidence-tiers.md --format json \
+    > signoff/t1-report.json 2>/dev/null ) || true
+o="$(mktemp)"
+if PYTHONOPTIMIZE=1 "$CHECKER" --root "$t" >/dev/null 2>"$o"; then
+  echo "FAIL: payload gate rejects under PYTHONOPTIMIZE=1 (checker passed)" >&2
+  fail=$((fail + 1))
+elif grep -q "did not produce a valid sg13g2-vco/analog tier report" "$o"; then
+  echo "PASS: payload gate rejects under PYTHONOPTIMIZE=1"
+  pass=$((pass + 1))
+else
+  echo "FAIL: payload gate rejects under PYTHONOPTIMIZE=1 (wrong reason)" >&2
+  fail=$((fail + 1))
+fi
 
 echo "self-test: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

@@ -22,6 +22,7 @@
 | `inventories.py` | The only writer and verifier of `evidence/`. `--regen` rebuilds inventories, envelopes and the manifest pins together; `--check` (CI: `check-all.sh signoff-inventories`) re-derives them from the live tree. Stdlib only; drift tests in `tests/stdlib/test_signoff_inventories.py`. |
 | `characterization.py`, `characterization-rows.json`, `characterization.md` | Issue #261, T1 item 8. `characterization.md` is the **generated** aggregated report: one line per ratified `spec/target-spec.md` row (0-11) with target, measured value, binding corner, verdict and the linked records. The generator reads only the spec table, the row map and `sim/record-currency.json`; a row grades `pass`/`fail` only from a record the index calls `current`, otherwise it is `pending` and names why (record state, or the issue owing the graded run). `--check` (CI: `check-all.sh signoff-characterization`) names the row whose line drifted. Drift tests: `tests/stdlib/test_signoff_characterization.py`. |
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone, at a checklist revision this repo names and hashes, rather than at whatever revision the installed wheel happens to bundle (see "Why the checklist doc is vendored"). |
+| `pin-safety.md` | The audit of record and operator runbook for the hash-pinned signoff surface: the four-tier pinned-member map (inventory-pinned / generator-owned / manifest-cited / gated-elsewhere), the verified audit result, the explicit N/A findings, and the copy-exact edit path (triage regex → exact inventory-derived list → regen → verify). Read it before editing anything in tiers 1, 3 or 4. |
 
 **Item 8 (issue #261): cited, `unmet` (`check_failed`) -- on purpose.** The
 generic envelope `evidence/t1-item-8-characterization.json` is bound to
@@ -73,6 +74,10 @@ The citations, and the ones deliberately left out:
     the validating command `.github/scripts/check-all.sh test`. Editing any of
     those requires `python3 -I signoff/inventories.py --regen` and a
     re-rendered `t1-report.json`.
+  - Editing **any** member of the three inventories: follow
+    [`pin-safety.md`](pin-safety.md) — the audit of record and the only
+    sanctioned edit path (triage regex, exact inventory-derived member list,
+    `.github/scripts/regen-signoff.sh`, verify).
 - **Item 3 (DRC clean): cited, `met` (issue #242).** The evidence is the same
   envelope, `layout/drc/vco-drc-ihp.json` (IHP's primary runset
   `ihp-sg13g2.drc`, `status: clean`, 0 violations, `coverage_assertion`
@@ -192,8 +197,10 @@ evidence (issue #244):
   of objects, not bare numbers: `{"id": "<row>", "gap": "<reason>"?,
   "ratified": bool?}`. Rows 1, 2, 3, 5, 6, 7, 9 are declared covered, row 4 is
   declared with a `gap` reason, and every row carries `"ratified": false`
-  because DR-007 is still **proposed**: evidence against an unratified limit
-  never grades `met`. Flip `ratified` to `true` when DR-007 is ratified.
+  because DR-007 is still **proposed**: an unratified row keeps item 6 off
+  `met` (it lands in `unratified_rows`), though it does not stop that row's
+  own citation from grading `met`. Flip `ratified` to `true` when DR-007 is
+  ratified.
 - **The run landed and item 6 now cites it (2026-11-15).** `sim/oscillator-core/yield/`
   ran the anchor-1 campaign (3216 fleet units: seed control, process and
   mismatch instruments at N = 400, seed 244, `seed_scope: shared`, plus both
@@ -205,10 +212,18 @@ evidence (issue #244):
   centre 4.00 GHz against the 4.5 GHz floor; ratio 1.109 against 1.15) —
   `uncovered_rows` 3, 5, 6, 9 (stages S2–S4 unrun), `declared_gaps` row 4,
   and every declared row under `unratified_rows` because DR-007 is still
-  **proposed**: the row-7 evidence itself is a 400/400 pass with its
-  negative control detected and `sample_size.verdict = sufficient`, but the
-  #295 policy (evidence never grades `met` against an unratified limit)
-  keeps it provisional. Flip `ratified` to `true` when DR-007 is ratified.
+  **proposed**. The row-7 evidence itself is a 400/400 pass with its
+  negative control detected and `sample_size.verdict = sufficient`, and
+  both row-7 citations grade `met` (2026-11-17): the item-6 `content_hash`
+  pins now hash the samples document each envelope names, which is what
+  `klt yield` grading verifies — the initial pins hashed the envelope files
+  instead and rendered `stale_evidence`. `ratified: false` does not block a
+  citation from grading `met`; the unratified caveat stays on the item, not
+  the citation — superseding the #295-policy wording in the append-only run
+  record
+  `sim/oscillator-core/records/20261115-190000-0b056b1-yield-anchor1-run.md`
+  (written 2026-11-15, before the repinned render). Flip `ratified` to
+  `true` when DR-007 is ratified.
 - **Citing evidence later:** a `klt yield` report only counts if its own
   `sample_size.verdict` is not `insufficient` and its negative control is
   detected (`sim/oscillator-core/yield/README.md`). Item 6 is not met by any

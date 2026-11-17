@@ -1,8 +1,40 @@
 # Work Log
 
-Merged PRs and closed issues from the 30-day bootstrap window ending
-2026-10-07. Entries record forge events; closure alone does not assert that
-engineering acceptance criteria passed. Guide maintenance PRs are excluded.
+Merged PRs and closed issues, newest first. Entries record forge events;
+closure alone does not assert that engineering acceptance criteria passed.
+Guide maintenance PRs are excluded.
+
+### 2026-11-17
+
+- **PR #400**: fix: dedup unmerged git-ls-files paths in signoff inventory candidates
+- **Issue #399** (closed): signoff inventories: git ls-files duplicates an unmerged path, so a conflicted tree can inventory a member 3x
+- **PR #398**: fix: derive signoff inventory candidates from git-tracked files
+- **Issue #397** (closed): signoff/inventories.py: _tracked_files() globs the filesystem, so an untracked file can join (or break) an inventory
+- **PR #396**: docs: drop closed 30-day-window clause from WORK_LOG preamble
+- **Issue #395** (closed): WORK_LOG.md header still claims a 30-day window ending 2026-10-07 while entries run to 2026-11-17
+- **PR #393**: fix: count and name unpaired decks in the deck-integrity gate
+- **Issue #392** (closed): deck-integrity verifies 36 of 37 tracked decks, and its unpaired counter cannot show the gap
+- **PR #391**: docs: add signoff/pin-safety.md, the hash-pinned surface audit and edit runbook
+- **PR #390**: fix(signoff): pin item-6 yield citations to the samples documents, not the envelopes
+- **PR #388**: chore(loom): resync installed Loom to v0.19.1306
+
+### 2026-11-16
+
+- **PR #375**: chore(loom): resync installed Loom to v0.19.1302
+- **PR #383**: docs: audit flat device/node-name dependencies on design/vco.spice
+- **Issue #379** (closed): Audit flat device/node-name dependencies on design/vco.spice (read-only; collapse deferred)
+- **PR #377**: fix: run signoff/layout heredoc gates with python3 -I so PYTHONOPTIMIZE cannot strip their asserts
+- **Issue #374** (closed): check-signoff.sh's payload gate runs under a bare `python3 -`: cwd on sys.path, PYTHONOPTIMIZE can strip its asserts
+- **PR #378**: docs: wire #362/#363 ownership of spec rows 5 and 9 into the signoff row map
+- **Issue #361** (closed): signoff: spec rows 5 (tank Q) and 9 (pushing) have no owning issue after #337's attribution fix
+- **PR #372**: docs: make signoff README build-identity prose pin-derived
+- **Issue #369** (closed): signoff/README.md quotes stale per-pin build-identity values (git_tag v0.7.0, grading_ruleset_id) that no check validates
+- **PR #371**: Gate regen-signoff render on build identity: release, clean, pinned tag
+- **Issue #368** (closed): regen-signoff.sh ambient-match path cannot tell a pinned release from a dev build that reports the pin
+- **PR #357**: docs: reconcile the row set owed by #50 across ROADMAP and the signoff row map
+- **Issue #337** (closed): docs: ROADMAP.md and characterization-rows.json disagree on which spec rows #50 owes
+- **PR #366**: signoff: guarded atomic regen for t1-report.json (klt-pin helper + wrapper)
+- **Issue #360** (closed): signoff regen path has no version guard: a mismatched klt silently rewrites the verdict-of-record
 
 ### 2026-11-15
 
