@@ -59,19 +59,35 @@ render).
 
 **Tier 3 — manifest-cited artifacts (`signoff/manifest.json`, graded by
 `klt signoff`, not audited by `inventories.py`).** The manifest uses two
-citation forms, and they are not equally strong:
+citation forms, and they are not equally strong. One rule governs every
+`content_hash` on this surface: it pins the artifact's declared **provenance
+input** — the artifact it was produced from — not the cited file's own bytes.
 
-- *`content_hash` pins (byte-pinned):* `layout/drc/vco-drc-ihp.json` (items 2
-  and 3, pinned to `layout/vco.gds`'s digest), `layout/erc/vco-erc.json`
-  (item 11), the six `sim/oscillator-core/yield/yield-envelope-*.json`
-  citations (item 6), `signoff/evidence/t1-item-8-characterization.json`
-  (item 8 envelope), and the vendored `signoff/design-evidence-tiers.md`
-  (pinned via the report's `source_doc_content_hash`).
+- *`content_hash` pins (of the declared provenance input):*
+  `layout/drc/vco-drc-ihp.json` (items 2 and 3) and `layout/erc/vco-erc.json`
+  (item 11) both pin `layout/vco.gds`'s digest — the GDS bytes are gated,
+  the records' own bytes are not; the six
+  `sim/oscillator-core/yield/yield-envelope-*.json` citations (item 6) pin
+  the **samples document** each envelope names (verified rule below);
+  `signoff/evidence/t1-item-8-characterization.json` (item 8 envelope) pins
+  `signoff/characterization.md`'s digest — the characterization render is
+  gated, the envelope's own bytes are not.
+- *The one own-bytes pin:* the vendored `signoff/design-evidence-tiers.md`
+  is pinned on its own bytes via the report's `source_doc_content_hash` —
+  the only `content_hash` on this surface that covers the cited file itself.
 - *JSON-pointer citations (not byte-pinned):* `layout/lvs/vco-lvs-record.json`
   is cited as `"pointer": "/klt_leg/lvs/response"` with **no `content_hash`
   anywhere**. Only the bytes under that pointer reach the render; an edit
   elsewhere in that file is caught by no digest, so treat the record as
   ungated except through item-11 grading.
+
+That ungated-own-bytes caveat is not unique to the LVS record. Under the
+rule above, an edit to the DRC or ERC record's own bytes outside the one
+digest-bearing field — the `status`, the violation count, the
+`coverage_assertion` — or to the item-8 envelope's `summary`/`status` is
+caught by no digest anywhere either. Treat each of these files the same way:
+vouched for on its provenance input, ungated on its own bytes except
+through grading.
 
 Item 8's characterization inputs (their digests are bound into the tier-2
 render): `characterization.py`
@@ -95,13 +111,22 @@ pins live in evidence files, not `signoff/manifest.json`, and each has a
 dedicated CI gate; an edit to the pinned bytes fails that gate, not
 `inventories.py --check`:
 
-- **36 simulation decks.** Every
-  `sim/*/records/<stamp>/decks/*.spice` is pinned by
-  `environment.netlist_sha256` in its paired
+- **37 simulation decks, 36 gated.** 36 of the 37 tracked
+  `sim/*/records/<stamp>/decks/*.spice` are pinned by
+  `environment.netlist_sha256` in their paired
   `records/<stamp>/reports/*.json`, gated by `check-all.sh deck-integrity`
   (`check-record-deck-integrity.sh` → `record_currency.py integrity`;
   at the audit stamp: 36 verified pairs, 0 unchecked unpaired reports).
-  A deck edit without regenerating its report fails the gate, named.
+  A deck edit without regenerating its report fails the gate, named. The
+  exception:
+  `sim/bn-substrate-tank/records/20261010-overlay-smoke-b233273/` keeps its
+  report at the record root (`report.json`) instead of under `reports/`, so
+  its deck `bn-sub__tt_v1.5.spice` falls outside the pairing convention and
+  no gate reads its `netlist_sha256` — the digest is committed and matches,
+  it just sits at a path the gate never reads. The gate's `unchecked
+  unpaired reports` counter counts reports without decks, never decks
+  without reports, which is why it still prints 0. Gate-side fix tracked in
+  #392; this document states the exception rather than claiming coverage.
 - **`layout/vco.gds`.** Eight layout records carry its digest —
   `layout/vco_manifest.json`, `layout/drc/vco-drc.json`,
   `layout/drc/vco-drc-ihp.json`, `layout/drc/vco-drc-ihp-assertion.json`,
@@ -110,9 +135,11 @@ dedicated CI gate; an edit to the pinned bytes fails that gate, not
   `check-all.sh layout-evidence` (`check-layout-evidence.sh`), which
   recomputes the GDS digest itself rather than trusting any citation.
   Note the tier-3/4 split here: `layout/drc/vco-drc-ihp.json` and
-  `layout/erc/vco-erc.json` are *also* manifest-`content_hash`-pinned on
-  their own bytes (tier 3), while the LVS record is pointer-cited only
-  (tier 3) yet still vouches for the GDS digest (tier 4).
+  `layout/erc/vco-erc.json` are *also* manifest-cited (tier 3) — on
+  `layout/vco.gds`'s digest, not their own bytes — and the LVS record is
+  pointer-cited only (tier 3). None of the three records' own bytes
+  carries a digest anywhere; what all three vouch for is the GDS digest
+  (tier 4).
 
 ## N/A findings (explicit, so nothing reads as an open question)
 
@@ -133,10 +160,11 @@ dedicated CI gate; an edit to the pinned bytes fails that gate, not
   `environment.netlist_sha256` (`check-all.sh deck-integrity`), and
   `layout/vco.gds` by the eight layout records
   (`check-all.sh layout-evidence`). What *is* tier 3 under those trees is
-  the set of individual record/envelope files whose own bytes carry
-  manifest `content_hash` pins (`layout/drc/vco-drc-ihp.json`,
-  `layout/erc/vco-erc.json`, the item-6 yield envelopes; the LVS record is
-  pointer-cited only). A deck or GDS edit is caught by the tier-4 gates,
+  the set of manifest-cited record/envelope files
+  (`layout/drc/vco-drc-ihp.json`, `layout/erc/vco-erc.json`, the item-6
+  yield envelopes; the LVS record is pointer-cited only) — but per the
+  tier-3 rule, their `content_hash` pins cover their provenance inputs,
+  not their own bytes. A deck or GDS edit is caught by the tier-4 gates,
   not by `check-signoff.sh`'s byte-drift assert.
 - `sim/pdk.json`'s `tarball_sha256` pins the upstream PDK release tarball,
   not a repo file; the repo-file pin for `sim/pdk.json` itself is the tier-1
@@ -232,11 +260,18 @@ git status --short                          # expect: your file(s) + the regener
 - `check-all.sh deck-integrity` → `check-record-deck-integrity.sh`
   (`record_currency.py integrity`): a paired report/deck `netlist_sha256`
   mismatch — or a malformed paired report — fails, named (tier 4; 36
-  verified pairs at the audit stamp).
+  verified pairs at the audit stamp; 37 decks tracked, the one unpaired
+  exception named under tier 4).
 - `check-all.sh layout-evidence` → `check-layout-evidence.sh`: a layout
   record carrying a stale `layout/vco.gds` digest fails, named (tier 4;
   the checker recomputes the GDS digest itself, 8 records at the audit
   stamp).
+- `check-all.sh model-inputs` → `check-model-inputs.sh`: a committed
+  `sim/**/records/<id>-model-inputs.json` must match its retained
+  `netlist-snapshots/<id>/model-inputs/` bytes (issue #139). Listed here for
+  completeness: it pins nothing today (0 manifests verified at the audit
+  stamp), so it has no tier-map entry — a gate that cannot run is not one
+  that passed.
 - `check-signoff.sh` (signoff CI): the committed `t1-report.json` must be
   byte-identical to a fresh render at the pin — a manifest citation whose
   artifact changed fails here.
