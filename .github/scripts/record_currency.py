@@ -313,9 +313,15 @@ def deck_integrity(root, files):
     paired report that is not valid JSON or lacks exactly one well-formed
     digest is recorded under "malformed" (report path -> reason) instead of
     being skipped. Reports without a paired deck keep the legacy policy:
-    counted as unpaired only when they carry a string digest, else ignored."""
+    counted as unpaired only when they carry a string digest, else ignored.
+    The pairing convention is enumerated from the report side, so a deck
+    with no reports/<stem>.json companion is never visited (issue #392);
+    such decks are named under "unpaired_decks" (absent == none, keeping
+    older index entries comparable): unchecked, never verified, never a
+    failure."""
     fileset = set(files)
     checked = matched = unpaired = 0
+    unpaired_decks = []
     mismatched = []
     malformed = {}
     for rel in files:
@@ -340,10 +346,20 @@ def deck_integrity(root, files):
             matched += 1
         else:
             mismatched.append(rel)
-    if not (checked or unpaired or malformed):
+    for rel in files:
+        if not rel.endswith(".spice"):
+            continue
+        d, _ = posixpath.split(rel)
+        if posixpath.basename(d) != "decks":
+            continue
+        if paired_report(rel) not in fileset:
+            unpaired_decks.append(rel)
+    if not (checked or unpaired or malformed or unpaired_decks):
         return None
     out = {"checked": checked, "matched": matched,
            "mismatched": sorted(mismatched), "unpaired": unpaired}
+    if unpaired_decks:  # absent == none; keeps older index entries comparable
+        out["unpaired_decks"] = sorted(unpaired_decks)
     if malformed:  # absent == none; keeps older index entries comparable
         out["malformed"] = malformed
     return out
@@ -363,6 +379,13 @@ def paired_deck(report):
     base = posixpath.basename(report)
     return posixpath.join(posixpath.dirname(d), "decks",
                           base[:-len(".json")] + ".spice")
+
+
+def paired_report(deck):
+    d = posixpath.dirname(deck)
+    base = posixpath.basename(deck)
+    return posixpath.join(posixpath.dirname(d), "reports",
+                          base[:-len(".spice")] + ".json")
 
 
 def _label(entry):
@@ -395,7 +418,7 @@ def integrity_scan(index, allowlist=None):
     mismatches; notes list verified/unchecked/allowlisted counts."""
     allow = INTEGRITY_ALLOWLIST if allowlist is None else allowlist
     errors, notes = [], []
-    verified = unchecked = bad = 0
+    verified = unchecked = unchecked_decks = bad = 0
     for e in index["records"]:
         errors.extend(integrity_errors(e, allow))
         di = e.get("deck_integrity")
@@ -414,11 +437,18 @@ def integrity_scan(index, allowlist=None):
                          "netlist_sha256 but have no paired deck "
                          "(legacy/unpaired; not verified, not a failure)"
                          % (_label(e), di["unpaired"]))
+        decks = di.get("unpaired_decks") or []
+        if decks:
+            unchecked_decks += len(decks)
+            notes.append("UNCHECKED: record %s: deck(s) %s have no paired "
+                         "report (legacy/unpaired; not verified, not a "
+                         "failure)" % (_label(e), ", ".join(decks)))
         for rep in di["mismatched"]:
             if allow.get(rep):
                 notes.append("ALLOWLISTED: %s: %s" % (rep, allow[rep]))
     notes.append("verified pairs: %d; unchecked unpaired reports: %d"
                  % (verified, unchecked))
+    notes.append("unchecked unpaired decks: %d" % unchecked_decks)
     notes.append("malformed paired reports: %d" % bad)
     return errors, notes
 
