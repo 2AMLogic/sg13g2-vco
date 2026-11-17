@@ -74,6 +74,15 @@
     },
     {
       "basis": "none",
+      "deck_integrity": {
+        "checked": 0,
+        "matched": 0,
+        "mismatched": [],
+        "unpaired": 0,
+        "unpaired_decks": [
+          "sim/bn-substrate-tank/records/20261010-overlay-smoke-b233273/decks/bn-sub__tt_v1.5.spice"
+        ]
+      },
       "design_netlist_sha256": null,
       "family": "sim/bn-substrate-tank",
       "file_count": 5,

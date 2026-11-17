@@ -729,6 +729,67 @@ class TestDeckIntegrity(Fixture):
         self.assertEqual(rc_, 0, (out, err))
         self.assertIn("UNCHECKED", out)
 
+    def test_unpaired_deck_is_named_not_checked(self):
+        # Issue #392: a deck with no reports/<stem>.json companion is never
+        # visited by the report loop; it must be counted and named, not
+        # silently skipped. Not a failure (same legacy policy as unpaired
+        # reports).
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        deck = "%s/%s/decks/orphan.spice" % (BN, r)
+        self.write(deck, "deck")
+        self.write(rc.INDEX, rc.render(self.idx()))
+        di = self.get(r)["deck_integrity"]
+        self.assertEqual(di["unpaired_decks"], [deck])
+        self.assertEqual((di["checked"], di["matched"], di["unpaired"]),
+                         (0, 0, 0))
+        self.assertEqual(self.cite(r), [])
+        errs, notes = rc.integrity_scan(self.idx())
+        self.assertEqual(errs, [])
+        self.assertTrue(any(n.startswith("UNCHECKED") and deck in n
+                            for n in notes))
+        self.assertIn("unchecked unpaired decks: 1", notes)
+        rc_, out, err = self.run_cli("integrity")
+        self.assertEqual(rc_, 0, (out, err))
+        self.assertIn("UNCHECKED", out)
+        self.assertIn("unchecked unpaired decks: 1", out)
+        self.assertIn("OK: no known report/deck integrity mismatches", out)
+
+    def test_paired_deck_is_not_counted_as_unpaired(self):
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        self.pair(r, "c", self.DECK_H)
+        di = self.get(r)["deck_integrity"]
+        self.assertNotIn("unpaired_decks", di)
+        self.assertEqual(di["checked"], 1)
+        self.assertIn("unchecked unpaired decks: 0",
+                      rc.integrity_scan(self.idx())[1])
+
+    def test_unpaired_deck_at_record_root_report_only(self):
+        # The bn-substrate legacy layout: report at the record root, not
+        # under reports/. The deck counts as unpaired; the root report is
+        # never read.
+        r = self.rid(); self.rec(BN, r)
+        self.j("%s/%s/report.json" % (BN, r),
+               {"netlist_sha256": "a" * 64})
+        self.write("%s/%s/decks/d.spice" % (BN, r), "deck")
+        di = self.get(r)["deck_integrity"]
+        self.assertEqual(di["unpaired_decks"], ["%s/%s/decks/d.spice" % (BN, r)])
+        self.assertEqual(di["unpaired"], 0)
+
+    def test_record_without_decks_dir_is_unaffected(self):
+        r = self.rid(); self.rec(BN, r); self.sidecar(BN, r, H1)
+        self.assertNotIn("deck_integrity", self.get(r))
+        self.assertIn("unchecked unpaired decks: 0",
+                      rc.integrity_scan(self.idx())[1])
+
+    def test_index_entry_without_unpaired_decks_key(self):
+        # Older index entries (pre-#392) carry no "unpaired_decks" key.
+        e = {"record_id": "x", "deck_integrity": {
+            "checked": 1, "matched": 1, "mismatched": [], "unpaired": 0}}
+        self.assertEqual(rc.integrity_errors(e), [])
+        errs, notes = rc.integrity_scan({"records": [e]})
+        self.assertEqual(errs, [])
+        self.assertIn("unchecked unpaired decks: 0", notes)
+
     def test_malformed_allowlist_requires_justification(self):
         r = self.malformed_pair("{nope")
         rep = "%s/%s/reports/c.json" % (BN, r)
