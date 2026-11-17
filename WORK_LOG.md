@@ -4,6 +4,11 @@ Merged PRs and closed issues from the 30-day bootstrap window ending
 2026-10-07. Entries record forge events; closure alone does not assert that
 engineering acceptance criteria passed. Guide maintenance PRs are excluded.
 
+### 2026-11-17
+
+- **PR #390**: fix(signoff): pin item-6 yield citations to the samples documents, not the envelopes
+- **PR #388**: chore(loom): resync installed Loom to v0.19.1306
+
 ### 2026-11-16
 
 - **PR #375**: chore(loom): resync installed Loom to v0.19.1302
