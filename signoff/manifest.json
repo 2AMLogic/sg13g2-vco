@@ -17,42 +17,42 @@
     "6": [
       {
         "file": "sim/oscillator-core/yield/yield-envelope-process-f0_bandcentre_hz.json",
-        "content_hash": "sha256:04f4832abc16ada50e2c98c05d8c695005524c1a10e6e5b6480225a2185115c2",
+        "content_hash": "sha256:6776be97f71ac7008bbce0027425e558de1f626ef8a0d7fd196a0f0e081b4b3a",
         "rows": [
           "1"
         ]
       },
       {
         "file": "sim/oscillator-core/yield/yield-envelope-process-tuning_ratio.json",
-        "content_hash": "sha256:3ebcbfe4553949ae26b1f816d287d3d494f4d543d36ee89b56700ce0f80dc4cd",
+        "content_hash": "sha256:4079da3d1212279b5d9fb8d79ff7b9b740dbb953783e2bc0616fb478e2a894da",
         "rows": [
           "2"
         ]
       },
       {
         "file": "sim/oscillator-core/yield/yield-envelope-process-swing_worst_v.json",
-        "content_hash": "sha256:a3a873427827610e90327811c37ac7505852c74cd6a2db2523f6ec34e7f29028",
+        "content_hash": "sha256:86969e1486c06bc90705e8a3c358ea1d89a60a9cfa66ad450989604455c165f4",
         "rows": [
           "7"
         ]
       },
       {
         "file": "sim/oscillator-core/yield/yield-envelope-mismatch-f0_bandcentre_hz.json",
-        "content_hash": "sha256:406b131490ceb20eac0e8028a171182a8d530f70d80a56ea4b6afe1985f154c0",
+        "content_hash": "sha256:4c2c61f7c6cdc471e3ac63d1bbb8114e53f7083fdf2886099fb17aec89c48c01",
         "rows": [
           "1"
         ]
       },
       {
         "file": "sim/oscillator-core/yield/yield-envelope-mismatch-tuning_ratio.json",
-        "content_hash": "sha256:48764ee012b83e6682165504ab676a87ba0d48ff1a7a7abfc0120ae349c56286",
+        "content_hash": "sha256:0d2fe5e0d11b6c1d5ef90e13c1ac5cacf469399625a354c1b29c5c7f7690afb1",
         "rows": [
           "2"
         ]
       },
       {
         "file": "sim/oscillator-core/yield/yield-envelope-mismatch-swing_worst_v.json",
-        "content_hash": "sha256:a2679054f67e8b93d96a897eb3e134b4bbcc42fd569a1f9411eea5a94051e55d",
+        "content_hash": "sha256:7b1a7ecde0a2cc794ed4b480090d37748790d540ce8399e44b2de227a59d8184",
         "rows": [
           "7"
         ]

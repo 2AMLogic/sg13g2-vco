@@ -205,10 +205,14 @@ evidence (issue #244):
   centre 4.00 GHz against the 4.5 GHz floor; ratio 1.109 against 1.15) —
   `uncovered_rows` 3, 5, 6, 9 (stages S2–S4 unrun), `declared_gaps` row 4,
   and every declared row under `unratified_rows` because DR-007 is still
-  **proposed**: the row-7 evidence itself is a 400/400 pass with its
-  negative control detected and `sample_size.verdict = sufficient`, but the
-  #295 policy (evidence never grades `met` against an unratified limit)
-  keeps it provisional. Flip `ratified` to `true` when DR-007 is ratified.
+  **proposed**. The row-7 evidence itself is a 400/400 pass with its
+  negative control detected and `sample_size.verdict = sufficient`, and
+  both row-7 citations grade `met` (2026-11-17): the item-6 `content_hash`
+  pins now hash the samples document each envelope names, which is what
+  `klt yield` grading verifies — the initial pins hashed the envelope files
+  instead and rendered `stale_evidence`. `ratified: false` does not block a
+  citation from grading `met`; the unratified caveat stays on the item, not
+  the citation. Flip `ratified` to `true` when DR-007 is ratified.
 - **Citing evidence later:** a `klt yield` report only counts if its own
   `sample_size.verdict` is not `insufficient` and its negative control is
   detected (`sim/oscillator-core/yield/README.md`). Item 6 is not met by any
