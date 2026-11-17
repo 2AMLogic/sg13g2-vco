@@ -22,6 +22,7 @@
 | `inventories.py` | The only writer and verifier of `evidence/`. `--regen` rebuilds inventories, envelopes and the manifest pins together; `--check` (CI: `check-all.sh signoff-inventories`) re-derives them from the live tree. Stdlib only; drift tests in `tests/stdlib/test_signoff_inventories.py`. |
 | `characterization.py`, `characterization-rows.json`, `characterization.md` | Issue #261, T1 item 8. `characterization.md` is the **generated** aggregated report: one line per ratified `spec/target-spec.md` row (0-11) with target, measured value, binding corner, verdict and the linked records. The generator reads only the spec table, the row map and `sim/record-currency.json`; a row grades `pass`/`fail` only from a record the index calls `current`, otherwise it is `pending` and names why (record state, or the issue owing the graded run). `--check` (CI: `check-all.sh signoff-characterization`) names the row whose line drifted. Drift tests: `tests/stdlib/test_signoff_characterization.py`. |
 | `design-evidence-tiers.md` | Vendored copy of the T1-T4 evidence-tier checklist `klt signoff` parses (see provenance below). Vendored so the render is reproducible from this repo alone, at a checklist revision this repo names and hashes, rather than at whatever revision the installed wheel happens to bundle (see "Why the checklist doc is vendored"). |
+| `pin-safety.md` | The audit of record and operator runbook for the hash-pinned signoff surface: the three-tier pinned-member map (inventory-pinned / generator-owned / manifest-cited), the verified audit result, the explicit N/A findings, and the copy-exact edit path (triage regex → exact inventory-derived list → regen → verify). Read it before editing anything in tiers 1 or 3. |
 
 **Item 8 (issue #261): cited, `unmet` (`check_failed`) -- on purpose.** The
 generic envelope `evidence/t1-item-8-characterization.json` is bound to
@@ -73,6 +74,10 @@ The citations, and the ones deliberately left out:
     the validating command `.github/scripts/check-all.sh test`. Editing any of
     those requires `python3 -I signoff/inventories.py --regen` and a
     re-rendered `t1-report.json`.
+  - Editing **any** member of the three inventories: follow
+    [`pin-safety.md`](pin-safety.md) — the audit of record and the only
+    sanctioned edit path (triage regex, exact inventory-derived member list,
+    `.github/scripts/regen-signoff.sh`, verify).
 - **Item 3 (DRC clean): cited, `met` (issue #242).** The evidence is the same
   envelope, `layout/drc/vco-drc-ihp.json` (IHP's primary runset
   `ihp-sg13g2.drc`, `status: clean`, 0 violations, `coverage_assertion`
