@@ -45,7 +45,12 @@ file:
   PDK pin: source, release tag `v0.3.0`, upstream tarball sha256), all 13
   `sim/*/testbench/*` templates, and the 11 runner scripts matched by
   `sim/**/*.sh` minus the `(/tests/|/records/|/netlist-snapshots/|/corners/)`
-  exclusions.
+  exclusions **that also reference a `sim/*/testbench/*` file by basename**.
+  That last clause is a content test, not a path filter: the glob selects 27
+  candidate scripts, the basename reference narrows them to the 11 members
+  (`_runners` in `signoff/inventories.py`). Membership therefore depends on
+  a script's *text*: an edit that adds or removes a testbench-basename
+  reference adds or removes a tier-1 member without touching any path.
 - Item 10 (`inventory-10-repo-hygiene.json`, 12 members): `README.md`,
   `LICENSE`, `spec/target-spec.md`, the DR-003 and DR-004 decision records,
   all six `.github/workflows/*.yml`, `.github/scripts/check-all.sh`.
@@ -203,6 +208,13 @@ Did this branch touch a pinned member (empty output / exit 1 = no):
 git diff --name-only origin/main...HEAD \
   | grep -Fxf <(jq -r '[(.members[]?.path // empty), (.testbenches[]?.path // empty), (.runners[]?.path // empty), (.pdk.pin_file.path // empty)] | .[]' signoff/evidence/inventory-*.json)
 ```
+
+A "no" here is path-derived, and one tier-1 class can change membership
+without changing any path: an item-9 runner edit that adds or removes a
+`sim/*/testbench/*` basename reference (see tier 1 above). For any
+`sim/**/*.sh` edit the intersection is not sufficient on its own — run
+`python3 -I signoff/inventories.py --check` (step 3 below), which re-derives
+membership from the live tree; that is the authoritative answer.
 
 A hit the inventories do not list is still gated when it is a tier-4 or
 tier-3 surface: `layout/vco.gds` → regenerate the affected records
