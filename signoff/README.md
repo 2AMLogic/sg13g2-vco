@@ -192,8 +192,10 @@ evidence (issue #244):
   of objects, not bare numbers: `{"id": "<row>", "gap": "<reason>"?,
   "ratified": bool?}`. Rows 1, 2, 3, 5, 6, 7, 9 are declared covered, row 4 is
   declared with a `gap` reason, and every row carries `"ratified": false`
-  because DR-007 is still **proposed**: evidence against an unratified limit
-  never grades `met`. Flip `ratified` to `true` when DR-007 is ratified.
+  because DR-007 is still **proposed**: an unratified row keeps item 6 off
+  `met` (it lands in `unratified_rows`), though it does not stop that row's
+  own citation from grading `met`. Flip `ratified` to `true` when DR-007 is
+  ratified.
 - **The run landed and item 6 now cites it (2026-11-15).** `sim/oscillator-core/yield/`
   ran the anchor-1 campaign (3216 fleet units: seed control, process and
   mismatch instruments at N = 400, seed 244, `seed_scope: shared`, plus both
@@ -205,10 +207,18 @@ evidence (issue #244):
   centre 4.00 GHz against the 4.5 GHz floor; ratio 1.109 against 1.15) —
   `uncovered_rows` 3, 5, 6, 9 (stages S2–S4 unrun), `declared_gaps` row 4,
   and every declared row under `unratified_rows` because DR-007 is still
-  **proposed**: the row-7 evidence itself is a 400/400 pass with its
-  negative control detected and `sample_size.verdict = sufficient`, but the
-  #295 policy (evidence never grades `met` against an unratified limit)
-  keeps it provisional. Flip `ratified` to `true` when DR-007 is ratified.
+  **proposed**. The row-7 evidence itself is a 400/400 pass with its
+  negative control detected and `sample_size.verdict = sufficient`, and
+  both row-7 citations grade `met` (2026-11-17): the item-6 `content_hash`
+  pins now hash the samples document each envelope names, which is what
+  `klt yield` grading verifies — the initial pins hashed the envelope files
+  instead and rendered `stale_evidence`. `ratified: false` does not block a
+  citation from grading `met`; the unratified caveat stays on the item, not
+  the citation — superseding the #295-policy wording in the append-only run
+  record
+  `sim/oscillator-core/records/20261115-190000-0b056b1-yield-anchor1-run.md`
+  (written 2026-11-15, before the repinned render). Flip `ratified` to
+  `true` when DR-007 is ratified.
 - **Citing evidence later:** a `klt yield` report only counts if its own
   `sample_size.verdict` is not `insufficient` and its negative control is
   detected (`sim/oscillator-core/yield/README.md`). Item 6 is not met by any
