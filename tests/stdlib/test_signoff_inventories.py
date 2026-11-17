@@ -8,8 +8,10 @@ than calling `verify()` / `regen()` in-process, so the entry point CI invokes
 is covered too (issue #334; before it, `main()` parsed no `--root` and these
 cases had to bypass it).
 """
+import json
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 
@@ -109,6 +111,108 @@ class InventoryDrift(unittest.TestCase):
 
     def test_item1_summary_states_gate_did_not_run(self):
         self.assertIn("did NOT run", inv.SUMMARY[1])
+
+
+class GitTrackedInventory(unittest.TestCase):
+    """In a git checkout the candidate set is the index, not the disk (#397).
+
+    setUp builds a throwaway copy of the tree and `git init`+`git add`s it, so
+    `--root` names a real checkout; the no-.git fallback is the class above.
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.root = os.path.join(self._tmp.name, "tree")
+        copy_tree(self.root)
+        self.git("init", "-q")
+        self.git("add", "-A")
+
+    def git(self, *args):
+        proc = subprocess.run(
+            ["git", "-C", self.root, *args], capture_output=True, text=True
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        return proc
+
+    def check(self):
+        proc = run_script("signoff/inventories.py", "--check", "--root", self.root)
+        fails = [l[len("FAIL: "):] for l in proc.stderr.splitlines() if l.startswith("FAIL: ")]
+        self.assertEqual(proc.returncode, 1 if fails else 0, proc.stderr)
+        return fails
+
+    def write(self, rel, text):
+        path = os.path.join(self.root, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(text)
+
+    def item9_paths(self):
+        with open(os.path.join(self.root, inv.ITEM_INVENTORY[9])) as f:
+            data = json.load(f)
+        return [t["path"] for t in data["testbenches"]] + [
+            r["path"] for r in data["runners"]
+        ]
+
+    def item10_paths(self):
+        with open(os.path.join(self.root, inv.ITEM_INVENTORY[10])) as f:
+            return [m["path"] for m in json.load(f)["members"]]
+
+    def test_untracked_scratch_runner_ignored(self):
+        self.write(
+            "sim/j397-scratch.sh",
+            "#!/bin/sh\n# scratch referencing tb_vco_port_noise.spice.tmpl\n",
+        )
+        self.assertEqual(self.check(), [])
+        proc = run_script("signoff/inventories.py", "--regen", "--root", self.root)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertNotIn("sim/j397-scratch.sh", self.item9_paths())
+        self.assertEqual(self.check(), [])
+
+    def test_untracked_testbench_and_workflow_ignored(self):
+        self.write("sim/phase-noise/testbench/tb_junk.spice.tmpl", "* junk\n")
+        self.write(".github/workflows/junk.yml", "on: push\njobs: {}\n")
+        self.assertEqual(self.check(), [])
+        proc = run_script("signoff/inventories.py", "--regen", "--root", self.root)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(
+            all(not p.endswith("tb_junk.spice.tmpl") for p in self.item9_paths())
+        )
+        self.assertNotIn(".github/workflows/junk.yml", self.item10_paths())
+
+    def test_staged_but_uncommitted_member_is_picked_up(self):
+        """`git add` without commit: in the index, so the gate must see it."""
+        self.write("sim/phase-noise/testbench/tb_staged.spice.tmpl", "* staged\n")
+        self.git("add", "sim/phase-noise/testbench/tb_staged.spice.tmpl")
+        self.assertTrue(
+            any("tb_staged" in e and "not in the inventory" in e for e in self.check())
+        )
+
+    def test_tracked_but_deleted_member_fails_by_name(self):
+        """Deleted tracked glob member: dropped from candidates, still named."""
+        os.remove(os.path.join(self.root, ".github/workflows/python.yml"))
+        errs = self.check()
+        self.assertTrue(
+            any("python.yml" in e and "no longer exists" in e for e in errs), errs
+        )
+
+    def test_subdirectory_root_falls_back_to_glob(self):
+        """`--root` below a checkout top is not a work tree root: glob as before."""
+        shutil.rmtree(os.path.join(self.root, ".git"))
+        proc = subprocess.run(
+            ["git", "-C", os.path.dirname(self.root), "init", "-q"],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.check(), [])
+        self.write(
+            "sim/j397-scratch.sh",
+            "#!/bin/sh\n# scratch referencing tb_vco_port_noise.spice.tmpl\n",
+        )
+        # Fallback is the filesystem glob, so the scratch IS flagged here.
+        self.assertTrue(
+            any("j397-scratch" in e and "not in the inventory" in e for e in self.check())
+        )
 
 
 if __name__ == "__main__":
