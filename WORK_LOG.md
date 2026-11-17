@@ -6,6 +6,13 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-17
 
+- **PR #398**: fix: derive signoff inventory candidates from git-tracked files
+- **Issue #397** (closed): signoff/inventories.py: _tracked_files() globs the filesystem, so an untracked file can join (or break) an inventory
+- **PR #396**: docs: drop closed 30-day-window clause from WORK_LOG preamble
+- **Issue #395** (closed): WORK_LOG.md header still claims a 30-day window ending 2026-10-07 while entries run to 2026-11-17
+- **PR #393**: fix: count and name unpaired decks in the deck-integrity gate
+- **Issue #392** (closed): deck-integrity verifies 36 of 37 tracked decks, and its unpaired counter cannot show the gap
+- **PR #391**: docs: add signoff/pin-safety.md, the hash-pinned surface audit and edit runbook
 - **PR #390**: fix(signoff): pin item-6 yield citations to the samples documents, not the envelopes
 - **PR #388**: chore(loom): resync installed Loom to v0.19.1306
 
