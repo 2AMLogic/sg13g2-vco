@@ -31,21 +31,19 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-_None._
+- **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
-- **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core
-- **#367**: Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz)
-- **#392**: deck-integrity verifies 36 of 37 tracked decks, and its unpaired counter cannot show the gap
+_None._
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#391**: docs: add signoff/pin-safety.md, the hash-pinned surface audit and edit runbook
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -65,8 +63,6 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)* *(held)*
 - **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)* *(held)*
-- **#367**: Record's summary sigma_f0 for the mismatch instrument (~4 MHz) is the Vctrl=0 endpoint spread, not the graded band-centre sigma (3.57 MHz) *(curated)*
-- **#392**: deck-integrity verifies 36 of 37 tracked decks, and its unpaired counter cannot show the gap *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -83,11 +79,11 @@ _None._
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
 | Important | 4 |
-| Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 3 |
-| PRs awaiting review | 1 |
+| Ready (`loom:issue`) | 1 |
+| In Progress (`loom:building`) | 0 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 10 |
+| Curated | 8 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
