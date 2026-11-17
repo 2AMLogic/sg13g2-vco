@@ -1,8 +1,8 @@
 # Work Log
 
-Merged PRs and closed issues from the 30-day bootstrap window ending
-2026-10-07. Entries record forge events; closure alone does not assert that
-engineering acceptance criteria passed. Guide maintenance PRs are excluded.
+Merged PRs and closed issues, newest first. Entries record forge events;
+closure alone does not assert that engineering acceptance criteria passed.
+Guide maintenance PRs are excluded.
 
 ### 2026-11-17
 
