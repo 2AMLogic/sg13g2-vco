@@ -6,6 +6,8 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-17
 
+- **PR #400**: fix: dedup unmerged git-ls-files paths in signoff inventory candidates
+- **Issue #399** (closed): signoff inventories: git ls-files duplicates an unmerged path, so a conflicted tree can inventory a member 3x
 - **PR #398**: fix: derive signoff inventory candidates from git-tracked files
 - **Issue #397** (closed): signoff/inventories.py: _tracked_files() globs the filesystem, so an untracked file can join (or break) an inventory
 - **PR #396**: docs: drop closed 30-day-window clause from WORK_LOG preamble
