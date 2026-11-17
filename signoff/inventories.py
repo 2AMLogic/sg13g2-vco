@@ -138,7 +138,9 @@ def _tracked_files(root: Path, pattern: str) -> list[str]:
     tracked-but-deleted path so a removed member still fails by name. A
     throwaway `--root` copy with no `.git` (and a root that is not the top of
     its work tree) falls back to the filesystem glob, which is what the
-    `tests/stdlib` drift cases grade.
+    `tests/stdlib` drift cases grade. An unresolved merge conflict makes
+    `git ls-files` print an unmerged path once per index stage, so the git
+    branch deduplicates: a conflicted member must be inventoried once (#399).
     """
     try:
         top = subprocess.run(
@@ -152,7 +154,7 @@ def _tracked_files(root: Path, pattern: str) -> list[str]:
             ["git", "-C", str(root), "ls-files", "-z", "--", f":(glob){pattern}"],
             capture_output=True, text=True, check=True,
         ).stdout
-        return sorted(p for p in listed.split("\0") if p and (root / p).is_file())
+        return sorted(set(p for p in listed.split("\0") if p and (root / p).is_file()))
     return sorted(
         p.relative_to(root).as_posix() for p in root.glob(pattern) if p.is_file()
     )
