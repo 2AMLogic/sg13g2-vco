@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 
 from _loader import ROOT, load_module, run_script
 
@@ -195,6 +196,37 @@ class GitTrackedInventory(unittest.TestCase):
         self.assertTrue(
             any("python.yml" in e and "no longer exists" in e for e in errs), errs
         )
+
+    def test_conflicted_member_is_listed_once(self):
+        """`git ls-files` prints an unmerged path once per index stage (#399).
+
+        A real conflicted merge leaves stages 1-3 in the index; the working
+        tree is put back to the inventoried bytes so only the *listing* is
+        the variable. Without dedup the repo-hygiene members list carries the
+        file three times and `--check` reports shape drift; with dedup the
+        gate is quiet.
+        """
+        wf = ".github/workflows/python.yml"
+        with open(os.path.join(self.root, wf)) as f:
+            orig = f.read()
+        self.git("config", "user.email", "test@example.com")
+        self.git("config", "user.name", "t")
+        self.git("commit", "-qm", "base")
+        base = self.git("symbolic-ref", "--short", "HEAD").stdout.strip()
+        self.git("checkout", "-qb", "side")
+        self.write(wf, orig + "\n# side\n")
+        self.git("commit", "-qam", "side")
+        self.git("checkout", "-q", base)
+        self.write(wf, orig + "\n# main\n")
+        self.git("commit", "-qam", "main")
+        merge = subprocess.run(
+            ["git", "-C", self.root, "merge", "side"], capture_output=True, text=True
+        )
+        self.assertNotEqual(merge.returncode, 0, merge.stdout + merge.stderr)
+        self.write(wf, orig)  # restore the inventoried bytes; index stays unmerged
+        listed = inv._tracked_files(Path(self.root), ".github/workflows/*.yml")
+        self.assertEqual(listed.count(wf), 1, listed)
+        self.assertEqual(self.check(), [])
 
     def test_subdirectory_root_falls_back_to_glob(self):
         """`--root` below a checkout top is not a work tree root: glob as before."""
