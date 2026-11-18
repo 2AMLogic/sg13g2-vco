@@ -31,13 +31,13 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core
+_None._
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
-- **#407**: gitignore: .klt/ scratch under sim/ is untracked and un-ignored
+- **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core
 
 ## PRs Awaiting Review
 
@@ -49,7 +49,7 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-- **#408**: gitignore: ignore klt run scratch (.klt/) at any depth — closes #407
+_None._
 
 ## Proposed
 
@@ -79,10 +79,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
 | Important | 4 |
-| Ready (`loom:issue`) | 1 |
+| Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 1 |
+| Approved PRs awaiting merge | 0 |
 | Curated | 8 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
