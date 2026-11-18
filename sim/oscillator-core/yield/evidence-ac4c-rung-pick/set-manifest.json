@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "_comment": [
+    "Deterministic rung-pick probes for the row-6 decision rung (issue #244 AC 4c).",
+    "Attempts: the three refinement probes were first submitted by a builder step whose",
+    "submitter died (step-builder-244-1794920362/1794943055); those jobs sat pending ~3 h",
+    "and were never launched, so they were resubmitted as attempt 2 on an idle fleet and",
+    "all three passed. The known-bad viability probe ran once, attempt 1.",
+    "Decision from these measurements: rung RREF 71k. Measured margin-equivalents",
+    "(I_nom 203.2 uA from the S2 units' vte_avg / RTE 2k, I_rung from each probe):",
+    "69k = 2.980, 71k = 3.062, 73k = 3.145; nominal late-window vdiff pk-pk",
+    "0.152 / 0.144 / 0.136 V (all sustain the 0.1 V criterion). 71k is the strongest",
+    "starvation whose nominal equivalent still clears the 3.0 floor, so a sustaining die",
+    "certifies >= 3.0 and the conservative-fail band (thresholds the rung cannot resolve)",
+    "is the narrowest; 69k (2.980 < 3.0) would grade the campaign yield ~0 by estimator",
+    "construction. See ../records/ (the AC 4c run record) for the full argument."
+  ],
+  "requests": [
+    {
+      "index": 0,
+      "request": "request-rung-pick-rref69.json",
+      "dir": "evidence-ac4c-rung-pick/request-rung-pick-rref69",
+      "status": "pass",
+      "job_id": "klt-sim-d7386c298451",
+      "job_ids": ["klt-sim-b79f522b1c05", "klt-sim-d7386c298451"],
+      "attempts": 2
+    },
+    {
+      "index": 1,
+      "request": "request-rung-pick-rref71.json",
+      "dir": "evidence-ac4c-rung-pick/request-rung-pick-rref71",
+      "status": "pass",
+      "job_id": "klt-sim-b5029f82adb4",
+      "job_ids": ["klt-sim-dc2c81673ea2", "klt-sim-b5029f82adb4"],
+      "attempts": 2
+    },
+    {
+      "index": 2,
+      "request": "request-rung-pick-rref73.json",
+      "dir": "evidence-ac4c-rung-pick/request-rung-pick-rref73",
+      "status": "pass",
+      "job_id": "klt-sim-946a54031e4a",
+      "job_ids": ["klt-sim-3f8d69f7c4d1", "klt-sim-946a54031e4a"],
+      "attempts": 2
+    },
+    {
+      "index": 3,
+      "request": "request-rung-pick-knownbad71k.json",
+      "dir": "evidence-ac4c-rung-pick/request-rung-pick-knownbad71k",
+      "status": "pass",
+      "job_id": "klt-sim-769c451a9f34",
+      "job_ids": ["klt-sim-769c451a9f34"],
+      "attempts": 1
+    }
+  ]
+}

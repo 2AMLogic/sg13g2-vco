@@ -56,11 +56,81 @@
         "rows": [
           "7"
         ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-kvco_mean_mhz_v.json",
+        "content_hash": "sha256:fd36cb6df6385a4bf3f86d73fa8e6ac39a16cbc2885bd2b133b5b9ee09041a4f",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-kvco_chord_nonlinearity_pct.json",
+        "content_hash": "sha256:23d003335a336397208728b14383362f7436cd2bdfa3fa132d09ed25164d0f9a",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-window_coverage.json",
+        "content_hash": "sha256:5a56868ce284409fee47ae39565d3adcb78d6d18209037eccfe39abb2516a609",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-kvco_single_signed.json",
+        "content_hash": "sha256:83f6b08db59be937c44680c63e4d4ad51928c307268549cdb8dbccae11bd8d10",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-kvco_mean_mhz_v.json",
+        "content_hash": "sha256:cb466b239c296f13001633ba8beba5140f822f594a110e8c47326bfd56e29ff0",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-kvco_chord_nonlinearity_pct.json",
+        "content_hash": "sha256:e3c230765fad65611dbe407793c3401f61fee6e91acc4c756450c4d1a117b0a2",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-window_coverage.json",
+        "content_hash": "sha256:39843dcc850a79f5c0f75b121e756ef0b0118e81a55e679511291302fc271638",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-kvco_single_signed.json",
+        "content_hash": "sha256:d1b3c0b121a94f31d77beeae4e29085b3165e5389e9070e7908e10990cc4afb0",
+        "rows": [
+          "3"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-process-startup_margin_lower.json",
+        "content_hash": "sha256:774fbb6c34db9a3a4094d9d55a08167fefa41718bfdccaeb08a5b53c73ad86c7",
+        "rows": [
+          "6"
+        ]
+      },
+      {
+        "file": "sim/oscillator-core/yield/yield-envelope-mismatch-startup_margin_lower-ext245.json",
+        "content_hash": "sha256:a99fd5d0368ce8d7e6269b3c692c058e1e241613bbd53105fa5c23fdee2ed4b3",
+        "rows": [
+          "6"
+        ]
       }
     ],
     "8": {
       "file": "signoff/evidence/t1-item-8-characterization.json",
-      "content_hash": "sha256:3ec278191ff07699aa8cf4d6a9165e9620a1b6424995dc5d2e3312d8e739ec02"
+      "content_hash": "sha256:7fce419705d6b1026db3a0dc05518b4767394e2d8b16e1ca4a6572da63f62543"
     },
     "9": {
       "file": "signoff/evidence/t1-item-9-testbenches.json",
@@ -102,6 +172,7 @@
       },
       {
         "id": "5",
+        "gap": "the graded tank-Q measurement is issue #362's bench (open); this campaign consumes it once that bench lands (issue #244 AC 4d)",
         "ratified": false
       },
       {
@@ -114,6 +185,7 @@
       },
       {
         "id": "9",
+        "gap": "the supply-pushing measurement is issue #363's bench (open); this campaign consumes it once that bench lands (issue #244 AC 4d)",
         "ratified": false
       }
     ]

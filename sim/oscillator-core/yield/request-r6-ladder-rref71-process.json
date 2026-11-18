@@ -1,0 +1,120 @@
+{
+ "_comment": [
+  "Row-6 per-sample startup-ladder stage, decision rung RREF 71k (issue #244 AC 4c). Rung",
+  "picked from the deterministic evidence: ladder map x3..x4 bracket the 3.0 floor; the",
+  "refinement probes measure margin-equivalents 69k=2.980, 71k=3.062, 73k=3.145 (I_nom",
+  "203.2 uA from the S2 units' vte_avg, I_rung from each probe's vte_avg, both over RTE 2k).",
+  "71k is the strongest starvation whose measured nominal equivalent still clears the 3.0",
+  "floor, so a sustaining die CERTIFIES >= 3.0; 69k (2.980 < 3.0) would grade the campaign",
+  "yield ~0 by estimator construction. Nominal die sustains the criterion at 71k (vdiff",
+  "late pk-pk 0.144 V >= 0.1 V). The known-bad control body at this exact rung",
+  "(vco_core_body_known_bad_rref71k.spice) is deterministic-probe-verified to fail it",
+  "(request-rung-pick-knownbad71k: pk-pk 6.3e-4 V). Vctrl 1.65 V, the pilot ladder's",
+  "convention. Same seed/scope contract as S1/S2: sample k is the same die as the S2",
+  "Vctrl=1.65 point, whose vte_avg is that die's nominal I_tail. Oscillation criterion:",
+  "t_cross_1 and t_cross_11 both present AND vdiff peak-to-peak over 15-20 ns >= 0.1 V.",
+  "engine_version 47 is the fail-closed post-run pin; the body carries selft=0 (documented",
+  "ngspice-47 VBIC self-heating deviation, run record 20261115-*)."
+ ],
+ "netlist": "vco_core_body_selft0_rref71.spice",
+ "netlist_source": "schematic",
+ "engine": "ngspice",
+ "models": {
+  "pdk": "ihp-sg13g2",
+  "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+ },
+ "corners": {
+  "process": [
+   {
+    "name": "r6-ladder-rref71-process",
+    "sections": [
+     {
+      "section": "hbt_typ_stat",
+      "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+     },
+     {
+      "section": "mos_tt_stat",
+      "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+     },
+     {
+      "section": "cap_typ_stat",
+      "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+     }
+    ]
+   }
+  ],
+  "supply_v": {
+   "vct": [
+    1.65
+   ]
+  },
+  "temperature_c": [
+   27
+  ]
+ },
+ "monte_carlo": {
+  "n": 400,
+  "seed": 244,
+  "vary": "process",
+  "seed_scope": "shared"
+ },
+ "analysis": {
+  "kind": "tran",
+  "args": "1p 20n 0 2p"
+ },
+ "measurements": [
+  {
+   "name": "t_cross_1",
+   "unit": "s",
+   "spice": ".meas tran t_cross_1 WHEN v(vdiff)=0 RISE=1 TD=10n"
+  },
+  {
+   "name": "t_cross_11",
+   "unit": "s",
+   "spice": ".meas tran t_cross_11 WHEN v(vdiff)=0 RISE=11 TD=10n"
+  },
+  {
+   "name": "vdiff_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vdiff_min",
+   "unit": "V",
+   "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vdiff_late_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_late_max MAX v(vdiff) FROM=15n TO=20n"
+  },
+  {
+   "name": "vdiff_late_min",
+   "unit": "V",
+   "spice": ".meas tran vdiff_late_min MIN v(vdiff) FROM=15n TO=20n"
+  },
+  {
+   "name": "isup_avg",
+   "unit": "A",
+   "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
+  },
+  {
+   "name": "vtail_avg",
+   "unit": "V",
+   "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
+  },
+  {
+   "name": "vte_avg",
+   "unit": "V",
+   "spice": ".meas tran vte_avg AVG v(te) FROM=10n TO=20n"
+  }
+ ],
+ "options": {
+  "timeout_s": 3000,
+  "keep_artifacts": false,
+  "osdi_preload": [
+   "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+  ]
+ },
+ "engine_version": "47"
+}

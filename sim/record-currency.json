@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 39
+    "unknown": 40
   },
   "records": [
     {
@@ -391,6 +391,19 @@
       "path": "sim/oscillator-core/records/20261116-052603-eafae11-yield-mismatch-sigma-correction.md",
       "reason": "filename-only provenance: the commit eafae11 named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
       "record_id": "20261116-052603-eafae11",
+      "state": "unknown"
+    },
+    {
+      "basis": "filename-commit",
+      "design_netlist_sha256": null,
+      "family": "sim/oscillator-core",
+      "file_count": 1,
+      "filename_commit": {
+        "id": "0fa456b"
+      },
+      "path": "sim/oscillator-core/records/20261118-050000-0fa456b-yield-ac4c-stages.md",
+      "reason": "filename-only provenance: the commit 0fa456b named in the record id proves at most the checkout the writer named, not a clean tree or the inputs consumed; its resolution in git history is live-only context (record_currency.py show), not part of the gated index.",
+      "record_id": "20261118-050000-0fa456b",
       "state": "unknown"
     },
     {

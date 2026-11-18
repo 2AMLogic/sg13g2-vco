@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "_comment": [
+    "Submission manifest for the row-6 decision-rung stage (issue #244 AC 4c).",
+    "The batch-set wrote each request's output under evidence-r6-ladder/request-*/;",
+    "the four directories were then renamed to the flat layout the assembler reads",
+    "(evidence-r6-ladder-process, evidence-r6-ladder-mismatch,",
+    "evidence-r6-ladder-control-process, evidence-r6-ladder-control-mismatch) --",
+    "same bytes, only the directory names changed. This manifest records the rename.",
+    "Attempt history: the four requests were first submitted individually ~40 min",
+    "earlier (job ids klt-sim-87ddf25039fe / f14974a9da85 / 25485ba73b0d /",
+    "c79b7f0e77f1); the shared fleet was over its vCPU budget (288 running against",
+    "BATCH_MAX_VCPU=224, quota shared with ci-spot), those submitters exhausted",
+    "their capacity wait and exited with the jobs never provisioned, so the stage",
+    "was resubmitted as this --batch-set with --capacity-retries 30 and all four",
+    "members ran on the first capacity that opened. The dead attempt-1 job ids are",
+    "recorded here and are never cited as evidence."
+  ],
+  "requests": [
+    {
+      "index": 0,
+      "request": "request-r6-ladder-rref71-process.json",
+      "dir": "evidence-r6-ladder-process",
+      "status": "pass",
+      "job_id": "klt-sim-86ae4fdcf780",
+      "job_ids": ["klt-sim-87ddf25039fe", "klt-sim-86ae4fdcf780"],
+      "attempts": 2
+    },
+    {
+      "index": 1,
+      "request": "request-r6-ladder-rref71-mismatch.json",
+      "dir": "evidence-r6-ladder-mismatch",
+      "status": "pass",
+      "job_id": "klt-sim-0b633818a930",
+      "job_ids": ["klt-sim-f14974a9da85", "klt-sim-0b633818a930"],
+      "attempts": 2
+    },
+    {
+      "index": 2,
+      "request": "request-r6-ladder-control-rref71-process.json",
+      "dir": "evidence-r6-ladder-control-process",
+      "status": "pass",
+      "job_id": "klt-sim-e8d48d9f9a4d",
+      "job_ids": ["klt-sim-25485ba73b0d", "klt-sim-e8d48d9f9a4d"],
+      "attempts": 2
+    },
+    {
+      "index": 3,
+      "request": "request-r6-ladder-control-rref71-mismatch.json",
+      "dir": "evidence-r6-ladder-control-mismatch",
+      "status": "pass",
+      "job_id": "klt-sim-b907d46874ba",
+      "job_ids": ["klt-sim-c79b7f0e77f1", "klt-sim-b907d46874ba"],
+      "attempts": 2
+    }
+  ]
+}

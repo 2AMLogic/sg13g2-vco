@@ -1,0 +1,879 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/oscillator-core/yield/vco_core_body_selft0_rref12.spice",
+    "scope": "repo"
+  },
+  "status": "pass",
+  "corner_count": 1,
+  "passed": 1,
+  "failed": 0,
+  "errored": 0,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {
+      "nonconvergence": 1
+    },
+    "by_severity": {
+      "warning": 1
+    },
+    "corners_with_diagnostics": 1
+  },
+  "metrics": {
+    "sim__corner__count": 1,
+    "sim__corner__passed_count": 1,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 0,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "47",
+    "ngspice_binary": "/usr/local/bin/ngspice",
+    "engine_build": {
+      "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******",
+      "binary_sha256": null,
+      "probe": "ok",
+      "reason": null
+    },
+    "ngspice_init": {
+      "source": "runner",
+      "lines": null,
+      "sha256": null
+    },
+    "models_lib": {
+      "path": null,
+      "scope": "absent"
+    },
+    "models_lib_sha256": null,
+    "models_lib_sha256_scope": "client",
+    "netlist_sha256": "f89e0d7062179465d5de9e5c59d60ff98a55d4d01f851a9a6e0fb9ba63a459eb",
+    "netlist_closure": [
+      {
+        "path": "sim/oscillator-core/yield/vco_core_body_selft0_rref12.spice",
+        "scope": "repo",
+        "sha256": "f89e0d7062179465d5de9e5c59d60ff98a55d4d01f851a9a6e0fb9ba63a459eb"
+      },
+      {
+        "path": "sim/oscillator-core/yield/sg13g2_inductor_em.spice",
+        "scope": "repo",
+        "sha256": "6f24f9857ab7810c91bda5f6307e78f1dfcbe2afd750bb023e28156ded06d6a0"
+      }
+    ],
+    "netlist_identity": "sha256:e6ddad40fb5b9f4e8ccc9b457778cf7f93ce783c6bebc724260b6851b06038ee",
+    "netlist_source": "schematic",
+    "corner_section_libs": [
+      {
+        "name": "cornerHBT.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462"
+      },
+      {
+        "name": "cornerMOShv.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "5a1f862dc304fdfe2fb9758b15d54809a688d83c3ce981dad2e8473b3e93481a"
+      },
+      {
+        "name": "cornerCAP.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56"
+      }
+    ],
+    "osdi_preload_runner_resolved": [
+      {
+        "entry": "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi",
+        "index": 0,
+        "reason": "env_var",
+        "sha256": "25e64a374ab523dbfeb7ffed75dcb8b086ee10f06120a9074bd68b92d7b0fb41"
+      }
+    ],
+    "remote": {
+      "provider": "aws-batch-fleet",
+      "job_id": "klt-sim-e942ae2d9e34",
+      "region": "us-east-1",
+      "instance_id": "i-060826f269a5f1292",
+      "instance_type": "m7i.4xlarge",
+      "availability_zone": "us-east-1b",
+      "ami_id": "ami-09c14f55df4958cbd",
+      "lifecycle": "spot",
+      "spot": true,
+      "state": "done",
+      "exit_code": "0",
+      "concurrency": "1",
+      "physical_cores": "8",
+      "elapsed_seconds": 24,
+      "client_submitted_at": "2026-11-17T16:51:20.591474Z",
+      "client_launched_at": "2026-11-17T16:51:40.864774Z",
+      "client_status_terminal_at": "2026-11-17T16:52:43.104069Z",
+      "client_collected_at": "2026-11-17T16:52:43.886402Z",
+      "runner_klt_version": "0.9.0",
+      "client_klt_version": "0.9.3.dev663+g22ab2a8756c7",
+      "runner_compatibility": "match",
+      "runner_request_features": {
+        "required": [
+          "corners.process[].sections[]",
+          "options.osdi_preload"
+        ],
+        "missing": [],
+        "status": "supported"
+      },
+      "worker_environment": {
+        "capture": "ok",
+        "simulator": {
+          "requested_binary": "ngspice",
+          "binary_source": "PATH",
+          "selected_path": "/usr/local/bin/ngspice",
+          "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+          "version_probe": "ok"
+        },
+        "pdk": {
+          "variant": "ihp-sg13g2",
+          "root": "/opt/pdk",
+          "stamp_scheme": null,
+          "stamp_sha256": null,
+          "stamp_text": null,
+          "models_staged": false,
+          "stamp_scope": "executed"
+        },
+        "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+        "omp_num_threads": null,
+        "image_manifest": null,
+        "model_inputs": null,
+        "diagnostics": [
+          "pdk stamp unreadable: FileNotFoundError"
+        ],
+        "pdk_stamp_comparison": {
+          "status": "not_comparable",
+          "reason": "worker_stamp_unavailable"
+        },
+        "ngspice_init": null,
+        "engine_build_comparison": {
+          "status": "match"
+        }
+      },
+      "runner_model_inputs": null,
+      "runner_models_lib_sha256": null,
+      "runner_osdi_preload": [
+        {
+          "name": "mosvar.osdi",
+          "sha256": "25e64a374ab523dbfeb7ffed75dcb8b086ee10f06120a9074bd68b92d7b0fb41"
+        }
+      ],
+      "job_ceiling": {
+        "basis": "conservative_serial_bound",
+        "unit_count": 1,
+        "per_unit_timeout_s": 3000,
+        "overhead_s": 120.0,
+        "job_bound_s": 3120.0,
+        "max_job_seconds": 3600.0,
+        "max_job_seconds_source": "fleet_config",
+        "exceeds_ceiling": false,
+        "check": "warn",
+        "max_units_per_job": 1,
+        "recommended_hosts": 1
+      },
+      "models_lib_comparison": {
+        "status": "not_comparable",
+        "reason": "runner_hash_unavailable"
+      }
+    },
+    "engine_host": "worker",
+    "client_ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "client_engine_build": {
+      "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******",
+      "binary_sha256": "39ca1adb826660324c3626f72bd946ec40704f0f3fc8e243c623f76e24b3eee2",
+      "probe": "ok",
+      "reason": null
+    },
+    "backend": {
+      "resolved": "batch",
+      "source": "flag",
+      "requested": "batch"
+    },
+    "monte_carlo": {
+      "n": 1,
+      "seed": 244,
+      "vary": "both",
+      "seed_scope": "shared",
+      "family_mismatch": [
+        {
+          "family": "other",
+          "active": null,
+          "note": "mismatch activity for the 'other' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        },
+        {
+          "family": "capacitor",
+          "active": null,
+          "note": "mismatch activity for the 'capacitor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        },
+        {
+          "family": "bipolar",
+          "active": null,
+          "note": "mismatch activity for the 'bipolar' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        },
+        {
+          "family": "resistor",
+          "active": null,
+          "note": "mismatch activity for the 'resistor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        }
+      ],
+      "family_mismatch_scan": {
+        "scanned": [
+          "sim/oscillator-core/yield/vco_core_body_selft0_rref12.spice",
+          "sim/oscillator-core/yield/sg13g2_inductor_em.spice"
+        ],
+        "not_scanned": []
+      }
+    }
+  },
+  "coverage": {
+    "corners_simulated": 1,
+    "measurements_declared": 9,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"isup_avg\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"t_cross_1\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"t_cross_11\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_late_max\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_late_min\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_max\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_min\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vtail_avg\"]/observation",
+      "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vte_avg\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"isup_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"t_cross_1\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"t_cross_11\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_late_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_late_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vdiff_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vtail_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"ladder-probe-rref12/1.650V/27C/mc0\",\"vte_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.9.3.dev663+g22ab2a8756c7",
+    "klt_git_commit": "22ab2a8756c79a5d09778a08f58822fd65031207",
+    "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@22ab2a8756c79a5d09778a08f58822fd65031207",
+    "klayout_version": "0.30.13",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "PDK_ROOT environment variable",
+      "version": "fetched:0.3.0"
+    },
+    "deck": null,
+    "input": {
+      "content_hash": "sha256:f89e0d7062179465d5de9e5c59d60ff98a55d4d01f851a9a6e0fb9ba63a459eb",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "t_cross_1",
+      "unit": "s",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.01652e-08,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.01652e-08
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.01652e-08
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 1.01652e-08,
+        "stddev": null,
+        "min": 1.01652e-08,
+        "max": 1.01652e-08,
+        "quantiles": {
+          "p5": 1.01652e-08,
+          "p50": 1.01652e-08,
+          "p95": 1.01652e-08
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 1.01652e-08,
+            "stddev": null,
+            "min": 1.01652e-08,
+            "max": 1.01652e-08,
+            "quantiles": {
+              "p5": 1.01652e-08,
+              "p50": 1.01652e-08,
+              "p95": 1.01652e-08
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "t_cross_11",
+      "unit": "s",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.25577e-08,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.25577e-08
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.25577e-08
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 1.25577e-08,
+        "stddev": null,
+        "min": 1.25577e-08,
+        "max": 1.25577e-08,
+        "quantiles": {
+          "p5": 1.25577e-08,
+          "p50": 1.25577e-08,
+          "p95": 1.25577e-08
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 1.25577e-08,
+            "stddev": null,
+            "min": 1.25577e-08,
+            "max": 1.25577e-08,
+            "quantiles": {
+              "p5": 1.25577e-08,
+              "p50": 1.25577e-08,
+              "p95": 1.25577e-08
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_max",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 7.40788e-05,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 7.40788e-05
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 7.40788e-05
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 7.40788e-05,
+        "stddev": null,
+        "min": 7.40788e-05,
+        "max": 7.40788e-05,
+        "quantiles": {
+          "p5": 7.40788e-05,
+          "p50": 7.40788e-05,
+          "p95": 7.40788e-05
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 7.40788e-05,
+            "stddev": null,
+            "min": 7.40788e-05,
+            "max": 7.40788e-05,
+            "quantiles": {
+              "p5": 7.40788e-05,
+              "p50": 7.40788e-05,
+              "p95": 7.40788e-05
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_min",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -7.36033e-05,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -7.36033e-05
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -7.36033e-05
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": -7.36033e-05,
+        "stddev": null,
+        "min": -7.36033e-05,
+        "max": -7.36033e-05,
+        "quantiles": {
+          "p5": -7.36033e-05,
+          "p50": -7.36033e-05,
+          "p95": -7.36033e-05
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -7.36033e-05,
+            "stddev": null,
+            "min": -7.36033e-05,
+            "max": -7.36033e-05,
+            "quantiles": {
+              "p5": -7.36033e-05,
+              "p50": -7.36033e-05,
+              "p95": -7.36033e-05
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_late_max",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.69338e-06,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.69338e-06
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 1.69338e-06
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 1.69338e-06,
+        "stddev": null,
+        "min": 1.69338e-06,
+        "max": 1.69338e-06,
+        "quantiles": {
+          "p5": 1.69338e-06,
+          "p50": 1.69338e-06,
+          "p95": 1.69338e-06
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 1.69338e-06,
+            "stddev": null,
+            "min": 1.69338e-06,
+            "max": 1.69338e-06,
+            "quantiles": {
+              "p5": 1.69338e-06,
+              "p50": 1.69338e-06,
+              "p95": 1.69338e-06
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_late_min",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -1.54629e-06,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -1.54629e-06
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -1.54629e-06
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": -1.54629e-06,
+        "stddev": null,
+        "min": -1.54629e-06,
+        "max": -1.54629e-06,
+        "quantiles": {
+          "p5": -1.54629e-06,
+          "p50": -1.54629e-06,
+          "p95": -1.54629e-06
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -1.54629e-06,
+            "stddev": null,
+            "min": -1.54629e-06,
+            "max": -1.54629e-06,
+            "quantiles": {
+              "p5": -1.54629e-06,
+              "p50": -1.54629e-06,
+              "p95": -1.54629e-06
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "isup_avg",
+      "unit": "A",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -2.99055e-05,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -2.99055e-05
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": -2.99055e-05
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": -2.99055e-05,
+        "stddev": null,
+        "min": -2.99055e-05,
+        "max": -2.99055e-05,
+        "quantiles": {
+          "p5": -2.99055e-05,
+          "p50": -2.99055e-05,
+          "p95": -2.99055e-05
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -2.99055e-05,
+            "stddev": null,
+            "min": -2.99055e-05,
+            "max": -2.99055e-05,
+            "quantiles": {
+              "p5": -2.99055e-05,
+              "p50": -2.99055e-05,
+              "p95": -2.99055e-05
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vtail_avg",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 2.58048,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 2.58048
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 2.58048
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 2.58048,
+        "stddev": null,
+        "min": 2.58048,
+        "max": 2.58048,
+        "quantiles": {
+          "p5": 2.58048,
+          "p50": 2.58048,
+          "p95": 2.58048
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 2.58048,
+            "stddev": null,
+            "min": 2.58048,
+            "max": 2.58048,
+            "quantiles": {
+              "p5": 2.58048,
+              "p50": 2.58048,
+              "p95": 2.58048
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vte_avg",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 0.0391808,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 0.0391808
+      },
+      "max": {
+        "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+        "value": 0.0391808
+      },
+      "monte_carlo": {
+        "n": 1,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 0.0391808,
+        "stddev": null,
+        "min": 0.0391808,
+        "max": 0.0391808,
+        "quantiles": {
+          "p5": 0.0391808,
+          "p50": 0.0391808,
+          "p95": 0.0391808
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "ladder-probe-rref12/1.650V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 0.0391808,
+            "stddev": null,
+            "min": 0.0391808,
+            "max": 0.0391808,
+            "quantiles": {
+              "p5": 0.0391808,
+              "p50": 0.0391808,
+              "p95": 0.0391808
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "ladder-probe-rref12/1.650V/27C/mc0",
+      "process": "ladder-probe-rref12",
+      "supply_v": {
+        "vct": 1.65
+      },
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 16.131,
+      "peak_rss_bytes": 68321280,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "t_cross_1",
+          "value": 1.01652e-08,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "t_cross_11",
+          "value": 1.25577e-08,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_max",
+          "value": 7.40788e-05,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_min",
+          "value": -7.36033e-05,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_late_max",
+          "value": 1.69338e-06,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_late_min",
+          "value": -1.54629e-06,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "isup_avg",
+          "value": -2.99055e-05,
+          "unit": "A",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vtail_avg",
+          "value": 2.58048,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vte_avg",
+          "value": 0.0391808,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": null,
+        "raw": null,
+        "waveform": null,
+        "deck": null
+      },
+      "monte_carlo": {
+        "sample_index": 0,
+        "seed": 405717652,
+        "process_seed": 844550415,
+        "mismatch_seed": 1184580593,
+        "seed_scope": "shared"
+      }
+    }
+  ]
+}

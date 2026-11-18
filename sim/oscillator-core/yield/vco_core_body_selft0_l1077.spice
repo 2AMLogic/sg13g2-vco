@@ -1,0 +1,74 @@
+* vco_core_body_selft0_l1077.spice -- the campaign body including the S4-scaled inductor
+* model (issue #244 stage S4). Derived from vco_core_body_selft0.spice (sha256
+* e0982010f9dc2214e36f2b8d6c53e14e4af245d0ebe497202fe4ec7f4bc18192) by EXACTLY ONE edit: the .include line. selft=0 as in the campaign body.
+* vco_core_body_selft0.spice -- the campaign body with VBIC self-heating switched off
+* (selft=0 on XQ1..XQ4). Derived from the elaborate-post79 vco_core_body.spice
+* (sha256 9ce081a6af3d5f3a884e0157e8e25a562d2afa3826b8de7c8d380ee812a6f155) by EXACTLY four
+* instance-parameter additions and nothing else; the four changed lines are XQ1, XQ2, XQ3, XQ4.
+*
+* Why (run record 20261115-*, ../records/): ngspice-47 (runner image and dispatch host since ~2026-11-13)
+* aborts this deck at the first transient timepoint -- VBIC's self-heating path hands the temperature
+* limiter a NaN ("The temperature limiting function received NaN", then "Timestep too small;
+* initial timepoint ... q.xq1.qnpn13g2v"). ngspice-46 passes the byte-identical deck (3/3 on the
+* fleet 2026-11-05; re-measured locally 2026-11-15, f matches the record to all printed digits).
+* ngspice-47p1 fails the same way. The defect is NOT the dsubw card (bare-diode probe at
+* T = TNOM = 27 C prints a finite cd = 9.76683e-15 on both 46 and 47); it is the VBIC thermal path.
+* selft=0 (rth = selft * 3.26e3 * (4/Nx)**0.9 -> rth = 0) disables junction self-heating.
+*
+* Measured bound of the deviation, this bench, tt_nominal, Vctrl = 0, 20 ns two-WHEN estimator:
+*   ngspice-46 (self-heating on):  f_osc 4.21337 GHz, vdiff_pp 0.593942 V
+*   ngspice-47 selft=0:            f_osc 4.21337 GHz, vdiff_pp 0.591418 V
+* i.e. frequency unchanged below print precision; differential swing -0.42 %. The bound is measured
+* at the 27 C anchor only; it is NOT extrapolated to hot corners, where self-heating is larger
+* (bisect record 20261106-055147: at 125 C the variants separate by far more). No hot-corner number
+* may come from this body.
+* Applicability: anchor-1 yield campaign only (27 C, issue #244). The #50 grid and any 125 C unit
+* remain governed by the pending operator decision on the dsubw card and are NOT run from here.
+.include sg13g2_inductor_em_l1077.spice
+XL1 VDD OUTP 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XL2 VDD OUTN 0 inductor w=8.22e-6 s=3.74e-6 d=141.975e-6 nr_r=4 m=1
+XC1 OUTP OUTN cap_cmim w=3.65e-6 l=3.65e-6 m=1
+XCVP1 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP2 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP3 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP4 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP5 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP6 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP7 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP8 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP9 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP10 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP11 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP12 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP13 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP14 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP15 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVP16 VCTRL OUTP VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN1 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN2 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN3 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN4 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN5 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN6 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN7 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN8 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN9 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN10 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN11 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN12 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN13 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN14 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN15 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XCVN16 VCTRL OUTN VCTRL 0 sg13_hv_svaricap w=3.74e-6 l=0.3e-6 Nx=1
+XQ1 OUTP OUTN TAIL 0 npn13G2v Nx=1 El=1.0 selft=0
+XQ2 OUTN OUTP TAIL 0 npn13G2v Nx=1 El=1.0 selft=0
+XQ3 TAIL NBIAS TE 0 npn13G2v Nx=1 El=2.0 selft=0
+RTE TE 0 2k m=1
+RREF VDD NBIAS 20.5k m=1
+XQ4 NBIAS NBIAS RE 0 npn13G2v Nx=1 El=1.0 selft=0
+RRE RE 0 4k m=1
+VSUP VDD 0 dc 3.3
+VCT VCTRL 0 dc 1.65
+Bvdiff VDIFF 0 V = V(OUTP) - V(OUTN)
+Bvcm VCM 0 V = (V(OUTP) + V(OUTN)) / 2
+.ic v(OUTP)=3.305 v(OUTN)=3.295

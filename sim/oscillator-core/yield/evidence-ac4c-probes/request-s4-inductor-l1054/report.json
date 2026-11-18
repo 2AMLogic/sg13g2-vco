@@ -1,0 +1,1167 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/oscillator-core/yield/vco_core_body_selft0_l1054.spice",
+    "scope": "repo"
+  },
+  "status": "pass",
+  "corner_count": 2,
+  "passed": 2,
+  "failed": 0,
+  "errored": 0,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {
+      "nonconvergence": 2
+    },
+    "by_severity": {
+      "warning": 2
+    },
+    "corners_with_diagnostics": 2
+  },
+  "metrics": {
+    "sim__corner__count": 2,
+    "sim__corner__passed_count": 2,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 0,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "47",
+    "ngspice_binary": "/usr/local/bin/ngspice",
+    "engine_build": {
+      "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******",
+      "binary_sha256": null,
+      "probe": "ok",
+      "reason": null
+    },
+    "ngspice_init": {
+      "source": "runner",
+      "lines": null,
+      "sha256": null
+    },
+    "models_lib": {
+      "path": null,
+      "scope": "absent"
+    },
+    "models_lib_sha256": null,
+    "models_lib_sha256_scope": "client",
+    "netlist_sha256": "2b94cce7f63d7c9c3fb16fdc29224a76acd803fb4766a2ba7e436b7f284abb44",
+    "netlist_closure": [
+      {
+        "path": "sim/oscillator-core/yield/vco_core_body_selft0_l1054.spice",
+        "scope": "repo",
+        "sha256": "2b94cce7f63d7c9c3fb16fdc29224a76acd803fb4766a2ba7e436b7f284abb44"
+      },
+      {
+        "path": "sim/oscillator-core/yield/sg13g2_inductor_em_l1054.spice",
+        "scope": "repo",
+        "sha256": "dd68b1786b128a901cbc9b79a33ae910d2afe7ad93a6883513c3b3469ac5566a"
+      }
+    ],
+    "netlist_identity": "sha256:50ae0513febe70f6ce939410d1e8c94e11100ca57785815f267dd6ec22c20dae",
+    "netlist_source": "schematic",
+    "corner_section_libs": [
+      {
+        "name": "cornerHBT.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462"
+      },
+      {
+        "name": "cornerMOShv.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "5a1f862dc304fdfe2fb9758b15d54809a688d83c3ce981dad2e8473b3e93481a"
+      },
+      {
+        "name": "cornerCAP.lib",
+        "path": null,
+        "scope": "external",
+        "sha256": "4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56"
+      }
+    ],
+    "osdi_preload_runner_resolved": [
+      {
+        "entry": "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi",
+        "index": 0,
+        "reason": "env_var",
+        "sha256": "25e64a374ab523dbfeb7ffed75dcb8b086ee10f06120a9074bd68b92d7b0fb41"
+      }
+    ],
+    "remote": {
+      "provider": "aws-batch-fleet",
+      "job_id": "klt-sim-c830d6710474",
+      "region": "us-east-1",
+      "instance_id": "i-0264b9810b6511b52",
+      "instance_type": "c6i.8xlarge",
+      "availability_zone": "us-east-1d",
+      "ami_id": "ami-09c14f55df4958cbd",
+      "lifecycle": "spot",
+      "spot": true,
+      "state": "done",
+      "exit_code": "0",
+      "concurrency": "2",
+      "physical_cores": "16",
+      "elapsed_seconds": 12,
+      "client_submitted_at": "2026-11-17T16:52:43.982301Z",
+      "client_launched_at": "2026-11-17T16:53:08.274587Z",
+      "client_status_terminal_at": "2026-11-17T16:53:39.819894Z",
+      "client_collected_at": "2026-11-17T16:53:40.724942Z",
+      "runner_klt_version": "0.9.0",
+      "client_klt_version": "0.9.3.dev663+g22ab2a8756c7",
+      "runner_compatibility": "match",
+      "runner_request_features": {
+        "required": [
+          "corners.process[].sections[]",
+          "options.osdi_preload"
+        ],
+        "missing": [],
+        "status": "supported"
+      },
+      "worker_environment": {
+        "capture": "ok",
+        "simulator": {
+          "requested_binary": "ngspice",
+          "binary_source": "PATH",
+          "selected_path": "/usr/local/bin/ngspice",
+          "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+          "version_probe": "ok"
+        },
+        "pdk": {
+          "variant": "ihp-sg13g2",
+          "root": "/opt/pdk",
+          "stamp_scheme": null,
+          "stamp_sha256": null,
+          "stamp_text": null,
+          "models_staged": false,
+          "stamp_scope": "executed"
+        },
+        "cpu_model": "Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz",
+        "omp_num_threads": null,
+        "image_manifest": null,
+        "model_inputs": null,
+        "diagnostics": [
+          "pdk stamp unreadable: FileNotFoundError"
+        ],
+        "pdk_stamp_comparison": {
+          "status": "not_comparable",
+          "reason": "worker_stamp_unavailable"
+        },
+        "ngspice_init": null,
+        "engine_build_comparison": {
+          "status": "match"
+        }
+      },
+      "runner_model_inputs": null,
+      "runner_models_lib_sha256": null,
+      "runner_osdi_preload": [
+        {
+          "name": "mosvar.osdi",
+          "sha256": "25e64a374ab523dbfeb7ffed75dcb8b086ee10f06120a9074bd68b92d7b0fb41"
+        }
+      ],
+      "job_ceiling": {
+        "basis": "conservative_serial_bound",
+        "unit_count": 2,
+        "per_unit_timeout_s": 3000,
+        "overhead_s": 120.0,
+        "job_bound_s": 6120.0,
+        "max_job_seconds": 3600.0,
+        "max_job_seconds_source": "fleet_config",
+        "exceeds_ceiling": true,
+        "check": "warn",
+        "max_units_per_job": 1,
+        "recommended_hosts": 2,
+        "warning": "batch job bound 6120s (options.timeout_s 3000s x 2 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 2 to run one job per shard of at most 1 units, each within the ceiling"
+      },
+      "models_lib_comparison": {
+        "status": "not_comparable",
+        "reason": "runner_hash_unavailable"
+      }
+    },
+    "engine_host": "worker",
+    "client_ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "client_engine_build": {
+      "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******",
+      "binary_sha256": "39ca1adb826660324c3626f72bd946ec40704f0f3fc8e243c623f76e24b3eee2",
+      "probe": "ok",
+      "reason": null
+    },
+    "backend": {
+      "resolved": "batch",
+      "source": "flag",
+      "requested": "batch"
+    },
+    "monte_carlo": {
+      "n": 1,
+      "seed": 244,
+      "vary": "both",
+      "seed_scope": "shared",
+      "family_mismatch": [
+        {
+          "family": "other",
+          "active": null,
+          "note": "mismatch activity for the 'other' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        },
+        {
+          "family": "capacitor",
+          "active": null,
+          "note": "mismatch activity for the 'capacitor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        },
+        {
+          "family": "bipolar",
+          "active": null,
+          "note": "mismatch activity for the 'bipolar' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        },
+        {
+          "family": "resistor",
+          "active": null,
+          "note": "mismatch activity for the 'resistor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        }
+      ],
+      "family_mismatch_scan": {
+        "scanned": [
+          "sim/oscillator-core/yield/vco_core_body_selft0_l1054.spice",
+          "sim/oscillator-core/yield/sg13g2_inductor_em_l1054.spice"
+        ],
+        "not_scanned": []
+      }
+    }
+  },
+  "coverage": {
+    "corners_simulated": 2,
+    "measurements_declared": 9,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"isup_avg\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"t_cross_1\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"t_cross_11\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_late_max\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_late_min\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_max\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_min\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vtail_avg\"]/observation",
+      "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vte_avg\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"isup_avg\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"t_cross_1\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"t_cross_11\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_late_max\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_late_min\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_max\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_min\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vtail_avg\"]/observation",
+      "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vte_avg\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"isup_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"t_cross_1\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"t_cross_11\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_late_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_late_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vdiff_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vtail_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"s4-inductor-l1054/0.000V/27C/mc0\",\"vte_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"isup_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"t_cross_1\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"t_cross_11\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_late_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_late_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_max\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vdiff_min\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vtail_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"s4-inductor-l1054/3.300V/27C/mc0\",\"vte_avg\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.9.3.dev663+g22ab2a8756c7",
+    "klt_git_commit": "22ab2a8756c79a5d09778a08f58822fd65031207",
+    "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@22ab2a8756c79a5d09778a08f58822fd65031207",
+    "klayout_version": "0.30.13",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "PDK_ROOT environment variable",
+      "version": "fetched:0.3.0"
+    },
+    "deck": null,
+    "input": {
+      "content_hash": "sha256:2b94cce7f63d7c9c3fb16fdc29224a76acd803fb4766a2ba7e436b7f284abb44",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "t_cross_1",
+      "unit": "s",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 1.01167e-08,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 1.01167e-08
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": 1.01432e-08
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 1.012995e-08,
+        "stddev": 1.87383297014437e-11,
+        "min": 1.01167e-08,
+        "max": 1.01432e-08,
+        "quantiles": {
+          "p5": 1.0118025e-08,
+          "p50": 1.012995e-08,
+          "p95": 1.0141874999999999e-08
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 1.01167e-08,
+            "stddev": null,
+            "min": 1.01167e-08,
+            "max": 1.01167e-08,
+            "quantiles": {
+              "p5": 1.01167e-08,
+              "p50": 1.01167e-08,
+              "p95": 1.01167e-08
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 1.01432e-08,
+            "stddev": null,
+            "min": 1.01432e-08,
+            "max": 1.01432e-08,
+            "quantiles": {
+              "p5": 1.01432e-08,
+              "p50": 1.01432e-08,
+              "p95": 1.01432e-08
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "t_cross_11",
+      "unit": "s",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 1.25541e-08,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 1.25541e-08
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": 1.28475e-08
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 1.27008e-08,
+        "stddev": 2.0746512960013293e-10,
+        "min": 1.25541e-08,
+        "max": 1.28475e-08,
+        "quantiles": {
+          "p5": 1.256877e-08,
+          "p50": 1.27008e-08,
+          "p95": 1.283283e-08
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 1.25541e-08,
+            "stddev": null,
+            "min": 1.25541e-08,
+            "max": 1.25541e-08,
+            "quantiles": {
+              "p5": 1.25541e-08,
+              "p50": 1.25541e-08,
+              "p95": 1.25541e-08
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 1.28475e-08,
+            "stddev": null,
+            "min": 1.28475e-08,
+            "max": 1.28475e-08,
+            "quantiles": {
+              "p5": 1.28475e-08,
+              "p50": 1.28475e-08,
+              "p95": 1.28475e-08
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_max",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 0.311349,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": 0.277537
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 0.311349
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 0.294443,
+        "stddev": 0.02390869448547955,
+        "min": 0.277537,
+        "max": 0.311349,
+        "quantiles": {
+          "p5": 0.27922759999999996,
+          "p50": 0.294443,
+          "p95": 0.30965839999999994
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 0.311349,
+            "stddev": null,
+            "min": 0.311349,
+            "max": 0.311349,
+            "quantiles": {
+              "p5": 0.311349,
+              "p50": 0.311349,
+              "p95": 0.311349
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 0.277537,
+            "stddev": null,
+            "min": 0.277537,
+            "max": 0.277537,
+            "quantiles": {
+              "p5": 0.277537,
+              "p50": 0.277537,
+              "p95": 0.277537
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_min",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": -0.31134,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": -0.31134
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": -0.277537
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": -0.2944385,
+        "stddev": 0.023902330524448887,
+        "min": -0.31134,
+        "max": -0.277537,
+        "quantiles": {
+          "p5": -0.30964985,
+          "p50": -0.2944385,
+          "p95": -0.27922715
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -0.31134,
+            "stddev": null,
+            "min": -0.31134,
+            "max": -0.31134,
+            "quantiles": {
+              "p5": -0.31134,
+              "p50": -0.31134,
+              "p95": -0.31134
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -0.277537,
+            "stddev": null,
+            "min": -0.277537,
+            "max": -0.277537,
+            "quantiles": {
+              "p5": -0.277537,
+              "p50": -0.277537,
+              "p95": -0.277537
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_late_max",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 0.311348,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": 0.277537
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 0.311348
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 0.2944425,
+        "stddev": 0.023907987378698384,
+        "min": 0.277537,
+        "max": 0.311348,
+        "quantiles": {
+          "p5": 0.27922755,
+          "p50": 0.2944425,
+          "p95": 0.30965745
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 0.311348,
+            "stddev": null,
+            "min": 0.311348,
+            "max": 0.311348,
+            "quantiles": {
+              "p5": 0.311348,
+              "p50": 0.311348,
+              "p95": 0.311348
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 0.277537,
+            "stddev": null,
+            "min": 0.277537,
+            "max": 0.277537,
+            "quantiles": {
+              "p5": 0.277537,
+              "p50": 0.277537,
+              "p95": 0.277537
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vdiff_late_min",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": -0.31134,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": -0.31134
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": -0.277537
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": -0.2944385,
+        "stddev": 0.023902330524448887,
+        "min": -0.31134,
+        "max": -0.277537,
+        "quantiles": {
+          "p5": -0.30964985,
+          "p50": -0.2944385,
+          "p95": -0.27922715
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -0.31134,
+            "stddev": null,
+            "min": -0.31134,
+            "max": -0.31134,
+            "quantiles": {
+              "p5": -0.31134,
+              "p50": -0.31134,
+              "p95": -0.31134
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -0.277537,
+            "stddev": null,
+            "min": -0.277537,
+            "max": -0.277537,
+            "quantiles": {
+              "p5": -0.277537,
+              "p50": -0.277537,
+              "p95": -0.277537
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "isup_avg",
+      "unit": "A",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": -0.000305673,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": -0.000305673
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": -0.00030567
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": -0.00030567150000000004,
+        "stddev": 2.121320343554711e-09,
+        "min": -0.000305673,
+        "max": -0.00030567,
+        "quantiles": {
+          "p5": -0.00030567285,
+          "p50": -0.00030567150000000004,
+          "p95": -0.00030567015
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -0.000305673,
+            "stddev": null,
+            "min": -0.000305673,
+            "max": -0.000305673,
+            "quantiles": {
+              "p5": -0.000305673,
+              "p50": -0.000305673,
+              "p95": -0.000305673
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": -0.00030567,
+            "stddev": null,
+            "min": -0.00030567,
+            "max": -0.00030567,
+            "quantiles": {
+              "p5": -0.00030567,
+              "p50": -0.00030567,
+              "p95": -0.00030567
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vtail_avg",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 2.59329,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": 2.58272
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 2.59329
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 2.588005,
+        "stddev": 0.0074741186771417846,
+        "min": 2.58272,
+        "max": 2.59329,
+        "quantiles": {
+          "p5": 2.5832485000000003,
+          "p50": 2.588005,
+          "p95": 2.5927615
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 2.59329,
+            "stddev": null,
+            "min": 2.59329,
+            "max": 2.59329,
+            "quantiles": {
+              "p5": 2.59329,
+              "p50": 2.59329,
+              "p95": 2.59329
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 2.58272,
+            "stddev": null,
+            "min": 2.58272,
+            "max": 2.58272,
+            "quantiles": {
+              "p5": 2.58272,
+              "p50": 2.58272,
+              "p95": 2.58272
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "vte_avg",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 0.406468,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+        "value": 0.406468
+      },
+      "max": {
+        "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+        "value": 0.40648
+      },
+      "monte_carlo": {
+        "n": 2,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 0.406474,
+        "stddev": 8.485281374247057e-06,
+        "min": 0.406468,
+        "max": 0.40648,
+        "quantiles": {
+          "p5": 0.4064686,
+          "p50": 0.406474,
+          "p95": 0.40647940000000005
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "s4-inductor-l1054/0.000V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 0.406468,
+            "stddev": null,
+            "min": 0.406468,
+            "max": 0.406468,
+            "quantiles": {
+              "p5": 0.406468,
+              "p50": 0.406468,
+              "p95": 0.406468
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "s4-inductor-l1054/3.300V/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 0.40648,
+            "stddev": null,
+            "min": 0.40648,
+            "max": 0.40648,
+            "quantiles": {
+              "p5": 0.40648,
+              "p50": 0.40648,
+              "p95": 0.40648
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "s4-inductor-l1054/0.000V/27C/mc0",
+      "process": "s4-inductor-l1054",
+      "supply_v": {
+        "vct": 0.0
+      },
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 4.241,
+      "peak_rss_bytes": 64274432,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "t_cross_1",
+          "value": 1.01167e-08,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "t_cross_11",
+          "value": 1.25541e-08,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_max",
+          "value": 0.311349,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_min",
+          "value": -0.31134,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_late_max",
+          "value": 0.311348,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_late_min",
+          "value": -0.31134,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "isup_avg",
+          "value": -0.000305673,
+          "unit": "A",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vtail_avg",
+          "value": 2.59329,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vte_avg",
+          "value": 0.406468,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": null,
+        "raw": null,
+        "waveform": null,
+        "deck": null
+      },
+      "monte_carlo": {
+        "sample_index": 0,
+        "seed": 405717652,
+        "process_seed": 844550415,
+        "mismatch_seed": 1184580593,
+        "seed_scope": "shared"
+      }
+    },
+    {
+      "corner_id": "s4-inductor-l1054/3.300V/27C/mc0",
+      "process": "s4-inductor-l1054",
+      "supply_v": {
+        "vct": 3.3
+      },
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 4.252,
+      "peak_rss_bytes": 64274432,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "t_cross_1",
+          "value": 1.01432e-08,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "t_cross_11",
+          "value": 1.28475e-08,
+          "unit": "s",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_max",
+          "value": 0.277537,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_min",
+          "value": -0.277537,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_late_max",
+          "value": 0.277537,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vdiff_late_min",
+          "value": -0.277537,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "isup_avg",
+          "value": -0.00030567,
+          "unit": "A",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vtail_avg",
+          "value": 2.58272,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "vte_avg",
+          "value": 0.40648,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": null,
+        "raw": null,
+        "waveform": null,
+        "deck": null
+      },
+      "monte_carlo": {
+        "sample_index": 0,
+        "seed": 405717652,
+        "process_seed": 844550415,
+        "mismatch_seed": 1184580593,
+        "seed_scope": "shared"
+      }
+    }
+  ]
+}
