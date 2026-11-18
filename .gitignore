@@ -21,6 +21,8 @@ layout/build/
 flow/build/
 # local klt install, created by the setup script
 .venv/
+# klt run scratch: regenerable artifacts collected under .klt/ beside each request
+.klt/
 # >>> loom-managed (do not edit) >>>
 # Loom runtime state (don't commit these)
 .loom-in-use
