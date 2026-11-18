@@ -257,6 +257,23 @@ campaign. Two controls are planned, because they test different things:
    request's `.meas` period count is coarser, as `klt-sim/README.md` already
    says; use the one that was validated.
 
+The pairing evidence is two distinct claims. The P2 pair probes prove only the
+**same-body** claim: sample k is the same die across requests sharing a seed,
+every body being the campaign body. The row-6 ladder estimator additionally
+pairs **across netlists** — its `I_nom` is measured on the nominal body while
+its `I_rung` comes from the decision-rung body
+(`vco_core_body_selft0_rref71.spice`) — which no request-level probe covers.
+The committed reports support that second claim directly: per-die `vte_avg` at
+the 1.65 V point correlates across the two bodies at the same `mc<index>` at
+0.9946 (process), 0.9983 (mismatch) and 0.9980 (seed-245 nominal companion vs
+extension ladder), while the same series shifted one index (index+1) — the
+null — gives 0.065 / -0.103 / -0.006. Re-derived on 2026-11-18 by joining each
+pair on `mc<index>` and computing Pearson over per-die `vte_avg` from
+`evidence-s2-{process,mismatch}/report.json` (1.65 V point),
+`evidence-r6-ladder-{process,mismatch}/report.json` and
+`evidence-r6-ladder-ext245-{,nommis-}mismatch/report.json`; the AC 4c run
+record describes the same pairing design.
+
 ## What this plan (still) does not do
 
 - ~~Run anything, or cite a `klt yield` report~~ — **done for anchor 1 on
