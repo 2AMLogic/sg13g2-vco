@@ -11,6 +11,10 @@
 #
 # Usage: check-sim-append-only.sh [--root DIR] [--base REF]
 #   --base defaults to $SIM_APPEND_ONLY_BASE, else origin/$GITHUB_BASE_REF.
+#   On a merge_group run (merge queue, issue #410) there is no
+#   GITHUB_BASE_REF: the workflow passes the trial-merge base sha as an
+#   explicit --base, and an explicitly empty --base fails closed instead of
+#   falling through to the pull_request fallback.
 # Pure bash + git; no PDK, no klt.
 
 set -u
@@ -18,14 +22,20 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 BASE="${SIM_APPEND_ONLY_BASE:-}"
+BASE_EXPLICIT=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --root) ROOT="$2"; shift 2 ;;
-    --base) BASE="$2"; shift 2 ;;
+    --base) BASE="$2"; BASE_EXPLICIT=1; shift 2 ;;
     *) echo "usage: $0 [--root DIR] [--base REF]" >&2; exit 2 ;;
   esac
 done
+
+if [ "$BASE_EXPLICIT" -eq 1 ] && [ -z "$BASE" ]; then
+  echo "FAIL: --base is empty (merge_group base_sha missing from the event?)" >&2
+  exit 1
+fi
 
 if [ -z "$BASE" ] && [ -n "${GITHUB_BASE_REF:-}" ]; then
   git -C "$ROOT" fetch --no-tags origin "$GITHUB_BASE_REF" >/dev/null 2>&1 || true

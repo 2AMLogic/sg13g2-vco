@@ -87,5 +87,33 @@ mkrepo nomb
 git -C "$R" checkout -q --orphan orphan; commit
 run_case "no merge-base fails closed" 1 main
 
+# Merge-group cases (issue #410): a merge_group run has no GITHUB_BASE_REF;
+# the workflow passes the trial-merge base sha as an explicit --base.
+mkrepo mgadd
+MG_BASE="$(git -C "$R" rev-parse main)"
+for d in sim/a/records sim/a/netlist-snapshots sim/a/corners sim/a/b/records \
+         sim/inductor-model/em-extraction/records; do echo new > "$R/$d/y.txt"; done
+commit; run_case "merge_group sha base, add-only passes" 0 "$MG_BASE"
+
+mkrepo mgmod
+MG_BASE="$(git -C "$R" rev-parse main)"
+echo changed > "$R/sim/a/records/x.txt"; commit
+run_case "merge_group sha base, modify fails" 1 "$MG_BASE"
+
+# An explicitly empty --base must fail closed even when GITHUB_BASE_REF
+# would offer a pull_request fallback (merge_group runs have none).
+mkrepo mgempty
+if out="$(SIM_APPEND_ONLY_BASE='' GITHUB_BASE_REF=fake-base \
+           "$CHECKER" --root "$R" --base "" 2>&1)"; then
+  echo "FAIL: merge_group empty --base fails closed (exit 0)" >&2; fail=$((fail + 1))
+elif printf '%s\n' "$out" | grep -Fq "FAIL: --base is empty"; then
+  echo "PASS: merge_group empty --base fails closed (named)"; pass=$((pass + 1))
+else
+  echo "FAIL: merge_group empty --base fails closed (no named message)" >&2; fail=$((fail + 1))
+fi
+
+mkrepo mgunres
+run_case "merge_group unavailable sha fails closed" 1 0123456789abcdef0123456789abcdef01234567
+
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
