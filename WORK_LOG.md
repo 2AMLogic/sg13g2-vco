@@ -4,6 +4,12 @@ Merged PRs and closed issues, newest first. Entries record forge events;
 closure alone does not assert that engineering acceptance criteria passed.
 Guide maintenance PRs are excluded.
 
+### 2026-11-18
+
+- **PR #408**: gitignore: ignore klt run scratch (.klt/) at any depth
+- **Issue #407** (closed): gitignore: .klt/ scratch under sim/ is untracked and un-ignored
+- **PR #406**: sim: run the AC 4c yield stages and cover statistical rows 3 and 6
+
 ### 2026-11-17
 
 - **PR #373**: docs: quote band-centre mismatch sigma_f0 (3.6 MHz) in yield summary lines
