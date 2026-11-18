@@ -37,7 +37,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core
+_None._
 
 ## PRs Awaiting Review
 
@@ -49,7 +49,7 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-- **#413**: docs(yield): state the row-6 cross-netlist pairing claim and its re-derived correlations [244] — closes #244
+_None._
 
 ## Proposed
 
@@ -61,7 +61,6 @@ Issues carrying `loom:curated`.
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)* *(held)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)* *(held)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)* *(held)*
-- **#244**: T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)* *(held)*
 
 ## Proposed (Architect / Hermit)
@@ -80,10 +79,10 @@ _None._
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 1 |
-| Curated | 8 |
+| Approved PRs awaiting merge | 0 |
+| Curated | 7 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

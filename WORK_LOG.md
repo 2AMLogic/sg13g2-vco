@@ -6,6 +6,8 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-18
 
+- **PR #413**: docs(yield): state the row-6 cross-netlist pairing claim and its re-derived correlations
+- **Issue #244** (closed): T1 item 6: declare the statistical spec rows and plan the klt yield campaign for the oscillator core
 - **PR #412**: ci: add merge_group trigger and adapt the PR-metadata gates
 - **Issue #410** (closed): Merge queue: add the merge_group trigger and adapt the PR-metadata gates
 - **PR #408**: gitignore: ignore klt run scratch (.klt/) at any depth
