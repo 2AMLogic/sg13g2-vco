@@ -31,7 +31,7 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#410**: Merge queue: add the merge_group trigger and adapt the PR-metadata gates
+_None._
 
 ## In Progress
 
@@ -49,7 +49,7 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-_None._
+- **#413**: docs(yield): state the row-6 cross-netlist pairing claim and its re-derived correlations [244] — closes #244
 
 ## Proposed
 
@@ -79,10 +79,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
 | Important | 4 |
-| Ready (`loom:issue`) | 1 |
+| Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 0 |
+| Approved PRs awaiting merge | 1 |
 | Curated | 8 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |

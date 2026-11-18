@@ -6,6 +6,8 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-18
 
+- **PR #412**: ci: add merge_group trigger and adapt the PR-metadata gates
+- **Issue #410** (closed): Merge queue: add the merge_group trigger and adapt the PR-metadata gates
 - **PR #408**: gitignore: ignore klt run scratch (.klt/) at any depth
 - **Issue #407** (closed): gitignore: .klt/ scratch under sim/ is untracked and un-ignored
 - **PR #406**: sim: run the AC 4c yield stages and cover statistical rows 3 and 6
