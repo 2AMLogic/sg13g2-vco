@@ -1,16 +1,30 @@
-# Monte Carlo yield campaign for the oscillator core (T1 item 6) — anchor 1 run, later stages planned
+# Monte Carlo yield campaign for the oscillator core (T1 item 6) — anchor 1 and AC 4c stages run
 
-- **Status (2026-11-15)**: **anchor 1 has RUN** — S0 seed control, both S1
-  instruments (process and mismatch, N = 400 each), and both negative
-  controls. Result, method, versions and the engine deviation:
-  `../records/20261115-190000-0b056b1-yield-anchor1-run.md`. Headline:
-  rows 1 and 2 grade as **misses** (yield 0.0 — the DR-006 shortfall,
-  sampled, not created, by this campaign); row 7 grades **400/400 under both
-  instruments** with its negative control detected and
-  `sample_size.verdict = sufficient` everywhere. Stages S2–S4 (rows 3, 5, 9
-  and the row-6 ladder design) remain **plan only**, unchanged below.
-  Issue #244. The corner-grid pairing (plan §"Pairing with the row-10
-  corners") still waits on #50.
+- **Status (2026-11-18, AC 4c complete + the seed-245 extension)**: **the AC
+  4c stages have RUN** — S2 mid-window points (both instruments, N = 400,
+  1600/1600 units each), the row-6 decision-rung pick (deterministic probes +
+  the rung decision: **RREF 71k**), the per-sample startup-ladder campaign
+  and its known-bad control at that rung, stage S4 (the deterministic
+  inductor sensitivity, gap G1's only bound), and the **seed-245 extension**
+  (N = 4200) that re-sizes the first mismatch ladder draw's
+  `sample_size.verdict = insufficient` to `sufficient` — the plan's rule:
+  extend with a NEW seed, never argue around. Result, method, versions:
+  `../records/20261118-050000-0fa456b-yield-ac4c-stages.md`.
+  Row 3 is now covered by eight envelopes (its Kvco-mean floor fails on the
+  merits — the DR-006 shortfall, sampled, not created, by this campaign; the
+  other three DR-004 requirements pass). Row 6 is covered: process passes
+  400/400 with its control detected; mismatch grades a conservative
+  lower-bound yield of 0.9186 — a miss on its merits (the DR-006 lane
+  again). **Rows 5 and 9 are NOT measured here**: #362 (row 5, graded tank-Q
+  bench) and #363 (row 9, supply-pushing bench) own those measurements; this
+  campaign consumes whatever they define (issue #244 AC 4d), and
+  `spec_rows."6"` declares them gaps naming the owners.
+  Earlier: anchor 1 (S0 + S1 + controls) ran 2026-11-15 —
+  `../records/20261115-190000-0b056b1-yield-anchor1-run.md`: rows 1/2 grade as
+  misses (yield 0.0, the DR-006 shortfall), row 7 400/400 with its control
+  detected, `sample_size.verdict = sufficient` everywhere.
+  The corner-grid pairing (plan §"Pairing with the row-10 corners") still
+  waits on #50.
 - **Classification this plan reads**: `spec/decision-records/DR-007-statistical-row-classification.md`.
   Statistical rows are **1, 2, 3, 4, 5, 6, 7, 9**; corner-bounded rows are 0,
   8, 10, 11. This plan covers rows 1, 2, 3, 5, 6, 7, 9. **Row 4 is a declared
@@ -53,18 +67,34 @@ that body.** The runner-side pinning gap is filed as klayout-tools#5853
 | `vco_core_body.spice` | The campaign circuit body, byte-identical to `../klt-sim/elaborate-post79/vco_core_body.spice` (sha256 `9ce081a6…f6155`, the post-#79 validated body). Kept unmodified as the derivation base. |
 | `vco_core_body_selft0.spice` | The body the anchor-1 run used: the above plus `selft=0` on XQ1–XQ4 (the documented ngspice-47 self-heating deviation; see the header and the run record). |
 | `vco_core_body_known_bad.spice` | The known-bad control body: `selft0` body plus RTE 2k → 4.4k (tail starved; sized by the deterministic probe). |
+| `vco_core_body_selft0_rref{2,3,4,6,8,12,69,71,73}.spice` | The row-6 ladder bodies: `selft0` body with RREF scaled by the named factor (`rref69/71/73` in kΩ are the refinement rungs; each derived by exactly one edit, header states it). `rref71` is the **decision rung** the ladder campaign ran at. |
+| `vco_core_body_known_bad_rref71k.spice` | The known-bad control body at the decision rung: `known_bad` plus RREF 20.5k → 71k. Deterministic-probe-verified to fail the rung. |
 | `sg13g2_inductor_em.spice` | The EM-fitted inductor model copy the body includes (same as the klt-sim attempt dirs carry). |
+| `sg13g2_inductor_em_l{0936,1054,1064,1077}.spice` | Stage S4 copies: the EM-fitted model with its total series L scaled by 0.936 / 1.054 / 1.064 / 1.077 (the analytic model's measured error class, issue #9). Generated, one-edit derivations; headers state the edit. |
 | `request-nominal-process.json` | Anchor 1, **global process** spread: `hbt_typ_stat`, `mos_tt_stat`, `cap_typ_stat`; N = 400, seed 244, `vary: "process"`, `seed_scope: "shared"`; `Vctrl` in {0.0, 3.3} V, 27 C, 3.3 V. As submitted. |
 | `request-nominal-mismatch.json` | Anchor 1, **per-instance mismatch**: `*_mismatch` sections; N = 400, seed 244, `vary: "mismatch"`, `seed_scope: "shared"`; same axes. As submitted. |
 | `request-negative-control-seed.json` | The seed negative control (below): plain typical sections, N = 8, expected sigma = 0. As submitted. |
 | `request-negative-control-known-bad-process.json` / `-mismatch.json` | The known-bad control at campaign N, seed and axes, per instrument. As submitted. |
 | `request-knownbad-probe.json`, `request-regression-probe.json`, `request-selft0-probe.json` | The one-shot deterministic probes (RTE sizing; plain-body fleet abort capture; self-heating-off local pass control). Not campaign requests. |
-| `assemble_yield_samples.py` | The committed assembler: pairs samples by `mc<index>` across the endpoints, derives f0 / ratio / swing, writes the six sample-set documents. |
+| `request-pair-probe-{process,mismatch}.json` | The seed-contract probes run before the S2 submission: 8 units at Vctrl 0.0 against the S1 reports, proving sample k is the same die across requests (P2). |
+| `request-s2-midwindow-{process,mismatch}.json` | **AC 4c, stage S2** (row 3): N = 400, seed 244, `seed_scope: "shared"`, the four mid-window points 1.65/1.8/2.4/3.0 V (the S1 endpoints complete the five in-window chord points + f(0.0)). As submitted. |
+| `request-ladder-probe-rref{1,2,3,4,6,8,12}.json` | The deterministic RREF ladder map (one unit each, plain typical): thresholds the rung bracket. |
+| `request-rung-pick-rref{69,71,73}.json`, `request-rung-pick-knownbad71k.json` | The rung refinement probes and the known-bad viability probe at the picked rung. **Decision: 71k** — the strongest starvation whose measured nominal margin-equivalent (3.062) still clears the 3.0 floor; 69k (2.980) would grade the campaign yield ≈ 0 by estimator construction. |
+| `request-r6-ladder-rref71-{process,mismatch}.json` | **AC 4c, row 6**: the per-sample startup-ladder campaign at the decision rung, N = 400 per instrument, seed 244, Vctrl 1.65 V (the pilot ladder's convention). As submitted. |
+| `request-r6-ladder-control-rref71-{process,mismatch}.json` | The row-6 known-bad control at the SAME rung, N = 100 per instrument. Expected: fails the rung → margin floor 1.0 → yield 0.0 → detected. As submitted. |
+| `request-s4-inductor-l{0936,1054,1064,1077}.json` | **AC 4c, stage S4** (deterministic, gap G1's only bound): plain typical sections, both tuning endpoints, no sampling. As submitted. |
+| `assemble_yield_samples.py` | The committed assembler: pairs samples by `mc<index>` across the endpoints, derives f0 / ratio / swing, writes the six sample-set documents. `ac4c` mode derives the row-3 quantities (pairing S1 endpoints with the S2 mid-window points by the seed contract) and the row-6 per-sample ladder margin (I_tail measured from `vte_avg`/RTE, never inferred), and writes the ten AC 4c sample-set documents. `ac4c-ext` mode writes the seed-245 extension sample set (the extension's I_nom comes from its nominal-body companion request). |
 | `yield-limits.json` | Run defaults (confidence 0.95, half-width 0.01, target yield 0.99) and the quoted per-row limits. |
-| `yield-samples-*.json` (6) | The `klt yield` sample-set documents (measurement × instrument). |
-| `yield-envelope-*.json` (6) | The `klt yield` grading envelopes (produced at the 0.8.0 pin) — what `signoff/manifest.json` item 6 cites. |
+| `yield-samples-*.json` (6 + 10 + 1) | The `klt yield` sample-set documents (measurement × instrument): six anchor-1 (rows 1/2/7), ten AC 4c (row 3's four requirements × 2 instruments, row 6's ladder margin × 2), and the seed-245 extension `yield-samples-mismatch-startup_margin_lower-ext245.json`. The seed-244 mismatch ladder sample set stays committed as the extension's provenance (its own envelope is deliberately not committed — see the run record). |
+| `yield-envelope-*.json` (16) | The `klt yield` grading envelopes (produced at the 0.8.0 pin) — what `signoff/manifest.json` item 6 cites. Every committed envelope grades `sample_size.verdict` != `insufficient`; the first mismatch ladder draw's envelope (seed 244, `insufficient`) is intentionally not committed — it regenerates exactly from its committed sample set, and the seed-245 extension envelope is the row-6 mismatch citation. |
+| `request-r6-ladder-ext245-mismatch.json` / `-nommis-mismatch.json` | **AC 4e extension** (row 6, mismatch): the decision-rung request and its nominal-body companion at seed 245, N = 4200 — sized from the first draw's committed CI alone so the verdict stays `sufficient` across it. As submitted. |
 | `evidence-s0/` | Seed-control report + retained per-unit decks/logs (16/16 pass, sigma = 0). |
 | `evidence-s1-process/`, `evidence-s1-mismatch/` | The two instruments' full reports (per-sample measurements, seeds, digests) and batch receipts. |
+| `evidence-s2-process/`, `evidence-s2-mismatch/` | **AC 4c, stage S2**: the mid-window reports (1600/1600 units each; every die oscillates at every point). |
+| `evidence-r6-ladder-process/`, `evidence-r6-ladder-mismatch/`, `evidence-r6-ladder-control-process/`, `evidence-r6-ladder-control-mismatch/` | **AC 4c, row 6**: the decision-rung campaign and its known-bad control, per instrument. |
+| `evidence-r6-ladder-ext245/` (`set-manifest.json`), `evidence-r6-ladder-ext245-mismatch/`, `evidence-r6-ladder-ext245-nommis-mismatch/` | **AC 4e, row 6 extension**: the seed-245 ladder and nominal-companion reports (4200 + 4200 units) and their receipts; the set manifest records both job ids (the companion's first collector was lost to a builder-step timeout; re-collected with `--attach`, never re-run). |
+| `evidence-ac4c-probes/` | The deterministic probes that sized and verified the AC 4c stages before any sampling: the RREF ladder map, the seed-contract pair probes, and the four S4 inductor scalings (13/13 pass). |
+| `evidence-ac4c-rung-pick/` | The rung refinement probes (69/71/73k), the known-bad viability probe at 71k, and the rung decision (71k) with its reasoning. |
 | `evidence-knownbad-probe/`, `evidence-knownbad-process/`, `evidence-knownbad-mismatch/` | The control probe and control runs' reports and receipts. |
 | `evidence-s0-ngspice47-regression/` | The ngspice-47 regression evidence: a one-unit fleet probe on the plain body (aborts), local 46/47/47p1 reproductions, the self-heating-off pass control, and the TNOM diode probe showing dsubw is not the cause. |
 
@@ -156,10 +186,12 @@ request at 400 samples and 2 endpoints is 800 transients, about **87 CPU-hours**
 | S0 negative control (seed) | none (harness check) | 2 | 16 (N = 8) | 1.7 CPU-h |
 | S1 anchor 1, process, endpoints | 1, 2, 6, 7 | `Vctrl` 0.0, 3.3 | 800 | 87 CPU-h |
 | S1 anchor 1, mismatch, endpoints | 1, 2, 6, 7 | 0.0, 3.3 | 800 | 87 CPU-h |
-| S2 mid-window points | 3 | + 1.65, 1.8, 2.4, 3.0 (row 3 needs >= 5 points in the window, endpoint 3.3 shared) | 1600 per instrument | 173 CPU-h each |
-| S3 supply pairs | 9 | + 2 points at band-centre `Vctrl`, VDD at 2.97 / 3.63 V | 800 per instrument | 87 CPU-h each |
-| S4 inductor sensitivity (deterministic) | 1, 2, 5 | 3 scalings of L, no sampling | few | negligible |
-| Row 5 (tank Q) | 5 | one small-signal `ac` run of the loaded tank, not a transient | 400 | small; request not written yet |
+| S2 mid-window points | 3 | + 1.65, 1.8, 2.4, 3.0 (row 3 needs >= 5 points in the window, endpoint 3.3 shared) | 1600 per instrument | 173 CPU-h each — **RUN 2026-11-17** |
+| S3 supply pairs | 9 | ~~+ 2 points at band-centre `Vctrl`, VDD at 2.97 / 3.63 V~~ | ~~800 per instrument~~ | **NOT run here**: row 9's measurement is **#363's** (the supply-pushing bench, open/`loom:blocked`). This issue consumes whatever that bench defines (issue #244 AC 4d); no second row-9 bench is defined in this directory. |
+| Row-6 decision-rung ladder | 6 | 1 point at Vctrl 1.65 at RREF 71k | 400 per instrument (+ 100-unit control) | ~44 CPU-h each — **RUN 2026-11-17** |
+| Row-6 mismatch extension | 6 | same, seed 245 (new seed, never a re-tune of the first draw) | 4200 mismatch + 4200 companion nominal-body units | ~450 CPU-h — **RUN 2026-11-17/18**, collected 2026-11-18 |
+| S4 inductor sensitivity (deterministic) | 1, 2, 5 | 4 scalings of L (0.936 / 1.054 / 1.064 / 1.077 — the analytic model's measured error class, issue #9), no sampling | few | negligible — **RUN 2026-11-17** (evidence-ac4c-probes) |
+| Row 5 (tank Q) | 5 | ~~one small-signal `ac` run of the loaded tank~~ | ~~400~~ | **NOT run here**: row 5's graded measurement is **#362's** (the tank-Q bench, open/`loom:blocked`). This issue consumes whatever that bench defines (issue #244 AC 4d); the 2026-10-17 plan predates #361/#362/#363 and its in-directory row-5 bench request is deliberately not written. |
 
 Total if every stage runs for both instruments is about 700 CPU-hours at
 anchor 1 alone (2 x 87 + 2 x 173 + 2 x 87), a fleet job. This is why the plan stages: S0 and S1 first, and
@@ -194,15 +226,15 @@ campaign. Two controls are planned, because they test different things:
    the sampler or the harness injects variation nobody asked for, and the
    campaign does not proceed.
 2. **Known-bad variant (for `klt yield`'s `negative_control`).** One edit to a
-   private copy of the netlist, chosen so that its **zero-spread** row-7 swing
-   is at most 0.8 x the 0.40 V floor (<= 0.32 V). A starting candidate is the
-   tail resistor `RTE` raised, which lowers `I_tail`; the value is **not
-   chosen here**. The run step sets it by one deterministic nominal transient
-   and records that transient *before* sampling. The same N, seed and axes
-   are then run; `klt yield` must report this variant's yield as degraded
-   against the real campaign. If it is not detected, the campaign cannot
-   distinguish a failing design from a passing one, and the real result is
-   not usable.
+   private copy of the netlist, chosen so that its zero-spread measurement
+   degrades against the real campaign. **Resolved**: the tail-starved body
+   (`RTE` 2k → 4.4k) was probe-sized and run at anchor 1 (row 7); the row-6
+   stage adds the SAME body at the decision rung
+   (`vco_core_body_known_bad_rref71k.spice`), deterministic-probe-verified to
+   fail the rung (`request-rung-pick-knownbad71k`: late-window pk-pk
+   6.3e-4 V << 0.1 V) before the ladder campaign was submitted. If a control
+   run is not detected, the campaign cannot distinguish a failing design from
+   a passing one, and the real result is not usable.
 
 ## Analysis
 
@@ -229,9 +261,23 @@ campaign. Two controls are planned, because they test different things:
 
 - ~~Run anything, or cite a `klt yield` report~~ — **done for anchor 1 on
   2026-11-15** (`../records/20261115-190000-0b056b1-yield-anchor1-run.md`;
-  the six envelopes are cited by `signoff/manifest.json` item 6). Still true:
-  stages S2–S4 have not run, and the corner-pairing anchors wait on #50.
+  the six envelopes are cited by `signoff/manifest.json` item 6) and for the
+  **AC 4c stages on 2026-11-17/18** (S2, the row-6 decision-rung ladder and
+  control, S4, and the seed-245 mismatch extension; run record
+  `../records/20261118-050000-0fa456b-yield-ac4c-stages.md`; all 16 committed
+  envelopes are cited by `signoff/manifest.json` item 6, which now declares
+  rows 5/9 as gaps naming #362/#363).
 - Cover row 4: a per-sample phase-noise estimator does not exist, so row 4
-  stays an uncovered statistical row in the signoff coverage statement.
+  stays a declared gap in the signoff coverage statement.
+- ~~Cover rows 5 and 9 here~~ — **reassigned 2026-11-17 (issue #244 AC 4d,
+  absorbing #361's finding)**: #362 owns the row-5 graded tank-Q bench and
+  #363 the row-9 supply-pushing bench (both filed 2026-11-15 out of PR #357's
+  coverage note; both open, `loom:blocked`). This directory defines no
+  competing row-5/row-9 bench and runs no S3 supply pairs; it consumes
+  whatever those benches define. Until they land, rows 5 and 9 stay uncovered
+  or are declared gaps naming them — either is honest; a second measurement
+  here would not be.
 - Bump the klt pin (P2 to P4 are checked against whichever release the run
   step pins).
+- The corner-pairing anchors wait on #50 (open, `loom:operator`); no worst
+  corner is named before that grid exists.

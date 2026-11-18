@@ -184,6 +184,86 @@
           ],
           "status": "met",
           "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-process-kvco_mean_mhz_v.json",
+          "rows": [
+            "3"
+          ],
+          "status": "unmet",
+          "reason": "check_failed"
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-process-kvco_chord_nonlinearity_pct.json",
+          "rows": [
+            "3"
+          ],
+          "status": "met",
+          "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-process-window_coverage.json",
+          "rows": [
+            "3"
+          ],
+          "status": "met",
+          "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-process-kvco_single_signed.json",
+          "rows": [
+            "3"
+          ],
+          "status": "met",
+          "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-mismatch-kvco_mean_mhz_v.json",
+          "rows": [
+            "3"
+          ],
+          "status": "unmet",
+          "reason": "check_failed"
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-mismatch-kvco_chord_nonlinearity_pct.json",
+          "rows": [
+            "3"
+          ],
+          "status": "met",
+          "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-mismatch-window_coverage.json",
+          "rows": [
+            "3"
+          ],
+          "status": "met",
+          "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-mismatch-kvco_single_signed.json",
+          "rows": [
+            "3"
+          ],
+          "status": "met",
+          "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-process-startup_margin_lower.json",
+          "rows": [
+            "6"
+          ],
+          "status": "met",
+          "reason": null
+        },
+        {
+          "citation": "sim/oscillator-core/yield/yield-envelope-mismatch-startup_margin_lower-ext245.json",
+          "rows": [
+            "6"
+          ],
+          "status": "unmet",
+          "reason": "check_failed"
         }
       ],
       "detail": {
@@ -191,34 +271,40 @@
           "sim/oscillator-core/yield/yield-envelope-process-f0_bandcentre_hz.json",
           "sim/oscillator-core/yield/yield-envelope-process-tuning_ratio.json",
           "sim/oscillator-core/yield/yield-envelope-mismatch-f0_bandcentre_hz.json",
-          "sim/oscillator-core/yield/yield-envelope-mismatch-tuning_ratio.json"
+          "sim/oscillator-core/yield/yield-envelope-mismatch-tuning_ratio.json",
+          "sim/oscillator-core/yield/yield-envelope-process-kvco_mean_mhz_v.json",
+          "sim/oscillator-core/yield/yield-envelope-mismatch-kvco_mean_mhz_v.json",
+          "sim/oscillator-core/yield/yield-envelope-mismatch-startup_margin_lower-ext245.json"
         ],
         "failed_rows": [
           "1",
           "2"
         ],
-        "uncovered_rows": [
-          "3",
-          "5",
-          "6",
-          "9"
-        ],
+        "uncovered_rows": [],
         "declared_gaps": [
           {
             "id": "4",
             "gap": "no per-sample phase-noise estimator exists (ISF route costs about 1.2 CPU-hours per corner); see sim/oscillator-core/yield/README.md"
+          },
+          {
+            "id": "5",
+            "gap": "the graded tank-Q measurement is issue #362's bench (open); this campaign consumes it once that bench lands (issue #244 AC 4d)"
+          },
+          {
+            "id": "9",
+            "gap": "the supply-pushing measurement is issue #363's bench (open); this campaign consumes it once that bench lands (issue #244 AC 4d)"
           }
         ],
         "unratified_rows": [
           "1",
           "2",
           "3",
-          "5",
           "6",
-          "7",
-          "9"
+          "7"
         ],
         "row_sources": {
+          "3": "asserted",
+          "6": "asserted",
           "7": "asserted"
         }
       }

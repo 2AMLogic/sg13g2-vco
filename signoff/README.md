@@ -189,30 +189,34 @@ evidence (issue #244):
   are corner-bounded. Reasons are in
   `spec/decision-records/DR-007-statistical-row-classification.md`.
 - **Covered by the planned campaign:** rows 1, 2, 3, 5, 6, 7, 9
-  (`sim/oscillator-core/yield/README.md`). **Declared gap: row 4**, because no
-  per-sample phase-noise estimator exists.
+  (`sim/oscillator-core/yield/README.md`). **Declared gaps: row 4** (no
+  per-sample phase-noise estimator exists), and — since 2026-11-18 — rows 5
+  and 9, whose graded measurements are owned by the open benches **#362**
+  (tank Q) and **#363** (supply pushing); this campaign consumes whatever
+  those benches define and declares the gap naming them rather than
+  measuring a competing bench (issue #244 AC 4d).
 - **Declared in `manifest.json` under `spec_rows."6"`** (klt 0.8.0 grades the
   field, read from `klayout_tools/signoff.py` `_read_spec_rows`; the
   klayout-tools#2908 field the pin `0.6.0` did not read). The value is a list
   of objects, not bare numbers: `{"id": "<row>", "gap": "<reason>"?,
-  "ratified": bool?}`. Rows 1, 2, 3, 5, 6, 7, 9 are declared covered, row 4 is
-  declared with a `gap` reason, and every row carries `"ratified": false`
-  because DR-007 is still **proposed**: an unratified row keeps item 6 off
-  `met` (it lands in `unratified_rows`), though it does not stop that row's
-  own citation from grading `met`. Flip `ratified` to `true` when DR-007 is
-  ratified.
+  "ratified": bool?}`. Rows 1, 2, 3, 6, 7 are declared covered, rows 4, 5 and
+  9 are declared with a `gap` reason, and every row carries `"ratified":
+  false` because DR-007 is still **proposed**: an unratified row keeps item 6
+  off `met` (it lands in `unratified_rows`), though it does not stop that
+  row's own citation from grading `met`. Flip `ratified` to `true` when
+  DR-007 is ratified.
 - **The run landed and item 6 now cites it (2026-11-15).** `sim/oscillator-core/yield/`
   ran the anchor-1 campaign (3216 fleet units: seed control, process and
   mismatch instruments at N = 400, seed 244, `seed_scope: shared`, plus both
   negative controls; record `sim/oscillator-core/records/20261115-190000-0b056b1-yield-anchor1-run.md`).
   `signoff/manifest.json` item 6 cites the six `klt yield` envelopes
   (multi-citation, rows tagged 1 / 2 / 7), and `signoff/t1-report.json` is
-  re-rendered at the pin. Item 6 reads `unmet` / `check_failed` with the
-  full detail: `failed_rows` 1 and 2 — the DR-006 shortfall, sampled (band
-  centre 4.00 GHz against the 4.5 GHz floor; ratio 1.109 against 1.15) —
-  `uncovered_rows` 3, 5, 6, 9 (stages S2–S4 unrun), `declared_gaps` row 4,
-  and every declared row under `unratified_rows` because DR-007 is still
-  **proposed**. The row-7 evidence itself is a 400/400 pass with its
+  re-rendered at the pin. Item 6 read `unmet` / `check_failed` after anchor
+  1: `failed_rows` 1 and 2 — the DR-006 shortfall, sampled (band centre
+  4.00 GHz against the 4.5 GHz floor; ratio 1.109 against 1.15) —
+  `uncovered_rows` 3, 5, 6, 9 (stages S2–S4 then unrun), `declared_gaps`
+  row 4, and every declared row under `unratified_rows` because DR-007 is
+  still **proposed**. The row-7 evidence itself is a 400/400 pass with its
   negative control detected and `sample_size.verdict = sufficient`, and
   both row-7 citations grade `met` (2026-11-17): the item-6 `content_hash`
   pins now hash the samples document each envelope names, which is what
@@ -224,6 +228,28 @@ evidence (issue #244):
   `sim/oscillator-core/records/20261115-190000-0b056b1-yield-anchor1-run.md`
   (written 2026-11-15, before the repinned render). Flip `ratified` to
   `true` when DR-007 is ratified.
+- **The AC 4c stages ran and rows 3 and 6 are covered (2026-11-18).**
+  `sim/oscillator-core/yield/` ran S2 (row 3: the four mid-window points,
+  both instruments, 1600/1600 units each), the row-6 decision-rung ladder at
+  RREF 71k with its known-bad control, the deterministic S4 inductor
+  sensitivity, and the seed-245 mismatch extension (N = 4200) that re-sizes
+  the first mismatch ladder draw's `insufficient` verdict (extend with a new
+  seed, never argue around); record
+  `sim/oscillator-core/records/20261118-050000-0fa456b-yield-ac4c-stages.md`.
+  `signoff/manifest.json` item 6 now cites sixteen envelopes (rows tagged
+  1 / 2 / 3 / 6 / 7; the ten new citations' `content_hash` values hash the
+  samples documents their envelopes name). The fresh render reads
+  `failed_rows` 1 and 2, **`uncovered_rows` empty**, `declared_gaps` rows
+  4, 5, 9, `row_sources` 3, 6, 7 asserted. What the new evidence says:
+  row 3's Kvco-mean floor fails on the merits (~242 MHz/V against the 381
+  floor — the DR-006 shortfall again) while chord nonlinearity, window
+  coverage and single-signedness pass both instruments; row 6 passes process
+  400/400 with its control detected and grades a conservative lower-bound
+  yield of 0.9186 under mismatch — a miss on its merits, in DR-006's lane;
+  S4 bounds gap G1 (the inductor has no statistical model): its measured
+  error class moves the endpoints at most −3.7 %/+3.4 % and cannot close the
+  row-1 band-centre miss. Every number is a 27 C anchor number on the
+  documented `selft=0` body (ngspice-47 deviation; no hot-corner claim).
 - **Citing evidence later:** a `klt yield` report only counts if its own
   `sample_size.verdict` is not `insufficient` and its negative control is
   detected (`sim/oscillator-core/yield/README.md`). Item 6 is not met by any

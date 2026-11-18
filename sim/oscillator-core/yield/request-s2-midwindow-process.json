@@ -1,0 +1,118 @@
+{
+ "_comment": [
+  "S2 stage, mid-window points for row 3 (issue #244 AC 4c). Points 1.65/1.8/2.4/3.0 V join the",
+  "S1 endpoints 0.0/3.3 V by the seed contract: seed 244 + seed_scope shared + vary ",
+  "makes sample k the same die at every point and across requests (P2; verified by",
+  "request-pair-probe-*.json against evidence-s1-*/report.json before submission). Row 3 grades",
+  "on the five in-window points 1.65/1.8/2.4/3.0/3.3 (spec row 3: >=5 points incl. both",
+  "endpoints); f(0.0) for the window-coverage requirement comes from the S1 report, same die.",
+  "vte_avg is new: it measures I_tail per die (V(TE)/RTE, the pilot's route) for the row-6",
+  "margin lower bound at the nominal rung.",
+  "engine_version 47 is the fail-closed post-run pin (issue #3041); the body carries selft=0",
+  "(the documented ngspice-47 VBIC self-heating deviation, run record 20261115-*)."
+ ],
+ "netlist": "vco_core_body_selft0.spice",
+ "netlist_source": "schematic",
+ "engine": "ngspice",
+ "models": {
+  "pdk": "ihp-sg13g2",
+  "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+ },
+ "corners": {
+  "process": [
+   {
+    "name": "s2-midwindow-process",
+    "sections": [
+     {
+      "section": "hbt_typ_stat",
+      "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+     },
+     {
+      "section": "mos_tt_stat",
+      "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+     },
+     {
+      "section": "cap_typ_stat",
+      "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+     }
+    ]
+   }
+  ],
+  "supply_v": {
+   "vct": [
+    1.65,
+    1.8,
+    2.4,
+    3.0
+   ]
+  },
+  "temperature_c": [
+   27
+  ]
+ },
+ "monte_carlo": {
+  "n": 400,
+  "seed": 244,
+  "vary": "process",
+  "seed_scope": "shared"
+ },
+ "analysis": {
+  "kind": "tran",
+  "args": "1p 20n 0 2p"
+ },
+ "measurements": [
+  {
+   "name": "t_cross_1",
+   "unit": "s",
+   "spice": ".meas tran t_cross_1 WHEN v(vdiff)=0 RISE=1 TD=10n"
+  },
+  {
+   "name": "t_cross_11",
+   "unit": "s",
+   "spice": ".meas tran t_cross_11 WHEN v(vdiff)=0 RISE=11 TD=10n"
+  },
+  {
+   "name": "vdiff_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vdiff_min",
+   "unit": "V",
+   "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vdiff_late_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_late_max MAX v(vdiff) FROM=15n TO=20n"
+  },
+  {
+   "name": "vdiff_late_min",
+   "unit": "V",
+   "spice": ".meas tran vdiff_late_min MIN v(vdiff) FROM=15n TO=20n"
+  },
+  {
+   "name": "isup_avg",
+   "unit": "A",
+   "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
+  },
+  {
+   "name": "vtail_avg",
+   "unit": "V",
+   "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
+  },
+  {
+   "name": "vte_avg",
+   "unit": "V",
+   "spice": ".meas tran vte_avg AVG v(te) FROM=10n TO=20n"
+  }
+ ],
+ "options": {
+  "timeout_s": 3000,
+  "keep_artifacts": false,
+  "osdi_preload": [
+   "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+  ]
+ },
+ "engine_version": "47"
+}

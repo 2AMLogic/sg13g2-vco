@@ -1,0 +1,96 @@
+{
+  "samples": "yield-samples-mismatch-kvco_single_signed.json",
+  "limits": "yield-limits.json",
+  "source": {
+    "kind": "sample-set",
+    "netlist": null,
+    "monte_carlo": null,
+    "sample_count": 400
+  },
+  "schema_version": 1,
+  "confidence": 0.95,
+  "target_ci_halfwidth": 0.01,
+  "min_samples": 2,
+  "status": "pass",
+  "measurement_count": 1,
+  "measurements": [
+    {
+      "name": "kvco_single_signed",
+      "unit": "dimensionless",
+      "n": 400,
+      "errored": 0,
+      "failed_unmeasurable": 0,
+      "censored": 0,
+      "inconclusive": 0,
+      "limits": {
+        "min": 1.0,
+        "target_yield": 0.99
+      },
+      "source_corners": [],
+      "distribution": {
+        "model": "normal",
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0,
+        "median": 1.0,
+        "skewness": null,
+        "excess_kurtosis": null,
+        "normality": {
+          "test": "anderson-darling",
+          "statistic": null,
+          "critical_value": 0.787,
+          "significance": 0.05,
+          "verdict": "degenerate"
+        }
+      },
+      "yield": {
+        "empirical": {
+          "method": "clopper-pearson",
+          "estimate": 1.0,
+          "confidence": 0.95,
+          "confidence_interval": {
+            "low": 0.9908201954163351,
+            "high": 1.0
+          },
+          "n": 400
+        },
+        "normal": null,
+        "variance_reduced": null
+      },
+      "capability": {
+        "cp": null,
+        "cpk": null,
+        "cpk_confidence_interval": null,
+        "sigma_to_spec": null,
+        "sigma_to_spec_confidence_interval": null,
+        "limiting_side": null
+      },
+      "sample_size": {
+        "n": 400,
+        "observed_ci_halfwidth": 0.004589902291832426,
+        "target_ci_halfwidth": 0.01,
+        "required_n": 183,
+        "required_n_for_target": 368,
+        "verdict": "sufficient",
+        "method": "clopper-pearson-zero-failures",
+        "variance_reduced": null
+      },
+      "negative_control": null,
+      "analytic_cross_check": null,
+      "sampling": {
+        "strategy": "plain_random",
+        "replicates": null,
+        "effective_sample_size": null
+      },
+      "status": "pass",
+      "warnings": [
+        "measurement 'kvco_single_signed': no sample fell outside the limits, so the empirical yield is bounded only from below -- \"at least 99.0820% at 95% confidence, N = 400\" is the honest statement, not \"100% yield\"",
+        "measurement 'kvco_single_signed': every sample has the same value, so the normal fit, Cpk and sigma-to-spec are undefined and are reported as null"
+      ]
+    }
+  ],
+  "warnings": [
+    "no measurement declared a negative_control -- this campaign has no seeded, known-bad variant demonstrating that the statistics above can actually detect a degraded design; see docs/cli/yield.md#negative-control"
+  ]
+}

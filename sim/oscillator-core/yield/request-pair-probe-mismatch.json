@@ -1,0 +1,110 @@
+{
+ "_comment": [
+  "Cross-request same-die pairing probe, mismatch instrument (issue #244 AC 4c).",
+  "Seed 244, seed_scope shared, vary mismatch: sample k's mc_seed must equal",
+  "evidence-s1-mismatch/report.json's mc<k> at Vctrl=0.0, bit for bit. If these four",
+  "units do not reproduce anchor-1's first four dies, the S2 requests must carry",
+  "all six Vctrl points instead of reusing the S1 endpoints."
+ ],
+ "netlist": "vco_core_body_selft0.spice",
+ "netlist_source": "schematic",
+ "engine": "ngspice",
+ "models": {
+  "pdk": "ihp-sg13g2",
+  "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+ },
+ "corners": {
+  "process": [
+   {
+    "name": "pair-probe-mismatch",
+    "sections": [
+     {
+      "section": "hbt_typ_mismatch",
+      "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+     },
+     {
+      "section": "mos_tt_mismatch",
+      "lib": "libs.tech/ngspice/models/cornerMOShv.lib"
+     },
+     {
+      "section": "cap_typ_mismatch",
+      "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+     }
+    ]
+   }
+  ],
+  "supply_v": {
+   "vct": [
+    0.0
+   ]
+  },
+  "temperature_c": [
+   27
+  ]
+ },
+ "monte_carlo": {
+  "n": 4,
+  "seed": 244,
+  "vary": "mismatch",
+  "seed_scope": "shared"
+ },
+ "analysis": {
+  "kind": "tran",
+  "args": "1p 20n 0 2p"
+ },
+ "measurements": [
+  {
+   "name": "t_cross_1",
+   "unit": "s",
+   "spice": ".meas tran t_cross_1 WHEN v(vdiff)=0 RISE=1 TD=10n"
+  },
+  {
+   "name": "t_cross_11",
+   "unit": "s",
+   "spice": ".meas tran t_cross_11 WHEN v(vdiff)=0 RISE=11 TD=10n"
+  },
+  {
+   "name": "vdiff_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_max MAX v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vdiff_min",
+   "unit": "V",
+   "spice": ".meas tran vdiff_min MIN v(vdiff) FROM=10n TO=20n"
+  },
+  {
+   "name": "vdiff_late_max",
+   "unit": "V",
+   "spice": ".meas tran vdiff_late_max MAX v(vdiff) FROM=15n TO=20n"
+  },
+  {
+   "name": "vdiff_late_min",
+   "unit": "V",
+   "spice": ".meas tran vdiff_late_min MIN v(vdiff) FROM=15n TO=20n"
+  },
+  {
+   "name": "isup_avg",
+   "unit": "A",
+   "spice": ".meas tran isup_avg AVG i(vsup) FROM=10n TO=20n"
+  },
+  {
+   "name": "vtail_avg",
+   "unit": "V",
+   "spice": ".meas tran vtail_avg AVG v(tail) FROM=10n TO=20n"
+  },
+  {
+   "name": "vte_avg",
+   "unit": "V",
+   "spice": ".meas tran vte_avg AVG v(te) FROM=10n TO=20n"
+  }
+ ],
+ "options": {
+  "timeout_s": 3000,
+  "keep_artifacts": false,
+  "osdi_preload": [
+   "$PDK_ROOT/ihp-sg13g2/libs.tech/ngspice/osdi/mosvar.osdi"
+  ]
+ },
+ "engine_version": "47"
+}
