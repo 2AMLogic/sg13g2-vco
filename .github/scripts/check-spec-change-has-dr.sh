@@ -7,6 +7,10 @@
 #
 # Usage: check-spec-change-has-dr.sh [--root DIR] [--base REF] [--head REF]
 #   Diffs BASE...HEAD (merge-base form). Defaults: base=origin/main, head=HEAD.
+#   On a merge_group run (merge queue, issue #410) the workflow passes the
+#   trial-merge base/head shas explicitly; an explicitly empty --base/--head
+#   or a ref that does not resolve fails closed with a named message rather
+#   than silently diffing against the origin/main default.
 set -eu
 
 root="."; base="origin/main"; head="HEAD"
@@ -20,6 +24,20 @@ while [ $# -gt 0 ]; do
 done
 
 cd "$root"
+if [ -z "$base" ]; then
+  echo "FAIL: --base is empty (merge_group base_sha missing from the event?)" >&2
+  exit 1
+fi
+if [ -z "$head" ]; then
+  echo "FAIL: --head is empty (merge_group head_sha missing from the event?)" >&2
+  exit 1
+fi
+for ref in "$base" "$head"; do
+  if ! git rev-parse --verify --quiet "$ref^{commit}" >/dev/null; then
+    echo "FAIL: ref '$ref' does not resolve to a commit (fetch it, e.g. fetch-depth: 0)" >&2
+    exit 1
+  fi
+done
 # Added/Copied/Modified/Renamed/Type-changed; deletions do not count.
 files="$(git diff --name-only --diff-filter=ACMRT "$base...$head")"
 # Also catch a deletion of the spec itself as a modification.

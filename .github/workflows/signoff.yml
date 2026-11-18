@@ -27,6 +27,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Merge queue (issue #410): the required contexts must report on the
+  # trial-merge commit too. No branches/paths filter — the required-check
+  # workflows run unconditionally for every queued merge.
+  merge_group:
 
 permissions:
   contents: read
@@ -144,9 +148,20 @@ jobs:
       - name: Every shell self-test is wired into check-all.sh test
         run: .github/scripts/check-all.sh test-wiring
 
+      # Issue #410: a merge_group run has no GITHUB_BASE_REF, so the
+      # trial-merge base sha is passed as an explicit --base (the checker
+      # fails closed on an empty one). pull_request runs are byte-unchanged:
+      # no --base, the checker resolves origin/$GITHUB_BASE_REF itself.
       - name: sim/ evidence is append-only
-        if: github.event_name == 'pull_request'
-        run: .github/scripts/check-all.sh append-only
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        env:
+          MERGE_GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "merge_group" ]; then
+            .github/scripts/check-all.sh append-only --base "${MERGE_GROUP_BASE}"
+          else
+            .github/scripts/check-all.sh append-only
+          fi
 
   # Layout evidence/GDS digest gate (issue #106). Pure bash + sha256sum +
   # python3 stdlib: no klt, no PDK.
@@ -165,7 +180,11 @@ jobs:
   spec-change-has-dr:
     # Presence check: an edit to spec/target-spec.md needs a
     # spec/decision-records/DR-NNN-slug.md in the same PR (issue #89).
-    if: github.event_name == 'pull_request'
+    # Issue #410: merge_group runs gate the trial-merge diff with the
+    # event's base/head shas (there is no github.base_ref); the checker
+    # fails closed on an empty or unresolvable base/head. pull_request
+    # runs are byte-unchanged.
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -178,6 +197,14 @@ jobs:
         run: .github/scripts/check-all.sh spec-dr-selftest
 
       - name: Spec edit carries a decision record
+        env:
+          MERGE_GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          MERGE_GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
         run: |
-          .github/scripts/check-all.sh spec-dr \
-            --base "origin/${{ github.base_ref }}" --head "${{ github.event.pull_request.head.sha }}"
+          if [ "${GITHUB_EVENT_NAME}" = "merge_group" ]; then
+            .github/scripts/check-all.sh spec-dr \
+              --base "${MERGE_GROUP_BASE}" --head "${MERGE_GROUP_HEAD}"
+          else
+            .github/scripts/check-all.sh spec-dr \
+              --base "origin/${{ github.base_ref }}" --head "${{ github.event.pull_request.head.sha }}"
+          fi

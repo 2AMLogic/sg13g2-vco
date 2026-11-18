@@ -28,15 +28,15 @@
     },
     {
       "path": ".github/workflows/lint.yml",
-      "sha256": "sha256:4c87b9d49134d26e39daabebf05f12d1eb6680e43cb442519473cd21fca984bb"
+      "sha256": "sha256:9c2e2eb73679b8d21ec5b2d709bf3cebd7635c95c0034f5a4f760605543dfd53"
     },
     {
       "path": ".github/workflows/method-check.yml",
-      "sha256": "sha256:1fe7009529711036dcbc3083724142629499f789002f2b38e051b1bce84c0178"
+      "sha256": "sha256:85455e998e633737ff086c06eabda2b2e1a521e55df64578167d465b02189dd6"
     },
     {
       "path": ".github/workflows/python.yml",
-      "sha256": "sha256:21fc93ba91091a6cada9429a20b51e24c01e480610b833be86f1669a5452eed0"
+      "sha256": "sha256:545323e8770a7dbf6882e77f2290f3bae62905c00bee51bd9dba7e2a7cb373a6"
     },
     {
       "path": ".github/workflows/record-id-loop.yml",
@@ -44,7 +44,7 @@
     },
     {
       "path": ".github/workflows/signoff.yml",
-      "sha256": "sha256:bfc8fe0429cd2fb8535bcd87765ccdbd3e3067c3cf5e389e646d70aaf0dc9dcd"
+      "sha256": "sha256:624bda50468790c628f25483cb2898a42b16cd98aad699ea057576132f84ca81"
     },
     {
       "path": ".github/scripts/check-all.sh",
