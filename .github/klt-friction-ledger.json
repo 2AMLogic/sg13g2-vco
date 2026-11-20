@@ -375,6 +375,15 @@
         ".github/scripts/regen-signoff.sh"
       ],
       "note": "Workaround renders to a temp file, gates the payload and only then moves it over the record (issue #360); cited from .github/scripts/regen-signoff.sh. Filed at the 0.8.0 pin, so the pin-keyed re-check trigger never fires for it (#333)."
+    },
+    {
+      "number": 6903,
+      "gap": "klt lvs with the klayout-runset engine and the pinned ihp-sg13g2 runset compares a mirrored spiral inductor terminal-reversed, and the runset's strict top-port findings never reach the report envelope; the pinned digest allowlist rejects a patched runset, so klt offers no sanctioned way to carry the fix.",
+      "status": "open",
+      "status_checked_on": "2026-11-20",
+      "klt_version_verified": "0.8.0",
+      "workarounds": [],
+      "note": "Status read from the upstream issue on 2026-11-20 (OPEN). Cited from ROADMAP.md, layout/PROVENANCE.md and the two DRAFT upstream reports layout/upstream-reports/inductor-terminal-order.md and inductor-port-names.md; no in-repo workaround, the LVS finding stays recorded as FAIL."
     }
   ]
 }
