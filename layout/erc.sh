@@ -47,7 +47,9 @@
 # `klt lvs` at this pin refuses this compare (PROVENANCE.md section 14); the
 # committed refusal is what item 11's second citation names.
 #
-# TOOLS.  `klt` at the repo's release pin, 0.8.0 (.github/klt-version), in a
+# TOOLS.  `klt` 0.8.0, the tagged wheel the committed ERC record reproduces
+# under (the claims pin, .github/klt-version, moved to 0.9.2 in #416; this
+# record regenerates under it via #266), in a
 # throwaway venv (KLT_RELEASE_ENV, default layout/build/klt-0.8.0) -- never
 # the host's, which is a post-tag dev build.  The negative control needs
 # `klayout` on PATH (it runs layout/scripts/break_ring.py inside KLayout's
@@ -73,7 +75,8 @@ GDS="layout/vco.gds"
 SPEC="layout/erc/vco-erc-spec.json"
 
 # ----------------------------------------------------------------- tools --
-# The tagged klayout-tools wheel CI pins (.github/klt-version), in a
+# The tagged klayout-tools 0.8.0 wheel the committed records reproduce
+# under (see the TOOLS note above), in a
 # throwaway venv -- the same environment layout/lvs.sh provisions for its
 # klt leg.  A post-tag host build ships a different curated deck and would
 # silently rewrite the record with it (see layout/drc.sh's tool note).
