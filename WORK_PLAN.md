@@ -37,7 +37,8 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#416**: Bump the klt pin 0.8.0 -> 0.9.2 (release carrying the ihp-sg13g2 runset digest allowlist) and re-render the signoff bundle
+- **#417**: lvs: prepare the two IHP runset reports (inductor terminal order; LA/LB texts as net names) and the tool-fix proposal for operator review (preparation authorised by the #162 ruling)
 
 ## PRs Awaiting Review
 
@@ -62,6 +63,8 @@ Issues carrying `loom:curated`.
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)* *(held)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)* *(held)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)* *(held)*
+- **#416**: Bump the klt pin 0.8.0 -> 0.9.2 (release carrying the ihp-sg13g2 runset digest allowlist) and re-render the signoff bundle *(curated)*
+- **#417**: lvs: prepare the two IHP runset reports (inductor terminal order; LA/LB texts as net names) and the tool-fix proposal for operator review (preparation authorised by the #162 ruling) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -79,10 +82,10 @@ _None._
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 0 |
+| In Progress (`loom:building`) | 2 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 7 |
+| Curated | 9 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
