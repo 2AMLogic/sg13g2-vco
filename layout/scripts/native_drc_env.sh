@@ -55,15 +55,19 @@ PY
 }
 if [[ "$(installed_rev)" != "${KLT_REV}" ]]; then
   echo "== native-env: installing klayout-tools @ ${KLT_REV} into ${ENV_DIR}/klt"
+  # klayout is pinned to KLAYOUT_VER alongside it: the run of record must
+  # report klayout_version_mismatch=false against the standalone binary, and
+  # unpinned the resolver pulls the newest wheel (0.30.13 was current when
+  # this pin was added), which silently mismatches the engine.
   rm -rf "${ENV_DIR}/klt"
   if command -v uv >/dev/null 2>&1; then
     uv venv -q "${ENV_DIR}/klt"
     VIRTUAL_ENV="${ENV_DIR}/klt" uv pip install -q \
-      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}"
+      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}" "klayout==${KLAYOUT_VER}"
   else
     python3 -m venv "${ENV_DIR}/klt"
     "${ENV_DIR}/klt/bin/python" -m pip install -q \
-      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}"
+      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}" "klayout==${KLAYOUT_VER}"
   fi
   [[ "$(installed_rev)" == "${KLT_REV}" ]] || {
     echo "error: klayout-tools install does not report revision ${KLT_REV}" >&2

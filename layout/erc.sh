@@ -114,10 +114,15 @@ rc=0
 # layout whose substrate tie is actually broken, so the committed stream is
 # re-run against a copy with one of the four ptap1 guard-ring bars deleted
 # (scripts/break_ring.py, the same control layout/drc.sh uses for the
-# ring-check).  That bar also carries the layout's only `0` label text, so
-# the control moves the net-connectivity verdict as well as the tie verdict;
-# both facts are recorded in the control record, with the exact finding
-# rules that name `0`.
+# ring-check).  Before the TopMetal2 ground landing (#427) that bar also
+# carried the layout's only `0` label text, so the control removed the
+# net's label together with its substrate tie and erc.unconnected_net fired
+# alongside erc.missing_tie.  Since #427 the second `0` label sits on the
+# landing itself and survives the deletion: `0` still resolves to one
+# labelled island (the severed landing), so the rejection now rides on
+# erc.missing_tie (the ring's taps are no longer wired to any `0` label)
+# plus the unlabelled-conductor remainder -- recorded as measured, with the
+# exact finding rules that name `0`.
 echo "== negative control: one ptap1 bar deleted (scripts/break_ring.py)"
 BROKEN="${SCRATCH}/vco_broken_ring.gds"
 KLAYOUT_PATH="${KLAYOUT_PATH}" klayout -zz -r "${HERE}/scripts/break_ring.py" \
@@ -174,12 +179,14 @@ rec = {
     "negative_control": {
         "script": "layout/scripts/break_ring.py",
         "break": "deletes one of the guard ring's four SG13_dev/ptap1 bars",
-        "observed": "that bar carries the layout's only `0` label text, so "
-                    "the control removes the net's label together with its "
-                    "substrate tie: erc.missing_tie (tap no longer wired to "
-                    "`0`), erc.unconnected_net (`0` matches no labelled "
-                    "geometry) and the roles measurement (unlabelled "
-                    "remainder on every owned role) all fire together",
+        "observed": "severs the ring's substrate tie from every `0` label: "
+                    "erc.missing_tie (the taps are no longer wired to `0`) "
+                    "and the unlabelled-conductor remainder fire together.  "
+                    "Since the TopMetal2 ground landing (#427) the second "
+                    "`0` label sits on the landing and survives the "
+                    "deletion, so `0` still resolves to one labelled island "
+                    "and erc.unconnected_net no longer fires (it did before "
+                    "#427, when the deleted bar carried the only `0` label)",
     },
     "committed_layout": intact_v,
     "negative_control_verdict": broken_v,

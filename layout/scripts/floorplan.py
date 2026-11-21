@@ -211,10 +211,23 @@ VCTRL_M3_Y = (-58.0, -56.0)      # VCTRL Metal3 trunk under both banks
 # TopMetal2 strap straight down to the guard ring's outer (bottom) edge, which
 # is the artifact bbox bottom, so a parent reaches VCTRL on TopMetal2 without
 # any Metal1-5 inside the bbox.  TopMetal2 elsewhere is only the VDD trunk
-# (y -11.5..-3.5) and the RREF spur (x 93..97): nothing to cross or to space to.
+# (y -11.5..-3.5), the RREF spur (x 93..97) and the ground landing
+# (x 64..68, #427): nothing to cross or to space to.
 VCTRL_PIN_X = -66.0              # stack centre / strap centreline
 VCTRL_PIN_W = 4.0                # TopMetal2 strap width (min 2.00)
 VCTRL_PIN_Y0 = -106.0            # strap's outboard end = ring outer edge
+# Ground chip-level pin (#427), the mirror image for net `0`: a Metal1..
+# TopMetal2 stack (the same vs_m1_tm2 ladder VS_VDD_REF uses) on the bottom
+# guard-ring bar, a TopMetal2 landing strap straight down to the ring's outer
+# edge, and a second `0` label over it.  The Metal1 `0` label the block
+# itself extracts from stays on the ring bar; a parent ties ground on
+# TopMetal2 alone instead of Metal1-5 inside a 20 um inductor keep-out.  The
+# stack's height is not a picked constant -- geometry() derives it from the
+# ladder's own measured pads, so the TopMetal2 pad never passes the ring edge
+# while the Metal1 pad still bites the bar's Metal1 strap.
+GND_PIN_X = 66.0                 # stack centre / strap centreline
+GND_PIN_W = 4.0                  # TopMetal2 strap width (min 2.00)
+GND_PIN_Y0 = -106.0              # strap's outboard end = ring outer edge
 
 Q12_Y = -72.0                    # cross-coupled pair
 Q1_ORG_X = -14.0
@@ -424,7 +437,8 @@ def wiring_request(build):
     TopMetal1 OUTP/OUTN tank straps, the Metal5 cap return, the Metal2 tank
     trunks and their cross-couple branches, the Metal3 cross-over, the Metal1
     varactor-bank buses, the per-bank NBL plates, the Metal3 VCTRL trunk, the
-    substrate returns, the Q4 diode strap, and the nine net labels.
+    substrate returns, the Q4 diode strap, and the nine net labels (`VCTRL`
+    and `0` each carry a second label on their TopMetal2 chip pins).
     """
     ind = load_ports(build, "ind")
     cap = load_ports(build, "cmim")
@@ -571,6 +585,12 @@ def wiring_request(build):
                   VCTRL_PIN_X + VCTRL_PIN_W / 2.0,
                   sum(VCTRL_M3_Y) / 2.0 + 2.5, "VCTRL"))
     t.append(label(TOPMETAL2, "VCTRL", VCTRL_PIN_X, VCTRL_PIN_Y0 + 2.0))
+    # chip-level ground pin (#427): TopMetal2 landing from the ring bar's
+    # stack down to the bbox edge, the mirror of the VCTRL pin
+    s.append(rect(TOPMETAL2, GND_PIN_X - GND_PIN_W / 2.0, GND_PIN_Y0,
+                  GND_PIN_X + GND_PIN_W / 2.0,
+                  g["VS_GND_PIN"][1] + 2.5, "0"))
+    t.append(label(TOPMETAL2, "0", GND_PIN_X, GND_PIN_Y0 + 2.0))
 
     # ---------------------------------------------------------------- TAIL --
     # Q1.E / Q2.E are the npn PCell's own Metal2 pads, so the pair's emitter
@@ -630,8 +650,9 @@ def wiring_request(build):
     t.append(label(METAL1, "0", (RING[0] + RING[2]) / 2.0,
                    ring_m1[1] + (RING_W - 2 * PTAP_M1_INSET[1]) / 2.0))
 
-    # one label per net, plus VCTRL's second label on its TopMetal2 chip pin
-    assert len(t) == len(NETS) + 1, "expected one label per net + the VCTRL pin, got %d" % len(t)
+    # one label per net, plus VCTRL's and 0's second labels on their
+    # TopMetal2 chip pins
+    assert len(t) == len(NETS) + 2, "expected one label per net + the VCTRL and ground pins, got %d" % len(t)
     assert {lb["text"] for lb in t} == set(NETS)
     for name in ("rte", "rre", "rref", "cmim", "ind", "npn_le1", "npn_le2"):
         assert name  # all port records were loaded above
@@ -749,6 +770,31 @@ def geometry(build):
     g["RING_M1"] = [RING[0] + PTAP_M1_INSET[0], RING[1] + PTAP_M1_INSET[1],
                     RING[2] - PTAP_M1_INSET[0], RING[3] - PTAP_M1_INSET[1]]
 
+    # Ground chip-level pin (#427): the stack sits as low on the bottom
+    # guard-ring bar as its own measured TopMetal2 pad allows without
+    # passing the ring's outer edge (where the landing strap ends; the
+    # artifact bbox bottom is 0.03 um below it), then the measured Metal1
+    # pad is asserted to still bite the bar's Metal1 strap by >= 0.10 um so
+    # the landing extracts onto the ring's electrical island.  Pads are read
+    # from the measured stream (build/dev/vs_m1_tm2.ports.json), never
+    # transcribed -- the same measured-geometry discipline as the VCTRL tap.
+    vs_m1tm2 = load_ports(build, "vs_m1_tm2")
+    gnd_m1pad = vs_m1tm2["pads"]["Metal1"]
+    gnd_tm2pad = vs_m1tm2["pads"]["TopMetal2"]
+    g["VS_GND_PIN"] = (GND_PIN_X, round(GND_PIN_Y0 + gnd_tm2pad[3], 4))
+    bar_m1_top = RING[1] + RING_W - PTAP_M1_INSET[1]
+    _bite = round(bar_m1_top - (g["VS_GND_PIN"][1] + gnd_m1pad[1]), 4)
+    assert _bite >= 0.10, (
+        "ground-pin stack bites the ring bar's Metal1 by only %.3f um "
+        "(want >= 0.10); the vs_m1_tm2 pads or the ring changed" % _bite)
+    assert (GND_PIN_X - gnd_tm2pad[2] > RING[0] + RING_W
+            and GND_PIN_X + gnd_tm2pad[2] < RING[2] - RING_W), (
+        "ground-pin stack escapes the bottom bar's Activ box")
+    assert ((GND_PIN_X - GND_PIN_W / 2.0)
+            - (VCTRL_PIN_X + VCTRL_PIN_W / 2.0) >= TM2_SP), (
+        "ground landing violates topmetal2.space (%.2f) to the VCTRL strap"
+        % TM2_SP)
+
     # VCTRL risers: outboard of each bank, 0.9 um clear of the nearest cell pad
     g["VCTRL_RISER_P"] = (BANK_P_X0 - 1.6, BANK_P_X0 - 0.9)
     g["VCTRL_RISER_N"] = (BANK_N_X0 + VAR_N * VAR_PITCH + 0.9,
@@ -806,6 +852,7 @@ def geometry(build):
         ("VS_RING_RRE", "vs_m1_m3", (g["VS_RRE_LO"][0], RING[1] + RING_W / 2.0)),
         ("VS_VCTRL_PIN", "vs_m3_tm2",
          (VCTRL_PIN_X, sum(VCTRL_M3_Y) / 2.0)),
+        ("VS_GND_PIN", "vs_m1_tm2", g["VS_GND_PIN"]),
         ("VS_VCTRL_P1", "vs_m1_m3", g["VS_VCTRL_P1"]),
         ("VS_VCTRL_P2", "vs_m1_m3", g["VS_VCTRL_P2"]),
         ("VS_VCTRL_N1", "vs_m1_m3", g["VS_VCTRL_N1"]),
