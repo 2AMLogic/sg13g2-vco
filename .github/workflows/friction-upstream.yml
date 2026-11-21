@@ -11,6 +11,13 @@ name: friction-upstream
 # The tracker is public: the repo-scoped GITHUB_TOKEN authenticates the
 # reads (32 entries cost well under its 5000/h budget) and the checker
 # falls back to anonymous — no secret is provisioned for this workflow.
+#
+# Issue #422: a red scheduled run alone repaired nothing, so drift piled
+# onto whichever PR next touched the ledger. The report-drift job below
+# is the scheduled-run consumer: on a confirmed disagreement (checker exit
+# 1) it opens one loom:triage repair issue and refreshes it while it stays
+# open. PR and manual runs stay check-only; the issue-write permission
+# exists nowhere but that job.
 
 on:
   schedule:
@@ -21,6 +28,7 @@ on:
       - .github/klt-friction-ledger.json
       - .github/scripts/check_klt_friction_upstream.py
       - .github/scripts/check-klt-friction-upstream.sh
+      - .github/scripts/report-friction-drift.sh
       - .github/scripts/test-check-klt-friction-upstream.sh
       - .github/scripts/check-all.sh
       - .github/workflows/friction-upstream.yml
@@ -32,6 +40,9 @@ jobs:
   friction-upstream:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      result: ${{ steps.compare.outputs.result }}
+      log: ${{ steps.compare.outputs.log }}
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -39,7 +50,56 @@ jobs:
       - name: Upstream-state gate self-test (offline)
         run: .github/scripts/check-all.sh friction-upstream-selftest
 
+      # The checker runs directly (not through check-all.sh, which folds
+      # tool failures into exit 1) so its raw exit is capturable: 1 is the
+      # only reportable drift signal; 0 agreement, 2 input error and 3
+      # unreadable-only are not. The step re-exits with the checker's code,
+      # so the check stays red on drift regardless of what reporting does.
       - name: Ledger states match the upstream tracker (strict)
-        run: .github/scripts/check-all.sh --strict friction-upstream
+        id: compare
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LOG="$RUNNER_TEMP/friction-upstream.log"
+          set +e
+          .github/scripts/check-klt-friction-upstream.sh >"$LOG" 2>&1
+          result=$?
+          set -e
+          cat "$LOG"
+          {
+            echo "result=$result"
+            echo "log<<friction_upstream_log_eof_4f2c91"
+            cat "$LOG"
+            echo "friction_upstream_log_eof_4f2c91"
+          } >> "$GITHUB_OUTPUT"
+          exit "$result"
+
+  # Scheduled-only repair-issue reporter (issue #422): only the schedule
+  # event and a confirmed drift (result == 1) reach the issue API; a
+  # failed self-test leaves `result` unset, and exits 2/3 file nothing.
+  # always() is required because the check job exits nonzero on drift by
+  # design - that failing check is preserved, never masked, by reporting.
+  report-drift:
+    needs: friction-upstream
+    if: >-
+      always() && github.event_name == 'schedule' &&
+      needs.friction-upstream.outputs.result == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Open or refresh the ledger-drift repair issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CHECK_LOG: ${{ needs.friction-upstream.outputs.log }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          LOG="$RUNNER_TEMP/friction-upstream.log"
+          printf '%s\n' "$CHECK_LOG" >"$LOG"
+          .github/scripts/report-friction-drift.sh --log "$LOG" --run-url "$RUN_URL"
