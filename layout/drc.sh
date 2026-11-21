@@ -408,7 +408,14 @@ else:
          and prov.get("klayout_version_mismatch") is False,
          "engine KLayout %r (mismatch=%r)"
          % (prov["klayout_version"], prov.get("klayout_version_mismatch"))),
-        (prov["klt_version"].endswith("+g" + klt_rev[:12]),
+        # klt_version: the historical record carries "0.8.0.dev2612+g<sha>"
+        # because the run predated the v0.8.0 tag. The same commit is now
+        # tagged, so a freshly provisioned env (native_drc_env.sh, pinned to
+        # this exact revision and gated on its direct_url commit above)
+        # reports the bare tag "0.8.0". Both strings identify revision
+        # klt_rev; the revision itself was enforced before the run ran.
+        (prov["klt_version"] == "0.8.0"
+         or prov["klt_version"].endswith("+g" + klt_rev[:12]),
          "klt_version %r is not revision %s" % (prov["klt_version"], klt_rev)),
     ]
     fail += [msg for ok, msg in checks if not ok]
@@ -537,18 +544,20 @@ ring = json.load(open(os.path.join(out, "vco-ring-check.json")))
 cnt = json.load(open(os.path.join(out, "vco-cnt-c-control.json")))
 fail = []
 
-# 1. The only rule the deck still reports is the one PROVENANCE.md section 12
-#    demonstrates is a false positive.  A violation of ANY other rule is a
-#    real layout defect and must fail this script.
+# 1. The only rule the deck still reports is the one PROVENANCE.md section
+#    12's 2026-11-10 (#315) entry demonstrates is a curated-deck artefact
+#    (the foundry's NW.c SVaricap carve-out, upstream klayout-tools#5212).
+#    A violation of ANY other rule is a real layout defect and must fail.
 other = {k: v for k, v in drc["rule_counts"].items()
-         if k != "activ.enclosing.cont.1"}
+         if k != "nwell.enclosing.pactiv.1"}
 if other:
     fail.append("klt drc reports rules beyond the known deck artefact: %s" % other)
 
-# 2. ... and the artefact's count is exactly the four HBT instances' worth.
-if drc["rule_counts"].get("activ.enclosing.cont.1", 0) != 8:
-    fail.append("activ.enclosing.cont.1 count moved from 8 to %s"
-                % drc["rule_counts"].get("activ.enclosing.cont.1", 0))
+# 2. ... and the artefact's count is exactly the two banks' 64 SVaricap
+#    cells' worth (32 per bank; section 12's #315 entry).
+if drc["rule_counts"].get("nwell.enclosing.pactiv.1", 0) != 64:
+    fail.append("nwell.enclosing.pactiv.1 count moved from 64 to %s"
+                % drc["rule_counts"].get("nwell.enclosing.pactiv.1", 0))
 
 # 3. The guard ring is a closed annulus on every layer where the check is
 #    shown to be able to fail.
@@ -560,15 +569,20 @@ for e in ring["layers"]:
         fail.append("guard ring is %s on layer %s"
                     % (e["committed_layout"]["status"], e["layer"]))
 
-# 4. The Cnt.c artefact is still an artefact: the control stream, carrying
-#    the one dropped rule term, is clean.  If it ever is not, the remaining
-#    violations are REAL and must not be described as a deck artefact.
+# 4. The Cnt.c control still changes nothing on this stream under klt 0.8.0:
+#    the activ_mask overlay neither clears nor adds findings.  Its committed
+#    conclusion is INCONCLUSIVE / CHANGED -- the remaining violations are
+#    explained by the #315 entry's missing SVaricap carve-out, not by the
+#    dropped activ_mask term -- so what this gate asserts is that the
+#    control run stays a no-op relative to the base run, not that it is
+#    clean.  If it ever reports anything beyond the base artefact, the
+#    control has become informative again and the record must be re-read.
 ctl = cnt["control_stream_with_activ_mask_joined"]
-if ctl["violation_count"] != 0:
-    fail.append("the Cnt.c control stream reports %d violation(s) %s -- the "
-                "remaining violations are no longer explained by the deck's "
-                "dropped activ_mask term and must be re-diagnosed"
-                % (ctl["violation_count"], ctl["rule_counts"]))
+if ctl["rule_counts"] != drc["rule_counts"]:
+    fail.append("the Cnt.c control stream reports %s against the base %s -- "
+                "the activ_mask overlay is no longer a no-op and the record "
+                "must be re-diagnosed"
+                % (ctl["rule_counts"], drc["rule_counts"]))
 
 # 5. The IHP-native report of record is CLEAN under the reviewed coverage
 #    assertion: zero findings (any finding is a real process-rule violation
@@ -601,11 +615,12 @@ if fail:
 
 print("\n== verdict (unchanged from layout/PROVENANCE.md sections 12-13)")
 print("  klt drc        : status=%s  %s" % (drc["status"], drc["rule_counts"]))
-print("                   all %d are activ.enclosing.cont.1 inside the PDK's"
+print("                   all %d are nwell.enclosing.pactiv.1 inside the PDK's"
       % drc["violation_count"])
-print("                   own npn13G2V PCell -- a curated-deck approximation")
-print("                   artefact, shown by vco-cnt-c-control.json, NOT a")
-print("                   layout defect.  NOT a clean report; see section 12.")
+print("                   own SVaricap PCell -- the curated rule lacks the")
+print("                   foundry NW.c SVaricap carve-out (section 12's #315")
+print("                   entry, upstream klayout-tools#5212), NOT a layout")
+print("                   defect.  NOT a clean report; see section 12.")
 for e in ring["layers"]:
     print("  ring %-6s    : %s" % ("%d/%d" % tuple(e["layer"]),
                                    e["evidence"].split(":")[0]))

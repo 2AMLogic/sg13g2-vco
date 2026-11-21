@@ -1,0 +1,949 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/tank.spice",
+    "scope": "repo"
+  },
+  "status": "pass",
+  "corner_count": 9,
+  "passed": 9,
+  "failed": 0,
+  "errored": 0,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {
+      "nonconvergence": 9
+    },
+    "by_severity": {
+      "warning": 9
+    },
+    "corners_with_diagnostics": 9
+  },
+  "metrics": {
+    "sim__corner__count": 9,
+    "sim__corner__passed_count": 9,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 0,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "47",
+    "ngspice_binary": "/usr/local/bin/ngspice",
+    "engine_build": {
+      "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******",
+      "binary_sha256": null,
+      "probe": "ok",
+      "reason": null
+    },
+    "ngspice_init": {
+      "source": "runner",
+      "lines": null,
+      "sha256": null
+    },
+    "models_lib": {
+      "path": null,
+      "scope": "external"
+    },
+    "models_lib_sha256": "4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56",
+    "models_lib_sha256_scope": "client",
+    "netlist_sha256": "9b851f28ed17b25f2a924a090013f3eb887852c8c22c8a8b5b9023f56bc6fe0c",
+    "netlist_sha256_scope": "staged",
+    "netlist_closure": [
+      {
+        "path": "sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/tank.spice",
+        "scope": "repo",
+        "sha256": "9b851f28ed17b25f2a924a090013f3eb887852c8c22c8a8b5b9023f56bc6fe0c"
+      }
+    ],
+    "netlist_identity": "sha256:a9b44bfed9781b1e11a20673f19994863af139550d1cf7d7789eb18eed2bba46",
+    "remote": {
+      "provider": "aws-batch-fleet",
+      "job_id": "klt-sim-cb86719bd9d4",
+      "region": "us-east-1",
+      "instance_id": "i-01d2ebd82764fcbc1",
+      "instance_type": "m6i.4xlarge",
+      "availability_zone": "us-east-1d",
+      "ami_id": "ami-09c14f55df4958cbd",
+      "lifecycle": "spot",
+      "spot": true,
+      "state": "done",
+      "exit_code": "0",
+      "concurrency": "1",
+      "physical_cores": "8",
+      "elapsed_seconds": 10,
+      "client_submitted_at": "2026-11-21T08:04:56.965961Z",
+      "client_launched_at": "2026-11-21T08:06:32.993496Z",
+      "client_status_terminal_at": "2026-11-21T08:07:04.410321Z",
+      "client_collected_at": "2026-11-21T08:07:05.464104Z",
+      "runner_klt_version": "0.9.0",
+      "client_klt_version": "0.9.3.dev2575+g6bd18bbc8637",
+      "runner_compatibility": "match",
+      "runner_request_features": {
+        "required": [
+          "options.ngspice_init"
+        ],
+        "missing": [],
+        "status": "supported"
+      },
+      "worker_environment": {
+        "capture": "ok",
+        "simulator": {
+          "requested_binary": "ngspice",
+          "binary_source": "PATH",
+          "selected_path": "/usr/local/bin/ngspice",
+          "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+          "version_probe": "ok"
+        },
+        "pdk": {
+          "variant": "ihp-sg13g2",
+          "root": "/opt/pdk",
+          "stamp_scheme": null,
+          "stamp_sha256": null,
+          "stamp_text": null,
+          "models_staged": false,
+          "stamp_scope": "executed"
+        },
+        "cpu_model": "Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz",
+        "omp_num_threads": null,
+        "image_manifest": null,
+        "model_inputs": null,
+        "diagnostics": [
+          "pdk stamp unreadable: FileNotFoundError"
+        ],
+        "pdk_stamp_comparison": {
+          "status": "not_comparable",
+          "reason": "worker_stamp_unavailable"
+        },
+        "ngspice_init": null,
+        "threads_per_worker": 1,
+        "engine_build_comparison": {
+          "status": "match"
+        }
+      },
+      "runner_model_inputs": null,
+      "runner_models_lib_sha256": "4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56",
+      "runner_osdi_preload": null,
+      "job_ceiling": {
+        "basis": "conservative_serial_bound",
+        "unit_count": 9,
+        "per_unit_timeout_s": 900,
+        "overhead_s": 120.0,
+        "job_bound_s": 8220.0,
+        "max_job_seconds": 3600.0,
+        "max_job_seconds_source": "fleet_config",
+        "exceeds_ceiling": true,
+        "check": "warn",
+        "max_units_per_job": 3,
+        "recommended_hosts": 3,
+        "warning": "batch job bound 8220s (options.timeout_s 900s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. Set request.remote.hosts to at least 3 to run one job per shard of at most 3 units, each within the ceiling"
+      },
+      "models_lib_comparison": {
+        "status": "match"
+      }
+    },
+    "engine_host": "worker",
+    "client_ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "client_engine_build": {
+      "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******",
+      "binary_sha256": "39ca1adb826660324c3626f72bd946ec40704f0f3fc8e243c623f76e24b3eee2",
+      "probe": "ok",
+      "reason": null
+    },
+    "backend": {
+      "resolved": "batch",
+      "source": "flag",
+      "requested": "batch"
+    }
+  },
+  "coverage": {
+    "corners_simulated": 9,
+    "measurements_declared": 4,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"cap_typ/novdd/-40C\",\"f0\"]/observation",
+      "measurement:[0,\"cap_typ/novdd/-40C\",\"f_m45\"]/observation",
+      "measurement:[0,\"cap_typ/novdd/-40C\",\"f_p45\"]/observation",
+      "measurement:[0,\"cap_typ/novdd/-40C\",\"zpk\"]/observation",
+      "measurement:[1,\"cap_typ/novdd/27C\",\"f0\"]/observation",
+      "measurement:[1,\"cap_typ/novdd/27C\",\"f_m45\"]/observation",
+      "measurement:[1,\"cap_typ/novdd/27C\",\"f_p45\"]/observation",
+      "measurement:[1,\"cap_typ/novdd/27C\",\"zpk\"]/observation",
+      "measurement:[2,\"cap_typ/novdd/125C\",\"f0\"]/observation",
+      "measurement:[2,\"cap_typ/novdd/125C\",\"f_m45\"]/observation",
+      "measurement:[2,\"cap_typ/novdd/125C\",\"f_p45\"]/observation",
+      "measurement:[2,\"cap_typ/novdd/125C\",\"zpk\"]/observation",
+      "measurement:[3,\"cap_bcs/novdd/-40C\",\"f0\"]/observation",
+      "measurement:[3,\"cap_bcs/novdd/-40C\",\"f_m45\"]/observation",
+      "measurement:[3,\"cap_bcs/novdd/-40C\",\"f_p45\"]/observation",
+      "measurement:[3,\"cap_bcs/novdd/-40C\",\"zpk\"]/observation",
+      "measurement:[4,\"cap_bcs/novdd/27C\",\"f0\"]/observation",
+      "measurement:[4,\"cap_bcs/novdd/27C\",\"f_m45\"]/observation",
+      "measurement:[4,\"cap_bcs/novdd/27C\",\"f_p45\"]/observation",
+      "measurement:[4,\"cap_bcs/novdd/27C\",\"zpk\"]/observation",
+      "measurement:[5,\"cap_bcs/novdd/125C\",\"f0\"]/observation",
+      "measurement:[5,\"cap_bcs/novdd/125C\",\"f_m45\"]/observation",
+      "measurement:[5,\"cap_bcs/novdd/125C\",\"f_p45\"]/observation",
+      "measurement:[5,\"cap_bcs/novdd/125C\",\"zpk\"]/observation",
+      "measurement:[6,\"cap_wcs/novdd/-40C\",\"f0\"]/observation",
+      "measurement:[6,\"cap_wcs/novdd/-40C\",\"f_m45\"]/observation",
+      "measurement:[6,\"cap_wcs/novdd/-40C\",\"f_p45\"]/observation",
+      "measurement:[6,\"cap_wcs/novdd/-40C\",\"zpk\"]/observation",
+      "measurement:[7,\"cap_wcs/novdd/27C\",\"f0\"]/observation",
+      "measurement:[7,\"cap_wcs/novdd/27C\",\"f_m45\"]/observation",
+      "measurement:[7,\"cap_wcs/novdd/27C\",\"f_p45\"]/observation",
+      "measurement:[7,\"cap_wcs/novdd/27C\",\"zpk\"]/observation",
+      "measurement:[8,\"cap_wcs/novdd/125C\",\"f0\"]/observation",
+      "measurement:[8,\"cap_wcs/novdd/125C\",\"f_m45\"]/observation",
+      "measurement:[8,\"cap_wcs/novdd/125C\",\"f_p45\"]/observation",
+      "measurement:[8,\"cap_wcs/novdd/125C\",\"zpk\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"cap_typ/novdd/-40C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"cap_typ/novdd/-40C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"cap_typ/novdd/-40C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[0,\"cap_typ/novdd/-40C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"cap_typ/novdd/27C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"cap_typ/novdd/27C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"cap_typ/novdd/27C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"cap_typ/novdd/27C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"cap_typ/novdd/125C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"cap_typ/novdd/125C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"cap_typ/novdd/125C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"cap_typ/novdd/125C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[3,\"cap_bcs/novdd/-40C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[3,\"cap_bcs/novdd/-40C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[3,\"cap_bcs/novdd/-40C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[3,\"cap_bcs/novdd/-40C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[4,\"cap_bcs/novdd/27C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[4,\"cap_bcs/novdd/27C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[4,\"cap_bcs/novdd/27C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[4,\"cap_bcs/novdd/27C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[5,\"cap_bcs/novdd/125C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[5,\"cap_bcs/novdd/125C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[5,\"cap_bcs/novdd/125C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[5,\"cap_bcs/novdd/125C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[6,\"cap_wcs/novdd/-40C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[6,\"cap_wcs/novdd/-40C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[6,\"cap_wcs/novdd/-40C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[6,\"cap_wcs/novdd/-40C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[7,\"cap_wcs/novdd/27C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[7,\"cap_wcs/novdd/27C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[7,\"cap_wcs/novdd/27C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[7,\"cap_wcs/novdd/27C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[8,\"cap_wcs/novdd/125C\",\"f0\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[8,\"cap_wcs/novdd/125C\",\"f_m45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[8,\"cap_wcs/novdd/125C\",\"f_p45\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[8,\"cap_wcs/novdd/125C\",\"zpk\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.9.3.dev2575+g6bd18bbc8637",
+    "klt_git_commit": "6bd18bbc8637f6d767b3c24e77bd5db7a39e4bbe",
+    "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@6bd18bbc8637f6d767b3c24e77bd5db7a39e4bbe",
+    "klayout_version": "0.30.12",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "search root: ~/share/pdk",
+      "version": "fetched:0.3.0"
+    },
+    "deck": {
+      "name": "cornerCAP.lib",
+      "content_hash": "sha256:4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56",
+      "released": false
+    },
+    "input": {
+      "content_hash": "sha256:9b851f28ed17b25f2a924a090013f3eb887852c8c22c8a8b5b9023f56bc6fe0c",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "zpk",
+      "unit": "ohm",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "cap_typ/novdd/-40C",
+        "value": 2588.36,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "cap_wcs/novdd/125C",
+        "value": 2044.99
+      },
+      "max": {
+        "corner_id": "cap_bcs/novdd/-40C",
+        "value": 2592.38
+      }
+    },
+    {
+      "name": "f0",
+      "unit": "Hz",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "cap_typ/novdd/-40C",
+        "value": 4271270000.0,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "cap_wcs/novdd/27C",
+        "value": 4201640000.0
+      },
+      "max": {
+        "corner_id": "cap_bcs/novdd/-40C",
+        "value": 4297270000.0
+      }
+    },
+    {
+      "name": "f_p45",
+      "unit": "Hz",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "cap_typ/novdd/-40C",
+        "value": 4087100000.0,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "cap_wcs/novdd/27C",
+        "value": 3994370000.0
+      },
+      "max": {
+        "corner_id": "cap_bcs/novdd/-40C",
+        "value": 4111280000.0
+      }
+    },
+    {
+      "name": "f_m45",
+      "unit": "Hz",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "cap_typ/novdd/-40C",
+        "value": 4459160000.0,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "cap_wcs/novdd/27C",
+        "value": 4410690000.0
+      },
+      "max": {
+        "corner_id": "cap_bcs/novdd/125C",
+        "value": 4530230000.0
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "cap_typ/novdd/-40C",
+      "process": "cap_typ",
+      "supply_v": {},
+      "temperature_c": -40,
+      "status": "pass",
+      "runtime_s": 0.283,
+      "peak_rss_bytes": 49487872,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2588.36,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4271270000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4087100000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4459160000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_typ_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_typ_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_typ/novdd/27C",
+      "process": "cap_typ",
+      "supply_v": {},
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 0.273,
+      "peak_rss_bytes": 49487872,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2260.92,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4226560000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4017490000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4437750000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_typ_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_typ_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_typ/novdd/125C",
+      "process": "cap_typ",
+      "supply_v": {},
+      "temperature_c": 125,
+      "status": "pass",
+      "runtime_s": 0.269,
+      "peak_rss_bytes": 49487872,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2052.45,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4265430000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4026270000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4501730000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_typ_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_typ_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_bcs/novdd/-40C",
+      "process": "cap_bcs",
+      "supply_v": {},
+      "temperature_c": -40,
+      "status": "pass",
+      "runtime_s": 0.273,
+      "peak_rss_bytes": 49487872,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2592.38,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4297270000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4111280000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4487280000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_bcs_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_bcs_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_bcs/novdd/27C",
+      "process": "cap_bcs",
+      "supply_v": {},
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 0.282,
+      "peak_rss_bytes": 49487872,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2266.08,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4251920000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4041000000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4465320000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_bcs_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_bcs_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_bcs/novdd/125C",
+      "process": "cap_bcs",
+      "supply_v": {},
+      "temperature_c": 125,
+      "status": "pass",
+      "runtime_s": 0.268,
+      "peak_rss_bytes": 49225728,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2059.86,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4291710000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4050680000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4530230000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_bcs_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_bcs_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_wcs/novdd/-40C",
+      "process": "cap_wcs",
+      "supply_v": {},
+      "temperature_c": -40,
+      "status": "pass",
+      "runtime_s": 0.277,
+      "peak_rss_bytes": 49487872,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2584.15,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4245740000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4063320000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4431570000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_wcs_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_wcs_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_wcs/novdd/27C",
+      "process": "cap_wcs",
+      "supply_v": {},
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 0.275,
+      "peak_rss_bytes": 49487872,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2255.64,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4201640000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 3994370000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4410690000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_wcs_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_wcs_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "cap_wcs/novdd/125C",
+      "process": "cap_wcs",
+      "supply_v": {},
+      "temperature_c": 125,
+      "status": "pass",
+      "runtime_s": 0.121,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "zpk",
+          "value": 2044.99,
+          "unit": "ohm",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f0",
+          "value": 4239640000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_p45",
+          "value": 4002270000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        },
+        {
+          "name": "f_m45",
+          "value": 4473770000.0,
+          "unit": "Hz",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_wcs_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/sim/build/tank-stub-load/20261121-074401-e6b0670-226451eb/stub/tt_v1.5/out/cap_wcs_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    }
+  ]
+}

@@ -8,11 +8,11 @@
     },
     "2": {
       "file": "layout/drc/vco-drc-ihp.json",
-      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e"
+      "content_hash": "sha256:8c19b5ac19381d12fbb9f0f3f72236bb8d5f91fa945b4b78897d4de917439558"
     },
     "3": {
       "file": "layout/drc/vco-drc-ihp.json",
-      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e"
+      "content_hash": "sha256:8c19b5ac19381d12fbb9f0f3f72236bb8d5f91fa945b4b78897d4de917439558"
     },
     "6": [
       {
@@ -130,7 +130,7 @@
     ],
     "8": {
       "file": "signoff/evidence/t1-item-8-characterization.json",
-      "content_hash": "sha256:7fce419705d6b1026db3a0dc05518b4767394e2d8b16e1ca4a6572da63f62543"
+      "content_hash": "sha256:2cb57524dc6d6c3ededdf6dc47194fed2e8f126806be9e68d14d078ec8fc2112"
     },
     "9": {
       "file": "signoff/evidence/t1-item-9-testbenches.json",
