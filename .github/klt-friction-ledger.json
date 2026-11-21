@@ -357,8 +357,8 @@
     {
       "number": 5853,
       "gap": "klt sim batch/remote has no runner-side simulator selection or version requirement; the request's engine_version pin (klayout-tools#3041) is checked only against the version the runner's report carried, after the run. A runner image that changes its simulator major re-runs previously validated routes on a different solver, and the first signal is per-unit aborts that look like design failures.",
-      "status": "open",
-      "status_checked_on": "2026-11-15",
+      "status": "closed",
+      "status_checked_on": "2026-11-21",
       "klt_version_verified": "0.8.0",
       "workarounds": [
         "sim/oscillator-core/yield/"
@@ -368,8 +368,8 @@
     {
       "number": 5867,
       "gap": "klt signoff --manifest cannot write the tier-report render to a file (-o/--output is scoped to --attest), so callers redirect stdout destructively and a failing render truncates the committed record.",
-      "status": "open",
-      "status_checked_on": "2026-11-15",
+      "status": "closed",
+      "status_checked_on": "2026-11-21",
       "klt_version_verified": "0.8.0",
       "workarounds": [
         ".github/scripts/regen-signoff.sh"
