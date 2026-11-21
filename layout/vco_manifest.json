@@ -126,7 +126,7 @@
       "y1": 290.26
     },
     "dbu_um": 0.001,
-    "digest": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
+    "digest": "sha256:9dd0ad96307fd2130a55d1ea1549bfc43482fae29d067252516645a6722812b4",
     "gds": "layout/vco.gds",
     "top_cell": "vco"
   },
@@ -203,8 +203,8 @@
       },
       "cell_name": "vco_wiring",
       "generator": "draw",
-      "label_count": 10,
-      "shape_count": 87,
+      "label_count": 11,
+      "shape_count": 88,
       "warnings": [
         "written verbatim by `klt draw`: no PDK awareness and no rule checking were applied; this cell is not guaranteed to be design-legal"
       ]
@@ -1170,6 +1170,13 @@
         "y_um": -105.0
       },
       {
+        "datatype": 25,
+        "layer": 134,
+        "text": "0",
+        "x_um": 66.0,
+        "y_um": -104.0
+      },
+      {
         "datatype": 0,
         "layer": 63,
         "text": "Ae=1*1.00*0.12",
@@ -1812,7 +1819,7 @@
       {
         "datatype": 0,
         "layer": 8,
-        "polygons": 368,
+        "polygons": 369,
         "texts": 0
       },
       {
@@ -1836,7 +1843,7 @@
       {
         "datatype": 0,
         "layer": 10,
-        "polygons": 72,
+        "polygons": 73,
         "texts": 0
       },
       {
@@ -1866,7 +1873,7 @@
       {
         "datatype": 0,
         "layer": 19,
-        "polygons": 154,
+        "polygons": 158,
         "texts": 0
       },
       {
@@ -1902,13 +1909,13 @@
       {
         "datatype": 0,
         "layer": 29,
-        "polygons": 60,
+        "polygons": 64,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 30,
-        "polygons": 27,
+        "polygons": 28,
         "texts": 0
       },
       {
@@ -1956,13 +1963,13 @@
       {
         "datatype": 0,
         "layer": 49,
-        "polygons": 16,
+        "polygons": 20,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 50,
-        "polygons": 4,
+        "polygons": 5,
         "texts": 0
       },
       {
@@ -1992,13 +1999,13 @@
       {
         "datatype": 0,
         "layer": 66,
-        "polygons": 16,
+        "polygons": 20,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 67,
-        "polygons": 6,
+        "polygons": 7,
         "texts": 0
       },
       {
@@ -2016,13 +2023,13 @@
       {
         "datatype": 0,
         "layer": 125,
-        "polygons": 16,
+        "polygons": 20,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 126,
-        "polygons": 24,
+        "polygons": 25,
         "texts": 0
       },
       {
@@ -2058,13 +2065,13 @@
       {
         "datatype": 0,
         "layer": 133,
-        "polygons": 272,
+        "polygons": 276,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 134,
-        "polygons": 15,
+        "polygons": 17,
         "texts": 0
       },
       {
@@ -2077,7 +2084,7 @@
         "datatype": 25,
         "layer": 134,
         "polygons": 0,
-        "texts": 2
+        "texts": 3
       },
       {
         "datatype": 0,
@@ -2099,7 +2106,7 @@
       "npn13G2V": 4,
       "ptap1": 4,
       "rppd": 3,
-      "via_stack": 55
+      "via_stack": 56
     }
   },
   "nets": [
@@ -2121,7 +2128,7 @@
       "install": "/home/ubuntu/share/pdk/ihp-sg13g2",
       "note": "the overlay repairs IHP-Open-PDK's two empty git submodules without mutating the shared install; see layout/scripts/pdk_env.sh and 2AMLogic/klayout-tools#1630",
       "overlay": {
-        "overlay": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-314/layout/build/pdk-klayout-overlay",
+        "overlay": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-427/layout/build/pdk-klayout-overlay",
         "pycell4klayout-api": {
           "repo": "https://github.com/IHP-GmbH/pycell4klayout-api.git",
           "rev": "2ffdf79fe51a7c35b361cc854369b5d434c8d478"
@@ -2134,8 +2141,8 @@
     },
     "source_of_truth": {
       "netlist": "design/vco.spice",
-      "repo_commit": "32ab615d6d591f6b70b84c17df45d7c0cbfdfdb3",
-      "repo_describe": "32ab615-dirty",
+      "repo_commit": "e6b0670c11c8d9c9d778718fb737197faea6c49b",
+      "repo_describe": "e6b0670-dirty",
       "schematic": "design/vco.sch"
     },
     "tools": {

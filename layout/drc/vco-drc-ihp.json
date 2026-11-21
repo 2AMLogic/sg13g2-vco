@@ -1812,7 +1812,7 @@
     "satisfied": true
   },
   "provenance": {
-    "klt_version": "0.8.0.dev2612+gc572046be644",
+    "klt_version": "0.8.0",
     "klayout_version": "0.30.12",
     "pdk": null,
     "deck": {
@@ -1824,7 +1824,7 @@
       }
     },
     "input": {
-      "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
+      "content_hash": "sha256:9dd0ad96307fd2130a55d1ea1549bfc43482fae29d067252516645a6722812b4",
       "role": "layout"
     },
     "klayout_version_mismatch": false
