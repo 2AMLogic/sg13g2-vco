@@ -56,14 +56,22 @@ PY
 if [[ "$(installed_rev)" != "${KLT_REV}" ]]; then
   echo "== native-env: installing klayout-tools @ ${KLT_REV} into ${ENV_DIR}/klt"
   rm -rf "${ENV_DIR}/klt"
+  # klayout==0.30.12 is PINNED, not left to the resolver: the run of record
+  # requires provenance.klayout_version 0.30.12 with mismatch false, and the
+  # module the wheel pulls by default drifts forward (0.30.13 by 2026-11),
+  # which re-flags every fresh provisioned env with klayout_version_mismatch.
+  # (The klt version metadata itself is date-dependent: the commit was tagged
+  # v0.8.0 after the original run, so fresh installs report the bare "0.8.0"
+  # where the original recorded "0.8.0.dev2612+g<sha>" -- drc.sh accepts
+  # either; the commit identity is gated separately via direct_url below.)
   if command -v uv >/dev/null 2>&1; then
     uv venv -q "${ENV_DIR}/klt"
     VIRTUAL_ENV="${ENV_DIR}/klt" uv pip install -q \
-      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}"
+      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}" "klayout==${KLAYOUT_VER}"
   else
     python3 -m venv "${ENV_DIR}/klt"
     "${ENV_DIR}/klt/bin/python" -m pip install -q \
-      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}"
+      "klayout-tools @ git+${KLT_REPO}@${KLT_REV}" "klayout==${KLAYOUT_VER}"
   fi
   [[ "$(installed_rev)" == "${KLT_REV}" ]] || {
     echo "error: klayout-tools install does not report revision ${KLT_REV}" >&2

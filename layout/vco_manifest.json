@@ -126,7 +126,7 @@
       "y1": 290.26
     },
     "dbu_um": 0.001,
-    "digest": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
+    "digest": "sha256:8c19b5ac19381d12fbb9f0f3f72236bb8d5f91fa945b4b78897d4de917439558",
     "gds": "layout/vco.gds",
     "top_cell": "vco"
   },
@@ -203,8 +203,8 @@
       },
       "cell_name": "vco_wiring",
       "generator": "draw",
-      "label_count": 10,
-      "shape_count": 87,
+      "label_count": 12,
+      "shape_count": 89,
       "warnings": [
         "written verbatim by `klt draw`: no PDK awareness and no rule checking were applied; this cell is not guaranteed to be design-legal"
       ]
@@ -1333,9 +1333,23 @@
       {
         "datatype": 25,
         "layer": 126,
+        "text": "OUTN",
+        "x_um": 120.0,
+        "y_um": -104.0
+      },
+      {
+        "datatype": 25,
+        "layer": 126,
         "text": "OUTP",
         "x_um": -120.0,
         "y_um": -24.0
+      },
+      {
+        "datatype": 25,
+        "layer": 126,
+        "text": "OUTP",
+        "x_um": -120.0,
+        "y_um": -104.0
       },
       {
         "datatype": 25,
@@ -2022,7 +2036,7 @@
       {
         "datatype": 0,
         "layer": 126,
-        "polygons": 24,
+        "polygons": 26,
         "texts": 0
       },
       {
@@ -2041,7 +2055,7 @@
         "datatype": 25,
         "layer": 126,
         "polygons": 0,
-        "texts": 2
+        "texts": 4
       },
       {
         "datatype": 0,
@@ -2121,7 +2135,7 @@
       "install": "/home/ubuntu/share/pdk/ihp-sg13g2",
       "note": "the overlay repairs IHP-Open-PDK's two empty git submodules without mutating the shared install; see layout/scripts/pdk_env.sh and 2AMLogic/klayout-tools#1630",
       "overlay": {
-        "overlay": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-314/layout/build/pdk-klayout-overlay",
+        "overlay": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/layout/build/pdk-klayout-overlay",
         "pycell4klayout-api": {
           "repo": "https://github.com/IHP-GmbH/pycell4klayout-api.git",
           "rev": "2ffdf79fe51a7c35b361cc854369b5d434c8d478"
@@ -2134,8 +2148,8 @@
     },
     "source_of_truth": {
       "netlist": "design/vco.spice",
-      "repo_commit": "32ab615d6d591f6b70b84c17df45d7c0cbfdfdb3",
-      "repo_describe": "32ab615-dirty",
+      "repo_commit": "e6b0670c11c8d9c9d778718fb737197faea6c49b",
+      "repo_describe": "e6b0670-dirty",
       "schematic": "design/vco.sch"
     },
     "tools": {
