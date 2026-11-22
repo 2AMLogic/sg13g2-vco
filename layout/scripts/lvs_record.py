@@ -1,0 +1,584 @@
+import hashlib, json, os, re, sys
+scratch, out, root, xcheck, klt_rc, xrc, deck_sha, kl_ver, py_kl = sys.argv[1:]
+klt_rc, xrc = int(klt_rc), int(xrc)
+fail = []
+
+def S(stem):
+    return json.load(open(os.path.join(scratch, "run-%s.json" % stem)))
+
+def sha(p):
+    return hashlib.sha256(open(p, "rb").read()).hexdigest()
+
+def cmp(stem):
+    return S(stem)["circuits"][0]
+
+EXPECT_CENSUS = {"cap_cmim": 1, "inductor": 2, "npn13g2v": 4, "ptap1": 1,
+                 "rppd": 3, "sg13_hv_svaricap": 32}
+
+def census(c, side):
+    return {k.lower(): v for k, v in c["devices"][side].items()}
+
+# -- the record: mismatch, full device census on both sides -------------
+rec = S("record"); rc = rec["circuits"][0]
+if rec["verdict"] != "mismatch":
+    fail.append("record compare is %r, not the recorded 'mismatch' -- "
+                "update PROVENANCE.md section 14 before the record" % rec["verdict"])
+for side in ("layout", "reference"):
+    if census(rc, side) != EXPECT_CENSUS:
+        fail.append("%s device census %r != %r" % (side, census(rc, side), EXPECT_CENSUS))
+
+# -- C1: L1 swapped -> match (L1's terminal order is the ONLY difference)
+c1 = S("c1-l1")
+c1_ok = c1["verdict"] == "match" and cmp("c1-l1")["device_pairs"]["not_matched"] == []
+if not c1_ok:
+    fail.append("control C1 (L1 order) is %r, not 'match'" % c1["verdict"])
+# -- the record must differ from C1 in exactly the one L1 device pair ----
+nm = rc["device_pairs"]["not_matched"]
+rec_ok = (len(nm) == 1 and nm[0]["layout"] and nm[0]["layout"]["class"] == "inductor"
+          and nm[0]["reference"] and nm[0]["reference"]["name"] == "L1")
+if rec_ok:
+    lt = list(nm[0]["layout"]["terminals"].values())[:2]
+    rt = list(nm[0]["reference"]["terminals"].values())[:2]
+    rec_ok = (rt == ["VDD", "OUTP"] and "OUTP" in lt[0] and "VDD" in lt[1])
+if not rec_ok:
+    fail.append("the record no longer differs only in the L1 terminal-order "
+                "pair (bn must be gone): %s" % json.dumps(nm)[:600])
+
+# -- negative controls: each must be rejected -----------------------------
+neg = []
+for stem, what in (("n1-supply", "VS_VDD_REF via ladder removed: RREF's VDD end "
+                    "detached from the VDD strap (supply connection)"),
+                   ("n2-signal", "VS_Q1B via ladder removed: Q1's base detached "
+                    "from OUTN (cross-coupling signal connection)"),
+                   ("n3-device", "C1 MIM instance removed (a missing device)")):
+    s = S(stem); c = s["circuits"][0]
+    ok = s["verdict"] == "mismatch"
+    if not ok:
+        fail.append("negative control %s compared %r against the matching "
+                    "reference -- the compare cannot see this break" % (stem, s["verdict"]))
+    neg.append({"control": stem, "change": what, "reference": "C1 diagnostic "
+                "(matches the intact stream)", "verdict": s["verdict"],
+                "rejected": ok,
+                "nets_not_matched": len(c["nets"]["not_matched"]),
+                "device_pairs_not_matched": len(c["device_pairs"]["not_matched"]),
+                "layout_census": census(c, "layout")})
+
+# == the label-order step (issue #80) ======================================
+def LO(stem):
+    return json.load(open(os.path.join(scratch, "run-%s.label-order.json" % stem)))
+
+def flags(rep):
+    """{label-ordered net pair: reordered?} over the resolved devices."""
+    return {" / ".join(d["label_order"]): d["reordered"]
+            for d in rep["devices"] if d.get("resolved")}
+
+# The intact stream: L1 (mirrored) is reordered, L2 is not, nothing unresolved.
+WANT_FLAGS = {"LA,VDD / LB,OUTP": True, "LA,VDD / LB,OUTN": False}
+
+# -- R0 fidelity: the wrapper + shim with the step in `report` mode must
+#    reproduce the runset-as-shipped compare EXACTLY (every field) ---------
+r0, r0_rep = S("lo-r0"), LO("lo-r0")
+r0_ok = (r0 == rec and r0_rep["mode"] == "report" and r0_rep["unresolved"] == 0
+         and flags(r0_rep) == WANT_FLAGS)
+if not r0_ok:
+    fail.append("fidelity control R0: the wrapper with the step in report mode "
+                "does not reproduce the runset-as-shipped compare exactly (or its "
+                "step report changed: %r)" % flags(r0_rep))
+
+# -- the compare of record: runset + step, against the reference of record
+lo, lrep = S("lo-record"), LO("lo-record")
+lc = lo["circuits"][0]
+lo_ok = (lo["verdict"] == "match" and lc["device_pairs"]["not_matched"] == []
+         and lc["nets"]["not_matched"] == [] and lc["pins"]["not_matched"] == [])
+if not lo_ok:
+    fail.append("the compare of record (runset + label-order step) is %r, not "
+                "'match': %s" % (lo["verdict"], json.dumps(lc["device_pairs"]["not_matched"])[:600]))
+for side in ("layout", "reference"):
+    if census(lc, side) != EXPECT_CENSUS:
+        fail.append("record (label-ordered) %s census %r != %r" % (side, census(lc, side), EXPECT_CENSUS))
+if not (lrep["mode"] == "apply" and lrep["inductor_devices"] == 2 and lrep["unresolved"] == 0
+        and lrep["reordered"] == 1 and flags(lrep) == WANT_FLAGS):
+    fail.append("label-order step on the intact stream: expected exactly the L1 pair "
+                "(LA,VDD / LB,OUTP) reordered and L2 untouched, got %r (unresolved %d)"
+                % (flags(lrep), lrep["unresolved"]))
+# The runset's strict top-port check (flag_missing_ports) runs only after a
+# matching compare.  It logs a NAME finding for each top-level pin net that
+# also carries a spiral's LA/LB text.  Recorded, not hidden: exactly these
+# three, each on a net the cross-reference pairs with the named reference net.
+PORT_FINDINGS = {("LA,VDD", "VDD"), ("LB,OUTN", "OUTN"), ("LB,OUTP", "OUTP")}
+def port_findings(s):
+    got = set()
+    for e in s["compare_log"]:
+        m = re.fullmatch(r"Port mismatch '([^']*)' vs\. '([^']*)'", e["message"])
+        got.add((e["severity"],) + (m.groups() if m else (e["message"],)))
+    return got
+pf_ok = port_findings(lo) == {("error",) + p for p in PORT_FINDINGS}
+pairs = {(p["layout"], p["reference"]) for p in lc["nets"]["pairs"]}
+pf_paired = all(p in pairs for p in PORT_FINDINGS)
+if not (pf_ok and pf_paired):
+    fail.append("record compare log is not exactly the three known port-name "
+                "findings on paired nets: %r" % lo["compare_log"])
+if port_findings(c1) != port_findings(lo):
+    fail.append("control C1's compare log differs from the record's: %r" % c1["compare_log"])
+lo_log = open(os.path.join(scratch, "run-lo-record.log")).read()
+runset_flag = ("Congratulations! Netlists match." in lo_log,
+               "Netlists don't match" in lo_log)
+if runset_flag != (False, True):
+    fail.append("runset log outcome changed for the record run: %r -- re-read the "
+                "strict-port findings" % (runset_flag,))
+
+# -- negative controls through the step, against the reference of record --
+def lo_entry(stem, what):
+    s, r = S(stem), LO(stem)
+    c = s["circuits"][0]
+    return {"control": stem, "change": what,
+            "reference": "the reference of record (layout/lvs/vco-reference.cir)",
+            "verdict": s["verdict"], "rejected": s["verdict"] != "match" or r["unresolved"] > 0,
+            "nets_not_matched": len(c["nets"]["not_matched"]),
+            "device_pairs_not_matched": len(c["device_pairs"]["not_matched"]),
+            "layout_census": census(c, "layout"),
+            "label_order_step": {
+                "inductor_devices": r["inductor_devices"], "unresolved": r["unresolved"],
+                "reordered": r["reordered"],
+                "devices": [{k: d.get(k) for k in ("device", "resolved", "why", "extracted_order",
+                                                   "label_order", "reordered")
+                             if d.get(k) is not None} for d in r["devices"]]}}
+
+lo_neg = []
+for stem, what, mech, mech_why in (
+        ("lo-n1-supply", "N1 (VS_VDD_REF via ladder removed), through the step", None, None),
+        ("lo-n2-signal", "N2 (VS_Q1B via ladder removed), through the step", None, None),
+        ("lo-n3-device", "N3 (C1 MIM instance removed), through the step", None, None),
+        ("lo-a-l1-flipped",
+         "(a) L1 GENUINELY wired the other way round: its instance re-placed mirrored "
+         "about its own axis (m90 -> r0), so the port carrying LA lands on the OUTP "
+         "wire and LB on VDD; every wire is unchanged",
+         lambda r: r["inductor_devices"] == 2 and r["unresolved"] == 0 and r["reordered"] == 0,
+         "the step must find L1's LA on OUTP and leave it there (nothing reordered)"),
+        ("lo-b1-l2-labels-swapped",
+         "(b) L2's LA and LB texts swapped: L2's LA label on the wrong net (OUTN). L2 is "
+         "the unmirrored spiral the step leaves alone on the intact stream",
+         lambda r: r["unresolved"] == 0 and r["reordered"] == 2,
+         "the step must follow L2's labels and reorder it too (2 reordered)"),
+        ("lo-b2-l1-labels-swapped",
+         "(b) L1's LA and LB texts swapped: L1's LA label on the wrong net (OUTP)",
+         lambda r: r["unresolved"] == 0 and r["reordered"] == 0,
+         "the step must follow L1's labels and not reorder it"),
+        ("lo-b3-l1-la-moved",
+         "(b) L1's LA text moved onto its LB port: LA on the wrong net (OUTP), both "
+         "labels on one port",
+         lambda r: r["inductor_devices"] == 1,
+         "the runset itself must drop L1 (one labelled port only)")):
+    e = lo_entry(stem, what)
+    if not e["rejected"]:
+        fail.append("negative control %s compared 'match' through the label-order step "
+                    "-- the accommodation hides this break" % stem)
+    if mech is not None:
+        e["expected_step_behaviour"] = mech_why
+        e["step_behaved_as_expected"] = bool(mech(LO(stem)))
+        if not e["step_behaved_as_expected"]:
+            fail.append("negative control %s: %s; step report %r" % (
+                stem, mech_why, e["label_order_step"]))
+    lo_neg.append(e)
+
+# -- why not a reference-side swap: the runset as shipped vs the C1 reference
+#    cannot see control (a) -------------------------------------------------
+ap = S("a-plain-vs-c1")
+if ap["verdict"] != "match":
+    fail.append("a-plain-vs-c1 is %r, not 'match': the record's argument against a "
+                "reference-side swap needs re-reading" % ap["verdict"])
+
+# -- T3 cross-check against xschem's own LVS netlist ----------------------
+_SI = {"t": 1e12, "g": 1e9, "meg": 1e6, "k": 1e3, "m": 1e-3, "u": 1e-6,
+       "n": 1e-9, "p": 1e-12, "f": 1e-15}
+def num(t):
+    m = re.fullmatch(r"([-+]?[0-9.]+(?:e[-+]?\d+)?)(meg|[tgkmunpf])?", t.lower())
+    return float(m.group(1)) * _SI.get(m.group(2) or "", 1.0) if m else t
+def cards(path, mapped):
+    d = {}
+    for l in open(path):
+        t = l.split()
+        if not t or t[0][0] not in "QLC" or t[0].startswith("*"):
+            continue
+        model_i = next(i for i, x in enumerate(t) if not "=" in x and i > 1
+                       and x in ("npn13G2v", "inductor", "cap_cmim", "sg13_hv_svaricap"))
+        nodes = t[1:model_i]
+        if mapped:  # our T5a: substrate `0` -> `sub`; compare as the source wrote it
+            nodes = ["0" if n == "sub" else n for n in nodes]
+        prm = {k.lower(): num(v) for k, v in (x.split("=", 1) for x in t[model_i + 1:])}
+        d[t[0]] = (nodes, t[model_i], prm)
+    return d
+if os.path.isfile(xcheck):
+    ours, theirs = cards(os.path.join(scratch, "ref", "vco-reference.cir"), True), cards(xcheck, False)
+    diffs = []
+    for k in sorted(set(ours) | set(theirs)):
+        a, b = ours.get(k), theirs.get(k)
+        if a is None or b is None or a[0] != b[0] or a[1] != b[1] or any(
+                abs(a[2].get(p, 0) - b[2].get(p, 0)) > 1e-9 * max(1, abs(b[2].get(p, 0)))
+                for p in set(a[2]) | set(b[2])):
+            diffs.append(k)
+    xc = {"status": "agree" if not diffs else "disagree", "devices_compared":
+          len(theirs), "differences": diffs,
+          "scope": "every Q/L/C card (T3 device-form mapping): nodes, model, "
+                   "parameters; xschem keeps ideal resistors and writes "
+                   "substrate as 0, so R cards and T4/T5 are outside it"}
+    if diffs:
+        fail.append("T3 cross-check: our reference disagrees with xschem's LVS "
+                    "netlist on %s" % diffs)
+else:
+    xc = {"status": xcheck}
+    # Carry the last real cross-check forward, labelled as NOT re-run.
+    try:
+        prev = json.load(open(os.path.join(out, "vco-lvs-record.json")))["reference_crosscheck_xschem"]
+        if prev.get("status") == "agree":
+            xc["last_rerun_agreement"] = prev
+            xc["note"] = ("not re-run in this regeneration; the carried block is the "
+                          "agreement recorded against the pre-#79 netlist (xschem "
+                          "3.4.7). The #79 change only re-points the 4th terminal "
+                          "of the 32 varactor cards (OUTP/OUTN -> 0); re-run with "
+                          "xschem >= 3.4.7 to refresh")
+        elif "last_rerun_agreement" in prev:
+            xc["last_rerun_agreement"] = prev["last_rerun_agreement"]
+            xc["note"] = prev.get("note")
+    except Exception:
+        pass
+
+# -- klt leg -------------------------------------------------------------
+def scrub(o):
+    return json.loads(json.dumps(o).replace(root + "/", "").replace(
+        os.path.join(scratch, "klt") + "/", "<scratch>/"))
+# klt writes its error envelope to stderr and a report to stdout.
+klt_lvs = None
+for f in ("lvs.json", "lvs.err"):
+    try:
+        klt_lvs = json.load(open(os.path.join(scratch, "klt", f)))
+        break
+    except Exception:
+        continue
+klt_lvs = klt_lvs or {"unparsable": "neither stdout nor stderr held JSON"}
+kmsg = (klt_lvs.get("error") or {}).get("message", "")
+# klt <=0.8.0 words the refusal "'inductor' is not a known device"; 0.8.0 on a
+# reference with several unknown subckts says "subcircuits 'inductor', ... are
+# not known devices".  Same refusal (exit 1, inductor unsupported), two phrasings.
+def inductor_refused(msg):
+    return "'inductor'" in msg and ("not a known device" in msg
+                                    or "not known devices" in msg)
+klt_refused = klt_rc == 1 and inductor_refused(kmsg)
+if not klt_refused:
+    fail.append("klt 0.8.0 lvs no longer refuses this reference (exit %d) -- "
+                "the klt gap may be closed: re-evaluate, update section 14" % klt_rc)
+kx = json.load(open(os.path.join(scratch, "klt", "extract.json")))
+if xrc != 0 or kx.get("device_counts") != {"cap_cmim": 1, "rppd": 3}:
+    fail.append("klt 0.8.0 extract census changed: exit %d, %r -- re-evaluate "
+                "the klt leg" % (xrc, kx.get("device_counts")))
+
+# -- klt leg, newest release (section 14.5) -------------------------------
+lat_dir = os.path.join(scratch, "klt-latest")
+lat_ver = os.environ["KLT_LATEST_VER"]
+lat_rc, latn_rc, latx_rc = (int(os.environ[k]) for k in ("LAT_RC", "LATN_RC", "LATX_RC"))
+def scrub_lat(o):
+    return json.loads(json.dumps(o).replace(lat_dir + "/", "<scratch>/").replace(
+        root + "/", ""))
+def envelope(stem):
+    for f in (stem + ".json", stem + ".err"):
+        try:
+            return json.load(open(os.path.join(lat_dir, f)))
+        except Exception:
+            continue
+    return {"unparsable": "neither stdout nor stderr held JSON"}
+lat_lvs, lat_net = envelope("lvs"), envelope("lvs-netlist")
+lmsg = (lat_lvs.get("error") or {}).get("message", "")
+nmsg = (lat_net.get("error") or {}).get("message", "")
+if not (lat_rc == 1 and inductor_refused(lmsg)):
+    fail.append("klt %s lvs no longer refuses this reference (exit %d) -- the "
+                "klt gap may be closed: re-evaluate, update section 14.5" % (lat_ver, lat_rc))
+if not (latn_rc == 1 and "could not parse layout netlist" in nmsg):
+    fail.append("klt %s lvs now reads the runset's extracted netlist (exit %d) -- "
+                "re-evaluate the pre-extracted route, update section 14.5" % (lat_ver, latn_rc))
+lkx = json.load(open(os.path.join(lat_dir, "extract.json")))
+if latx_rc != 0 or lkx.get("device_counts") != {"cap_cmim": 1, "rppd": 3}:
+    fail.append("klt %s extract census changed: exit %d, %r -- re-evaluate "
+                "the klt leg" % (lat_ver, latx_rc, lkx.get("device_counts")))
+
+if fail:
+    print("\n== LVS RECORD DRIFTED -- layout/lvs/ record files left as they were")
+    for f in fail:
+        print("  [FAIL] %s" % f)
+    sys.exit(1)
+
+def supply(stem):
+    c = cmp(stem); want = {"VDD", "0", "SUB"}
+    got = [p for p in c["nets"]["pairs"] if (p["reference"] or "").upper() in want]
+    bad = [n for n in c["nets"]["not_matched"]
+           if (n["reference"] or "").upper() in want]
+    return {"paired": got, "not_paired": bad}
+
+for stem in ("c1-l1", "lo-record"):
+    if supply(stem)["not_paired"] or len(supply(stem)["paired"]) != 3:
+        print("[FAIL] %s does not pair VDD/0/substrate 1:1" % stem); sys.exit(1)
+
+# -- write the committed record ------------------------------------------
+import shutil
+for f in ("vco-reference.cir", "vco-reference.json"):
+    shutil.copyfile(os.path.join(scratch, "ref", f), os.path.join(out, f))
+def write_ext(stem, dst, what):
+    ext = [l for l in open(os.path.join(scratch, "run-" + stem, "vco_extracted.cir"))
+           .read().splitlines(True)
+           if not l.startswith("* Extracted by KLayout with SG13G2 LVS runset on")]
+    open(os.path.join(out, dst), "w").write(
+        "* Extracted from layout/vco.gds by IHP's sg13g2.lvs runset (layout/lvs.sh)%s;\n"
+        "* the runset's date-stamp comment line is removed so reruns are byte-stable.\n"
+        % what + "".join(ext))
+write_ext("record", "vco-extracted.cir", "")
+write_ext("lo-record", "vco-extracted-label-ordered.cir",
+          ",\n* AFTER the label-order step (layout/scripts/lvs_label_order.rb, issue #80):\n"
+          "* this is the layout netlist the compare of record compared")
+
+gds_sha = sha(os.path.join(root, "layout/vco.gds"))
+ref_sha = sha(os.path.join(out, "vco-reference.cir"))
+step_sha = sha(os.path.join(root, "layout/scripts/lvs_label_order.rb"))
+STEP = {"script": "layout/scripts/lvs_label_order.rb",
+        "content_hash": "sha256:" + step_sha, "issue": "#80",
+        "rule": "for every extracted device of class `inductor`: the winding "
+                "terminal whose port carries the LA text (27/25) becomes "
+                "terminal 1, the one carrying LB terminal 2 (the PDK's own "
+                "convention: its LVS unit testcase names every pattern's "
+                "nodes `la_N lb_N`); applied identically to every inductor, "
+                "keyed on the labels at each device's own terminals, never on "
+                "instance or cell names; a device without exactly one LA and "
+                "one LB on different terminals is left as extracted and "
+                "reported unresolved (fails the record)",
+        "not_changed": "the runset files (hash-pinned), every run_lvs.py switch, "
+                       "every other device class, every net, every parameter, "
+                       "the substrate terminal, and the reference netlist"}
+ihp = {"schema_version": 2,
+       "engine": "KLayout %s LVS (NetlistComparer), IHP-Open-PDK sg13g2.lvs runset "
+                 "+ the label-order step (issue #80)" % kl_ver,
+       "deck": {"pdk_relative_path": "libs.tech/klayout/tech/lvs/sg13g2.lvs",
+                "content_hash": "sha256:" + deck_sha,
+                "hash_scope": "sha256 over '<sha256>  <path>' lines of sg13g2.lvs, "
+                              "run_lvs.py and rule_decks/*.lvs, sorted"},
+       "label_order_step": dict(STEP, devices=lrep["devices"]),
+       "input": {"file": "layout/vco.gds", "content_hash": "sha256:" + gds_sha},
+       "reference": {"file": "layout/lvs/vco-reference.cir",
+                     "content_hash": "sha256:" + ref_sha,
+                     "derived_from": json.load(open(os.path.join(
+                         out, "vco-reference.json")))["source"]},
+       "status": lo["verdict"],
+       "compare": lc,
+       "compare_log": lo["compare_log"],
+       "runset_as_shipped": {"status": rec["verdict"], "compare": rc,
+                             "compare_log": rec["compare_log"]}}
+json.dump(ihp, open(os.path.join(out, "vco-lvs-ihp.json"), "w"), indent=2)
+open(os.path.join(out, "vco-lvs-ihp.json"), "a").write("\n")
+
+def counts(c):
+    return {k: "%d/%d" % (c[k]["matched"], c[k]["matched"] + len(c[k]["not_matched"]))
+            for k in ("device_pairs", "nets", "pins")}
+
+record = {
+    "schema_version": 2,
+    "verdict_of_record": {
+        "status": lo["verdict"],
+        "compare": "IHP's runset (unmodified, hash-pinned) + the label-order "
+                   "step, against the reference of record (unedited)",
+        "report": "layout/lvs/vco-lvs-ihp.json",
+        "cross_reference": counts(lc),
+        "device_census": {"layout": census(lc, "layout"),
+                          "reference": census(lc, "reference"),
+                          "devices_in_design": 42,
+                          "extra": "ptap1 = the guard-ring substrate tie (T5b)"},
+        "label_order_step": dict(STEP, inductor_devices=lrep["inductor_devices"],
+                                 reordered=lrep["reordered"],
+                                 unresolved=lrep["unresolved"],
+                                 devices=lrep["devices"],
+                                 reading="the step reordered exactly one device, the "
+                                         "mirrored spiral whose ports carry LA on VDD and "
+                                         "LB on OUTP (the reference's L1: VDD OUTP); it "
+                                         "left the unmirrored spiral (LA on VDD, LB on "
+                                         "OUTN: the reference's L2) as extracted"),
+        "strict_port_check": {
+            "findings": lo["compare_log"],
+            "runset_log_outcome": "Netlists don't match",
+            "reading": "IHP's runset runs flag_missing_ports (strict top-port "
+                       "mode) only after a matching compare. It logs one "
+                       "error per top-level pin net whose layout name is not "
+                       "exactly the reference port name. The three findings "
+                       "are the three pin nets that also carry a spiral's "
+                       "LA/LB PCell text, which the runset connects as a net "
+                       "name (ind_connections.lvs: connect(ind_pin, ind_text)), "
+                       "so the layout net is named e.g. 'LA,VDD'. Each of those "
+                       "nets IS paired with the named reference net by the "
+                       "cross-reference (gated by lvs.sh), so these are name "
+                       "findings, not connectivity findings; run_lvs.py's own "
+                       "summary nevertheless reports FAIL for this run. The "
+                       "same three findings were present, unread, under control "
+                       "C1 before issue #80 (PROVENANCE.md section 14.6). They "
+                       "are not addressed by the label-order step and are not "
+                       "suppressed (no --ignore_top_ports_mismatch). Tracked in "
+                       "issue #162."},
+        "explained_differences": [
+            {"id": "L1-terminal-order", "devices": 1, "kind": "extractor artefact",
+             "detail": "IHP's GeneralNTerminalExtractor sorts inductor ports by x "
+                       "position (custom_extractor.lvs: define_and_sort_terminals "
+                       "-> sort_polygons); L1 is placed mirrored (m90), so its LA "
+                       "(on VDD) sorts second, while the inductor class declares "
+                       "its two winding terminals non-equivalent. The LA/LB labels "
+                       "in the stream put LA on VDD for both spirals, as the "
+                       "schematic says. Isolated by control C1.",
+             "resolution": "the label-order step (this record, issue #80); upstream "
+                           "report drafted, not filed (PROVENANCE.md section 14.6)"}],
+        "supply_pairing": {
+            "record": supply("lo-record"), "runset_as_shipped": supply("record"),
+            "control_C1": supply("c1-l1"),
+            "reading": "in the compare of record VDD, 0 and the substrate each "
+                       "pair 1:1 with the reference, as under C1; in the "
+                       "runset-as-shipped compare VDD and the substrate do not "
+                       "pair cleanly because the L1 terminal-order artefact "
+                       "perturbs VDD/OUTP"},
+        "power_connectivity": {
+            "status": "not_produced",
+            "why": "klt lvs's power_connectivity block exists only in a klt lvs "
+                   "report, and klt 0.8.0 cannot produce one for this design "
+                   "(klt_leg below). Supply pairing in the device-aware compare "
+                   "is reported per net in vco-lvs-ihp.json -> compare.nets."},
+        "removal": "drop the label-order step (layout/scripts/lvs_label_order.rb and "
+                   "the wrapper/shim in lvs.sh) once the pinned IHP-Open-PDK runset "
+                   "orders inductor terminals by their LA/LB labels or declares the "
+                   "two windings equivalent; bump IHP_LVS_DECK_SHA to that runset "
+                   "and re-check that the runset as shipped gives the verdict of "
+                   "record on its own (PROVENANCE.md section 14.6)"},
+    "runset_as_shipped": {
+        "status": rec["verdict"],
+        "cross_reference": counts(rc),
+        "device_pairs_not_matched": rc["device_pairs"]["not_matched"],
+        "reading": "the same runset without the step: exactly one unpaired "
+                   "device pair, spiral L1 with its windings in x order "
+                   "(OUTP, VDD) against the reference's (VDD, OUTP); kept as "
+                   "evidence of what the step accommodates"},
+    "tools": {"runset_engine": {"klayout": kl_ver, "klayout_python_module": py_kl,
+                                "source": "layout/scripts/native_drc_env.sh "
+                                          "(KLayout's own 0.30.12 .deb, extracted)"},
+              "runset": {"path": "$IHP_PDK_ROOT/libs.tech/klayout/tech/lvs/run_lvs.py",
+                         "content_hash": "sha256:" + deck_sha},
+              "label_order_step": {"path": STEP["script"],
+                                   "content_hash": STEP["content_hash"]},
+              "klt_leg": "klayout-tools==0.8.0 (tagged wheel, the CI pin)"},
+    "inputs": {"layout": {"file": "layout/vco.gds", "content_hash": "sha256:" + gds_sha},
+               "schematic_netlist": json.load(open(os.path.join(
+                   out, "vco-reference.json")))["source"],
+               "reference": {"file": "layout/lvs/vco-reference.cir",
+                             "content_hash": "sha256:" + ref_sha}},
+    "invocation": ["python3", "$IHP_PDK_ROOT/libs.tech/klayout/tech/lvs/run_lvs.py",
+                   "--layout=layout/vco.gds", "--netlist=layout/lvs/vco-reference.cir",
+                   "--topcell=vco", "--run_dir=<scratch>"],
+    "invocation_notes": "run_lvs.py defaults: flat mode, simplify on, strict "
+                        "top-port mode (flag_missing_ports); run_lvs.py exits 0 "
+                        "on a mismatch, so the verdict is read from the .lvsdb. "
+                        "The compare of record runs this same command with a "
+                        "`klayout` shim first on PATH that replaces only the "
+                        "`-r <runset>/sg13g2.lvs` argument by a generated "
+                        "wrapper deck (`# %include` of the step, then of the "
+                        "unmodified sg13g2.lvs) and adds -rd label_order_report "
+                        "and -rd label_order_mode=apply; every other switch "
+                        "passes through (fidelity control R0)",
+    "reference_crosscheck_xschem": xc,
+    "single_variable_controls": [
+        {"control": "C1", "reference_change": "L1 winding terminals swapped",
+         "compare": "runset as shipped (no step)",
+         "verdict": c1["verdict"],
+         "device_pairs_matched": cmp("c1-l1")["device_pairs"]["matched"],
+         "nets_matched": cmp("c1-l1")["nets"]["matched"],
+         "pins_matched": cmp("c1-l1")["pins"]["matched"],
+         "compare_log": c1["compare_log"],
+         "reading": "still the explanation of the runset-as-shipped mismatch: "
+                    "with only L1's terminal order changed, the runset pairs "
+                    "everything"}],
+    "control_scope": "C1 reference is a scratch diagnostic produced by "
+                     "lvs_reference.py's --swap-inductor switch; it is never "
+                     "committed and is not a reference of record. It "
+                     "establishes that L1's terminal order is the ONLY "
+                     "difference, not that the layout matches.",
+    "fidelity_control": {
+        "control": "R0", "compare": "runset + wrapper + shim, step in `report` mode "
+                                    "(computes, changes nothing)",
+        "verdict": r0["verdict"], "identical_to_runset_as_shipped": r0_ok,
+        "reading": "every field of the R0 compare equals the runset-as-shipped "
+                   "compare, so the wrapper deck and the shim do not move the "
+                   "result; only the step's reordering does"},
+    "negative_controls": neg,
+    "negative_controls_label_order": lo_neg,
+    "negative_controls_scope": "negative_controls: the runset as shipped against "
+                               "the C1 diagnostic (unchanged from #62). "
+                               "negative_controls_label_order: the compare of "
+                               "record's own path (runset + step) against the "
+                               "reference of record; a `match` (or an "
+                               "unresolved device counted as a pass) would mean "
+                               "the step hides the break",
+    "reference_side_swap_check": {
+        "control": "a-plain-vs-c1",
+        "compare": "runset as shipped, stream of control (a) (L1 genuinely wired "
+                   "the other way round), against the C1 diagnostic reference",
+        "verdict": ap["verdict"],
+        "reading": "a reference-side swap would accept a genuinely reversed L1: "
+                   "the x-ordered extraction of control (a) matches the swapped "
+                   "reference. That is why the accommodation reorders the "
+                   "extraction by its own labels and never edits the reference"},
+    "klt_leg": {
+        "lvs": {"request": {"layout": {"file": "layout/vco.gds", "deck": "sg13g2", "top": "vco"},
+                            "reference": {"netlist": "<design/vco.spice minus T1, wrapped per T2>",
+                                          "form": "subckt-call", "deck": "sg13g2", "top": "vco"}},
+                "exit": klt_rc, "response": scrub(klt_lvs)},
+        "extract": {"exit": xrc, "device_counts": kx.get("device_counts"),
+                    "net_count": kx.get("net_count"),
+                    "devices_in_design": 42},
+        "reading": "klt 0.8.0 refuses the reference (no inductor / 4-terminal "
+                   "varactor / HBT device class for sg13g2) and its curated "
+                   "extraction recognizes %d of 42 devices, so no klt lvs report "
+                   "of this block can exist at this pin (PROVENANCE.md section "
+                   "14; 2AMLogic/klayout-tools#2849)"
+                   % sum((kx.get("device_counts") or {}).values())},
+    "klt_leg_latest_release": {
+        "klt": "klayout-tools==%s (tagged wheel, throwaway venv; not the CI pin)" % lat_ver,
+        "lvs_inline_extraction": {"request": "same as klt_leg.lvs.request",
+                                  "exit": lat_rc, "response": scrub_lat(lat_lvs)},
+        "lvs_pre_extracted": {
+            "request": {"layout": {"netlist": "<the runset's own extraction of "
+                                              "layout/vco.gds (the record run)>",
+                                   "top": "vco"},
+                        "reference": {"netlist": "layout/lvs/vco-reference.cir",
+                                      "top": "vco"}},
+            "exit": latn_rc, "response": scrub_lat(lat_net)},
+        "extract": {"exit": latx_rc, "device_counts": lkx.get("device_counts"),
+                    "net_count": lkx.get("net_count"), "devices_in_design": 42},
+        "reading": "the newest release behaves as the pin does: it refuses the "
+                   "reference, recognizes %d of 42 devices on inline extraction, "
+                   "and cannot read the runset's device-aware extraction as a "
+                   "pre-extracted layout netlist -- the gap tracked by "
+                   "2AMLogic/klayout-tools#2849 is open in %s too "
+                   "(PROVENANCE.md section 14.5)"
+                   % (sum((lkx.get("device_counts") or {}).values()), lat_ver)},
+    "limits": [
+        "the verdict is IHP's runset's plus one repo-local step; klt lvs could "
+        "not run it, so no klt-native LVS envelope (and no klt "
+        "power_connectivity block) exists",
+        "the `match` is the cross-reference's; the runset's strict top-port "
+        "check still logs three port-name findings and run_lvs.py's summary "
+        "says FAIL (verdict_of_record.strict_port_check; issue #162)",
+        "the label-order step is this repo's accommodation of a runset "
+        "artefact, not IHP's; it is reviewed and controlled here, and removable "
+        "(verdict_of_record.removal)",
+        "one engine only: no second, independent extractor recognizes this "
+        "block's HBT/varactor/inductor devices",
+        "the reference is DERIVED (T1..T6); T4 (rppd for ideal R) and T5 "
+        "(substrate net + guard-ring tie) are the layout phase's own physical "
+        "choices restated, so their parameters are checked against the "
+        "generator's intent, not against the schematic",
+        "a topological + parameter compare; no parasitic, matching or "
+        "geometric check"]}
+json.dump(record, open(os.path.join(out, "vco-lvs-record.json"), "w"), indent=2)
+open(os.path.join(out, "vco-lvs-record.json"), "a").write("\n")
+print("\n== LVS record written: status %s (runset + label-order step: L1 reordered by "
+      "its LA/LB labels, L2 untouched; 3 strict-port NAME findings recorded) -- runset "
+      "as shipped: %s (L1 terminal order only, C1 match); R0 identical; every "
+      "negative control rejected; klt 0.8.0 refuses (recorded)" % (lo["verdict"], rec["verdict"]))
