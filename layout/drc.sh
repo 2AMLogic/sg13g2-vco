@@ -47,7 +47,9 @@
 # outside the deck that ran (section 13).
 #
 # TOOLS.  The curated deck, ring-check and Cnt.c control use `klt` on PATH
-# (the repo's release pin, 0.8.0) and `klayout` on PATH for the helper
+# (tagged 0.8.0, the version the committed reports reproduce under; the
+# claims pin, .github/klt-version, moved to 0.9.2 in #416, and these records
+# regenerate under it via #266) and `klayout` on PATH for the helper
 # scripts.  The IHP-native run needs klayout-tools at the PR #2803 merge
 # revision and KLayout 0.30.12; layout/scripts/native_drc_env.sh provisions
 # both, pinned, into the gitignored scratch area (NATIVE_DRC_ENV, default
@@ -87,7 +89,9 @@ mkdir -p "${KLSCRATCH}"
 
 echo "== tools: $(klt --version 2>&1 | head -1) / $(klayout -v 2>&1 | head -1)"
 # The curated deck's hash and `released: true` (section 12) are the TAGGED
-# 0.8.0 wheel's -- the one .github/workflows/signoff.yml pins.  A post-tag
+# 0.8.0 wheel's -- the one .github/workflows/signoff.yml pinned when these
+# reports were recorded (the claims pin moved to 0.9.2 in #416; see the TOOLS
+# note above).  A post-tag
 # git build reports "0.8.1.devN+g<sha>" but ships a different curated deck,
 # so it would silently rewrite the diagnostic reports with another deck.
 [[ "$(klt --version 2>&1 | head -1)" == "klt 0.8.0" ]] || {
