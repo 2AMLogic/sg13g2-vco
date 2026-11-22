@@ -22,7 +22,7 @@ _None._
 
 `loom:important`; taken before unlabelled work.
 
-- **#50**: sim: run the oscillator-core graded row-10/11 PVT grid (~180 CPU-hours) and record the row 1/2/3/6/8 verdicts
+- **#50**: sim: run the oscillator-core graded row-10/11 PVT grid (~180 CPU-hours) and record the row 1/2/3/6/8 verdicts *(held)*
 - **#53**: sim: run the graded row-10/11 phase-noise grid for design/vco.sch (spec row 4) and widen the ISF impulse spacing *(held)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(held)*
 - **#162**: lvs: runset strict top-port check logs 3 port-name findings ('LA,VDD' vs 'VDD') after the cross-reference matches *(held)*
@@ -48,7 +48,6 @@ Issues currently being built (`loom:building`).
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#419**: docs(lvs): split the section 14.6 draft into two IHP runset reports with fix proposals
 - **#428**: layout: expose OUTP/OUTN as TopMetal1 pins at the bbox edge
 - **#429**: layout: add TopMetal2 ground chip-level pin on the bottom guard-ring bar
 - **#432**: test: pin pre-change tuning row so the byte-identical check always runs
@@ -65,7 +64,7 @@ _None._
 Issues carrying `loom:curated`.
 
 - **#3**: Gap to T1 sim-validated: artifact-presence checklist (bootstrap tracker) *(curated)* *(held)*
-- **#50**: sim: run the oscillator-core graded row-10/11 PVT grid (~180 CPU-hours) and record the row 1/2/3/6/8 verdicts *(curated)*
+- **#50**: sim: run the oscillator-core graded row-10/11 PVT grid (~180 CPU-hours) and record the row 1/2/3/6/8 verdicts *(curated)* *(held)*
 - **#53**: sim: run the graded row-10/11 phase-noise grid for design/vco.sch (spec row 4) and widen the ISF impulse spacing *(curated)* *(held)*
 - **#59**: layout: draw and commit sg13g2-vco GDS/OASIS (T1 item 1/2, analog full-custom) — unblocked now that #57/DR-004 landed *(curated)* *(held)*
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)* *(held)*
@@ -94,7 +93,7 @@ _None._
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 6 |
-| PRs awaiting review | 5 |
+| PRs awaiting review | 4 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 11 |
 | Architect / Hermit proposals | 2 |
