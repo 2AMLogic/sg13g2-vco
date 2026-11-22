@@ -216,9 +216,10 @@ devices, 10/10 nets, 9/9 pins; [`layout/lvs/vco-lvs-record.json`][lvs-record]).
 ### When a runset with the port-name fix is pinned
 
 The current pin records three strict-port errors and an overall FAIL.
-On the first pin with the naming fix, update `IHP_LVS_DECK_SHA` and the
-expectations together in
-[`layout/lvs.sh`](https://github.com/2AMLogic/sg13g2-vco/blob/main/layout/lvs.sh).
+On the first pin with the naming fix, update `IHP_LVS_DECK_SHA` in
+[`layout/lvs.sh`](https://github.com/2AMLogic/sg13g2-vco/blob/main/layout/lvs.sh)
+and the record checks in
+[`layout/scripts/lvs_record.py`](https://github.com/2AMLogic/sg13g2-vco/blob/main/layout/scripts/lvs_record.py).
 
 - If the label-order step is still needed, update `WANT_FLAGS` to use the
   explicit net names (`VDD / OUTP` for L1 and `VDD / OUTN` for L2).
