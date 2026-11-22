@@ -1256,16 +1256,13 @@ only artefact of the change in this directory.
 
 **Remaining: spiral L1 terminal order, an extractor artefact, tracked as #80.** The
 stream's own labels put `LA` on `VDD` for **both** spirals, and `LB` on
-`OUTP`/`OUTN`, exactly as the schematic says. The two spiral cells are
-mirror images (`LA` at x = +25.315 µm in one, −25.315 µm in the other), and
-L1 is placed `m90`. The runset finds the two ports by those labels
-(`ind_derivations.lvs`), but then orders them **by x position**
+`OUTP`/`OUTN`, exactly as the schematic says. L1 is placed `m90`, which
+puts its `LB` port to the left of `LA` (§14.6). The runset finds the ports
+by their labels (`ind_derivations.lvs`), then orders them **by x position**
 (`custom_extractor.lvs`, `define_and_sort_terminals` → `sort_polygons`). Its
 inductor class clears terminal equivalence (`custom_devices.lvs`,
-`DeviceCustomInd`), so a mirrored spiral always extracts with its windings
-reversed. The fix belongs to the runset (or to a reviewed accommodation in
-this flow), not to the layout. The runset is IHP's, not klt's, so it is not
-filed at klayout-tools. #80 holds the options.
+`DeviceCustomInd`), so L1 compares with its windings reversed. #80 records
+the options for correcting the order in IHP's runset or in this flow.
 
 ### Supply pairing
 
@@ -1648,9 +1645,9 @@ each still marked DRAFT, NOT FILED, each generic (they describe the
 runset, not this block):
 
 - [`upstream-reports/inductor-terminal-order.md`](upstream-reports/inductor-terminal-order.md)
-  — **report A:** a 2-terminal `inductor` has its terminals ordered by x,
-  not by its `LA`/`LB` labels, so a mirrored inductor compares reversed —
-  the artefact this section accommodates.
+  — **report A** describes how a two-terminal `inductor` compares reversed
+  when its placement makes `LB` sort before `LA` by position. L1's measured
+  `m90` placement triggers this artefact.
 - [`upstream-reports/inductor-port-names.md`](upstream-reports/inductor-port-names.md)
   — **report B:** the `LA`/`LB` PCell texts are connected as net names
   (`ind_connections.lvs`: `connect(ind_pin, ind_text)`), so an inductor
@@ -1668,8 +1665,8 @@ upstream tracker's issues and pull requests (read-only; none found), its
 proposed fix with the regression test and negative controls (controls (a),
 (b1)–(b3), N1–N3, plus a misnamed-top-pin must-fail for B), and the ranked
 filing choices asked of the operator — to be answered **separately per
-report**; the klt-side route that does not depend on IHP's schedule is
-[2AMLogic/klayout-tools#6903](https://github.com/2AMLogic/klayout-tools/issues/6903).
+report**. The klt-side investigation can proceed on the pinned runset
+independently of an IHP filing. [2AMLogic/klayout-tools#6903](https://github.com/2AMLogic/klayout-tools/issues/6903)
 
 ## 15. VCTRL chip-level pin on TopMetal2 (2026-11-10, issue #314)
 

@@ -183,26 +183,38 @@ extraction re-read as reference), the **explicit port mapping**, and
 **device/net/pin coverage** (in this block: 43/43 devices, 10/10 nets,
 9/9 pins; the record run's numbers, `layout/lvs/vco-lvs-record.json`).
 
-## What this repo removes once a fixed runset is pinned
+## When a runset with the port-name fix is pinned
 
-Nothing — that is the point. This behaviour was never accommodated: the
-three findings are recorded as FAIL (`verdict_of_record.strict_port_check`,
-#162), with no suppression and no name exception. A runset with either fix
-above makes the strict top-port check pass on its own; §14.6's caveat that
-"the `match` above is the cross-reference's, not the runset's overall
-success flag" retires with it, and #162's ruling requirement (clean strict
-top-port result, no name exception) becomes reachable. (Report A's fix
-additionally retires the label-order accommodation, per §14.6 "Removal".)
+The current pin records three strict-port errors and an overall FAIL.
+On the first pin with the naming fix, update `IHP_LVS_DECK_SHA` and the
+expectations together in [`layout/lvs.sh`](../lvs.sh).
+
+- If the label-order step is still needed, update `WANT_FLAGS` to use the
+  explicit net names (`VDD / OUTP` for L1 and `VDD / OUTN` for L2).
+  Retiring that step depends on the terminal-order fix in report A.
+- Replace the exact three-error expectation with a requirement for zero
+  strict-port findings.
+  Require VDD, OUTN and OUTP each to pair with its own reference name and
+  require the runset log to report success. The misnamed-pin control must
+  fail under the same strict settings.
+- Regenerate the LVS record from the new run, including the findings and
+  measured runset outcome in `verdict_of_record.strict_port_check`. Check
+  the full device, net and pin coverage and update §14.6 with the new result.
 
 ## Decision asked of the operator (ranked, answer separately from report A)
 
 1. **File this report at `IHP-GmbH/IHP-Open-PDK`** — the text above is
    ready to file verbatim; a human files it.
-2. **Route the fix through the klt-side engine first**
-   ([2AMLogic/klayout-tools#6903](https://github.com/2AMLogic/klayout-tools/issues/6903),
-   open): the `klayout-runset` route can carry a patched deck and the
-   strict-port envelope without depending on IHP's schedule; file at IHP
-   only if that route stalls or IHP uptake matters.
+2. **Defer filing while klt investigates the pinned runset.** The proposed
+   reproduction would establish whether strict top-port checking runs and
+   where the findings appear. klt would report observable findings verbatim,
+   keep the as-shipped failure visible, and identify the terminal-order
+   limitation where distinguishable. This work uses the existing runset
+   pin. [KLT #6903](https://github.com/2AMLogic/klayout-tools/issues/6903)
+
+   A separate proposal would measure whether treating LA/LB as markers
+   preserves genuine errors. Using a normalised result for signoff
+   requires an operator ruling. [KLT #6914](https://github.com/2AMLogic/klayout-tools/issues/6914)
 3. **Do not file**: the finding stays recorded as FAIL. Unlike report A
    there is no local accommodation to keep, but #162's strict top-port
    requirement stays unreachable on this runset.

@@ -6,9 +6,8 @@
 choices asked of the operator are at the end. Nothing has been posted outside
 this repository.
 
-**Title to file:** KLayout LVS: 2-terminal `inductor` terminals are ordered by
-x position, not by their LA/LB labels, so a mirrored inductor always compares
-with reversed windings.
+**Title to file:** KLayout LVS reverses the two-terminal `inductor` windings
+when the LB port sorts ahead of LA by position.
 
 This report describes the runset, not any one block. The block-scale measured
 outcome quoted below is attributed to the existing recorded run
@@ -86,11 +85,12 @@ earlier note):
    matching `inductor.gds` LA lies to the left of LB. The testcase therefore
    never exercises a mirrored spiral, and that is why it passes.
 
-Consequence: for any inductor instance placed with a mirror (`m90`, `r180`,
-`m0` — anything that puts `LA` right of `LB`), the extracted `inductor_1` is
-the **LB** port. A correctly wired mirrored inductor fails LVS against a CDL
-that lists its nodes in LA, LB order. Any layout that mirrors an inductor, for
-example for a symmetric differential tank, hits this.
+When placement makes LB sort before LA, the extractor assigns LB to
+`inductor_1` even though the CDL lists LA first. In the measured `m90`
+example below, reflection across the vertical axis exchanges the ports'
+left-to-right order. For the same as-drawn pair, `m0` reflects across the
+horizontal axis and preserves both x coordinates, so LA still sorts first.
+[KLayout transformation definitions](https://www.klayout.de/doc/about/transformations.html)
 
 ## Minimal reproduction (measured 2026-10-10, §14.6)
 
@@ -169,13 +169,11 @@ duplicate.**
 terminal 1 in either orientation.** Concretely, the smallest proper fix in
 the runset:
 
-1. Order by label. Keep `ind_port_la` and `ind_port_lb` as separate inputs to
-   the extractor (or pass the label-to-polygon mapping through), define
-   `inductor_1` on the LA port and `inductor_2` on the LB port, and apply the
-   same rule to `inductor3` (LA, LB, LC). The join at `ind_derivations.lvs`
-   (line 52 at `dev`, 50 at `v0.3.0`) is where the identity is lost; the
-   coordinate fallback at `custom_extractor.lvs` (line 294 / 291) is where the
-   order is decided.
+1. Scope label ordering to the two-terminal `inductor` extractor. Pass
+   `ind_port_la` and `ind_port_lb` separately so it can assign LA to
+   `inductor_1` and LB to `inductor_2`. The join in `ind_derivations.lvs`
+   (line 52 at `dev`, 50 at `v0.3.0`) loses that identity. The coordinate
+   fallback in `custom_extractor.lvs` (line 294 / 291) then decides the order.
 2. Declaring the two windings equivalent
    (`equivalent_terminal_id`) would also make the compare pass, but it is
    **not** proposed as the fix: winding equivalence masks a genuine wiring
@@ -225,11 +223,15 @@ windings equivalent would additionally require the (a) decision above.
 
 1. **File this report at `IHP-GmbH/IHP-Open-PDK`** — the text above is ready
    to file verbatim; a human files it.
-2. **Route the fix through the klt-side engine first**
-   ([2AMLogic/klayout-tools#6903](https://github.com/2AMLogic/klayout-tools/issues/6903),
-   open): the `klayout-runset` route carries the mirrored-inductor compare
-   and the strict-port envelope without depending on IHP's schedule; file at
-   IHP only if that route stalls or IHP uptake matters.
+2. **Defer filing while klt investigates the pinned runset.** The proposed
+   work would reproduce the as-drawn and `m90` cases, report strict-port
+   findings verbatim and identify the terminal-order limitation if the
+   evidence distinguishes it from a real wiring swap. The report would
+   retain the as-shipped verdict. [KLT #6903](https://github.com/2AMLogic/klayout-tools/issues/6903)
+
+   A separate proposal would measure label-based ordering against negative
+   controls. Using a normalised result for signoff requires an operator
+   ruling. [KLT #6914](https://github.com/2AMLogic/klayout-tools/issues/6914)
 3. **Do not file**: keep the finding recorded as FAIL and the local
    label-order accommodation in place. This leaves #162's strict top-port
    chain blocked as today.

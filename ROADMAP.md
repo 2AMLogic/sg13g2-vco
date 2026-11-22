@@ -136,13 +136,13 @@ signoff bundle is re-rendered under it with the graded deltas recorded in
 - **Ratification:** DR-006 (gates #198), DR-007, DR-008.
 - **LVS, #62 and #162:** the ruling of 2026-10-19 requires a clean strict
   top-port result with no name exception, plus a native `klt lvs` report with
-  power-connectivity evidence (the two upstream reports are prepared,
-  refreshed to `dev` head `cc9afba5` / `27071f58` / `v0.3.0` `5cccb161` and
-  deduplicated in `layout/upstream-reports/` — `inductor-terminal-order.md`
-  (A, terminal order) and `inductor-port-names.md` (B, port names), both
-  DRAFT, NOT FILED, per #417; each asks the operator for a separate filing
-  decision, with the klt-side route at
-  2AMLogic/klayout-tools#6903). **This is no longer
+  power-connectivity evidence. #417 prepared two drafts,
+  A ([`inductor-terminal-order.md`](layout/upstream-reports/inductor-terminal-order.md)) and
+  B ([`inductor-port-names.md`](layout/upstream-reports/inductor-port-names.md)). Both are
+  DRAFT, NOT FILED, with source checks at `cc9afba5`, `27071f58` and
+  `v0.3.0` (`5cccb161`) and a duplicate check for each. The operator decides
+  whether to file each report separately. The klt-side investigation is
+  tracked in 2AMLogic/klayout-tools#6903. **This is no longer
   waiting on klayout-tools.** #2849 closed `not_planned` 2026-10-17 when the
   `klayout-runset` engine landed, and its successors #3206, #2870 and #2864
   are all closed `completed`; `klt lvs --deck-file` for `request.engine
