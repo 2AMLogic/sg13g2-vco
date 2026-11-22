@@ -74,17 +74,16 @@ if [ -z "$mismatches" ]; then
 fi
 
 # One open issue per title: refresh it while open, create after closure.
-# Closed issues never appear in --state open, so a recurrence re-enters
-# the create branch on its own.
-open_json="$(gh issue list --repo "$repo" --state open --limit 200 --json number,title)"
-issue_number="$(printf '%s\n' "$open_json" | TITLE="$TITLE" python3 -I -c '
-import json, os, sys
-try:
-    rows = json.load(sys.stdin)
-except ValueError as exc:
-    sys.exit("report-friction-drift: gh issue list returned invalid JSON: %s" % exc)
-ids = sorted(int(r["number"]) for r in rows if r.get("title") == os.environ["TITLE"])
-print(ids[0] if ids else "")')"
+# The repository issues endpoint includes pull requests. Search every page
+# and keep the oldest matching issue if duplicates already exist.
+issue_number="$(
+  gh api --paginate --slurp "repos/$repo/issues?state=open&per_page=100" |
+    python3 -I -c '
+import json, sys
+matches = (row["number"] for page in json.load(sys.stdin) for row in page
+           if "pull_request" not in row and row["title"] == sys.argv[1])
+print(min(matches, default=""))' "$TITLE"
+)"
 
 body_file="$(mktemp)"
 trap 'rm -f "$body_file"' EXIT

@@ -26,7 +26,7 @@
 #      creates one labeled loom:triage with entries, states and run URL;
 #      an open repair issue is refreshed by comment, never duplicated (a
 #      retried run adds evidence); a closed prior issue is invisible to
-#      --state open so a recurrence opens a new issue; a mixed log's body
+#      the open-issue lookup so a recurrence opens a new issue; a mixed log's body
 #      separates confirmed mismatches from unreadable entries; workflow
 #      wiring asserts the schedule + result==1 gates, issue-write confined
 #      to the reporting job, and the compare step re-exiting with the
@@ -186,28 +186,48 @@ GHDIR="$TMP/gh-stub"
 export GH_STUB_DIR="$GHDIR"
 mkdir -p "$GHDIR"
 cat >"$GHDIR/gh" <<'STUB'
-#!/usr/bin/env bash
-printf '%s\n' "$*" >>"$GH_STUB_DIR/calls"
-prev=""
-for a in "$@"; do
-  [ "$prev" = "--body-file" ] && cp "$a" "$GH_STUB_DIR/last-body"
-  prev="$a"
-done
-case "$1 $2" in
-  "issue list") cat "$GH_STUB_DIR/list.json" ;;
-  "issue create") echo "https://stub.example/stub/stub/issues/99" ;;
-  "issue comment") echo "https://stub.example/stub/stub/issues/99#issuecomment-1" ;;
-  *) echo "gh-stub: unexpected subcommand: $*" >&2; exit 9 ;;
-esac
+#!/usr/bin/env python3
+import json
+import os
+from pathlib import Path
+import sys
+
+args = sys.argv[1:]
+stub = Path(os.environ["GH_STUB_DIR"])
+with (stub / "calls").open("a") as calls:
+    print(*args, file=calls)
+if "--body-file" in args:
+    (stub / "last-body").write_bytes(Path(args[args.index("--body-file") + 1]).read_bytes())
+
+db = stub / "issues.json"
+rows = json.loads(db.read_text())
+if args[0] == "api" and "repos/stub/stub/issues?state=open&per_page=100" in args:
+    opened = [row for row in rows if row["state"] == "open"]
+    pages = [opened[i:i + 100] for i in range(0, len(opened), 100)] or [[]]
+    if "--paginate" not in args:
+        pages = pages[:1]
+    if "--slurp" in args:
+        print(json.dumps(pages))
+    else:
+        for page in pages:
+            print(json.dumps(page))
+elif args[:2] == ["issue", "create"]:
+    number = max((row["number"] for row in rows), default=0) + 1
+    rows.insert(0, {"state": "open", "number": number, "title": args[args.index("--title") + 1]})
+    db.write_text(json.dumps(rows))
+    print(f"https://stub.example/stub/stub/issues/{number}")
+elif args[:2] == ["issue", "comment"]:
+    print(f"https://stub.example/stub/stub/issues/{args[2]}#issuecomment-1")
+else:
+    sys.exit(f"gh-stub: unexpected command: {args}")
 STUB
 chmod +x "$GHDIR/gh"
 
-run_report() { # name expect-exit; reads RLOG (checker log) and RLIST (open issues)
+run_report() { # name expect-exit [run-url]; reads RLOG and the stub's issue database
   rm -f "$GHDIR/calls" "$GHDIR/last-body"
-  printf '%s' "$RLIST" >"$GHDIR/list.json"
   got=0
   PATH="$GHDIR:$PATH" GH_TOKEN=stub-token GITHUB_REPOSITORY=stub/stub \
-    "$REPORT" --log "$RLOG" --run-url "https://example/runs/1" \
+    "$REPORT" --log "$RLOG" --run-url "${3:-https://example/runs/1}" \
     >"$TMP/rout" 2>"$TMP/rerr" || got=$?
   if [ "$got" -eq "$2" ]; then echo "PASS: $1"; pass=$((pass + 1))
   else echo "FAIL: $1 (expected $2, got $got)" >&2; sed -n '1,5p' "$TMP/rerr" >&2; fail=$((fail + 1)); fi
@@ -242,7 +262,8 @@ echo '{' >"$TMP/report-bad/.github/klt-friction-ledger.json"
 "$CHECKER" --root "$TMP/report-bad" --states-file "$RS" >"$TMP/log-setup" 2>&1 || true
 
 # Agreement / unreadable-only / setup failure: no issue write at all.
-RLIST='[]'; RLOG="$TMP/log-agree"
+states "$GHDIR/issues.json" '[]'
+RLOG="$TMP/log-agree"
 run_report "agreement files nothing" 0
 assert_no_calls "agreement"
 RLOG="$TMP/log-unreadable"
@@ -253,10 +274,10 @@ run_report "setup FAIL line has no entry shape, files nothing" 0
 assert_no_calls "setup failure"
 
 # Confirmed drift, nothing open: create one labeled issue with evidence.
-RLIST='[]'; RLOG="$TMP/log-drift"
+RLOG="$TMP/log-drift"
 run_report "drift with no open repair issue creates one" 0
 check "one lookup then one create, no comment" \
-  '[ "$(grep -c "^issue " "$GHDIR/calls")" -eq 2 ] && grep -q "^issue create " "$GHDIR/calls" && ! grep -q "^issue comment " "$GHDIR/calls"'
+  '[ "$(wc -l < "$GHDIR/calls")" -eq 2 ] && head -1 "$GHDIR/calls" | grep -q "^api " && tail -1 "$GHDIR/calls" | grep -q "^issue create "'
 check "created issue carries loom:triage" \
   'grep -q " --label loom:triage " "$GHDIR/calls"'
 check "created issue uses the stable title" \
@@ -268,17 +289,31 @@ check "created body links the Actions run" \
 check "created body names no unreadable section" \
   '! grep -q "Unreadable entries" "$GHDIR/last-body"'
 
-# Recurrence after closure: a closed issue is absent from --state open,
-# and identity is the exact title, so unrelated open issues do not match.
-RLIST='[{"number": 5, "title": "unrelated open issue"}]'
+# With both writers in the same concurrency group, the second lookup sees
+# the issue created above. Give it a different run URL to check its evidence.
+run_report "next scheduled writer sees the first writer's issue" 0 "https://example/runs/2"
+check "second writer comments on the newly created issue with its own evidence" \
+  'grep -q "^issue comment 1 " "$GHDIR/calls" && ! grep -q "^issue create " "$GHDIR/calls" && grep -qF "https://example/runs/2" "$GHDIR/last-body"'
+
+# A closed repair issue, a similarly titled issue, and an exact-title PR
+# are all ineligible. A recurrence must create a new issue.
+states "$GHDIR/issues.json" '[
+  {"state":"closed","number":3,"title":"ci: friction-upstream ledger drift repair"},
+  {"state":"open","number":4,"title":"ci: friction-upstream ledger drift repair follow-up"},
+  {"state":"open","number":5,"title":"ci: friction-upstream ledger drift repair","pull_request":{}}
+]'
 run_report "recurrence after closure opens a new issue" 0
 check "exact-title identity ignores unrelated open issues" \
   'grep -q "^issue create " "$GHDIR/calls" && ! grep -q "^issue comment " "$GHDIR/calls"'
 
-# Open repair issue: refreshed by comment, not duplicated.
-RLIST='[{"number": 42, "title": "ci: friction-upstream ledger drift repair"},
-        {"number": 5, "title": "unrelated open issue"}]'
-run_report "open repair issue is refreshed, not duplicated" 0
+# The repair issue falls on the third API page behind 200 newer issues.
+python3 -I - >"$GHDIR/issues.json" <<'PY'
+import json
+rows = [{"state": "open", "number": n, "title": "unrelated"} for n in range(242, 42, -1)]
+rows.append({"state": "open", "number": 42, "title": "ci: friction-upstream ledger drift repair"})
+print(json.dumps(rows))
+PY
+run_report "older open repair issue is refreshed, not duplicated" 0
 check "comment targets the open repair issue" \
   'grep -q "^issue comment 42 " "$GHDIR/calls"'
 check "no create while the repair issue is open" \
@@ -306,21 +341,51 @@ check "mixed body keeps unreadable entries separate" \
 # Workflow wiring: the reporting decision and its permission scope live
 # in friction-upstream.yml; these structural assertions pin the gates the
 # shell cases cannot reach (event, needs/result, per-job permissions).
-WF="$HERE/../workflows/friction-upstream.yml"
-wf_grep() { # name fixed-string-pattern (must be present in the workflow)
-  if grep -qF -- "$2" "$WF"; then echo "PASS: $1"; pass=$((pass + 1))
-  else echo "FAIL: $1" >&2; fail=$((fail + 1)); fi
-}
+if python3 -I - "$HERE/../workflows/friction-upstream.yml" <<'PY'
+from itertools import takewhile
+from pathlib import Path
+import sys
+from textwrap import dedent
 
-wf_grep "reporting is gated on the schedule event" "github.event_name == 'schedule'"
-wf_grep "reporting fires only on confirmed drift (result == 1)" "needs.friction-upstream.outputs.result == '1'"
-wf_grep "reporting job runs after the check job despite its red" "needs: friction-upstream"
-wf_grep "compare step preserves the checker exit" 'exit "$result"'
-wf_grep "reporter script is on the workflow PR path list" ".github/scripts/report-friction-drift.sh"
+# Read only direct children of the named header in this block-style workflow.
+# Strip full-line comments so prose cannot satisfy an assertion.
+def block(lines, header):
+    start = lines.index(header) + 1
+    children = takewhile(lambda line: line.startswith(" "), lines[start:])
+    return dedent("\n".join(children)).splitlines()
 
-if [ "$(grep -c "issues: write" "$WF")" -eq 1 ] && grep -qF "always()" "$WF"; then
-  echo "PASS: issue-write permission exists only in the reporting job"; pass=$((pass + 1))
-else echo "FAIL: issue-write permission exists only in the reporting job" >&2; fail=$((fail + 1)); fi
+workflow = [line.rstrip() for line in Path(sys.argv[1]).read_text().splitlines()
+            if line.strip() and not line.lstrip().startswith("#")]
+jobs = block(workflow, "jobs:")
+report = block(jobs, "report-drift:")
+compare = block(jobs, "friction-upstream:")
+
+assert "needs: friction-upstream" in report, "report must depend on the comparison"
+condition = " ".join(block(report, "if: >-"))
+assert condition == ("always() && github.event_name == 'schedule' && "
+                     "needs.friction-upstream.outputs.result == '1'"), "unexpected report condition"
+assert sorted(block(report, "concurrency:")) == [
+    "group: friction-upstream-repair-issue", "queue: max"
+], "report writers must queue in one group across runs and retries"
+
+default = block(workflow, "permissions:")
+assert default == ["contents: read"], "workflow token must be read-only"
+for header in (line for line in jobs if not line.startswith(" ")):
+    job = block(jobs, header)
+    permissions = block(job, "permissions:") if any(s.startswith("permissions:") for s in job) else default
+    expected = ["contents: read", "issues: write"] if header == "report-drift:" else ["contents: read"]
+    assert sorted(permissions) == expected, f"unexpected permissions for {header} {permissions}"
+
+paths = block(block(block(workflow, "on:"), "pull_request:"), "paths:")
+assert "- .github/scripts/report-friction-drift.sh" in paths, "reporter must trigger PR checks"
+compare_step = block(block(compare, "steps:"), "- name: Ledger states match the upstream tracker (strict)")
+assert 'exit "$result"' == block(compare_step, "run: |")[-1], "comparison must preserve checker exit"
+report_step = block(block(report, "steps:"), "- name: Open or refresh the ledger-drift repair issue")
+assert any(line.startswith(".github/scripts/report-friction-drift.sh ")
+           for line in block(report_step, "run: |")), "serialized job must invoke the reporter"
+PY
+then echo "PASS: workflow gates, permissions and serialized reporting"; pass=$((pass + 1))
+else echo "FAIL: workflow gates, permissions or serialized reporting" >&2; fail=$((fail + 1)); fi
 
 echo "test-check-klt-friction-upstream: $pass passed, $fail failed"
 [ "$fail" -eq 0 ]

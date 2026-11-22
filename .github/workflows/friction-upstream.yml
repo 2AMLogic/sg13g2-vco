@@ -84,6 +84,10 @@ jobs:
     if: >-
       always() && github.event_name == 'schedule' &&
       needs.friction-upstream.outputs.result == '1'
+    # Queue reruns with new reports so each lookup sees the prior issue write.
+    concurrency:
+      group: friction-upstream-repair-issue
+      queue: max
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
