@@ -1256,16 +1256,13 @@ only artefact of the change in this directory.
 
 **Remaining: spiral L1 terminal order, an extractor artefact, tracked as #80.** The
 stream's own labels put `LA` on `VDD` for **both** spirals, and `LB` on
-`OUTP`/`OUTN`, exactly as the schematic says. The two spiral cells are
-mirror images (`LA` at x = +25.315 µm in one, −25.315 µm in the other), and
-L1 is placed `m90`. The runset finds the two ports by those labels
-(`ind_derivations.lvs`), but then orders them **by x position**
+`OUTP`/`OUTN`, exactly as the schematic says. L1 is placed `m90`, which
+puts its `LB` port to the left of `LA` (§14.6). The runset finds the ports
+by their labels (`ind_derivations.lvs`), then orders them **by x position**
 (`custom_extractor.lvs`, `define_and_sort_terminals` → `sort_polygons`). Its
 inductor class clears terminal equivalence (`custom_devices.lvs`,
-`DeviceCustomInd`), so a mirrored spiral always extracts with its windings
-reversed. The fix belongs to the runset (or to a reviewed accommodation in
-this flow), not to the layout. The runset is IHP's, not klt's, so it is not
-filed at klayout-tools. #80 holds the options.
+`DeviceCustomInd`), so L1 compares with its windings reversed. #80 records
+the options for correcting the order in IHP's runset or in this flow.
 
 ### Supply pairing
 
@@ -1476,11 +1473,15 @@ API:
   pattern's nodes `la_N lb_N`, in that order. In every pattern of the
   matching `inductor.gds`, LA lies to the left of LB. The testcase therefore
   never exercises a mirrored spiral, and that is why it passes.
-- On `dev` @ `f7bca326`, `sort_polygons`, the `ind2_ports` join and
-  `DeviceCustomInd` are unchanged. (`dev` changed the turn count and the
-  winding layers, which is unrelated.) **An upstream fix is therefore not
-  available to pin.** A search of the upstream tracker for an existing
-  report found none.
+- On `dev` @ `f7bca326` (**historical**, 2026-10-09, as checked when this
+  section was written; re-verified 2026-11-20, see "Upstream reports"
+  below), `sort_polygons`, the `ind2_ports` join and `DeviceCustomInd` are
+  unchanged. (`dev` changed the turn count and the winding layers, which is
+  unrelated.) **An upstream fix is therefore not available to pin.** A
+  search of the upstream tracker for an existing report found none. (Still
+  true at `dev` head `cc9afba5`, 2026-11-20 — the last `…/tech/lvs` commit
+  is `27071f58`, 2026-10-07, and the inductor decks are byte-identical to
+  it; each report's duplicate check, 2026-11-20.)
 
 In this block, both spiral sub-cells have `LA` at local x = −25.315 µm and
 `LB` at +25.315 µm. L2 is placed `r0`, so its `LA` (on `VDD`) is left and
@@ -1635,78 +1636,37 @@ Then:
 `lvs.sh` fails at the new runset hash until this is done, so the step
 cannot outlive its reason silently.
 
-#### Upstream report: DRAFT, NOT YET FILED
+#### Upstream reports: prepared drafts, NOT FILED (issue #417)
 
 Filing at `IHP-GmbH/IHP-Open-PDK` is outward-facing, so it is left to a
-human. This is the text to file. It is generic and describes the runset,
-not this block.
+human. The single draft that lived in this section since 2026-10-10 was
+split, refreshed and deduplicated in #417 into two self-contained reports,
+each still marked DRAFT, NOT FILED, each generic (they describe the
+runset, not this block):
 
-> **Title:** KLayout LVS: 2-terminal `inductor` terminals are ordered by x
-> position, not by their LA/LB labels, so a mirrored inductor always
-> compares with reversed windings
->
-> **Runset:** `libs.tech/klayout/tech/lvs` (`sg13g2.lvs`), confirmed on
-> `dev` @ `f7bca326` (2026-10-09). KLayout 0.30.12.
->
-> **What happens.** `ind_derivations.lvs` identifies the two ports of an
-> `inductor2` by their `LA`/`LB` texts on `IND:text` (27/25), then joins
-> them (`ind2_ports = ind_port_la.join(ind_port_lb)`).
-> `GeneralNTerminalExtractor#define_and_sort_terminals`
-> (`custom_extractor.lvs`) assigns `inductor_1`/`inductor_2` from
-> `sort_polygons(ports)`, which orders the port polygons by their first
-> vertex, i.e. by x. `DeviceCustomInd` calls `clear_equivalent_terminal_ids`,
-> so the order is compared. For any inductor instance placed with a mirror
-> (`m90`, or `r180`/`m0`, anything that puts `LA` right of `LB`), the
-> extracted `inductor_1` is the **LB** port. A correctly wired mirrored
-> inductor therefore fails LVS against a CDL that lists its nodes in
-> LA, LB order. That is the order the runset's own unit testcase uses
-> (`testing/testcases/unit/ind_devices/netlist/inductor.cdl`, `la_N lb_N`).
-> The unit testcase does not catch this. Every pattern in its layout has LA
-> left of LB, and its inductor nets are not anchored by name: mirroring a
-> pattern in place still gives a match there.
->
-> **Minimal reproduction** (measured with KLayout 0.30.12 on a runset
-> snapshot whose terminal-ordering code, quoted above, is identical to
-> `dev` @ `f7bca326`).
-> Take only the 1-turn, d = 25.35 µm `inductor2` pattern from the unit
-> testcase layout (`ind_devices/layout/inductor.gds`, the shapes inside its
-> IND marker at (−44.68, 0; 44.68, 89.36) µm) as top cell `indtest`. The
-> PCell's own `LA`/`LB` texts name its two port nets `LA` and `LB`. Use this
-> CDL:
->
-> ```
-> .SUBCKT indtest LA LB
-> L1 LA LB sub inductor w=2u s=2.1u d=25.35u nr_r=1
-> .ENDS
-> ```
->
-> As drawn, `run_lvs.py --topcell=indtest` reports "Congratulations!
-> Netlists match." Now mirror the same shapes about the marker's vertical
-> centre line (`M90`). The labels move with their ports, so the device is
-> still wired LA→`LA` and LB→`LB`. The run now fails: the comparer can pair
-> the device only by pairing layout net `LA` with reference `LB`, and the
-> strict top-port check logs `Port mismatch 'LA' vs. 'LB'` and
-> `Port mismatch 'LB' vs. 'LA'`. In a larger circuit, where the nets are
-> anchored by other devices, the same thing shows up as an unpaired
-> inductor with its terminals reversed. Any layout that mirrors an inductor,
-> for example for a symmetric differential tank, hits this.
->
-> **Proposed fix (either).**
-> (1) Order by label: keep `ind_port_la` and `ind_port_lb` as separate
-> extractor layers, or pass the label-to-polygon mapping to the extractor.
-> Define `inductor_1` on the LA port and `inductor_2` on the LB port, and
-> apply the same rule to `inductor3` (LA, LB, LC).
-> (2) If the model is symmetric in its two windings, declare them
-> equivalent (`equivalent_terminal_id`) so that the order does not matter.
-> Option (1) keeps the LA/LB distinction the CDL carries.
-> Add a mirrored pattern to the unit testcase in either case.
->
-> **Related observation (separate).** The `LA`/`LB` PCell texts are also
-> connected as net names (`ind_connections.lvs`:
-> `connect(ind_pin, ind_text)`). An inductor port on a top-level pin net
-> therefore names that net, e.g. `LA,VDD`. Strict top-port mode
-> (`flag_missing_ports`) then logs `Port mismatch 'LA,VDD' vs. 'VDD'` even
-> when the cross-reference pairs the nets.
+- [`upstream-reports/inductor-terminal-order.md`](upstream-reports/inductor-terminal-order.md)
+  — **report A** describes how a two-terminal `inductor` compares reversed
+  when its placement makes `LB` sort before `LA` by position. L1's measured
+  `m90` placement triggers this artefact.
+- [`upstream-reports/inductor-port-names.md`](upstream-reports/inductor-port-names.md)
+  — **report B:** the `LA`/`LB` PCell texts are connected as net names
+  (`ind_connections.lvs`: `connect(ind_pin, ind_text)`), so an inductor
+  port on a top-level pin net is named `LA,VDD` and strict top-port mode
+  logs the three port-name findings recorded above (#162).
+
+The `dev` @ `f7bca326` reference used while writing this section is
+**historical**. Both behaviours were re-verified on 2026-11-20, with file,
+line and commit permalinks in each report, at `dev` head `cc9afba5`
+(2026-11-10), at the last `…/tech/lvs` commit `27071f58` (2026-10-07; the
+inductor decks and `sg13g2.lvs` are byte-identical there) and at release
+tag `v0.3.0` (`5cccb161`, the klt-allowlist pin): **present at every
+revision.** Each report carries its own dated duplicate check against the
+upstream tracker's issues and pull requests (read-only; none found), its
+proposed fix with the regression test and negative controls (controls (a),
+(b1)–(b3), N1–N3, plus a misnamed-top-pin must-fail for B), and the ranked
+filing choices asked of the operator — to be answered **separately per
+report**. The klt-side investigation can proceed on the pinned runset
+independently of an IHP filing. [2AMLogic/klayout-tools#6903](https://github.com/2AMLogic/klayout-tools/issues/6903)
 
 ## 15. VCTRL chip-level pin on TopMetal2 (2026-11-10, issue #314)
 
