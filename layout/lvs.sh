@@ -40,7 +40,8 @@
 # Drop the step once the pinned runset orders inductor terminals by label
 # (PROVENANCE.md section 14.6, "Removal").
 #
-# `klt lvs` (the repo's pinned 0.8.0 -- see layout/PROVENANCE.md
+# `klt lvs` (tagged 0.8.0, the version the committed records reproduce
+# under; see layout/PROVENANCE.md
 # section 14.5 for the 0.6.0 and 0.7.0 records) cannot run this compare at all; both refusals are recorded
 # (2AMLogic/klayout-tools#2849).
 #
@@ -63,7 +64,9 @@
 # environment layout/scripts/native_drc_env.sh provisions for the native DRC
 # (KLayout 0.30.12, extracted into gitignored scratch) is reused, together
 # with the `klayout` Python module of its venv.  The klt leg uses the tagged
-# klayout-tools==0.8.0 wheel CI pins, in a throwaway venv
+# klayout-tools==0.8.0 wheel the committed records reproduce under (the
+# claims pin, .github/klt-version, moved to 0.9.2 in #416; these records
+# regenerate under it via #266), in a throwaway venv
 # (KLT_RELEASE_ENV, default layout/build/klt-0.8.0) -- never the host's.
 
 set -euo pipefail

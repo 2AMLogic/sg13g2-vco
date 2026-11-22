@@ -97,18 +97,26 @@ The citations, and the ones deliberately left out:
   4 `NW.e` findings, neither covered by this citation); it is a block-level
   result on `layout/vco.gds`; the report was produced by a post-tag source
   build (`provenance.klt_version` `0.6.0+g70dee3b679a6`, deck
-  `released: false`) while the pin was `0.6.0` then (now `0.8.0`). The 16-chapter / 37-layer lists
+  `released: false`) while the pin was `0.6.0` then (now `0.9.2`). The 16-chapter / 37-layer lists
   in `layout/PROVENANCE.md` §12 belong to the curated-deck report
   `layout/drc/vco-drc.json`, not to this envelope (correction note there).
 - **Item 4 (LVS): not cited.** The device-aware LVS (`layout/lvs.sh`, IHP's
   own runset plus the reviewed label-order step from #80) now reaches
   **`match`** on the cross-reference. IHP's runset as shipped still reports
   `mismatch`, and its strict top-port check still logs three port-name
-  findings (#162; `layout/PROVENANCE.md` §14.6). `klt lvs` at the `0.6.0` pin cannot
-  produce a report for this block at all, and neither can the newest
-  release, `0.7.0` (re-checked 2026-10-09, `layout/PROVENANCE.md` §14.5;
-  klayout-tools#2849). So there is
-  neither a passing nor a `klt`-format envelope to cite.
+  findings (#162; `layout/PROVENANCE.md` §14.6). No `klt`-format LVS report
+  exists to cite: the curated-deck route never could run this compare
+  (klayout-tools#2849; `layout/PROVENANCE.md` §14.5), and the sanctioned
+  route — `klt lvs --engine klayout-runset` (klayout-tools#2870) — needs a
+  PDK host (#266). **The grading side is unblocked by the 0.9.2 pin** (issue
+  #416): `signoff_runset.PINNED_RUNSETS` at klt 0.9.2 allowlists the
+  `ihp-sg13g2` LVS runset at
+  `sha256:e01bcb1ec5858e8069bade8f7fd7ec28c1026fc2fd0590e8f611d3398a5bbbd7`
+  — IHP-Open-PDK `v0.3.0`, commit `5cccb161f7492697cfa52eb14dc03beb00bdca9e`,
+  over `ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs` (reviewed in
+  klayout-tools#4309; also listed by `klt signoff --describe-grader` under
+  `pinned_runsets`). A runset report produced against that revision can now
+  grade; producing it is #417/#266's work, not this manifest's.
 
 Earlier records rendered all 11 items `unmet` because no evidence envelope
 existed yet. That absence, not the spec's ratification state, was why.
@@ -153,8 +161,8 @@ not actually support an item just to make a row go green.
     (klayout-tools#2057, plus the per-item build-grading guard of #2201)
     were on klayout-tools `main` but in no release, so a citation would
     have fallen through to rules the running build did not have and could
-    have rendered `met` from nothing. **That gate is closed**: the pin is
-    now `0.6.0`, which contains #2057 and #2201, and the refreshed report
+    have rendered `met` from nothing. **That gate is closed**: every pin
+    since `0.6.0` contains #2057 and #2201, and the refreshed report
     proves it mechanically — `build_t1_item_count: 11` equals
     `t1_item_count: 11` and item 11 carries `graded_by_build: true`, so
     the running build has rules for every row the vendored checklist
@@ -165,9 +173,11 @@ not actually support an item just to make a row go green.
     cross-reference pairs `VDD`, `0` and the substrate 1:1
     (`layout/PROVENANCE.md` §14, "Supply pairing"). But that is an existing
     artifact, not passing item-11 evidence: no `klt erc` supply-spec run
-    exists, and no `klt lvs` report (hence no `power_connectivity` block) can
-    exist at klt 0.6.0 or 0.7.0 (klayout-tools#2849; `layout/PROVENANCE.md`
-    §14.5). Strict top-port LVS findings remain open (#162). So item 11 has
+    exists, and no `klt lvs` report (hence no `power_connectivity` block)
+    exists — the curated-deck route cannot run this compare at any pin
+    (klayout-tools#2849; `layout/PROVENANCE.md` §14.5), and the runset
+    route, whose grading the 0.9.2 allowlist unblocks (item 4 above),
+    still needs a PDK host (#266). Strict top-port LVS findings remain open (#162). So item 11 has
     nothing to point at — the same "has a row, even
     if unmet" state issue #34 requires. Cite it when a real `klt erc`
     envelope exists, not before. Item 11's blocking work is tracked in
@@ -195,7 +205,7 @@ evidence (issue #244):
   (tank Q) and **#363** (supply pushing); this campaign consumes whatever
   those benches define and declares the gap naming them rather than
   measuring a competing bench (issue #244 AC 4d).
-- **Declared in `manifest.json` under `spec_rows."6"`** (klt 0.8.0 grades the
+- **Declared in `manifest.json` under `spec_rows."6"`** (klt 0.9.2 grades the
   field, read from `klayout_tools/signoff.py` `_read_spec_rows`; the
   klayout-tools#2908 field the pin `0.6.0` did not read). The value is a list
   of objects, not bare numbers: `{"id": "<row>", "gap": "<reason>"?,
@@ -290,16 +300,16 @@ by the pin bump.
 | Field | Value |
 |---|---|
 | Source | `2AMLogic/klayout-tools` `docs/design-evidence-tiers.md` |
-| Pinned at | the checklist bundled in the `klayout-tools==0.8.0` wheel (`klayout_tools/data/design-evidence-tiers.md`), i.e. the doc as of upstream tag `v0.8.0` (upstream commit not traced) |
-| File SHA-256 | `a26b90262320d0fbd32b3f549a02b6300832706041797a559d8bf6bdb62efdc7` |
-| Last doc-touching upstream commit | not recorded at the 0.8.0 refresh (previously `0882541638acaec9ceb43c4df77b47d5a1a179db`, v0.6.0) |
+| Pinned at | the checklist bundled in the `klayout-tools==0.9.2` wheel (`klayout_tools/data/design-evidence-tiers.md`), i.e. the doc as of upstream tag `v0.9.2` |
+| File SHA-256 | `d9287ec9dc6107e560e00b1a8b7a670f757722713b5c651dee3d2cbde058490a` |
+| Last doc-touching upstream commit | `d2289c68410566e7baa3c7c4dd68a2aa5b2648bd` (2026-11-12, "feat(signoff): grade item 11 on the ERC substrate-path result"; the 0.8.0 refresh did not trace one) |
 | License | Apache-2.0 (klayout-tools is Apache-2.0; this copy is verbatim, unmodified) |
 
 This copy is byte-identical to the checklist bundled inside the pinned
-`klayout-tools` wheel pinned as `0.8.0` (`klayout_tools/data/design-evidence-tiers.md`,
+`klayout-tools` wheel pinned as `0.9.2` (`klayout_tools/data/design-evidence-tiers.md`,
 same SHA-256), so the vendored doc and the pinned build agree by
 construction — verified by extracting the file from the `uvx --from
-"klayout-tools==0.8.0"` environment, not inferred from the tag.
+"klayout-tools==0.9.2"` environment, not inferred from the tag.
 
 **Upgrade procedure**: copy the newer doc from klayout-tools verbatim,
 update the provenance table, then refresh and commit `t1-report.json`
@@ -373,16 +383,16 @@ fields klayout-tools#2175/#2176/#2201 added, and they say this:
 
 | Field | Value on the current record | What it settles |
 |---|---|---|
-| `build.version` / `build.package_version` | `0.8.0` / `0.8.0` | which `klt` graded this verdict — no longer inferred from the CI install step |
-| `build.git_tag` / `build.is_release` | `v0.8.0` / `true` | the grading build is the tagged PyPI release, not a working copy |
+| `build.version` / `build.package_version` | `0.9.2` / `0.9.2` | which `klt` graded this verdict — no longer inferred from the CI install step |
+| `build.git_tag` / `build.is_release` | `v0.9.2` / `true` | the grading build is the tagged PyPI release, not a working copy |
 | `build.dirty` | `false` | no uncommitted tool changes in the grading build |
 | `build.grading_ruleset_id` | see the record's `build` object (`signoff/t1-report.json`) | the grading rules themselves are hashed, so a rules change is drift even at an unchanged version string |
-| `source_doc_content_hash` | `sha256:a26b9026…efdc7` | the exact checklist bytes graded — matches the vendored doc's SHA-256 above |
+| `source_doc_content_hash` | `sha256:d9287ec9…490a` | the exact checklist bytes graded — matches the vendored doc's SHA-256 above |
 | `build_t1_item_count` vs `t1_item_count` | `11` vs `11` | the build has rules for every row the checklist renders; nothing is graded by a build that lacks rules for it |
 | `items[].graded_by_build` | `true` on all 11 T1 rows | per-row confirmation of the same, including item 11 |
 
 The version cells above are a snapshot of the record at the current pin
-(`0.8.0`, `.github/klt-version`) as of this writing, not a restatement
+(`0.9.2`, `.github/klt-version`) as of this writing, not a restatement
 of the pin: on the next pin bump the record — not this table — is what
 changes and is authoritative, and the two version cells should then be
 re-read off the new record. The `grading_ruleset_id` is quoted nowhere
