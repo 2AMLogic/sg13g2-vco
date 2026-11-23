@@ -31,19 +31,20 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#420**: layout: expose OUTP/OUTN as top-metal pins at the bbox edge (parent tank routes are 100+ um at the floor)
+_None._
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
 - **#422**: ci: friction-upstream has been red on main's daily schedule since 2026-11-17 and nothing repairs the drift
+- **#447**: sim/tank-stub-load/run_stub_ab.sh has no simulator-free fixture test (its sibling runner does)
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#428**: layout: expose OUTP/OUTN as TopMetal1 pins at the bbox edge
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -62,9 +63,9 @@ Issues carrying `loom:curated`.
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)* *(held)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)* *(held)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)* *(held)*
-- **#420**: layout: expose OUTP/OUTN as top-metal pins at the bbox edge (parent tank routes are 100+ um at the floor) *(curated)*
 - **#422**: ci: friction-upstream has been red on main's daily schedule since 2026-11-17 and nothing repairs the drift *(curated)*
 - **#445**: layout: the artifact-outline gate's expected value is an unchecked transcription, and a failed acceptance check never prints its bounds *(curated)*
+- **#447**: sim/tank-stub-load/run_stub_ab.sh has no simulator-free fixture test (its sibling runner does) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -81,9 +82,9 @@ _None._
 | Operator merge-risk holds | 1 |
 | Very important | 0 |
 | Important | 4 |
-| Ready (`loom:issue`) | 1 |
-| In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
+| Ready (`loom:issue`) | 0 |
+| In Progress (`loom:building`) | 2 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
 | Curated | 10 |
 | Architect / Hermit proposals | 1 |
