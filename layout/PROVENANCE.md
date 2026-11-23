@@ -1989,7 +1989,13 @@ manifest records.
 
 **Evidence refreshed to the new stream.**
 - DRC (`drc/vco-drc-ihp.json`, `-assertion.json`): `status: clean`,
-  0 findings, assertion 590/590, all four controls discriminating.
+  0 findings, assertion 590/590.  Three negative controls: the coverage
+  assertion is rejected twice — `--expect-rule-categories 591` (reviewed
+  count + 1; 590 declared) and `--deck-var no_angle=true` with the
+  reviewed count kept (the 3.2 angle group gated off; 380 declared),
+  both exit 1 — and the same invocation without
+  `--expect-rule-categories` exits 4, keeping the conservative
+  `coverage_unknown` verdict (0 violations).
   Ring-check continuous on `1/0`, `14/0`, `8/0`, controls discriminating;
   the `8/0` negative control's violation count moves 56 → 57 because the
   deleted-bar control now also counts the landing's Metal1 pad as a
