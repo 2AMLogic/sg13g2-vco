@@ -68,7 +68,8 @@ is derived from the ladder's measured pads so the TopMetal2 pad never passes
 the ring edge while the Metal1 pad still bites the bar by 0.23 µm). No other
 shape of the block changed, the artifact bbox is unchanged, and the landings
 add no Metal1-5 outside their stacks. The nearest other TopMetal2 is the
-`VDD` trunk (y −11.5…−3.5, ~90 µm above the landings) and the RREF spur
+`VDD` trunk (y −11.5…−3.5; its lower edge is 43.0 µm above the `VCTRL`
+strap's top and 90.07 µm above the ground landing's) and the RREF spur
 (x 93…97); the two straps are 128 µm apart (`topmetal2.space` is 2.0).
 
 The OUTP/OUTN pins (land on each strap's bottom end, y −106…−104) need **no

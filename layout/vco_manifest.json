@@ -115,6 +115,22 @@
       "expected": 0,
       "measured": 0,
       "pass": true
+    },
+    {
+      "check": "artifact bbox matches the PROVENANCE sections 15/17 outline (all four edges, um)",
+      "expected": {
+        "x0": -305.13,
+        "x1": 305.13,
+        "y0": -106.03,
+        "y1": 290.26
+      },
+      "measured": {
+        "x0": -305.13,
+        "x1": 305.13,
+        "y0": -106.03,
+        "y1": 290.26
+      },
+      "pass": true
     }
   ],
   "artifact": {
@@ -2142,7 +2158,7 @@
       "install": "/home/ubuntu/share/pdk/ihp-sg13g2",
       "note": "the overlay repairs IHP-Open-PDK's two empty git submodules without mutating the shared install; see layout/scripts/pdk_env.sh and 2AMLogic/klayout-tools#1630",
       "overlay": {
-        "overlay": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-420/layout/build/pdk-klayout-overlay",
+        "overlay": "/home/ubuntu/GitHub/sg13g2-vco/.loom/worktrees/issue-439/layout/build/pdk-klayout-overlay",
         "pycell4klayout-api": {
           "repo": "https://github.com/IHP-GmbH/pycell4klayout-api.git",
           "rev": "2ffdf79fe51a7c35b361cc854369b5d434c8d478"
@@ -2155,8 +2171,8 @@
     },
     "source_of_truth": {
       "netlist": "design/vco.spice",
-      "repo_commit": "e71a0a62fc74b7ae678b21152ccde096065aca68",
-      "repo_describe": "e71a0a6-dirty",
+      "repo_commit": "975c100b1db964d6a5ea11ff261d6c31038bdc45",
+      "repo_describe": "975c100-dirty",
       "schematic": "design/vco.sch"
     },
     "tools": {
