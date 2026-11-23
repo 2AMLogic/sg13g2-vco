@@ -1,7 +1,7 @@
 # `tank-stub-load/` -- what #420's OUTP/OUTN edge-pin straps load onto the tank
 
 `layout/vco.gds` exposes the tank outputs as TopMetal1 chip-level pins at the
-bbox bottom edge (issue #420, `layout/PROVENANCE.md` §17): a 2.0 um
+bbox bottom edge (issue #420, `layout/PROVENANCE.md` §18): a 2.0 um
 TopMetal1 strap per tank node, from the existing tank strap down to the guard
 ring's outer edge. Each strap hangs on the tank node itself, so it is a
 capacitive load the block (and any parent) pays for. This directory is the

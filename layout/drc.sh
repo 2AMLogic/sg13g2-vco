@@ -47,7 +47,9 @@
 # outside the deck that ran (section 13).
 #
 # TOOLS.  The curated deck, ring-check and Cnt.c control use `klt` on PATH
-# (the repo's release pin, 0.8.0) and `klayout` on PATH for the helper
+# (tagged 0.8.0, the version the committed reports reproduce under; the
+# claims pin, .github/klt-version, moved to 0.9.2 in #416, and these records
+# regenerate under it via #266) and `klayout` on PATH for the helper
 # scripts.  The IHP-native run needs klayout-tools at the PR #2803 merge
 # revision and KLayout 0.30.12; layout/scripts/native_drc_env.sh provisions
 # both, pinned, into the gitignored scratch area (NATIVE_DRC_ENV, default
@@ -87,7 +89,9 @@ mkdir -p "${KLSCRATCH}"
 
 echo "== tools: $(klt --version 2>&1 | head -1) / $(klayout -v 2>&1 | head -1)"
 # The curated deck's hash and `released: true` (section 12) are the TAGGED
-# 0.8.0 wheel's -- the one .github/workflows/signoff.yml pins.  A post-tag
+# 0.8.0 wheel's -- the one .github/workflows/signoff.yml pinned when these
+# reports were recorded (the claims pin moved to 0.9.2 in #416; see the TOOLS
+# note above).  A post-tag
 # git build reports "0.8.1.devN+g<sha>" but ships a different curated deck,
 # so it would silently rewrite the diagnostic reports with another deck.
 [[ "$(klt --version 2>&1 | head -1)" == "klt 0.8.0" ]] || {
@@ -408,12 +412,12 @@ else:
          and prov.get("klayout_version_mismatch") is False,
          "engine KLayout %r (mismatch=%r)"
          % (prov["klayout_version"], prov.get("klayout_version_mismatch"))),
-        # klt_version: the historical record carries "0.8.0.dev2612+g<sha>"
-        # because the run predated the v0.8.0 tag. The same commit is now
-        # tagged, so a freshly provisioned env (native_drc_env.sh, pinned to
-        # this exact revision and gated on its direct_url commit above)
-        # reports the bare tag "0.8.0". Both strings identify revision
-        # klt_rev; the revision itself was enforced before the run ran.
+        # The revision identity is the direct_url.json commit asserted above
+        # drc.sh's contract; this leg only keeps the version string honest.
+        # Both forms occur for the same pinned commit: a clone made before
+        # the v0.8.0 tag existed reports the dev-node form
+        # (0.8.0.devNNNN+g<rev>), a clone at the now-tagged commit reports
+        # the bare tag (0.8.0).
         (prov["klt_version"] == "0.8.0"
          or prov["klt_version"].endswith("+g" + klt_rev[:12]),
          "klt_version %r is not revision %s" % (prov["klt_version"], klt_rev)),
@@ -544,20 +548,30 @@ ring = json.load(open(os.path.join(out, "vco-ring-check.json")))
 cnt = json.load(open(os.path.join(out, "vco-cnt-c-control.json")))
 fail = []
 
-# 1. The only rule the deck still reports is the one PROVENANCE.md section
-#    12's 2026-11-10 (#315) entry demonstrates is a curated-deck artefact
-#    (the foundry's NW.c SVaricap carve-out, upstream klayout-tools#5212).
-#    A violation of ANY other rule is a real layout defect and must fail.
-other = {k: v for k, v in drc["rule_counts"].items()
-         if k != "nwell.enclosing.pactiv.1"}
+# 1. The only rule the deck still reports is the one PROVENANCE.md
+#    section 12 demonstrates is a curated-deck artefact (the missing
+#    carve-out behind nwell.enclosing.pactiv.1 diagnosed at commit
+#    70cf6b4, issue #315).  A violation of ANY other rule is a real
+#    layout defect and must fail this script.  The 0.6.0 deck's 8 x
+#    activ.enclosing.cont.1 (the activ_mask approximation of IHP's
+#    Cnt.c) is history kept in this comment only: under the pinned
+#    deck that rule reports zero, so it gets no allowance here.
+EXPECTED_ARTEFACTS = {"nwell.enclosing.pactiv.1": 64}
+other = {k: v for k, v in drc["rule_counts"].items() if k not in EXPECTED_ARTEFACTS}
 if other:
-    fail.append("klt drc reports rules beyond the known deck artefact: %s" % other)
+    fail.append("klt drc reports rules beyond the known deck artefacts: %s" % other)
 
-# 2. ... and the artefact's count is exactly the two banks' 64 SVaricap
-#    cells' worth (32 per bank; section 12's #315 entry).
-if drc["rule_counts"].get("nwell.enclosing.pactiv.1", 0) != 64:
-    fail.append("nwell.enclosing.pactiv.1 count moved from 64 to %s"
-                % drc["rule_counts"].get("nwell.enclosing.pactiv.1", 0))
+# 2. ... and every allowlisted artefact is bounded at its exact recorded
+#    count, so the allowlist cannot silently absorb a real violation of
+#    the same rule: under the pinned 0.8.0 deck the surviving artefact
+#    is exactly the 32 SVaricap + 32 SVaricap$1 cells' worth of
+#    nwell.enclosing.pactiv.1 (PROVENANCE.md section 15; the 0.6.0
+#    deck's 8 x activ.enclosing.cont.1 wording of the same artefact
+#    is gone).
+for rule, expected in EXPECTED_ARTEFACTS.items():
+    if drc["rule_counts"].get(rule, 0) != expected:
+        fail.append("%s count moved from %d to %s"
+                    % (rule, expected, drc["rule_counts"].get(rule, 0)))
 
 # 3. The guard ring is a closed annulus on every layer where the check is
 #    shown to be able to fail.
@@ -569,20 +583,19 @@ for e in ring["layers"]:
         fail.append("guard ring is %s on layer %s"
                     % (e["committed_layout"]["status"], e["layer"]))
 
-# 4. The Cnt.c control still changes nothing on this stream under klt 0.8.0:
-#    the activ_mask overlay neither clears nor adds findings.  Its committed
-#    conclusion is INCONCLUSIVE / CHANGED -- the remaining violations are
-#    explained by the #315 entry's missing SVaricap carve-out, not by the
-#    dropped activ_mask term -- so what this gate asserts is that the
-#    control run stays a no-op relative to the base run, not that it is
-#    clean.  If it ever reports anything beyond the base artefact, the
-#    control has become informative again and the record must be re-read.
+# 4. The Cnt.c control: joining the deck's dropped activ_mask term must not
+#    change the surviving artefact -- the 64 nwell.enclosing.pactiv.1 hits
+#    are NOT a Cnt.c artefact (that was the 0.6.0 deck's 8 x
+#    activ.enclosing.cont.1), and the standing diagnosis is section 12's
+#    missing carve-out (#315).  If the control ever clears them, or reports
+#    anything beyond the artefact, the diagnosis has moved and must be
+#    re-derived before the verdict is cited.
 ctl = cnt["control_stream_with_activ_mask_joined"]
-if ctl["rule_counts"] != drc["rule_counts"]:
-    fail.append("the Cnt.c control stream reports %s against the base %s -- "
-                "the activ_mask overlay is no longer a no-op and the record "
-                "must be re-diagnosed"
-                % (ctl["rule_counts"], drc["rule_counts"]))
+if ctl["rule_counts"] != {"nwell.enclosing.pactiv.1": 64}:
+    fail.append("the Cnt.c control stream reports %d violation(s) %s -- the "
+                "surviving artefact is no longer explained by section 12's "
+                "diagnosis and must be re-diagnosed"
+                % (ctl["violation_count"], ctl["rule_counts"]))
 
 # 5. The IHP-native report of record is CLEAN under the reviewed coverage
 #    assertion: zero findings (any finding is a real process-rule violation
@@ -615,12 +628,13 @@ if fail:
 
 print("\n== verdict (unchanged from layout/PROVENANCE.md sections 12-13)")
 print("  klt drc        : status=%s  %s" % (drc["status"], drc["rule_counts"]))
-print("                   all %d are nwell.enclosing.pactiv.1 inside the PDK's"
+print("                   all %d are nwell.enclosing.pactiv.1 rolled up on"
       % drc["violation_count"])
-print("                   own SVaricap PCell -- the curated rule lacks the")
-print("                   foundry NW.c SVaricap carve-out (section 12's #315")
-print("                   entry, upstream klayout-tools#5212), NOT a layout")
-print("                   defect.  NOT a clean report; see section 12.")
+print("                   the 32 SVaricap + 32 SVaricap$1 cells -- a")
+print("                   curated-deck rule missing its carve-out (section")
+print("                   12, issue #315; vco-cnt-c-control.json shows the")
+print("                   Cnt.c activ_mask term does not clear them), NOT a")
+print("                   layout defect.  NOT a clean report; see section 12.")
 for e in ring["layers"]:
     print("  ring %-6s    : %s" % ("%d/%d" % tuple(e["layer"]),
                                    e["evidence"].split(":")[0]))

@@ -40,6 +40,7 @@ at the pinned release. Read §14 before citing any LVS claim.
 - [14. LVS record (2026-10-08, issue #62)](#14-lvs-record-2026-10-08-issue-62)
 - [15. VCTRL chip-level pin on TopMetal2 (2026-11-10, issue #314)](#15-vctrl-chip-level-pin-on-topmetal2-2026-11-10-issue-314)
 - [16. ERC supply-spec record (2026-11-14, issue #330)](#16-erc-supply-spec-record-2026-11-14-issue-330)
+- [17. Ground chip-level pin on TopMetal2 (2026-11-21, issue #427)](#17-ground-chip-level-pin-on-topmetal2-2026-11-21-issue-427)
 <!-- /toc -->
 
 ## 1. Tooling and inputs
@@ -1256,16 +1257,13 @@ only artefact of the change in this directory.
 
 **Remaining: spiral L1 terminal order, an extractor artefact, tracked as #80.** The
 stream's own labels put `LA` on `VDD` for **both** spirals, and `LB` on
-`OUTP`/`OUTN`, exactly as the schematic says. The two spiral cells are
-mirror images (`LA` at x = +25.315 µm in one, −25.315 µm in the other), and
-L1 is placed `m90`. The runset finds the two ports by those labels
-(`ind_derivations.lvs`), but then orders them **by x position**
+`OUTP`/`OUTN`, exactly as the schematic says. L1 is placed `m90`, which
+puts its `LB` port to the left of `LA` (§14.6). The runset finds the ports
+by their labels (`ind_derivations.lvs`), then orders them **by x position**
 (`custom_extractor.lvs`, `define_and_sort_terminals` → `sort_polygons`). Its
 inductor class clears terminal equivalence (`custom_devices.lvs`,
-`DeviceCustomInd`), so a mirrored spiral always extracts with its windings
-reversed. The fix belongs to the runset (or to a reviewed accommodation in
-this flow), not to the layout. The runset is IHP's, not klt's, so it is not
-filed at klayout-tools. #80 holds the options.
+`DeviceCustomInd`), so L1 compares with its windings reversed. #80 records
+the options for correcting the order in IHP's runset or in this flow.
 
 ### Supply pairing
 
@@ -1476,11 +1474,15 @@ API:
   pattern's nodes `la_N lb_N`, in that order. In every pattern of the
   matching `inductor.gds`, LA lies to the left of LB. The testcase therefore
   never exercises a mirrored spiral, and that is why it passes.
-- On `dev` @ `f7bca326`, `sort_polygons`, the `ind2_ports` join and
-  `DeviceCustomInd` are unchanged. (`dev` changed the turn count and the
-  winding layers, which is unrelated.) **An upstream fix is therefore not
-  available to pin.** A search of the upstream tracker for an existing
-  report found none.
+- On `dev` @ `f7bca326` (**historical**, 2026-10-09, as checked when this
+  section was written; re-verified 2026-11-20, see "Upstream reports"
+  below), `sort_polygons`, the `ind2_ports` join and `DeviceCustomInd` are
+  unchanged. (`dev` changed the turn count and the winding layers, which is
+  unrelated.) **An upstream fix is therefore not available to pin.** A
+  search of the upstream tracker for an existing report found none. (Still
+  true at `dev` head `cc9afba5`, 2026-11-20 — the last `…/tech/lvs` commit
+  is `27071f58`, 2026-10-07, and the inductor decks are byte-identical to
+  it; each report's duplicate check, 2026-11-20.)
 
 In this block, both spiral sub-cells have `LA` at local x = −25.315 µm and
 `LB` at +25.315 µm. L2 is placed `r0`, so its `LA` (on `VDD`) is left and
@@ -1635,78 +1637,37 @@ Then:
 `lvs.sh` fails at the new runset hash until this is done, so the step
 cannot outlive its reason silently.
 
-#### Upstream report: DRAFT, NOT YET FILED
+#### Upstream reports: prepared drafts, NOT FILED (issue #417)
 
 Filing at `IHP-GmbH/IHP-Open-PDK` is outward-facing, so it is left to a
-human. This is the text to file. It is generic and describes the runset,
-not this block.
+human. The single draft that lived in this section since 2026-10-10 was
+split, refreshed and deduplicated in #417 into two self-contained reports,
+each still marked DRAFT, NOT FILED, each generic (they describe the
+runset, not this block):
 
-> **Title:** KLayout LVS: 2-terminal `inductor` terminals are ordered by x
-> position, not by their LA/LB labels, so a mirrored inductor always
-> compares with reversed windings
->
-> **Runset:** `libs.tech/klayout/tech/lvs` (`sg13g2.lvs`), confirmed on
-> `dev` @ `f7bca326` (2026-10-09). KLayout 0.30.12.
->
-> **What happens.** `ind_derivations.lvs` identifies the two ports of an
-> `inductor2` by their `LA`/`LB` texts on `IND:text` (27/25), then joins
-> them (`ind2_ports = ind_port_la.join(ind_port_lb)`).
-> `GeneralNTerminalExtractor#define_and_sort_terminals`
-> (`custom_extractor.lvs`) assigns `inductor_1`/`inductor_2` from
-> `sort_polygons(ports)`, which orders the port polygons by their first
-> vertex, i.e. by x. `DeviceCustomInd` calls `clear_equivalent_terminal_ids`,
-> so the order is compared. For any inductor instance placed with a mirror
-> (`m90`, or `r180`/`m0`, anything that puts `LA` right of `LB`), the
-> extracted `inductor_1` is the **LB** port. A correctly wired mirrored
-> inductor therefore fails LVS against a CDL that lists its nodes in
-> LA, LB order. That is the order the runset's own unit testcase uses
-> (`testing/testcases/unit/ind_devices/netlist/inductor.cdl`, `la_N lb_N`).
-> The unit testcase does not catch this. Every pattern in its layout has LA
-> left of LB, and its inductor nets are not anchored by name: mirroring a
-> pattern in place still gives a match there.
->
-> **Minimal reproduction** (measured with KLayout 0.30.12 on a runset
-> snapshot whose terminal-ordering code, quoted above, is identical to
-> `dev` @ `f7bca326`).
-> Take only the 1-turn, d = 25.35 µm `inductor2` pattern from the unit
-> testcase layout (`ind_devices/layout/inductor.gds`, the shapes inside its
-> IND marker at (−44.68, 0; 44.68, 89.36) µm) as top cell `indtest`. The
-> PCell's own `LA`/`LB` texts name its two port nets `LA` and `LB`. Use this
-> CDL:
->
-> ```
-> .SUBCKT indtest LA LB
-> L1 LA LB sub inductor w=2u s=2.1u d=25.35u nr_r=1
-> .ENDS
-> ```
->
-> As drawn, `run_lvs.py --topcell=indtest` reports "Congratulations!
-> Netlists match." Now mirror the same shapes about the marker's vertical
-> centre line (`M90`). The labels move with their ports, so the device is
-> still wired LA→`LA` and LB→`LB`. The run now fails: the comparer can pair
-> the device only by pairing layout net `LA` with reference `LB`, and the
-> strict top-port check logs `Port mismatch 'LA' vs. 'LB'` and
-> `Port mismatch 'LB' vs. 'LA'`. In a larger circuit, where the nets are
-> anchored by other devices, the same thing shows up as an unpaired
-> inductor with its terminals reversed. Any layout that mirrors an inductor,
-> for example for a symmetric differential tank, hits this.
->
-> **Proposed fix (either).**
-> (1) Order by label: keep `ind_port_la` and `ind_port_lb` as separate
-> extractor layers, or pass the label-to-polygon mapping to the extractor.
-> Define `inductor_1` on the LA port and `inductor_2` on the LB port, and
-> apply the same rule to `inductor3` (LA, LB, LC).
-> (2) If the model is symmetric in its two windings, declare them
-> equivalent (`equivalent_terminal_id`) so that the order does not matter.
-> Option (1) keeps the LA/LB distinction the CDL carries.
-> Add a mirrored pattern to the unit testcase in either case.
->
-> **Related observation (separate).** The `LA`/`LB` PCell texts are also
-> connected as net names (`ind_connections.lvs`:
-> `connect(ind_pin, ind_text)`). An inductor port on a top-level pin net
-> therefore names that net, e.g. `LA,VDD`. Strict top-port mode
-> (`flag_missing_ports`) then logs `Port mismatch 'LA,VDD' vs. 'VDD'` even
-> when the cross-reference pairs the nets.
+- [`upstream-reports/inductor-terminal-order.md`](upstream-reports/inductor-terminal-order.md)
+  — **report A** describes how a two-terminal `inductor` compares reversed
+  when its placement makes `LB` sort before `LA` by position. L1's measured
+  `m90` placement triggers this artefact.
+- [`upstream-reports/inductor-port-names.md`](upstream-reports/inductor-port-names.md)
+  — **report B:** the `LA`/`LB` PCell texts are connected as net names
+  (`ind_connections.lvs`: `connect(ind_pin, ind_text)`), so an inductor
+  port on a top-level pin net is named `LA,VDD` and strict top-port mode
+  logs the three port-name findings recorded above (#162).
+
+The `dev` @ `f7bca326` reference used while writing this section is
+**historical**. Both behaviours were re-verified on 2026-11-20, with file,
+line and commit permalinks in each report, at `dev` head `cc9afba5`
+(2026-11-10), at the last `…/tech/lvs` commit `27071f58` (2026-10-07; the
+inductor decks and `sg13g2.lvs` are byte-identical there) and at release
+tag `v0.3.0` (`5cccb161`, the klt-allowlist pin): **present at every
+revision.** Each report carries its own dated duplicate check against the
+upstream tracker's issues and pull requests (read-only; none found), its
+proposed fix with the regression test and negative controls (controls (a),
+(b1)–(b3), N1–N3, plus a misnamed-top-pin must-fail for B), and the ranked
+filing choices asked of the operator — to be answered **separately per
+report**. The klt-side investigation can proceed on the pinned runset
+independently of an IHP filing. [2AMLogic/klayout-tools#6903](https://github.com/2AMLogic/klayout-tools/issues/6903)
 
 ## 15. VCTRL chip-level pin on TopMetal2 (2026-11-10, issue #314)
 
@@ -1979,7 +1940,124 @@ with the supplies paired. Until then item 11 stays `unmet` here, as AC5
 requires.
 
 
-## 17. OUTP/OUTN chip-level pins on TopMetal1 (2026-11-21, issue #420)
+## 17. Ground chip-level pin on TopMetal2 (2026-11-21, issue #427)
+
+**Change.** `scripts/floorplan.py` adds one `SG13_dev/via_stack` Metal1 →
+TopMetal2 (`vs_m1_tm2`, the same ladder `VS_VDD_REF` uses; instance
+`VS_GND_PIN`) at (66.0, −104.07) on the bottom guard-ring bar, a 4.0 µm
+TopMetal2 landing strap from the stack down to y = −106.0 (x 64.0…68.0,
+top at −101.57, covering the stack's TopMetal2 pad), and a second `0`
+label on it (`134/25` at (66.0, −104.0)).  The stack's height is not a
+picked constant: its centre y = −106.0 + the ladder's *measured* TopMetal2
+pad half-height (1.93 µm, `build/dev/vs_m1_tm2.ports.json`), so the pad's
+bottom edge sits exactly at the ring's outer edge, and the measured Metal1
+pad is asserted (in `geometry()`) to bite the bar's own Metal1 strap —
+inset top edge y = −104.15 — by 0.23 µm ≥ 0.10.  The Metal1 `0` label at
+(12.5, −105.0) that the block itself extracts from is unchanged, the
+wiring-label assertion moved from `len(NETS)+1` to `len(NETS)+2`, and
+nothing else was edited: no device, no other route, no runset.  This is
+the mirror of the VCTRL pin (§15) for the ground node: a parent ties `0`
+on TopMetal2 alone instead of Metal1-5 inside the 20 µm inductor keep-out
+a parent draws around the stream.
+
+**Pin vs. bbox.** The artifact bbox is unchanged
+(x ±305.13, y −106.03…290.26); the strap's outboard end is 0.03 µm inside
+the bottom edge, like the VCTRL strap.  The ladder rises into empty space
+above the bar — the nearest neighbours are the VCTRL strap (x −68…−64,
+128 µm away on TopMetal2, `topmetal2.space` is 2.0), the `VS_RING_RRE`
+stack (x ≈ 42) and the RRE body (x ≈ 41.5) — and the TopMetal1 pad
+(x 64.07…67.93) has no other TopMetal1 within 40 µm.
+
+**Ladder trace (measured on the rebuilt stream).** `134/0` strap
+x 64.00…68.00, y −106.00…−101.57 over the stack pad x 64.07…67.93,
+y −106.00…−102.14; TopVia2 (`133/0`) 2×2 → TopMetal1 (`126/0`) pad →
+TopVia1 (`125/0`) 2×2 → Metal5 (`67/0`) pad 65.27…66.73 → Via4/Via3/
+Via2/Via1 2×2 each → the Metal1 (`8/0`) pad x 65.65…66.35,
+y −104.38…−103.76, overlapping the bottom bar's Metal1
+(y −105.85…−104.15) by 0.23 µm.  `klt extract`: the no-spiral variant
+still has the nine distinct named nets and both variants have zero
+dead-metal clusters; net `0` resolves to one island that now includes the
+landing.
+
+**New stream.** `layout/vco.gds` @
+`sha256:9dd0ad96307fd2130a55d1ea1549bfc43482fae29d067252516645a6722812b4`
+(was `c65cad9b…`, which regenerated byte-identically from `main` at
+`e6b0670` before the edit, so the whole difference is this change; the
+new stream in turn rebuilt byte-identically on a second regeneration).
+Generated with `klt 0.6.0` / KLayout 0.30.12 — the tools the committed
+manifest records.
+
+**Evidence refreshed to the new stream.**
+- DRC (`drc/vco-drc-ihp.json`, `-assertion.json`): `status: clean`,
+  0 findings, assertion 590/590, all four controls discriminating.
+  Ring-check continuous on `1/0`, `14/0`, `8/0`, controls discriminating;
+  the `8/0` negative control's violation count moves 56 → 57 because the
+  deleted-bar control now also counts the landing's Metal1 pad as a
+  disconnected `8/0` shape inside the clip window — the verdict (broken,
+  discriminating) is unchanged.  Curated deck (`drc/vco-drc.json`):
+  64 × `nwell.enclosing.pactiv.1` (the §12/#315 artefact) and nothing
+  else.
+- LVS (`lvs/vco-lvs-ihp.json`, `vco-lvs-record.json`): compare of record
+  `match` — nets 10/10, pins 9/9, devices 43/43, same as §14.6; R0
+  fidelity control identical; every negative control rejected; the
+  `klt lvs` 0.8.0 refusals recorded as before.
+- ERC (`erc/vco-erc.json`, `vco-erc-control.json`): `erc_status: clean`,
+  0 findings, both supplies exactly one island (the landing joins `0`'s
+  island; the substrate tie is untouched), `--check` match.  The
+  envelope's measured TopMetal2 label count is now 3 (was 2).  The AC3
+  negative control still rejects, with a changed finding set:
+  `erc.missing_tie` naming `0` plus unlabelled-conductor findings;
+  `erc.unconnected_net` no longer fires, because the landing's own `0`
+  label survives the bar deletion and `0` still resolves to one labelled
+  island (the severed landing).  `erc.sh`'s recorded control narrative
+  was updated to say exactly that.
+- `signoff/manifest.json` / `t1-report.json`: the input hash of every
+  item citing the stream moves to the new digest; inventories unchanged.
+
+**Two `drc.sh` repairs this change needed — both pre-existing on `main`,
+both required to regenerate the DRC evidence at all.**
+1. *Native toolchain identity.* The native-DRC contract failed on two
+   legs through provisioning drift since §15's run, not through any
+   layout verdict: (a) `native_drc_env.sh` installed
+   `klayout-tools @ c572046` with the klayout wheel unpinned, so it now
+   resolves 0.30.13 and the record reports `klayout_version_mismatch:
+   true` against the 0.30.12 engine — the env now pins
+   `klayout==0.30.12` alongside, reproducing `mismatch: false`;
+   (b) the v0.8.0 tag now exists at that very commit, so setuptools-scm
+   reports the bare `0.8.0` instead of `0.8.0.dev2612+gc572046be644` —
+   the contract accepts both forms of the version string for the same
+   commit (the revision identity itself stays pinned by the
+   `direct_url.json` commit assertion that precedes the leg).
+2. *Stale curated-deck gate.* The drift gate still encoded the
+   pre-0.8.0 verdict (8 × `activ.enclosing.cont.1`, Cnt.c control clean)
+   and failed on `main`'s own committed records: §15's re-run under
+   klt 0.8.0 moved the verdict to 64 × `nwell.enclosing.pactiv.1` with
+   the Cnt.c control also at 64, but the gate was never re-based.  It now
+   encodes the verdict of record: only the two §12 artefact rules are
+   allowed, `nwell.enclosing.pactiv.1` must be exactly 64 (32 SVaricap +
+   32 `SVaricap$1`), and the Cnt.c control must carry the same 64 — the
+   activ_mask join not clearing them is precisely the §12/#315
+   missing-carve-out diagnosis.
+
+**Keep-out check.** `klt keepout-check` (0.8.0) `--forbidden
+[[8,0],[10,0],[30,0],[50,0],[67,0]] --margin 20 --cells vco` on a stub
+parent that instantiates `vco` and adds only a TopMetal2 rectangle
+(x 64.5…67.5, y −130…−104.5) running from below the 20 µm margin (margin
+bottom edge y = −126.03) onto the landing's bottom end: `clean`,
+0 violations; positive-area overlap at the contact 3.0 × 1.5 µm.  Same
+scope limits as §15: it shows the parent route needs no Metal1-5 inside
+the keep-out; it does not test the VCO's own metal.
+
+**Parasitic estimate (not measured).** Added route: 4.0 × 4.43 µm ≈
+18 µm² of TopMetal2 plus one four-layer via stack (and the ladder's own
+pads, counted in the PCell).  At roughly 0.02 fF/µm² to substrate
+(order-of-magnitude, no extraction was run) that is ≈ 0.4 fF on `0` —
+the ground node, not a signal path; the strap's series resistance is
+negligible against the ring's ptap network.  No simulation was re-run:
+this is a DC appendage on ground, and the supply ERC above is the
+evidence that `0` remains one island with its substrate tie.
+
+## 18. OUTP/OUTN chip-level pins on TopMetal1 (2026-11-21, issue #420)
 
 **Change.** `scripts/floorplan.py` adds, per tank node, one 2.0 µm TopMetal1
 strap (`TANK_PIN_W`; the layer's legal minimum is 1.64 µm) at
@@ -2021,14 +2099,16 @@ TopMetal1 at the bbox edge); moving the tank closer to the edge (a redesign,
 out of the issue's scope).
 
 **New stream.** `layout/vco.gds` @
-`sha256:8c19b5ac19381d12fbb9f0f3f72236bb8d5f91fa945b4b78897d4de917439558`
-(was `c65cad9b…`, §15). Regenerated with `layout/generate.sh`
+`sha256:0f859c9572721dd9dce7d42a3946f0f993305124044e53cb1a28f7400947c462`
+(was `9dd0ad96…`, §17, the ground-pin stream). Regenerated with `layout/generate.sh`
 (`klt 0.6.0` + KLayout 0.30.12, the versions the committed manifest's
 `provenance.tools` records); connectivity stage passes (9 nets distinct,
-no dead metal), `label_count` 10 → 12 and `shape_count` 87 → 89 in
-`vco_wiring`.
+no dead metal), `label_count` 11 → 13 and `shape_count` 88 → 90 in
+`vco_wiring`. The stream was regenerated after merging main's #427 ground
+pin, so it carries both the TopMetal2 `0` pin (§17) and these two straps; the
+manifest differs from main's only by the two straps and their labels.
 
-**Evidence refreshed to the new stream** (all four cite `8c19b5ac…`).
+**Evidence refreshed to the new stream** (all four cite `0f859c95…`).
 - IHP runset DRC (`drc/vco-drc-ihp.json`, `-assertion.json`): `status:
   clean`, 0 findings, coverage assertion 590/590 satisfied, negative
   controls discriminating — **no new DRC finding from the straps**.
@@ -2052,21 +2132,12 @@ no dead metal), `label_count` 10 → 12 and `shape_count` 87 → 89 in
   wrapper (`.github/scripts/regen-signoff.sh`); items 2/3 cite the new
   digest.
 
-**Two gate repairs this refresh forced** (both align a gate with what §12/
-§15 already record; neither relaxes one). First, `drc.sh` still asserted the
-pre-#315 world — `activ.enclosing.cont.1` × 8 — so it failed against the
-records of record that #314's refresh (commit 300df05) already committed; it
-now asserts `nwell.enclosing.pactiv.1` × 64 with the §12 #315 citation, and
-the `Cnt.c` control check asserts the no-op relation (control `rule_counts`
-== base `rule_counts`) instead of the obsolete "control is clean". Second,
-`scripts/native_drc_env.sh` now pins `klayout==0.30.12` (the engine the
-IHP-native run of record requires) instead of letting the resolver drift
-(0.30.13 by 2026-11, which re-flagged every fresh env with
-`klayout_version_mismatch`), and `drc.sh` accepts the now-tagged `klt
-0.8.0` version string (the commit identity is still enforced via the
-installed distribution's `direct_url`); `lvs/vco-lvs-record.json`
-consequently records `klayout_python_module` 0.30.12 against engine 0.30.12
-(§15 had noted the 0.30.13 skew — now gone).
+**Gate repairs.** This change originally also aligned `drc.sh` with the
+records of record (`nwell.enclosing.pactiv.1` × 64, the `Cnt.c` control as a
+no-op) and added a `klayout==0.30.12` pin note to `scripts/native_drc_env.sh`.
+Main landed the same `drc.sh` alignment independently (#438) and already pins
+the engine, so on merge both files are main's versions and this change makes
+no gate edit.
 
 **What the pins load onto the tank (measured, not assumed).
 `sim/tank-stub-load/`** is the A/B record: the passive differential tank of
@@ -2112,4 +2183,3 @@ intrinsic to exposing the pins at the edge at all — it is the price of the
 `spec/` file was edited; the interaction belongs to DR-006's pending
 decision, which this section hands the numbers to. Row 3 (Kvco) was not
 re-graded: this bench measures the passive tank only.
-

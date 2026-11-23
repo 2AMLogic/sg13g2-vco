@@ -126,7 +126,7 @@
       "y1": 290.26
     },
     "dbu_um": 0.001,
-    "digest": "sha256:8c19b5ac19381d12fbb9f0f3f72236bb8d5f91fa945b4b78897d4de917439558",
+    "digest": "sha256:0f859c9572721dd9dce7d42a3946f0f993305124044e53cb1a28f7400947c462",
     "gds": "layout/vco.gds",
     "top_cell": "vco"
   },
@@ -203,8 +203,8 @@
       },
       "cell_name": "vco_wiring",
       "generator": "draw",
-      "label_count": 12,
-      "shape_count": 89,
+      "label_count": 13,
+      "shape_count": 90,
       "warnings": [
         "written verbatim by `klt draw`: no PDK awareness and no rule checking were applied; this cell is not guaranteed to be design-legal"
       ]
@@ -1170,6 +1170,13 @@
         "y_um": -105.0
       },
       {
+        "datatype": 25,
+        "layer": 134,
+        "text": "0",
+        "x_um": 66.0,
+        "y_um": -104.0
+      },
+      {
         "datatype": 0,
         "layer": 63,
         "text": "Ae=1*1.00*0.12",
@@ -1826,7 +1833,7 @@
       {
         "datatype": 0,
         "layer": 8,
-        "polygons": 368,
+        "polygons": 369,
         "texts": 0
       },
       {
@@ -1850,7 +1857,7 @@
       {
         "datatype": 0,
         "layer": 10,
-        "polygons": 72,
+        "polygons": 73,
         "texts": 0
       },
       {
@@ -1880,7 +1887,7 @@
       {
         "datatype": 0,
         "layer": 19,
-        "polygons": 154,
+        "polygons": 158,
         "texts": 0
       },
       {
@@ -1916,13 +1923,13 @@
       {
         "datatype": 0,
         "layer": 29,
-        "polygons": 60,
+        "polygons": 64,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 30,
-        "polygons": 27,
+        "polygons": 28,
         "texts": 0
       },
       {
@@ -1970,13 +1977,13 @@
       {
         "datatype": 0,
         "layer": 49,
-        "polygons": 16,
+        "polygons": 20,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 50,
-        "polygons": 4,
+        "polygons": 5,
         "texts": 0
       },
       {
@@ -2006,13 +2013,13 @@
       {
         "datatype": 0,
         "layer": 66,
-        "polygons": 16,
+        "polygons": 20,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 67,
-        "polygons": 6,
+        "polygons": 7,
         "texts": 0
       },
       {
@@ -2030,13 +2037,13 @@
       {
         "datatype": 0,
         "layer": 125,
-        "polygons": 16,
+        "polygons": 20,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 126,
-        "polygons": 26,
+        "polygons": 27,
         "texts": 0
       },
       {
@@ -2072,13 +2079,13 @@
       {
         "datatype": 0,
         "layer": 133,
-        "polygons": 272,
+        "polygons": 276,
         "texts": 0
       },
       {
         "datatype": 0,
         "layer": 134,
-        "polygons": 15,
+        "polygons": 17,
         "texts": 0
       },
       {
@@ -2091,7 +2098,7 @@
         "datatype": 25,
         "layer": 134,
         "polygons": 0,
-        "texts": 2
+        "texts": 3
       },
       {
         "datatype": 0,
@@ -2113,7 +2120,7 @@
       "npn13G2V": 4,
       "ptap1": 4,
       "rppd": 3,
-      "via_stack": 55
+      "via_stack": 56
     }
   },
   "nets": [
@@ -2148,8 +2155,8 @@
     },
     "source_of_truth": {
       "netlist": "design/vco.spice",
-      "repo_commit": "e6b0670c11c8d9c9d778718fb737197faea6c49b",
-      "repo_describe": "e6b0670-dirty",
+      "repo_commit": "e71a0a62fc74b7ae678b21152ccde096065aca68",
+      "repo_describe": "e71a0a6-dirty",
       "schematic": "design/vco.sch"
     },
     "tools": {

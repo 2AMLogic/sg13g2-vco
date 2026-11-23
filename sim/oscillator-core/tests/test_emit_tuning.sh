@@ -35,13 +35,10 @@ verd() { awk -F, '{print $18","$19","$20}' "${TUNING_CSV}"; }
 curve "${FULL}" | run "${FULL}"
 [[ "$(verd)" == "BOTH ENDPOINTS INSIDE,MET,MET" ]] && check complete-valid ok || check complete-valid "bad: $(verd)"
 [[ "$(wc -l < "${KVCO_CSV}")" == 9 ]] && check complete-kvco ok || check complete-kvco bad
-# byte-for-byte vs pre-change implementation
-OLD="${W}/old.csv"
-( source /tmp/osc_bench_old.sh 2>/dev/null; CSV_OUT="${W}/o.csv"; TUNING_CSV="${OLD}"; KVCO_CSV="${W}/ko.csv"; : > "${OLD}"; : > "${KVCO_CSV}"
-  osc_emit_tuning m c1 h 27 ) 2>/dev/null
-if [[ -s "${OLD}" ]]; then
-  cmp -s "${OLD}" "${TUNING_CSV}" && check byte-identical-to-prechange ok || check byte-identical-to-prechange bad
-fi
+# byte-for-byte vs pre-change implementation (row captured from 967853d)
+EXPECTED="${W}/expected.csv"
+printf '%s\n' 'm,c1,h,27,10,4.520000e+09,5.480000e+09,3.3,0,1.212389,21.2389,4.976907e+09,-3.423871e+08,-7.111133e+08,-1.777767e+08,155.77,0.1,BOTH ENDPOINTS INSIDE,MET,MET' > "${EXPECTED}"
+cmp -s "${EXPECTED}" "${TUNING_CSV}" && check byte-identical-to-prechange ok || check byte-identical-to-prechange bad
 
 # (a) endpoints only
 { row 0.0 PASS 5.4e9; for v in 0.3 0.6 0.9 1.2 1.65 1.8 2.4 3.0; do row "$v" NOSC 0; done; row 3.3 PASS 4.6e9; } | run "${FULL}"

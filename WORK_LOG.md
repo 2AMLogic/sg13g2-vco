@@ -4,6 +4,11 @@ Merged PRs and closed issues, newest first. Entries record forge events;
 closure alone does not assert that engineering acceptance criteria passed.
 Guide maintenance PRs are excluded.
 
+### 2026-11-22
+
+- **PR #421**: build: bump pinned klt to 0.9.2 (ihp-sg13g2 runset allowlist) and re-render signoff
+- **Issue #416** (closed): Bump the klt pin 0.8.0 -> 0.9.2 (release carrying the ihp-sg13g2 runset digest allowlist) and re-render the signoff bundle
+
 ### 2026-11-18
 
 - **PR #413**: docs(yield): state the row-6 cross-netlist pairing claim and its re-derived correlations

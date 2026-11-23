@@ -11,7 +11,7 @@ states cited below were re-read 2026-11-14. The verdict of record is
 
 ## Where it stands
 
-The graded report (klt 0.8.0, 11-item checklist vendored in
+The graded report (klt 0.9.2, 11-item checklist vendored in
 [`signoff/design-evidence-tiers.md`](signoff/design-evidence-tiers.md)) reads
 **5 of 11 T1 items met**.
 
@@ -50,16 +50,18 @@ What the unmet items already have behind them:
 - **LVS.** IHP's own runset pairs 43/43 devices, 10/10 nets and 9/9 pins after
   the reviewed label-order step (#80), with negative controls
   (`layout/PROVENANCE.md` §14). Its strict top-port check still logs three
-  port-name findings (#162), and no `klt lvs` report exists: at klt 0.8.0 — the
-  release this repo pins for claims (`signoff/README.md`) — the curated
-  extraction recognises 4 of 42 devices. The curated deck is not the sanctioned
-  path for this block; the `klayout-runset` engine is (klayout-tools#2870), and
-  it has shipped — see Blocked for what that path still needs.
+  port-name findings (#162), and no `klt lvs` report exists: the curated
+  extraction recognises 4 of 42 devices at the 0.9.2 claims pin (unchanged
+  from 0.8.0; re-measured 2026-11-20). The curated deck is not the sanctioned
+  path for this block; the `klayout-runset` engine is (klayout-tools#2870),
+  and its grading side is unblocked — the 0.9.2 pin's runset digest allowlist
+  carries the `ihp-sg13g2` entry (see Blocked for what that path still
+  needs).
 
 ## Now
 
 No open issue is ready for dispatch: all 13 are blocked or await a decision.
-The four items below wait on none of those blocks; each is one pull request.
+The three items below wait on none of those blocks; each is one pull request.
 
 1. **Per-corner ISF reduction for the 135-corner grid** (#329, part of #53).
    `sim/phase-noise/klt-sim/reduce_isf_fleet.sh` reduces one corner and takes
@@ -77,14 +79,13 @@ The four items below wait on none of those blocks; each is one pull request.
 3. **README status paragraph brought to this state** (#331). It predates the
    125 °C attribution and #326, and its row-7 wording differs from the graded
    record. Done when: it cites the records above and links this file.
-4. **Bump the klt pin to a release carrying the runset digest allowlist**
-   (part of #62, item 4; no issue of its own). Claims are pinned at klt 0.8.0,
-   whose `signoff_runset.PINNED_RUNSETS` is `{}`; 0.9.1 pins the `ihp-sg13g2`
-   runset digest (Blocked, below). This needs no PDK host — only the pinned
-   release and the signoff bundle. Done when: the pin in `signoff/README.md`
-   moves to a release whose allowlist carries the SG13G2 digest, the signoff
-   bundle is re-rendered under it with the graded deltas recorded, and any
-   refusal met on the way is added to the friction ledger.
+
+Done from this list: item 4, **bump the klt pin to a release carrying the
+runset digest allowlist** (was part of #62, item 4) — **done 2026-11-20 as
+issue #416**: the pin is 0.9.2, whose `signoff_runset.PINNED_RUNSETS`
+allowlists the `ihp-sg13g2` runset digest (IHP-Open-PDK `v0.3.0`), the
+signoff bundle is re-rendered under it with the graded deltas recorded in
+#416's PR, and the friction ledger is re-verified at the new pin.
 
 ## Next
 
@@ -135,19 +136,24 @@ The four items below wait on none of those blocks; each is one pull request.
 - **Ratification:** DR-006 (gates #198), DR-007, DR-008.
 - **LVS, #62 and #162:** the ruling of 2026-10-19 requires a clean strict
   top-port result with no name exception, plus a native `klt lvs` report with
-  power-connectivity evidence (the report is drafted in
-  `layout/PROVENANCE.md` §14.6, marked not yet filed). **This is no longer
+  power-connectivity evidence. #417 prepared two drafts,
+  A ([`inductor-terminal-order.md`](layout/upstream-reports/inductor-terminal-order.md)) and
+  B ([`inductor-port-names.md`](layout/upstream-reports/inductor-port-names.md)). Both are
+  DRAFT, NOT FILED, with source checks at `cc9afba5`, `27071f58` and
+  `v0.3.0` (`5cccb161`) and a duplicate check for each. The operator decides
+  whether to file each report separately. The klt-side investigation is
+  tracked in 2AMLogic/klayout-tools#6903. **This is no longer
   waiting on klayout-tools.** #2849 closed `not_planned` 2026-10-17 when the
   `klayout-runset` engine landed, and its successors #3206, #2870 and #2864
   are all closed `completed`; `klt lvs --deck-file` for `request.engine
-  'klayout-runset'` is present already at the pinned klt 0.8.0, and the digest
-  allowlist is no longer empty — klt 0.9.1 pins `ihp-sg13g2` at IHP-Open-PDK
-  `v0.3.0` (`sha256:e01bcb1e…` over
+  'klayout-runset'` is present already at the pinned klt 0.9.2, and the
+  digest allowlist is no longer empty — the 0.9.2 pin (issue #416, bump
+  measured 2026-11-20) allowlists `ihp-sg13g2` at IHP-Open-PDK `v0.3.0`
+  (`sha256:e01bcb1e…` over
   `ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs`, reviewed in
-  klayout-tools#4309), where 0.8.0's `PINNED_RUNSETS` is `{}` (both measured
-  2026-11-14 with `uvx --from klayout-tools==<v>`). What remains is in-repo:
-  the pin bump of Now item 4, a PDK host to run the runset engine (#266), and
-  #162's three port-name findings. The repo's recorded runset hash
+  klayout-tools#4309), where 0.8.0's `PINNED_RUNSETS` was `{}`. What remains
+  is in-repo: a PDK host to run the runset engine (#266) and #162's three
+  port-name findings. The repo's recorded runset hash
   (`fd11fced…`) covers a different file set than the allowlist digest
   (`sg13g2.lvs` alone, per `layout/lvs/vco-lvs-ihp.json`'s `hash_scope`), so a
   pinnable report must be produced against the allowlisted revision. #59 and

@@ -13,19 +13,18 @@
   "invocation": "klt erc <file> layout/erc/vco-erc-spec.json --top vco --deck sg13g2 --format json",
   "negative_control": {
     "break": "deletes one of the guard ring's four SG13_dev/ptap1 bars",
-    "observed": "that bar carries the layout's only `0` label text, so the control removes the net's label together with its substrate tie: erc.missing_tie (tap no longer wired to `0`), erc.unconnected_net (`0` matches no labelled geometry) and the roles measurement (unlabelled remainder on every owned role) all fire together",
+    "observed": "severs the ring's substrate tie from every `0` label: erc.missing_tie (the taps are no longer wired to `0`) and the unlabelled-conductor remainder fire together.  Since the TopMetal2 ground landing (#427) the second `0` label sits on the landing and survives the deletion, so `0` still resolves to one labelled island and erc.unconnected_net no longer fires (it did before #427, when the deleted bar carried the only `0` label)",
     "script": "layout/scripts/break_ring.py"
   },
   "negative_control_verdict": {
     "erc_status": "violations",
-    "finding_count": 4,
+    "finding_count": 3,
     "rules": [
       "erc.missing_tie",
-      "erc.unconnected_net",
       "erc.unlabelled_conductor"
     ],
     "supply_islands": {
-      "0": 0,
+      "0": 1,
       "VDD": 1
     }
   },

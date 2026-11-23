@@ -199,7 +199,7 @@
     "pdk_relative_path": "libs.tech/klayout/tech/drc/ihp-sg13g2.drc"
   },
   "input": {
-    "content_hash": "sha256:8c19b5ac19381d12fbb9f0f3f72236bb8d5f91fa945b4b78897d4de917439558",
+    "content_hash": "sha256:0f859c9572721dd9dce7d42a3946f0f993305124044e53cb1a28f7400947c462",
     "file": "layout/vco.gds"
   },
   "invocation": [
@@ -259,7 +259,7 @@
     "klt": {
       "package": "klayout-tools",
       "provisioned_by": "layout/scripts/native_drc_env.sh",
-      "reported_version": "0.8.0",
+      "reported_version": "0.8.0.dev2612+gc572046be644",
       "revision": "c572046be644e0407f693f2410f3abb799d68a3a",
       "source": "git+https://github.com/2AMLogic/klayout-tools",
       "why": "the merge commit of PR #2803, which added --expect-rule-categories; no release carries it yet"
