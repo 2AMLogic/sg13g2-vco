@@ -13,6 +13,7 @@ Guide maintenance PRs are excluded.
 - **PR #434**: test: verify the emitted model-input capture with the production reader
 - **PR #432**: test: pin pre-change tuning row so the byte-identical check always runs
 - **PR #429**: layout: add TopMetal2 ground chip-level pin on the bottom guard-ring bar
+- **Issue #448** (closed): layout/PROVENANCE.md §18 misstates the label-count assertion change; tank-stub make_requests.py docstring lists a flag it does not accept
 - **Issue #444** (closed): docs(layout): drc.sh file header still states the 0.6.0 `8 Cnt.c hits` story as present fact
 - **Issue #440** (closed): docs(layout): two measurable claims in PROVENANCE §17 / README do not match the committed records
 - **Issue #439** (closed): layout: ground-pin stack height assumes via_stack pad symmetry, and generate.sh never asserts the artifact bbox
