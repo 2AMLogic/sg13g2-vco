@@ -24,6 +24,21 @@
 # Simulation citations: manifest evidence under sim/**/records/ must be
 # "current" per .github/scripts/record_currency.py (see the check below).
 #
+# T1 direction gate (issue #449): with --base REF, after the byte-drift
+# check passes, the committed verdict is also compared against the
+# merge-base's signoff/t1-report.json — any tier=="T1" item going
+# met -> non-met (or disappearing), or a t1_met_count drop, fails even
+# when the render is perfectly self-consistent. A deliberate regression
+# (evidence legitimately retired) opts out via a commit-message trailer in
+# merge-base..HEAD:
+#
+#   Allow-Signoff-Regression: <id[,id...]>: <non-empty reason>
+#
+# every regressed item id must be listed with a non-empty reason; see
+# signoff/README.md. Without --base none of this runs (push-to-main CI
+# keeps the bare form; PRs and the merge queue pass the base explicitly).
+# Needs git only when --base is given.
+#
 # Requirements: python3, and klt on PATH at exactly the version in .github/klt-version
 # (see signoff/README.md; regen-signoff.sh selects that release itself, so no
 # host-wide install is needed). Headless — needs no PDK, no KLayout project, no network.
@@ -33,10 +48,17 @@ set -u
 payload_rc=0
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-if [ "${1:-}" = "--root" ] && [ -n "${2:-}" ]; then
-  ROOT="$2"
-  shift 2
-fi
+BASE=""
+BASE_EXPLICIT=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --root) [ $# -ge 2 ] || { echo "usage: $0 [--root DIR] [--base REF]" >&2; exit 2; }
+            ROOT="$2"; shift 2 ;;
+    --base) [ $# -ge 2 ] || { echo "usage: $0 [--root DIR] [--base REF]" >&2; exit 2; }
+            BASE="$2"; BASE_EXPLICIT=1; shift 2 ;;
+    *) echo "usage: $0 [--root DIR] [--base REF]" >&2; exit 2 ;;
+  esac
+done
 
 MANIFEST="signoff/manifest.json"
 TIERS_DOC="signoff/design-evidence-tiers.md"
@@ -67,7 +89,53 @@ cd "$ROOT" || fail "cannot cd to $ROOT"
 
 tmp="$(mktemp)"
 err="$(mktemp)"
-trap 'rm -f "$tmp" "$err"' EXIT
+basejson="$(mktemp)"
+commitlog="$(mktemp)"
+trap 'rm -f "$tmp" "$err" "$basejson" "$commitlog"' EXIT
+
+# Fail-closed base resolution (issue #449): an explicit --base must be
+# non-empty, resolve to a commit, share a merge-base with HEAD, and that
+# merge-base must carry a valid signoff/t1-report.json. Any failure is a
+# named error, never a silently skipped direction gate.
+MB=""
+if [ "$BASE_EXPLICIT" -eq 1 ]; then
+  if [ -z "$BASE" ]; then
+    fail "--base is empty (merge_group base_sha missing from the event?)"
+  fi
+  if ! git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null 2>&1; then
+    fail "base ref '$BASE' does not resolve to a commit (fetch it, e.g. fetch-depth: 0)"
+  fi
+  MB="$(git merge-base "$BASE" HEAD 2>/dev/null)" || MB=""
+  if [ -z "$MB" ]; then
+    fail "no merge-base between '$BASE' and HEAD (shallow clone?)"
+  fi
+  if ! git show "$MB:$RECORD" >"$basejson" 2>/dev/null; then
+    fail "merge-base ${MB:0:12} has no $RECORD (cannot grade T1 direction)"
+  fi
+  baseval_rc=0
+  python3 -I - "$basejson" <<'PY' || baseval_rc=1
+import json, sys
+
+try:
+    with open(sys.argv[1]) as f:
+        report = json.load(f)
+except (OSError, ValueError) as e:
+    print(f"FAIL: merge-base report is not valid JSON: {e}", file=sys.stderr)
+    raise SystemExit(1)
+if (not isinstance(report, dict)
+        or not isinstance(report.get("items"), list)
+        or not isinstance(report.get("t1_met_count"), int)):
+    print("FAIL: merge-base report has no items/t1_met_count", file=sys.stderr)
+    raise SystemExit(1)
+PY
+  if [ "$baseval_rc" -ne 0 ]; then
+    fail "merge-base ${MB:0:12} lacks a valid $RECORD"
+  fi
+  # Commit messages in merge-base..HEAD carry the opt-out trailers. Empty
+  # range (base == HEAD) is fine: no trailers, and the compare below sees
+  # identical reports.
+  git log --format=%B "$MB..HEAD" >"$commitlog" 2>/dev/null || true
+fi
 
 klt signoff --manifest "$MANIFEST" --tiers-doc "$TIERS_DOC" --format json \
   >"$tmp" 2>"$err"
@@ -115,6 +183,116 @@ if cmp -s "$tmp" "$RECORD"; then
   met="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); print(r["t1_met_count"])' "$RECORD")"
   count="$(python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); print(r["t1_item_count"])' "$RECORD")"
   echo "OK: signoff/t1-report.json matches the fresh klt render (T1: $met/$count items met; tier: $(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["tier"])' "$RECORD"))"
+  if [ "$BASE_EXPLICIT" -eq 1 ]; then
+    # T1 direction gate (issue #449): the verdict of record may not lose
+    # met T1 items against the merge-base report. Runs under python3 -I
+    # with no bare asserts, so PYTHONOPTIMIZE cannot strip it.
+    if ! python3 -I - "$basejson" "$RECORD" "$commitlog" "${MB:0:12}" <<'PY'
+import json, re, sys
+
+base_path, head_path, log_path, mb_short = sys.argv[1:5]
+
+def die(msg):
+    print(f"FAIL: {msg}", file=sys.stderr)
+    raise SystemExit(1)
+
+def load(path, what):
+    try:
+        with open(path) as f:
+            report = json.load(f)
+    except (OSError, ValueError) as e:
+        die(f"{what} is not valid JSON ({e})")
+    if not isinstance(report, dict) or not isinstance(report.get("items"), list):
+        die(f"{what} has no items array")
+    if not isinstance(report.get("t1_met_count"), int):
+        die(f"{what} has no integer t1_met_count")
+    return report
+
+def t1_index(report, what):
+    # Only tier=="T1" rows carry an integer id; T2-T4 summary rows have
+    # id null and are never gated (they cannot collide on None here).
+    index = {}
+    for item in report["items"]:
+        if not isinstance(item, dict) or item.get("tier") != "T1":
+            continue
+        iid = item.get("id")
+        if isinstance(iid, bool) or not isinstance(iid, int):
+            die(f"{what} has a T1 item without an integer id: {item.get('title')!r}")
+        index[iid] = item
+    return index
+
+base = load(base_path, "merge-base report")
+head = load(head_path, "head report")
+base_t1 = t1_index(base, "merge-base report")
+head_t1 = t1_index(head, "head report")
+
+regressed = []
+for iid in sorted(base_t1):
+    if base_t1[iid].get("status") != "met":
+        continue
+    hit = head_t1.get(iid)
+    head_status = hit.get("status") if isinstance(hit, dict) else None
+    if head_status != "met":
+        reason = hit.get("reason") if isinstance(hit, dict) else None
+        regressed.append((iid, base_t1[iid].get("title"), head_status, reason))
+
+base_met = base["t1_met_count"]
+head_met = head["t1_met_count"]
+
+# Allow-Signoff-Regression: <id[,id...]>: <non-empty reason>  — a trailer
+# with an empty reason does not match and allows nothing.
+trailer_re = re.compile(
+    r"(?m)^Allow-Signoff-Regression:[ \t]*([0-9]+(?:[ \t]*,[ \t]*[0-9]+)*)"
+    r"[ \t]*:[ \t]*(\S.*)$")
+try:
+    with open(log_path) as f:
+        log = f.read()
+except OSError as e:
+    die(f"cannot read the merge-base..HEAD commit log ({e})")
+allowed = set()
+for match in trailer_re.finditer(log):
+    for token in match.group(1).split(","):
+        token = token.strip()
+        if token:
+            allowed.add(int(token))
+
+regressed_ids = sorted(iid for iid, _, _, _ in regressed)
+unlisted = [iid for iid in regressed_ids if iid not in allowed]
+# The count rule is defensive: a met item that vanished from the report
+# entirely is already in `regressed`, so an unexplained drop means the
+# report itself changed shape (item list or count arithmetic).
+count_drop_unexplained = head_met < base_met and (
+    not regressed or head_met < base_met - len(regressed))
+
+if unlisted or count_drop_unexplained:
+    print(f"FAIL: T1 regression vs the merge-base report {mb_short}", file=sys.stderr)
+    for iid, title, head_status, reason in regressed:
+        suffix = f" ({reason})" if reason else ""
+        shown = head_status if head_status is not None else "missing"
+        print(f"  item {iid} ({title}): met -> {shown}{suffix}", file=sys.stderr)
+    if count_drop_unexplained and not regressed:
+        print(f"  t1_met_count dropped {base_met} -> {head_met} "
+              "with no met -> non-met T1 item transition", file=sys.stderr)
+    else:
+        print(f"  t1_met_count: {base_met} -> {head_met}", file=sys.stderr)
+    print("A deliberate T1 regression must carry, on a commit in merge-base..HEAD:", file=sys.stderr)
+    print("  Allow-Signoff-Regression: <id[,id...]>: <non-empty reason>", file=sys.stderr)
+    print("(every regressed item id listed; a trailer with an empty reason allows nothing)", file=sys.stderr)
+    raise SystemExit(1)
+
+if regressed:
+    ids = ", ".join(str(iid) for iid in regressed_ids)
+    print(f"OK (opt-out): T1 item(s) {ids} went met -> non-met vs merge-base "
+          f"{mb_short}, allowed by Allow-Signoff-Regression trailer(s) in "
+          f"merge-base..HEAD (t1_met_count {base_met} -> {head_met})")
+else:
+    print(f"OK: no T1 met-item regression vs merge-base {mb_short} "
+          f"(t1_met_count {base_met} -> {head_met})")
+PY
+    then
+      fail "T1 direction regressed vs merge-base ${MB:0:12} of $BASE (details above)"
+    fi
+  fi
   exit 0
 fi
 
