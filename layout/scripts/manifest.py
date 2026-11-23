@@ -44,6 +44,15 @@ def git(repo, *args):
         return None
 
 
+# The block outline PROVENANCE.md sections 15 and 17 specify (x +-305.13,
+# y -106.03...290.26 um).  Independent of the stream on purpose (issue #439):
+# this constant is transcribed from the provenance record, not derived from
+# the artifact, so a geometry change that moves any edge fails the build
+# instead of being measured and recorded.  A deliberate outline change
+# updates PROVENANCE first, then this constant.
+EXPECTED_BBOX_UM = {"x0": -305.13, "y0": -106.03, "x1": 305.13, "y1": 290.26}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("build")
@@ -144,6 +153,12 @@ def main(argv=None):
             "expected": 0,
             "measured": connectivity.get(v, {}).get("dead_metal_clusters"),
             "pass": connectivity.get(v, {}).get("dead_metal_clusters") == 0})
+    checks.append({
+        "check": ("artifact bbox matches the PROVENANCE sections 15/17 "
+                  "outline (all four edges, um)"),
+        "expected": EXPECTED_BBOX_UM,
+        "measured": verify["bbox_um"],
+        "pass": verify["bbox_um"] == EXPECTED_BBOX_UM})
 
     manifest = {
         "schema_version": 1,

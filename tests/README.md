@@ -6,6 +6,8 @@ shared runner: `.github/scripts/check-all.sh py-tests` (stdlib) and
 `.github/klayout-pip-version`; set `PYTHON` to a venv interpreter that has it).
 
 - `stdlib/` -- stdlib `unittest` only: `layout/scripts/manifest.py`,
+  `layout/scripts/floorplan.py` (the `geometry()` placement arithmetic on a
+  synthetic `build/dev` ports tree; issue #439) and
   `sim/bn-substrate-tank/{analyze,make_requests}.py`. The two sim scripts run
   at import time, so they are driven as `python3 -I` subprocesses on synthetic
   or temp-dir inputs and never write under `sim/`.
@@ -31,7 +33,8 @@ Not covered, by design (only syntax-checked by `py-compile` where Python):
 - `layout/scripts/measure_ports.py` -- reads real `klt gen --pdk-pcell` output
   and asserts PDK-specific geometry (pin boxes, PCell texts, GatPoly/nSD
   overlaps); a synthetic stand-in would only restate its own assumptions.
-- `layout/scripts/floorplan.py`, `lvs_reference.py` -- need the IHP deck.
+- `layout/scripts/floorplan.py`'s request stages, `lvs_reference.py` -- need
+  the IHP deck.
 - `layout/scripts/ihp_deck_categories.py` -- static walk of IHP's DRC runset
   source; needs the deck checkout.
 - `layout/scripts/activ_mask_overlay.py` -- one-off diagnostic experiment on

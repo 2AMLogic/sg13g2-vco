@@ -29,7 +29,10 @@ VERIFY = {
     "em_only_layers_found": [],
     "top_cell": "vco",
     "dbu_um": 0.001,
-    "bbox_um": [0, 0, 10, 10],
+    # the same four-key object the stream verifier (layout/scripts/
+    # verify.py) supplies; equal to manifest.EXPECTED_BBOX_UM so the
+    # outline check passes at baseline
+    "bbox_um": {"x0": -305.13, "y0": -106.03, "x1": 305.13, "y1": 290.26},
     "area_mm2": 0.0001,
     "layers_present": ["1/0"],
 }
@@ -111,7 +114,8 @@ class MainTests(unittest.TestCase):
         self.assertEqual(m["schema_version"], 1)
         self.assertTrue(all(c["pass"] for c in m["acceptance_checks"]))
         # 2 pcells + labels + em-only + nospiral nets + 2 dead-metal checks
-        self.assertEqual(len(m["acceptance_checks"]), 7)
+        # + the artifact-outline check
+        self.assertEqual(len(m["acceptance_checks"]), 8)
         self.assertEqual(m["artifact"]["digest"],
                          "sha256:ba7816bf8f01cfea414140de5dae2223"
                          "b00361a396177a9cb410ff61f20015ad")
@@ -157,6 +161,36 @@ class MainTests(unittest.TestCase):
                    {"nets": [{"name": "A"}], "dead_metal": [{"x": 1}]})
         out = os.path.join(self.root, "m.json")
         self.assertEqual(run_main(b, out), 1)
+
+    def test_outline_match_records_expected_and_measured(self):
+        b = make_build(self.root)
+        out = os.path.join(self.root, "m.json")
+        self.assertEqual(run_main(b, out), 0)
+        with open(out) as fh:
+            check = [c for c in json.load(fh)["acceptance_checks"]
+                     if c.get("check", "").startswith("artifact bbox")][0]
+        self.assertTrue(check["pass"])
+        self.assertEqual(check["expected"], manifest.EXPECTED_BBOX_UM)
+        self.assertEqual(check["measured"], manifest.EXPECTED_BBOX_UM)
+
+    def test_outline_one_edge_drift_fails(self):
+        # one database unit (0.001 um on the committed stream) off on a
+        # single edge must fail the check and name both bound sets
+        for edge, delta in (("x0", -0.001), ("y0", -0.001),
+                            ("x1", 0.001), ("y1", 0.001)):
+            bad = copy.deepcopy(VERIFY)
+            bad["bbox_um"][edge] += delta
+            b = make_build(self.root, bad)
+            out = os.path.join(self.root, "m.json")
+            self.assertEqual(run_main(b, out), 1, edge)
+            with open(out) as fh:
+                failed = [c for c in json.load(fh)["acceptance_checks"]
+                          if not c["pass"]]
+            self.assertEqual(len(failed), 1, edge)
+            self.assertTrue(failed[0]["check"].startswith("artifact bbox"),
+                            edge)
+            self.assertEqual(failed[0]["expected"], manifest.EXPECTED_BBOX_UM)
+            self.assertEqual(failed[0]["measured"], bad["bbox_um"])
 
     def test_missing_required_input_raises(self):
         b = make_build(self.root)

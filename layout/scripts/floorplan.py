@@ -778,22 +778,48 @@ def geometry(build):
     # the landing extracts onto the ring's electrical island.  Pads are read
     # from the measured stream (build/dev/vs_m1_tm2.ports.json), never
     # transcribed -- the same measured-geometry discipline as the VCTRL tap.
+    # Every leg below is derived from the pad edge that expresses the
+    # intent (issue #439): the height from the pad's own bottom edge
+    # (-pad[1]), the horizontal extents from the placed left/right edges
+    # (x + pad[0], x + pad[2]) -- never from the opposite edge as a
+    # half-extent, which holds only while the pad is symmetric about the
+    # cell origin.
     vs_m1tm2 = load_ports(build, "vs_m1_tm2")
     gnd_m1pad = vs_m1tm2["pads"]["Metal1"]
     gnd_tm2pad = vs_m1tm2["pads"]["TopMetal2"]
-    g["VS_GND_PIN"] = (GND_PIN_X, round(GND_PIN_Y0 + gnd_tm2pad[3], 4))
+    g["VS_GND_PIN"] = (GND_PIN_X, round(GND_PIN_Y0 - gnd_tm2pad[1], 4))
+    assert g["VS_GND_PIN"][1] + gnd_tm2pad[1] >= GND_PIN_Y0, (
+        "ground-pin stack's TopMetal2 pad passes the ring's outer edge "
+        "y=%.4f (placed bottom %.4f); the vs_m1_tm2 pad changed shape"
+        % (GND_PIN_Y0, g["VS_GND_PIN"][1] + gnd_tm2pad[1]))
     bar_m1_top = RING[1] + RING_W - PTAP_M1_INSET[1]
     _bite = round(bar_m1_top - (g["VS_GND_PIN"][1] + gnd_m1pad[1]), 4)
     assert _bite >= 0.10, (
         "ground-pin stack bites the ring bar's Metal1 by only %.3f um "
         "(want >= 0.10); the vs_m1_tm2 pads or the ring changed" % _bite)
-    assert (GND_PIN_X - gnd_tm2pad[2] > RING[0] + RING_W
+    assert (GND_PIN_X + gnd_tm2pad[0] > RING[0] + RING_W
             and GND_PIN_X + gnd_tm2pad[2] < RING[2] - RING_W), (
-        "ground-pin stack escapes the bottom bar's Activ box")
+        "ground-pin stack escapes the bottom bar's Activ box (placed "
+        "TopMetal2 x %.4f..%.4f vs bar interior %.2f..%.2f)"
+        % (GND_PIN_X + gnd_tm2pad[0], GND_PIN_X + gnd_tm2pad[2],
+           RING[0] + RING_W, RING[2] - RING_W))
     assert ((GND_PIN_X - GND_PIN_W / 2.0)
             - (VCTRL_PIN_X + VCTRL_PIN_W / 2.0) >= TM2_SP), (
         "ground landing violates topmetal2.space (%.2f) to the VCTRL strap"
         % TM2_SP)
+
+    # VCTRL chip-level pin (#314), mirrored (#439): the stack sits centred
+    # on the Metal3 trunk's centreline and its landing strap (not its pad)
+    # runs down to the ring's outer edge -- so the placed TopMetal2 pad is
+    # asserted against that edge from its own measured vs_m3_tm2 box and
+    # the trunk-centred placement shared with the instance list below.
+    vs_m3tm2 = load_ports(build, "vs_m3_tm2")
+    vctrl_tm2pad = vs_m3tm2["pads"]["TopMetal2"]
+    g["VS_VCTRL_PIN"] = (VCTRL_PIN_X, round(sum(VCTRL_M3_Y) / 2.0, 4))
+    assert g["VS_VCTRL_PIN"][1] + vctrl_tm2pad[1] >= VCTRL_PIN_Y0, (
+        "VCTRL-pin stack's TopMetal2 pad passes the strap's outboard end "
+        "y=%.4f (placed bottom %.4f); the vs_m3_tm2 pad changed shape"
+        % (VCTRL_PIN_Y0, g["VS_VCTRL_PIN"][1] + vctrl_tm2pad[1]))
 
     # VCTRL risers: outboard of each bank, 0.9 um clear of the nearest cell pad
     g["VCTRL_RISER_P"] = (BANK_P_X0 - 1.6, BANK_P_X0 - 0.9)
@@ -850,8 +876,7 @@ def geometry(build):
         ("VS_RE", "vs_m1_m2", g["RRE_HI"]),
         ("VS_RING_RTE", "vs_m1_m3", (g["VS_RTE_LO"][0], RING[1] + RING_W / 2.0)),
         ("VS_RING_RRE", "vs_m1_m3", (g["VS_RRE_LO"][0], RING[1] + RING_W / 2.0)),
-        ("VS_VCTRL_PIN", "vs_m3_tm2",
-         (VCTRL_PIN_X, sum(VCTRL_M3_Y) / 2.0)),
+        ("VS_VCTRL_PIN", "vs_m3_tm2", g["VS_VCTRL_PIN"]),
         ("VS_GND_PIN", "vs_m1_tm2", g["VS_GND_PIN"]),
         ("VS_VCTRL_P1", "vs_m1_m3", g["VS_VCTRL_P1"]),
         ("VS_VCTRL_P2", "vs_m1_m3", g["VS_VCTRL_P2"]),
