@@ -48,7 +48,7 @@
     },
     {
       "path": ".github/scripts/check-all.sh",
-      "sha256": "sha256:d50d366d9f72a063ee3e8ed3d6eb0ab809b856a8e9d1e708551e0d03b1a953cf"
+      "sha256": "sha256:d960a8241bb7919f64509da11907a7a9d519fe12d286ae5e8fafe22a5155b1ad"
     }
   ],
   "format_validation_command": ".github/scripts/check-all.sh test"

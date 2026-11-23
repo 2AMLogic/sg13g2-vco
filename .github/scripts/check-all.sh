@@ -36,6 +36,8 @@
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
 #   tank-ab-selftest      sim/tests/test-tank-ab-reserve.sh (tank A/B runner
 #                         reserves its record id; no ngspice/PDK/network)
+#   stub-ab-selftest      sim/tests/test-stub-ab-reserve.sh (tank-stub A/B runner
+#                         reserve/collection/store paths; no ngspice/PDK/network)
 #   local-grid-guard-selftest  sim/tests/test-local-grid-guard.sh
 #   osdi-staging-selftest sim/tests/test-build-osdi-staging.sh (issue #182:
 #                         OSDI publication stays outside the PDK and a failed
@@ -108,7 +110,7 @@
 #   test  = lint-selftest signoff-selftest regen-signoff-selftest
 #           signoff-inventories signoff-characterization
 #           append-only-selftest
-#           record-id-selftest tank-ab-selftest local-grid-guard-selftest
+#           record-id-selftest tank-ab-selftest stub-ab-selftest local-grid-guard-selftest
 #           osdi-staging-selftest spec-dr-selftest runner-selftest
 #           test-wiring-selftest test-wiring grader-spec-selftest grader-spec currency-selftest currency
 #           model-inputs-selftest model-inputs
@@ -306,6 +308,8 @@ gate() {
       run_gate "$g" "$ROOT/sim/tests/test-reserve-record-id.sh" "$@" ;;
     tank-ab-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-tank-ab-reserve.sh" "$@" ;;
+    stub-ab-selftest)
+      run_gate "$g" "$ROOT/sim/tests/test-stub-ab-reserve.sh" "$@" ;;
     local-grid-guard-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-local-grid-guard.sh" "$@" ;;
     osdi-staging-selftest)
@@ -409,6 +413,7 @@ agg_test() {
   gate append-only-selftest
   gate record-id-selftest
   gate tank-ab-selftest
+  gate stub-ab-selftest
   gate local-grid-guard-selftest
   gate osdi-staging-selftest
   gate spec-dr-selftest
