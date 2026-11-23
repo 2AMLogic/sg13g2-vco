@@ -16,8 +16,13 @@
 #
 # WHAT IT WRITES (all committed, all repo-root-relative inside, no host paths):
 #   layout/drc/vco-drc.json         `klt drc --deck sg13g2` (curated deck) --
-#                                   kept as a diagnostic: its 8 Cnt.c hits
-#                                   are a deck artefact (section 12)
+#                                   kept as a diagnostic: its 64 x
+#                                   nwell.enclosing.pactiv.1 hits are a
+#                                   deck artefact -- section 12's missing
+#                                   carve-out, issue #315 (the 0.6.0
+#                                   deck's 8 Cnt.c hits are history only:
+#                                   the pinned 0.8.0 deck reports zero
+#                                   of them)
 #   layout/drc/vco-drc-ihp.json     IHP's own primary runset (tech/drc/
 #                                   ihp-sg13g2.drc) via `klt drc --engine
 #                                   klayout --expect-rule-categories N` --
@@ -29,11 +34,14 @@
 #   layout/drc/vco-ring-check.json  guard-ring annulus evidence + its negative
 #                                   control
 #   layout/drc/vco-cnt-c-control.json  the same deck re-run against a
-#                                   DIAGNOSTIC copy of the stream carrying the
-#                                   one `Cnt.c` term klt's deck drops, which
-#                                   is what shows the remaining
-#                                   `activ.enclosing.cont.1` hits are an
-#                                   artefact of that approximation
+#                                   DIAGNOSTIC copy of the stream carrying
+#                                   the one `Cnt.c` term klt's deck drops:
+#                                   joining it does not clear the surviving
+#                                   64 nwell.enclosing.pactiv.1 hits, so
+#                                   they are NOT a Cnt.c artefact (the
+#                                   0.6.0 deck's 8 x activ.enclosing.cont.1
+#                                   is the historical case it was first
+#                                   built for)
 #
 # READ layout/PROVENANCE.md sections 12 and 13 BEFORE CITING ANY OF THIS.
 # The curated-engine report (vco-drc.json) is NOT `status: clean`, and the
