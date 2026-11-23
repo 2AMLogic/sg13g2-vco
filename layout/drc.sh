@@ -548,25 +548,30 @@ ring = json.load(open(os.path.join(out, "vco-ring-check.json")))
 cnt = json.load(open(os.path.join(out, "vco-cnt-c-control.json")))
 fail = []
 
-# 1. The only rules the deck still reports are the two PROVENANCE.md
-#    section 12 demonstrates are curated-deck artefacts (the activ_mask
-#    approximation of IHP's Cnt.c, and the missing carve-out behind
-#    nwell.enclosing.pactiv.1 diagnosed at commit 70cf6b4, issue #315).
-#    A violation of ANY other rule is a real layout defect and must fail
-#    this script.
-ARTEFACTS = {"activ.enclosing.cont.1": "Cnt.c activ_mask approximation",
-             "nwell.enclosing.pactiv.1": "missing carve-out (issue #315)"}
-other = {k: v for k, v in drc["rule_counts"].items() if k not in ARTEFACTS}
+# 1. The only rule the deck still reports is the one PROVENANCE.md
+#    section 12 demonstrates is a curated-deck artefact (the missing
+#    carve-out behind nwell.enclosing.pactiv.1 diagnosed at commit
+#    70cf6b4, issue #315).  A violation of ANY other rule is a real
+#    layout defect and must fail this script.  The 0.6.0 deck's 8 x
+#    activ.enclosing.cont.1 (the activ_mask approximation of IHP's
+#    Cnt.c) is history kept in this comment only: under the pinned
+#    deck that rule reports zero, so it gets no allowance here.
+EXPECTED_ARTEFACTS = {"nwell.enclosing.pactiv.1": 64}
+other = {k: v for k, v in drc["rule_counts"].items() if k not in EXPECTED_ARTEFACTS}
 if other:
     fail.append("klt drc reports rules beyond the known deck artefacts: %s" % other)
 
-# 2. ... and under the pinned 0.8.0 deck the surviving artefact is exactly
-#    the 32 SVaricap + 32 SVaricap$1 cells' worth of nwell.enclosing.pactiv.1
-#    (PROVENANCE.md section 15; the 0.6.0 deck's 8 x activ.enclosing.cont.1
-#    wording of the same artefact is gone).
-if drc["rule_counts"].get("nwell.enclosing.pactiv.1", 0) != 64:
-    fail.append("nwell.enclosing.pactiv.1 count moved from 64 to %s"
-                % drc["rule_counts"].get("nwell.enclosing.pactiv.1", 0))
+# 2. ... and every allowlisted artefact is bounded at its exact recorded
+#    count, so the allowlist cannot silently absorb a real violation of
+#    the same rule: under the pinned 0.8.0 deck the surviving artefact
+#    is exactly the 32 SVaricap + 32 SVaricap$1 cells' worth of
+#    nwell.enclosing.pactiv.1 (PROVENANCE.md section 15; the 0.6.0
+#    deck's 8 x activ.enclosing.cont.1 wording of the same artefact
+#    is gone).
+for rule, expected in EXPECTED_ARTEFACTS.items():
+    if drc["rule_counts"].get(rule, 0) != expected:
+        fail.append("%s count moved from %d to %s"
+                    % (rule, expected, drc["rule_counts"].get(rule, 0)))
 
 # 3. The guard ring is a closed annulus on every layer where the check is
 #    shown to be able to fail.
