@@ -2079,7 +2079,7 @@ x −121…−119, y −106.0…−22.0 (80.0 µm of new length); OUTN x 119…1
 y −106.0…−30.0 (72.0 µm); 304 µm² of TopMetal1 in total. The strap's
 nesting inside its tank strap's measured x-span is asserted in
 `wiring_request`, not assumed, and the label-count assertion moves from
-`len(NETS) + 1` to `+ 3` (VCTRL's TopMetal2 pin from §15, plus these two).
+`len(NETS) + 2` to `+ 4` (VCTRL's TopMetal2 pin from §15 and the ground pin from §17, plus these two).
 
 **Pin vs. bbox.** The artifact bbox is unchanged
 (x ±305.13, y −106.03…290.26); each strap's outboard end is 0.03 µm inside

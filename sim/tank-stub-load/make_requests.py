@@ -2,7 +2,7 @@
 """make_requests.py -- build the `klt sim` AC requests for the issue #420
 tank-stub A/B.
 
-    make_requests.py <outdir> [--cp F] [--cn F] [--label-suffix S]
+    make_requests.py <outdir> [--cp F] [--cn F]
 
 Writes, per (variant, mos corner, Vctrl):
 <outdir>/<variant>/<mos>_v<V>/{tank.spice, request.json, cell.json}.
