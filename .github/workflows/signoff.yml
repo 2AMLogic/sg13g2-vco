@@ -40,8 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Check out repository
+      # Full history (issue #449): the T1 direction gate resolves the PR /
+      # merge-queue merge-base and reads its committed signoff/t1-report.json.
+      - name: Check out repository (full history)
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
 
       - name: Install pinned klt
         run: |
@@ -51,8 +55,26 @@ jobs:
       - name: Drift-checker self-test
         run: .github/scripts/check-all.sh signoff-selftest
 
+      # Issue #449: on PRs and merge-queue runs the verdict of record is
+      # also graded for direction — no T1 item may go met -> non-met (and
+      # t1_met_count may not drop) vs the merge-base report, except via an
+      # explicit Allow-Signoff-Regression commit trailer (see
+      # signoff/README.md). push-to-main runs stay bare (the append-only /
+      # spec-dr pattern from issue #410: a merge_group run has no
+      # GITHUB_BASE_REF, so the trial-merge base sha is passed explicitly;
+      # an explicitly empty --base fails closed).
       - name: T1 verdict of record is current
-        run: .github/scripts/check-all.sh signoff
+        env:
+          MERGE_GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          PR_BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "merge_group" ]; then
+            .github/scripts/check-all.sh signoff --base "${MERGE_GROUP_BASE}"
+          elif [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            .github/scripts/check-all.sh signoff --base "${PR_BASE_REF:+origin/$PR_BASE_REF}"
+          else
+            .github/scripts/check-all.sh signoff
+          fi
 
       # Issue #243: the item 1/9/10 inventories are re-derived from the live
       # tree; a changed, added or removed inventoried file fails by name.

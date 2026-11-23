@@ -382,6 +382,30 @@ reset; run_case "$BIN" --artifacts "$T/art" method
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-method-checks.sh $T/art|" ]; then
   ok "leading --artifacts forwarded to method"; else bad "leading artifacts method: rc=$RC $(calls)"; fi
 
+# 9c. signoff --base forwarding (issue #449): trailing and leading forms,
+#     ref verification, rejected --head/--artifacts, and the all aggregate
+reset; run_case "$BIN" signoff --base "$FIRST"
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-signoff.sh --base $FIRST|" ]; then
+  ok "signoff forwards --base to the checker"; else bad "signoff fwd: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" signoff --base no-such-ref
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF: 'no-such-ref'" "$OUT" && [ ! -s "$CALLS" ]; then
+  ok "unavailable --base on signoff -> exit 1"; else bad "bad ref signoff: rc=$RC"; fi
+reset; run_case "$BIN" --base "$FIRST" signoff
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-signoff.sh --base $FIRST|" ]; then
+  ok "leading --base forwarded to signoff"; else bad "leading fwd signoff: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" --base no-such-ref signoff
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF" "$OUT" && [ ! -s "$CALLS" ]; then
+  ok "leading unavailable --base on signoff -> exit 1"; else bad "leading bad ref signoff: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" --head HEAD signoff
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --head on signoff -> exit 2"; else bad "leading head signoff: rc=$RC"; fi
+reset; run_case "$BIN" --artifacts "$T/art" signoff
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --artifacts on signoff -> exit 2"; else bad "leading artifacts signoff: rc=$RC"; fi
+reset; run_case "$BIN" --base "$FIRST" all
+if [ "$RC" -eq 0 ] && grep -q "^check-signoff.sh --base $FIRST$" "$CALLS"; then
+  ok "all --base forwards --base to the signoff gate"; else bad "all base signoff: rc=$RC $(calls)"; fi
+
 # 10. usage errors
 reset; run_case "$BIN" pr-diff
 if [ "$RC" -eq 2 ]; then ok "pr-diff without --base -> exit 2"; else bad "pr-diff no base: rc=$RC"; fi

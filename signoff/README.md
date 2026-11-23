@@ -354,6 +354,49 @@ report is a correct verdict, not a CI failure. The payload gates on its
 own fields (`block`, `kind`, `schema_version`, 11 rendered items, no
 error envelope), not the exit code alone.
 
+### T1 direction gate (`--base`, issue #449)
+
+Byte-drift alone grades self-consistency, not direction: a change whose
+purpose is unrelated to signoff can silently drop T1 items from `met`
+and re-render a matching record, and nothing in CI used to say so. So
+on `pull_request` and `merge_group` runs (`.github/workflows/signoff.yml`,
+full-history checkout) the checker also takes `--base REF` — typically
+`origin/$GITHUB_BASE_REF` or the merge queue's trial-merge base sha —
+resolves the merge-base, reads its committed `signoff/t1-report.json`
+(no second `klt` render: the base's record is already gated
+byte-identical to its own fresh render), and after the byte-drift check
+passes, fails if:
+
+- any `tier == "T1"` item went `status == "met"` → any non-`met` status
+  (or disappeared from the report), **even when another item became met
+  and `t1_met_count` stayed equal**; or
+- `t1_met_count` decreased relative to the merge-base report.
+
+Only `tier == "T1"` rows are compared (integer `id`); the T2–T4 summary
+rows carry `id: null` and are never gated. `push` to `main` runs the
+bare form (no `--base`), matching `sim-append-only` and `spec-dr`.
+Local use: `.github/scripts/check-all.sh signoff --base origin/main`
+(the `all` aggregate forwards `--base` the same way).
+
+**Deliberate regressions opt out with a commit trailer.** Evidence can
+be legitimately retired (a superseded record, a re-scoped item), so the
+gate is a speed bump, not a wall: a commit message in
+`merge-base..HEAD` carrying
+
+```
+Allow-Signoff-Regression: <id[,id...]>: <non-empty reason>
+```
+
+(e.g. `Allow-Signoff-Regression: 2, 3: retiring stale layout pins
+pending DR-006`) exempts the listed item ids. The opt-out succeeds only
+when **every** regressed item id is listed with a non-empty reason — a
+trailer with an empty reason allows nothing — and the pass prints
+`OK (opt-out): T1 item(s) …` naming the ids so the bypass is visible in
+the CI log. A commit trailer (not a PR-body marker) because the gate
+also runs on `merge_group` events, where
+`github.event.pull_request.body` does not exist, and in offline
+`check-all.sh` runs; it leaves no stale in-tree allowlist to clean up.
+
 ### Layout-evidence digest gate
 
 `.github/scripts/check-layout-evidence.sh` (self-tested by
