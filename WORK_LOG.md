@@ -6,6 +6,11 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-23
 
+- **PR #451**: signoff: gate T1 met-item regressions against the merge-base verdict
+- **PR #428**: layout: expose OUTP/OUTN as TopMetal1 pins at the bbox edge
+- **Issue #449** (closed): signoff: CI accepts a t1_met_count regression — check-signoff.sh only compares the render, never the met count
+- **Issue #448** (closed): layout/PROVENANCE.md §18 misstates the label-count assertion change; tank-stub make_requests.py docstring lists a flag it does not accept
+- **Issue #420** (closed): layout: expose OUTP/OUTN as top-metal pins at the bbox edge (parent tank routes are 100+ um at the floor)
 - **PR #446**: docs(layout): state 0.8.0 diagnostic counts in drc.sh header
 - **PR #443**: fix(layout): derive pin placements from measured pad edges and gate the artifact outline
 - **PR #442**: fix(layout): bound the curated-deck allowlist to exact artefact counts
