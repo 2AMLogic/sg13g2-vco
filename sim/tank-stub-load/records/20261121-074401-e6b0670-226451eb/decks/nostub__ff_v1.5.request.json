@@ -1,0 +1,68 @@
+{
+  "netlist": "tank.spice",
+  "engine": "ngspice",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerCAP.lib"
+  },
+  "corners": {
+    "process": [
+      {
+        "name": "cap_typ",
+        "sections": [
+          "cap_typ"
+        ]
+      },
+      {
+        "name": "cap_bcs",
+        "sections": [
+          "cap_bcs"
+        ]
+      },
+      {
+        "name": "cap_wcs",
+        "sections": [
+          "cap_wcs"
+        ]
+      }
+    ],
+    "temperature_c": [
+      -40,
+      27,
+      125
+    ]
+  },
+  "analysis": {
+    "kind": "ac",
+    "args": "lin 5501 1g 12g"
+  },
+  "measurements": [
+    {
+      "name": "zpk",
+      "unit": "ohm",
+      "spice": ".meas ac zpk MAX vm(zd) FROM=1g TO=12g"
+    },
+    {
+      "name": "f0",
+      "unit": "Hz",
+      "spice": ".meas ac f0 WHEN vp(zd)=0 FALL=1"
+    },
+    {
+      "name": "f_p45",
+      "unit": "Hz",
+      "spice": ".meas ac f_p45 WHEN vp(zd)=0.78539816 FALL=1"
+    },
+    {
+      "name": "f_m45",
+      "unit": "Hz",
+      "spice": ".meas ac f_m45 WHEN vp(zd)=-0.78539816 FALL=1"
+    }
+  ],
+  "options": {
+    "timeout_s": 900,
+    "keep_artifacts": true,
+    "ngspice_init": [
+      "set ngbehavior=hsa"
+    ]
+  }
+}

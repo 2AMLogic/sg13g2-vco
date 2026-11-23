@@ -38,20 +38,25 @@ dominated by the two `p11` spirals.
 | Via ladder | 56 | `SG13_dev/via_stack` |
 
 All 9 nets of `design/vco.spice` are routed and labelled (`VCTRL` and `0`
-each carry a second label, on their TopMetal2 chip-level pins, below):
-`VDD`, `OUTP`, `OUTN`, `VCTRL`, `TAIL`, `TE`, `NBIAS`, `RE`, `0`.
+each carry a second label, on their TopMetal2 chip-level pins, and `OUTP`/`OUTN`
+each carry one on their TopMetal1 chip-level pins, below): `VDD`, `OUTP`,
+`OUTN`, `VCTRL`, `TAIL`, `TE`, `NBIAS`, `RE`, `0`.
 
-## Chip-level pins on TopMetal2 (issues #314, #427)
+## Chip-level pins: VCTRL and 0 on TopMetal2 (#314, #427), OUTP/OUTN on TopMetal1 (#420)
 
 A parent that keeps Metal1-5 out of a region around the block can reach every
 signal the chip needs from outside the bbox only on TopMetal1/TopMetal2.
 `OUTP`/`OUTN` are TopMetal1 and `VDD` is TopMetal2; `VCTRL` and `0` are
 TopMetal2 pins too (they were a Metal3 label inside the core and a Metal1
-label on the guard ring, respectively).
+label on the guard ring, respectively), and `OUTP`/`OUTN` are pins at the bbox
+bottom edge (they were labels on the core tank metal only, 74–82 µm inside the
+edge).
 
 | Pin | Layer (GDS) | Shape (µm, in `vco` coordinates) | Label | Distance to artifact bbox edge |
 |---|---|---|---|---|
 | `VCTRL` | TopMetal2 `134/0` | x −68.0…−64.0, y −106.0…−54.5 (4.0 µm wide strap) | `VCTRL` on `134/25` at (−66.0, −104.0) | **0.03 µm** to the bottom edge (bbox y0 = −106.03; the strap's outboard end is the guard ring's outer edge, y = −106.0) |
+| `OUTP` | TopMetal1 `126/0` | x −121.0…−119.0, y −106.0…−22.0 (2.0 µm wide strap) | second `OUTP` on `126/25` at (−120.0, −104.0); core label at (−120.0, −24.0) stays | **0.03 µm** to the bottom edge (same edge geometry as VCTRL's pin) |
+| `OUTN` | TopMetal1 `126/0` | x 119.0…121.0, y −106.0…−30.0 (2.0 µm wide strap) | second `OUTN` on `126/25` at (120.0, −104.0); core label at (120.0, −32.0) stays | **0.03 µm** to the bottom edge |
 | `0` | TopMetal2 `134/0` | x 64.0…68.0, y −106.0…−101.57 (4.0 µm wide landing strap) | `0` on `134/25` at (66.0, −104.0) | **0.03 µm** to the bottom edge (same as `VCTRL`) |
 
 Land on either strap's bottom end (y −106…−104). `VCTRL` reaches the
@@ -66,6 +71,20 @@ add no Metal1-5 outside their stacks. The nearest other TopMetal2 is the
 `VDD` trunk (y −11.5…−3.5; its lower edge is 43.0 µm above the `VCTRL`
 strap's top and 90.07 µm above the ground landing's) and the RREF spur
 (x 93…97); the two straps are 128 µm apart (`topmetal2.space` is 2.0).
+
+The OUTP/OUTN pins (land on each strap's bottom end, y −106…−104) need **no
+via at all** — each strap is TopMetal1 like the tank metal it drops from,
+overlapping the existing tank strap over its full 4.0 µm height, and adds no
+Metal1-5. The tank pin straps sit outside the guard ring's x-range (its Activ
+box spans x −80…105) with 39/14 µm of clearance (OUTP/OUTN), and the two
+straps are 238 µm apart.
+
+The straps are not free: they hang on the tank nodes, adding a measured
+6.888 fF (OUTP) / 6.199 fF (OUTN) of geometric substrate capacitance — a
+−0.8…−1.0 % f0 and −0.2 % tuning-ratio shift, quantified with its method and
+limits in `sim/tank-stub-load/` and `PROVENANCE.md` §18. A parent landing on
+these pins replaces ~103–111 µm of in-bbox route per side with ~29 µm, so the
+**net** tank load still drops sharply (the parent's own numbers, #345).
 
 The tank is **two independent 3-terminal spirals sharing `VDD`**
 (`XL1 VDD OUTP 0`, `XL2 VDD OUTN 0`), not one centre-tapped differential coil.

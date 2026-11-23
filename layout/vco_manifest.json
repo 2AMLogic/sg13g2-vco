@@ -142,7 +142,7 @@
       "y1": 290.26
     },
     "dbu_um": 0.001,
-    "digest": "sha256:9dd0ad96307fd2130a55d1ea1549bfc43482fae29d067252516645a6722812b4",
+    "digest": "sha256:0f859c9572721dd9dce7d42a3946f0f993305124044e53cb1a28f7400947c462",
     "gds": "layout/vco.gds",
     "top_cell": "vco"
   },
@@ -219,8 +219,8 @@
       },
       "cell_name": "vco_wiring",
       "generator": "draw",
-      "label_count": 11,
-      "shape_count": 88,
+      "label_count": 13,
+      "shape_count": 90,
       "warnings": [
         "written verbatim by `klt draw`: no PDK awareness and no rule checking were applied; this cell is not guaranteed to be design-legal"
       ]
@@ -1356,9 +1356,23 @@
       {
         "datatype": 25,
         "layer": 126,
+        "text": "OUTN",
+        "x_um": 120.0,
+        "y_um": -104.0
+      },
+      {
+        "datatype": 25,
+        "layer": 126,
         "text": "OUTP",
         "x_um": -120.0,
         "y_um": -24.0
+      },
+      {
+        "datatype": 25,
+        "layer": 126,
+        "text": "OUTP",
+        "x_um": -120.0,
+        "y_um": -104.0
       },
       {
         "datatype": 25,
@@ -2045,7 +2059,7 @@
       {
         "datatype": 0,
         "layer": 126,
-        "polygons": 25,
+        "polygons": 27,
         "texts": 0
       },
       {
@@ -2064,7 +2078,7 @@
         "datatype": 25,
         "layer": 126,
         "polygons": 0,
-        "texts": 2
+        "texts": 4
       },
       {
         "datatype": 0,

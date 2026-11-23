@@ -196,6 +196,23 @@ OUTP_TM1_Y = (-26.0, -22.0)      # TopMetal1 OUTP strap (4.0 um; min 1.64)
 OUTN_TM1_Y = (-34.0, -30.0)      # ... and OUTN, 4.0 um clear of it
 TANK_LADDER_X = 73.5             # |x| where each tank node drops to Metal1
 TANK_M2_HW = 1.5                 # half-width of the Metal2 tank trunks
+# Tank chip-level pins (#420): the tank nodes' TopMetal1 straps already run
+# horizontally at y -26..-22 (OUTP) / -34..-30 (OUTN) across x = +-120 (the
+# |x| the requesting parent, sg13g2-lc-pll #345, measured for its input
+# stack); a 2.0 um TopMetal1 strap drops from each existing tank strap
+# straight down to the guard ring's outer bottom edge (y = -106.0, 0.03 um
+# inside the artifact bbox), so a parent lands OUTP/OUTN at the bbox edge
+# with no Metal1-5 inside the bbox and no new via.  Width 2.0 um, not the
+# 4.0 um of the in-bbox straps: the strap hangs on the tank node itself, so
+# its substrate capacitance scales with width -- 4.0 doubles the tank load
+# the parent also pays for, while the 1.64 um legal minimum saves only a
+# further 18 % for zero width margin (measured trade in PROVENANCE.md; the
+# parent's own routes are 2.0 um TopMetal1 too).  RING spans x -80..105, so
+# x = +-120 is outside the ring and the straps cross no other TopMetal1/2
+# shape (verified by DRC).
+TANK_PIN_X = 120.0                # |x| of both pin straps (#420's request)
+TANK_PIN_W = 2.0                  # TopMetal1 pin-strap width (min 1.64)
+TANK_PIN_Y0 = -106.0              # straps' outboard end = ring outer edge
 
 CAP_ORG = (-1.825, -34.0)        # cmim block origin (centres the cap on x=0)
 
@@ -500,6 +517,25 @@ def wiring_request(build):
                   m5y[1], "OUTN"))
     t.append(label(TOPMETAL1, "OUTN", 120.0, sum(OUTN_TM1_Y) / 2.0))
 
+    # chip-level pins (#420): a 2.0 um TopMetal1 strap from each existing
+    # tank strap straight down to the bbox bottom edge, at the |x| = 120 the
+    # requesting parent measured for its input stack, plus the outboard pin
+    # label.  Same net, same layer: no via is added, and the strap overlaps
+    # the existing tank strap over its full 4.0 um height so the union is
+    # unambiguous.  The nesting inside each strap's measured x-span is
+    # asserted, not assumed, so a PCell change that moves the straps fails
+    # generation instead of silently drawing a floating strap.
+    for net, px, ytop, span in (
+            ("OUTP", -TANK_PIN_X, OUTP_TM1_Y[1],
+             (g["L1_LB"][0] - hw, capp[2])),
+            ("OUTN", TANK_PIN_X, OUTN_TM1_Y[1],
+             (TANK_LADDER_X - 3.5, g["L2_LB"][0] + hw))):
+        assert span[0] < px - TANK_PIN_W / 2.0 and px + TANK_PIN_W / 2.0 < span[1], \
+            "%s pin strap at x %.3f leaves its tank strap span %s" % (net, px, span)
+        s.append(rect(TOPMETAL1, px - TANK_PIN_W / 2.0, TANK_PIN_Y0,
+                      px + TANK_PIN_W / 2.0, ytop, net))
+        t.append(label(TOPMETAL1, net, px, TANK_PIN_Y0 + 2.0))
+
     # Metal2 trunks from each tank ladder down into the core.
     for net, sgn, ybot in (("OUTP", -1.0, Q12_Y + 1.0), ("OUTN", 1.0, Q12_Y - 1.0)):
         x = sgn * TANK_LADDER_X
@@ -650,9 +686,10 @@ def wiring_request(build):
     t.append(label(METAL1, "0", (RING[0] + RING[2]) / 2.0,
                    ring_m1[1] + (RING_W - 2 * PTAP_M1_INSET[1]) / 2.0))
 
-    # one label per net, plus VCTRL's and 0's second labels on their
-    # TopMetal2 chip pins
-    assert len(t) == len(NETS) + 2, "expected one label per net + the VCTRL and ground pins, got %d" % len(t)
+    # one label per net, plus the second labels on the four chip-level pins
+    # (VCTRL and the ground bar on TopMetal2, #314/#419; OUTP and OUTN on
+    # TopMetal1, #420)
+    assert len(t) == len(NETS) + 4, "expected one label per net + the VCTRL/ground/OUTP/OUTN pins, got %d" % len(t)
     assert {lb["text"] for lb in t} == set(NETS)
     for name in ("rte", "rre", "rref", "cmim", "ind", "npn_le1", "npn_le2"):
         assert name  # all port records were loaded above

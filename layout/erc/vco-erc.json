@@ -89,9 +89,9 @@
         },
         {
           "layer": "TopMetal1",
-          "step_area_um2": 5850.1914,
-          "cumulative_area_um2": 7347.5224,
-          "antenna_ratio": 86.093016,
+          "step_area_um2": 6154.1914,
+          "cumulative_area_um2": 7651.5224,
+          "antenna_ratio": 89.655071,
           "antenna_ratio_max": null,
           "antenna_ratio_source": null,
           "verdict": "unchecked",
@@ -100,8 +100,8 @@
         {
           "layer": "TopMetal2",
           "step_area_um2": 41701.56605,
-          "cumulative_area_um2": 49049.08845,
-          "antenna_ratio": 574.722165,
+          "cumulative_area_um2": 49353.08845,
+          "antenna_ratio": 578.28422,
           "antenna_ratio_max": null,
           "antenna_ratio_source": null,
           "verdict": "unchecked",
@@ -246,7 +246,7 @@
       "released": true
     },
     "input": {
-      "content_hash": "sha256:9dd0ad96307fd2130a55d1ea1549bfc43482fae29d067252516645a6722812b4",
+      "content_hash": "sha256:0f859c9572721dd9dce7d42a3946f0f993305124044e53cb1a28f7400947c462",
       "role": "layout"
     },
     "spec": {
@@ -330,7 +330,7 @@
       {
         "name": "TopMetal1",
         "label_layer": "126/25",
-        "label_text_count": 2
+        "label_text_count": 4
       },
       {
         "name": "TopMetal2",

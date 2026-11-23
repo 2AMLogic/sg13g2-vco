@@ -2062,3 +2062,130 @@ the ground node, not a signal path; the strap's series resistance is
 negligible against the ring's ptap network.  No simulation was re-run:
 this is a DC appendage on ground, and the supply ERC above is the
 evidence that `0` remains one island with its substrate tie.
+
+## 18. OUTP/OUTN chip-level pins on TopMetal1 (2026-11-21, issue #420)
+
+**Change.** `scripts/floorplan.py` adds, per tank node, one 2.0 µm TopMetal1
+strap (`TANK_PIN_W`; the layer's legal minimum is 1.64 µm) at
+x = ±120.0 (`TANK_PIN_X`, the |x| the requesting parent `sg13g2-lc-pll`
+measured for its input stack, #345) dropping from the **existing** tank
+TopMetal1 strap straight down to the guard ring's outer bottom edge
+(y = −106.0), plus a second `OUTP`/`OUTN` label on the strap's outboard end
+(126/25 at (−120.0, −104.0) / (120.0, −104.0); the core labels at
+(−120.0, −24.0) / (120.0, −32.0) stay). Same net, same layer, so **no via is
+added**: the strap overlaps the existing tank strap over its full 4.0 µm
+height and the union is unambiguous. New metal per side: OUTP
+x −121…−119, y −106.0…−22.0 (80.0 µm of new length); OUTN x 119…121,
+y −106.0…−30.0 (72.0 µm); 304 µm² of TopMetal1 in total. The strap's
+nesting inside its tank strap's measured x-span is asserted in
+`wiring_request`, not assumed, and the label-count assertion moves from
+`len(NETS) + 2` to `+ 4` (VCTRL's TopMetal2 pin from §15 and the ground pin from §17, plus these two).
+
+**Pin vs. bbox.** The artifact bbox is unchanged
+(x ±305.13, y −106.03…290.26); each strap's outboard end is 0.03 µm inside
+the bottom edge. A parent lands on the strap's bottom end (y −106…−104)
+with no Metal1-5 inside the bbox. The guard ring's Activ box spans
+x −80…105 (`RING`), so each strap sits outside it — 39 µm of clearance from
+OUTP's strap to the box, 14 µm from OUTN's — and crosses no ring metal; the
+spirals occupy y > 0 and the straps y < 0; DRC (below) found no spacing
+finding against any other TopMetal1/2 shape. The two straps are 238 µm apart
+(inner edges x −119 / 119) and never approach each other.
+
+**Why 2.0 µm and not the 4.0 µm of the in-bbox straps (the measured trade).
+The strap hangs on the tank node itself, so its substrate capacitance scales
+with its width.** At 4.0 µm the stub would be ~13.8/12.4 fF per side and the
+f0 shift below would roughly double; at the 1.64 µm legal minimum it would
+shrink 18 % (≈ −0.82 % f0 instead of −1.0 %) but leave zero width margin
+against the minimum. 2.0 µm is what the parent's own routes are drawn at
+(the 0.0861 fF/µm coefficient is defined for 2 µm TopMetal1), so the pin
+and the route that lands on it load the tank identically per µm. Rejected
+alternatives: TopMetal2 pins (a TM1→TM2 via stack adds via capacitance the
+parent also pays for, and TopMetal2 buys nothing — the parent can route
+TopMetal1 at the bbox edge); moving the tank closer to the edge (a redesign,
+out of the issue's scope).
+
+**New stream.** `layout/vco.gds` @
+`sha256:0f859c9572721dd9dce7d42a3946f0f993305124044e53cb1a28f7400947c462`
+(was `9dd0ad96…`, §17, the ground-pin stream). Regenerated with `layout/generate.sh`
+(`klt 0.6.0` + KLayout 0.30.12, the versions the committed manifest's
+`provenance.tools` records); connectivity stage passes (9 nets distinct,
+no dead metal), `label_count` 11 → 13 and `shape_count` 88 → 90 in
+`vco_wiring`. The stream was regenerated after merging main's #427 ground
+pin, so it carries both the TopMetal2 `0` pin (§17) and these two straps; the
+manifest differs from main's only by the two straps and their labels.
+
+**Evidence refreshed to the new stream** (all four cite `0f859c95…`).
+- IHP runset DRC (`drc/vco-drc-ihp.json`, `-assertion.json`): `status:
+  clean`, 0 findings, coverage assertion 590/590 satisfied, negative
+  controls discriminating — **no new DRC finding from the straps**.
+- Curated deck (`drc/vco-drc.json`): the same 64 ×
+  `nwell.enclosing.pactiv.1` as before the change — the §12 #315 entry's
+  SVaricap PCell artefact, unchanged by this edit. The `Cnt.c` control
+  (`drc/vco-cnt-c-control.json`) reads violations(64) on both streams: the
+  `activ_mask` overlay is a no-op relative to the base run, consistent with
+  the #315 diagnosis (the remaining findings are the missing foundry
+  carve-out, not the dropped deck term).
+- LVS (`lvs/vco-lvs-ihp.json`, `lvs/vco-lvs-record.json`): `match` —
+  nets 10/10, pins 9/9, devices 43/43, the same three strict-port NAME
+  findings §14.6 records (open in #417/#162, untouched here); `OUTP`/`OUTN`
+  stay distinct nets with no new short. The ERC antenna census
+  (`erc/vco-erc.json`, §16.6) moved exactly with the drawn metal:
+  TopMetal1 step area 5850.19 → 6154.19 µm² and ratio 86.09 → 89.66 —
+  the +304 µm² is precisely the two straps — with the verdict unchanged
+  (`unchecked`: no ratified antenna maximum exists to check against).
+- ERC (`erc/vco-erc.json`): supply-spec verdicts unchanged, `erc.sh` green.
+- `signoff/manifest.json` / `t1-report.json`: regenerated via the guarded
+  wrapper (`.github/scripts/regen-signoff.sh`); items 2/3 cite the new
+  digest.
+
+**Gate repairs.** This change originally also aligned `drc.sh` with the
+records of record (`nwell.enclosing.pactiv.1` × 64, the `Cnt.c` control as a
+no-op) and added a `klayout==0.30.12` pin note to `scripts/native_drc_env.sh`.
+Main landed the same `drc.sh` alignment independently (#438) and already pins
+the engine, so on merge both files are main's versions and this change makes
+no gate edit.
+
+**What the pins load onto the tank (measured, not assumed).
+`sim/tank-stub-load/`** is the A/B record: the passive differential tank of
+`../bn-substrate-tank/` (same surrogate, same corner set) with and without
+the two straps, each strap modelled as ideal node-to-substrate capacitance.
+Stub C is **geometric, not extracted**: 0.0861 fF/µm (the parent's recorded
+coefficient for 2 µm TopMetal1 over substrate, #345) × the new strap length
+— **C(OUTP) = 6.888 fF, C(OUTN) = 6.199 fF**. Limits, stated: the
+coefficient is transferred from the parent's environment, not extracted
+from this layout (no neighbouring metal within 13 µm of either strap; the
+guard ring's Activ box is 39 µm from OUTP's strap and 14 µm from OUTN's, by
+the floorplan `RING` constants); fringing and
+strap-to-ring coupling are not separated out; strap series resistance is
+not modelled (its branch Q exceeds 5000 at 4 GHz, three orders above the
+loaded tank Q).
+
+Over 90/90 valid corners (MIM typ/bcs/wcs × −40/27/125 °C × MOS tt at
+Vctrl 0.0/1.5/3.3 V + ss/ff at band centre, all on the Spot batch fleet as
+`klt sim` requests, none local):
+
+- **f0: −0.79 % … −1.02 %** (every one of the 45 variant pairs; e.g. tt/
+  cap_typ/27 °C band centre 4.2683 → 4.2266 GHz);
+- **tank Q (phase-bandwidth): +0.21 % … +0.76 %** (slightly up: the stub
+  lowers f0 and the half-power band narrows with it);
+- **tuning ratio f(0.0)/f(3.3): −0.181 % … −0.200 %** (1.1113…1.1168 →
+  1.1093…1.1146).
+
+Estimators and their resolution are `../bn-substrate-tank/`'s (deterministic
+AC solves, ±0.05 % on f0, ±0.5 % on Q); the A/B delta is native ngspice
+elements only, so it does not inherit the surrogate's absolute f0 error,
+only its tank-to-full-oscillator offset, which cancels to first order in a
+small perturbation (the surrogate tracks the full circuit's f0 within ~2 %,
+that README's cross-check). Record:
+`sim/tank-stub-load/records/20261121-074401-e6b0670-226451eb/`.
+
+**Spec impact, stated honestly.** No row moves from met to unmet: row 5's Q
+moves in the passing direction, and rows 1/2 are **already unmet pre-#420**
+(graded band centre 4.000 GHz against the 4.5–5.5 GHz window, ratio 1.1096
+against ≥ 1.15; the open re-tune decision DR-006). But the stub deepens
+both shortfalls by roughly 1 % of f0 and 0.2 % of ratio, and that cost is
+intrinsic to exposing the pins at the edge at all — it is the price of the
+~75 µm of route the parent no longer has to draw. Per the issue's terms no
+`spec/` file was edited; the interaction belongs to DR-006's pending
+decision, which this section hands the numbers to. Row 3 (Kvco) was not
+re-graded: this bench measures the passive tank only.
