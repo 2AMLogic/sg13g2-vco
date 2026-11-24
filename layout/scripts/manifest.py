@@ -215,6 +215,10 @@ def main(argv=None):
     for c in checks:
         print("  [%s] %s" % ("ok" if c["pass"] else "FAIL",
                              c.get("pcell") or c.get("check")))
+        if not c["pass"]:
+            for k in ("expected", "measured"):
+                if k in c:
+                    print("    %s: %r" % (k, c[k]))
     if failed:
         print("manifest.py: %d acceptance check(s) failed" % len(failed),
               file=sys.stderr)
