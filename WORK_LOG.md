@@ -4,6 +4,11 @@ Merged PRs and closed issues, newest first. Entries record forge events;
 closure alone does not assert that engineering acceptance criteria passed.
 Guide maintenance PRs are excluded.
 
+### 2026-11-25
+
+- **PR #455**: test: gate EXPECTED_BBOX_UM against the PROVENANCE outline; print bounds on failed checks
+- **Issue #445** (closed): layout: the artifact-outline gate's expected value is an unchecked transcription, and a failed acceptance check never prints its bounds
+
 ### 2026-11-23
 
 - **PR #451**: signoff: gate T1 met-item regressions against the merge-base verdict
