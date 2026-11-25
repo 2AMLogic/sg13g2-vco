@@ -141,6 +141,32 @@ def assert_outline_agrees(section_numbers, bbox):
         assert_section_outline(sections[n], n, bbox)
 
 
+def assert_every_outline_agrees(bbox, sections=None):
+    """Issue #456: every section that restates the outline (section 18
+    today, any later one) must agree with the transcription.  Sections
+    with no outline statement are skipped; the 15/17 gate remains the
+    authority and fails on a reformat."""
+    if sections is None:
+        sections = provenance_sections()
+    for n in sorted(sections):
+        if provenance_outlines(sections[n]):
+            assert_section_outline(sections[n], n, bbox)
+
+
+FIXTURE_BBOX = {"x0": -10.5, "y0": -20.25, "x1": 10.5, "y1": 30.75}
+
+
+def outline_statement(bbox):
+    """The prose form "(x ±A, y −B…C)" for a symmetric-x bbox."""
+    return "(x ±%.2f, y −%.2f…%.2f)" % (bbox["x1"], -bbox["y0"], bbox["y1"])
+
+
+def assert_outline_agrees_in(sections, section_numbers, bbox):
+    """assert_outline_agrees over a supplied {number: text} mapping."""
+    for n in section_numbers:
+        assert_section_outline(sections[n], n, bbox)
+
+
 class HelperTests(unittest.TestCase):
     def test_sha256_known_answer(self):
         with tempfile.TemporaryDirectory() as d:
@@ -291,8 +317,9 @@ class MainTests(unittest.TestCase):
 
 class OutlineProvenanceTests(unittest.TestCase):
     """EXPECTED_BBOX_UM is a hand transcription of the prose outline in
-    PROVENANCE sections 15 and 17 (checked individually, since section 18
-    repeats the same words); these tests fail the moment the constant and
+    PROVENANCE sections 15 and 17 (the authority, checked individually),
+    and every other section restating it must agree (issue #456); these
+    tests fail the moment the constant and
     the record disagree (issue #445)."""
 
     def test_expected_bbox_transcribes_provenance_15_and_17(self):
@@ -315,6 +342,46 @@ class OutlineProvenanceTests(unittest.TestCase):
         self.assertEqual(provenance_outlines(mangled), [])
         with self.assertRaises(AssertionError):
             assert_section_outline(mangled, 15, manifest.EXPECTED_BBOX_UM)
+
+    def test_every_section_restating_outline_agrees(self):
+        # live check over whatever sections restate the outline; a section
+        # that only refers back to 15/17 has zero matches and is skipped
+        assert_every_outline_agrees(manifest.EXPECTED_BBOX_UM)
+
+    def test_stale_restatement_alone_fails_naming_it(self):
+        # controlled fixture: sections 15/17 and a restating section 18
+        # are all generated from the fixture bbox, so nothing here
+        # depends on today's PROVENANCE text or dimensions
+        sections = {n: outline_statement(FIXTURE_BBOX) for n in (15, 17, 18)}
+        assert_every_outline_agrees(FIXTURE_BBOX, sections)
+        stale = dict(FIXTURE_BBOX, y1=FIXTURE_BBOX["y1"] + 0.01)
+        sections[18] = outline_statement(stale)
+        assert_outline_agrees_in(sections, (15, 17), FIXTURE_BBOX)
+        with self.assertRaisesRegex(AssertionError, "section 18"):
+            assert_every_outline_agrees(FIXTURE_BBOX, sections)
+
+    def test_coordinated_outline_update_passes(self):
+        moved = dict(FIXTURE_BBOX, y0=FIXTURE_BBOX["y0"] - 0.02)
+        sections = {n: outline_statement(moved) for n in (15, 17, 18)}
+        assert_every_outline_agrees(moved, sections)
+        # the old bbox no longer agrees with the moved statements
+        with self.assertRaises(AssertionError):
+            assert_every_outline_agrees(FIXTURE_BBOX, sections)
+
+    def test_section_referring_back_without_coordinates_is_skipped(self):
+        sections = {15: outline_statement(FIXTURE_BBOX),
+                    17: outline_statement(FIXTURE_BBOX),
+                    18: "the outline specified in section 15"}
+        assert_every_outline_agrees(FIXTURE_BBOX, sections)
+
+    def test_every_section_check_covers_later_sections_and_skips_empty(self):
+        good = outline_statement(FIXTURE_BBOX)
+        bad = outline_statement(dict(FIXTURE_BBOX, y1=FIXTURE_BBOX["y1"] + 0.01))
+        assert_every_outline_agrees(
+            FIXTURE_BBOX, {1: "no outline here", 19: good + " and " + good})
+        with self.assertRaisesRegex(AssertionError, "section 19"):
+            assert_every_outline_agrees(FIXTURE_BBOX,
+                                        {1: "none", 19: good + bad})
 
     def test_missing_section_fails(self):
         with self.assertRaises(AssertionError):
