@@ -6,6 +6,8 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-25
 
+- **PR #453**: test: add fixture and gate for the tank-stub A/B runner
+- **Issue #447** (closed): sim/tank-stub-load/run_stub_ab.sh has no simulator-free fixture test (its sibling runner does)
 - **PR #459**: test: check every PROVENANCE outline restatement against EXPECTED_BBOX_UM
 - **Issue #456** (closed): layout: PROVENANCE §18 restates the artifact outline but the new drift gate only covers §§15/17
 - **PR #455**: test: gate EXPECTED_BBOX_UM against the PROVENANCE outline; print bounds on failed checks
