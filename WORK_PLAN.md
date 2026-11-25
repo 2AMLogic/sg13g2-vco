@@ -44,12 +44,13 @@ Issues currently being built (`loom:building`).
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#453**: test: add fixture and gate for the tank-stub A/B runner
+_None._
 
 ## Approved (Awaiting Merge)
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
+- **#453**: test: add fixture and gate for the tank-stub A/B runner
 - **#424**: ci: file a loom:triage repair issue from scheduled friction-upstream drift
 
 ## Proposed
@@ -64,7 +65,6 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
 - **#422**: ci: friction-upstream has been red on main's daily schedule since 2026-11-17 and nothing repairs the drift *(curated)*
-- **#445**: layout: the artifact-outline gate's expected value is an unchecked transcription, and a failed acceptance check never prints its bounds *(curated)*
 - **#447**: sim/tank-stub-load/run_stub_ab.sh has no simulator-free fixture test (its sibling runner does) *(curated)*
 
 ## Proposed (Architect / Hermit)
@@ -84,9 +84,9 @@ _None._
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 2 |
-| PRs awaiting review | 1 |
-| Approved PRs awaiting merge | 1 |
-| Curated | 10 |
+| PRs awaiting review | 0 |
+| Approved PRs awaiting merge | 2 |
+| Curated | 9 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
