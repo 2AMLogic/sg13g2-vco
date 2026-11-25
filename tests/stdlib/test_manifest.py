@@ -8,10 +8,11 @@ import copy
 import io
 import json
 import os
+import re
 import tempfile
 import unittest
 
-from _loader import load_module
+from _loader import ROOT, load_module
 
 manifest = load_module("vco_manifest", "layout/scripts/manifest.py")
 
@@ -75,6 +76,69 @@ def run_main(build, out):
 def _run_main(build, out):
     return manifest.main([build, out, "--klt", "9.9.9", "--klayout", "0.0.1",
                           "--pdk", "/pdk", "--repo", "/nonexistent-repo"])
+
+
+# PROVENANCE.md states the artifact outline in prose as
+# "(x ±305.13, y −106.03…290.26)": ± is U+00B1, − is U+2212 and … is
+# U+2026, so a plain-ASCII pattern cannot match it.  The pattern is
+# anchored to the full prose form so a reformat that drops or reshapes it
+# matches nothing and fails loudly instead of passing vacuously.
+OUTLINE_RE = re.compile(
+    r"\(x ±(?P<x>\d+(?:\.\d+)?), "
+    r"y −(?P<y0>\d+(?:\.\d+)?)…(?P<y1>\d+(?:\.\d+)?)\)")
+
+
+def provenance_sections():
+    """PROVENANCE.md split at its `## N.` headers -> {number: text}."""
+    with open(os.path.join(ROOT, "layout", "PROVENANCE.md"),
+              encoding="utf-8") as fh:
+        text = fh.read()
+    sections = {}
+    header = re.compile(r"^## (\d+)\.")
+    current, buf = None, []
+    for line in text.splitlines(keepends=True):
+        m = header.match(line)
+        if m:
+            if current is not None:
+                sections[current] = "".join(buf)
+            current, buf = int(m.group(1)), [line]
+        elif current is not None:
+            buf.append(line)
+    if current is not None:
+        sections[current] = "".join(buf)
+    return sections
+
+
+def provenance_outlines(text):
+    """Every "(x ±A, y −B…C)" outline in one section, as four-key dicts."""
+    return [{"x0": -float(m.group("x")), "y0": -float(m.group("y0")),
+             "x1": float(m.group("x")), "y1": float(m.group("y1"))}
+            for m in OUTLINE_RE.finditer(text)]
+
+
+def assert_section_outline(text, number, bbox):
+    """One section's outline statements must all equal the transcription."""
+    found = provenance_outlines(text)
+    if not found:
+        raise AssertionError(
+            "PROVENANCE section %d states no outline of the form "
+            "(x ±A, y −B…C); it was reformatted?" % number)
+    for outline in found:
+        if outline != bbox:
+            raise AssertionError(
+                "PROVENANCE section %d states %r but the transcribed "
+                "bbox is %r" % (number, outline, bbox))
+
+
+def assert_outline_agrees(section_numbers, bbox):
+    """The §15/§17 drift gate (issue #445): EXPECTED_BBOX_UM is a
+    hand transcription of PROVENANCE's prose outline, so every outline
+    statement in each named section must match it."""
+    sections = provenance_sections()
+    for n in section_numbers:
+        if n not in sections:
+            raise AssertionError("PROVENANCE.md has no section %d" % n)
+        assert_section_outline(sections[n], n, bbox)
 
 
 class HelperTests(unittest.TestCase):
@@ -192,11 +256,69 @@ class MainTests(unittest.TestCase):
             self.assertEqual(failed[0]["expected"], manifest.EXPECTED_BBOX_UM)
             self.assertEqual(failed[0]["measured"], bad["bbox_um"])
 
+    def test_failed_check_prints_expected_and_measured(self):
+        # a failed check must print both bound sets under its name; the
+        # drifted edge (y1) is readable straight off the terminal
+        bad = copy.deepcopy(VERIFY)
+        bad["bbox_um"]["y1"] += 0.001
+        b = make_build(self.root, bad)
+        out = os.path.join(self.root, "m.json")
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout), \
+                contextlib.redirect_stderr(io.StringIO()):
+            rc = _run_main(b, out)
+        self.assertEqual(rc, 1)
+        lines = stdout.getvalue().splitlines()
+        fail_ix = [i for i, line in enumerate(lines) if "FAIL" in line]
+        self.assertEqual(len(fail_ix), 1)
+        i = fail_ix[0]
+        self.assertIn("artifact bbox", lines[i])
+        self.assertEqual(lines[i + 1],
+                         "    expected: %r" % manifest.EXPECTED_BBOX_UM)
+        self.assertEqual(lines[i + 2],
+                         "    measured: %r" % bad["bbox_um"])
+        # passing checks stay one line each: no indented detail follows [ok]
+        for j, line in enumerate(lines):
+            if "[ok]" in line and j + 1 < len(lines):
+                self.assertFalse(lines[j + 1].startswith("    "), line)
+
     def test_missing_required_input_raises(self):
         b = make_build(self.root)
         os.remove(os.path.join(b, "verify.json"))
         with self.assertRaises(FileNotFoundError):
             run_main(b, os.path.join(self.root, "m.json"))
+
+
+class OutlineProvenanceTests(unittest.TestCase):
+    """EXPECTED_BBOX_UM is a hand transcription of the prose outline in
+    PROVENANCE sections 15 and 17 (checked individually, since section 18
+    repeats the same words); these tests fail the moment the constant and
+    the record disagree (issue #445)."""
+
+    def test_expected_bbox_transcribes_provenance_15_and_17(self):
+        assert_outline_agrees((15, 17), manifest.EXPECTED_BBOX_UM)
+
+    def test_one_edge_drift_in_expected_bbox_fails(self):
+        # mutation case: mutate one edge of the transcription at a time
+        # and require the agreement check to fire for every one of them
+        for edge, delta in (("x0", -0.001), ("y0", -0.001),
+                            ("x1", 0.001), ("y1", 0.001)):
+            mutant = dict(manifest.EXPECTED_BBOX_UM)
+            mutant[edge] += delta
+            with self.assertRaises(AssertionError, msg=edge):
+                assert_outline_agrees((15, 17), mutant)
+
+    def test_reformatted_section_fails_not_passes_vacuously(self):
+        # a section whose outline no longer matches the prose form must
+        # fail the gate, not let it pass by finding nothing to compare
+        mangled = OUTLINE_RE.sub("", provenance_sections()[15])
+        self.assertEqual(provenance_outlines(mangled), [])
+        with self.assertRaises(AssertionError):
+            assert_section_outline(mangled, 15, manifest.EXPECTED_BBOX_UM)
+
+    def test_missing_section_fails(self):
+        with self.assertRaises(AssertionError):
+            assert_outline_agrees((15, 99), manifest.EXPECTED_BBOX_UM)
 
 
 if __name__ == "__main__":
