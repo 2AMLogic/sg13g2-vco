@@ -44,7 +44,7 @@
     },
     {
       "path": ".github/workflows/signoff.yml",
-      "sha256": "sha256:4371bd1ceefa3984d0a290437426071be19da4c7cecface74c7dc8e084bdf9a4"
+      "sha256": "sha256:557eb67e75987c44774c9a6c8a2bc6e6f51284dac72d64641a99555366db5405"
     },
     {
       "path": ".github/scripts/check-all.sh",

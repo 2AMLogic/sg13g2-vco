@@ -5,7 +5,7 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 SRC="$(cd "${HERE}/.." && pwd)"
-T="$(mktemp -d)"
+T="$(mktemp -d)" || exit 1
 trap 'rm -rf "$T"' EXIT
 pass=0; fail=0
 ok() { pass=$((pass + 1)); echo "ok   - $1"; }
@@ -147,6 +147,9 @@ shift 3; m="$1"; shift; printf '%s\n' "$@" > "$m"
 P
 chmod +x "$T/kltshim"; mkdir -p "$T/bin"; cp "$T/kltshim" "$T/bin/klt"
 export STUB_AB_MAKE_REQUESTS="$T/mkreq2.py" STUB_AB_KLT="$T/klt3"
+# Evidence stays inside the fixture: pin the root to the scratch dir (ignoring any
+# caller-supplied STORE_EVIDENCE_ROOT) and use the copied store-evidence.sh explicitly.
+export STORE_EVIDENCE_ROOT="$T" STUB_AB_STORE="$T/sim/store-evidence.sh"
 run8() { rm -rf "$T/sim/build" "$EXP/records" "$EXP/corners" "$T/manifests"
   OUT="$(STUB_AB_ARGS=good1 "$@" bash "$EXP/run_stub_ab.sh" 2>"$T/err8")"; RC=$?; }
 run8 env -u KLT_ARTIFACT_BROKER PATH="$T/bin:$PATH"
