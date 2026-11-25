@@ -22,6 +22,23 @@
 #      payload gate must reject, with the record re-rendered to match so
 #      only the payload gate can reject -> check-signoff.sh FAILS (the
 #      gate runs python3 -I, so optimization cannot strip its asserts).
+#   13-24. T1 direction gate (issue #449), all with --base against a
+#      committed synthetic base report in the throwaway repo (klt only
+#      renders HEAD, so the base variant is committed verbatim and the
+#      head record stays the real klt-rendered verdict):
+#      13. --base "" fails closed; 14. unresolvable --base fails closed;
+#      15. merge-base without the report fails closed; 16. merge-base
+#      with an invalid report fails closed; 17. identical base/head
+#      passes; 18. item swap (item 2 -> unmet, item 4 -> met, count
+#      unchanged at 5) fails — the item-level gate, not the count;
+#      19. the same swap with a full opt-out trailer passes and prints
+#      OK (opt-out); 20. opt-out naming a non-regressed item fails;
+#      21. empty-reason opt-out trailer fails; 22. two-item regression
+#      with both ids opted out passes / 23. with one id fails;
+#      24. pure improvement (base 4 met -> head 5) passes without any
+#      trailer; plus a PYTHONOPTIMIZE=1 regression case and output-shape
+#      greps (failure names items and the trailer syntax; opt-out names
+#      the allowed ids).
 
 set -u
 
@@ -38,11 +55,12 @@ pass=0
 fail=0
 
 run_case() {
-  # run_case <name> <expected: 0=pass 1=fail> <tree>
+  # run_case <name> <expected: 0=pass 1=fail> <tree> [checker-args...]
   name="$1"
   expect="$2"
   tree="$3"
-  if "$CHECKER" --root "$tree" >/dev/null 2>&1; then
+  shift 3
+  if "$CHECKER" --root "$tree" "$@" >/dev/null 2>&1; then
     got=0
   else
     got=1
@@ -246,6 +264,198 @@ elif grep -q "did not produce a valid sg13g2-vco/analog tier report" "$o"; then
   pass=$((pass + 1))
 else
   echo "FAIL: payload gate rejects under PYTHONOPTIMIZE=1 (wrong reason)" >&2
+  fail=$((fail + 1))
+fi
+
+# --- 13-24. T1 direction gate, --base (issue #449) ---------------------------
+#
+# klt signoff renders only HEAD, so the base report is committed verbatim
+# as a synthetic variant and the head record stays the pristine committed
+# verdict (which case 1 already proves matches the fresh render): only the
+# direction comparison can reject. The base variants never need synthetic
+# LVS evidence because they are never re-rendered.
+git_prep() {
+  git -C "$1" config user.email t@t
+  git -C "$1" config user.name t
+}
+
+# edit_base_report <tree> <mode>: rewrite the working-tree record into the
+# synthetic base variant, then commit it (caller restores the pristine
+# record for head).
+edit_base_report() {
+  python3 - "$1/signoff/t1-report.json" "$2" <<'PY'
+import json, sys
+
+path, mode = sys.argv[1], sys.argv[2]
+report = json.load(open(path))
+items = {it.get("id"): it for it in report["items"] if it.get("tier") == "T1"}
+
+def unmet(iid, reason):
+    items[iid]["status"] = "unmet"
+    items[iid]["reason"] = reason
+
+def met(iid):
+    items[iid]["status"] = "met"
+    items[iid].pop("reason", None)
+
+if mode == "swap":
+    # item 2 out, item 4 in: t1_met_count stays 5, so only the item-level
+    # gate can catch it (the count is unchanged).
+    unmet(2, "stale_evidence")
+    met(4)
+elif mode == "gain2":
+    # items 4 and 5 met in the base (count 7) regressed to unmet in the
+    # pristine head (count 5): both the per-item gate and the count drop.
+    met(4)
+    met(5)
+    report["t1_met_count"] = 7
+elif mode == "improve":
+    unmet(3, "no_evidence")
+    report["t1_met_count"] = 4
+elif mode == "broken":
+    pass  # caller overwrites the file with invalid JSON
+json.dump(report, open(path, "w"), indent=2)
+PY
+}
+
+# commit_base <tree> <mode>: commit the synthetic base variant and restore
+# + commit the pristine head record; HEAD~1 is then the base.
+commit_base() {
+  local t="$1" mode="$2"
+  git_prep "$t"
+  if [ "$mode" = broken ]; then
+    printf 'not json\n' > "$t/signoff/t1-report.json"
+  else
+    edit_base_report "$t" "$mode"
+  fi
+  git -C "$t" add -A
+  git -C "$t" commit -q -m "base: synthetic ${mode} verdict"
+  cp "$ROOT/signoff/t1-report.json" "$t/signoff/t1-report.json"
+  git -C "$t" add -A
+  git -C "$t" commit -q -m "head: restore pristine verdict"
+}
+
+# opt_out <tree> <count> <trailer-body...>: commit an empty commit carrying
+# the trailer; the base stays <count> commits back.
+opt_out() {
+  local t="$1" back="$2" body="$3"
+  git -C "$t" commit -q --allow-empty -m "opt out" -m "$body"
+  echo "HEAD~$back"
+}
+
+# 13. An explicitly empty --base fails closed (merge_group base_sha missing).
+t="$(fresh_tree)"
+run_case "empty --base fails closed" 1 "$t" --base ""
+
+# 14. An unresolvable --base fails closed with a named error.
+t="$(fresh_tree)"
+run_case "unresolvable --base fails closed" 1 "$t" --base no-such-ref
+
+# 15. A merge-base without signoff/t1-report.json fails closed.
+t="$(fresh_tree)"
+git_prep "$t"
+( cd "$t" && git add -A && git rm -q --cached signoff/t1-report.json \
+    && git commit -q -m "base: no record" )
+git -C "$t" add -A
+git -C "$t" commit -q -m "head: add the record"
+run_case "merge-base without the report fails closed" 1 "$t" --base HEAD~1
+
+# 16. A merge-base with an invalid (unparsable) report fails closed.
+t="$(fresh_tree)"
+commit_base "$t" broken
+run_case "merge-base with an invalid report fails closed" 1 "$t" --base HEAD~1
+
+# 17. Identical base and head reports pass with the direction gate on.
+t="$(fresh_tree)"
+git_prep "$t"
+git -C "$t" add -A
+git -C "$t" commit -q -m base
+git -C "$t" commit -q --allow-empty -m head
+run_case "identical base and head passes with --base" 0 "$t" --base HEAD~1
+
+# 18. Item swap (item 2 -> unmet, item 4 -> met, count still 5) fails: the
+#     per-item gate catches what a count-only check would miss.
+t="$(fresh_tree)"
+commit_base "$t" swap
+run_case "item swap without opt-out fails (item-level gate)" 1 "$t" --base HEAD~1
+o="$(mktemp)"
+if "$CHECKER" --root "$t" --base HEAD~1 >"$o" 2>&1; then
+  echo "FAIL: swap failure output shape (checker passed)" >&2
+  fail=$((fail + 1))
+elif grep -q "item 4 (LVS clean): met -> unmet (no_evidence)" "$o" \
+   && grep -q "t1_met_count: 5 -> 5" "$o" \
+   && grep -q "Allow-Signoff-Regression: <id\[,id...\]>: <non-empty reason>" "$o"; then
+  echo "PASS: swap failure names the item, statuses and trailer syntax"
+  pass=$((pass + 1))
+else
+  echo "FAIL: swap failure output shape (wrong details)" >&2
+  fail=$((fail + 1))
+fi
+
+# 19. The same swap with a full opt-out trailer passes — and the bypass is
+#     visible in the log.
+ref="$(opt_out "$t" 2 "Allow-Signoff-Regression: 4: deliberate swap while DR-006 lands")"
+run_case "item swap with a full opt-out passes" 0 "$t" --base "$ref"
+if "$CHECKER" --root "$t" --base "$ref" >"$o" 2>&1 \
+   && grep -q "OK (opt-out): T1 item(s) 4 " "$o"; then
+  echo "PASS: opt-out pass prints OK (opt-out) naming the id"
+  pass=$((pass + 1))
+else
+  echo "FAIL: opt-out output shape" >&2
+  fail=$((fail + 1))
+fi
+
+# 20. An opt-out naming a non-regressed item does not cover the regressed
+#     one (fresh tree: earlier trailers stay out of the range).
+t="$(fresh_tree)"
+commit_base "$t" swap
+ref="$(opt_out "$t" 2 "Allow-Signoff-Regression: 5: unrelated item")"
+run_case "opt-out naming a non-regressed item fails" 1 "$t" --base "$ref"
+
+# 21. A trailer with an empty reason allows nothing.
+t="$(fresh_tree)"
+commit_base "$t" swap
+ref="$(opt_out "$t" 2 "Allow-Signoff-Regression: 4:")"
+run_case "empty-reason opt-out trailer fails" 1 "$t" --base "$ref"
+
+# 22/23. Two regressed items (base counts 7 -> head 5): both ids opted out
+#        passes, one id fails.
+t="$(fresh_tree)"
+commit_base "$t" gain2
+run_case "two-item regression without opt-out fails" 1 "$t" --base HEAD~1
+if ! "$CHECKER" --root "$t" --base HEAD~1 >"$o" 2>&1 \
+   && grep -q "t1_met_count: 7 -> 5" "$o"; then
+  echo "PASS: regression failure names the base vs head counts"
+  pass=$((pass + 1))
+else
+  echo "FAIL: regression failure count output shape" >&2
+  fail=$((fail + 1))
+fi
+ref="$(opt_out "$t" 2 "Allow-Signoff-Regression: 4, 5: retiring stale evidence")"
+run_case "two-item regression with both ids opted out passes" 0 "$t" --base "$ref"
+t="$(fresh_tree)"
+commit_base "$t" gain2
+ref="$(opt_out "$t" 2 "Allow-Signoff-Regression: 4: partial cover")"
+run_case "two-item regression with one id opted out fails" 1 "$t" --base "$ref"
+
+# 24. A pure improvement (base 4 met -> head 5) needs no trailer.
+t="$(fresh_tree)"
+commit_base "$t" improve
+run_case "pure improvement passes without opt-out" 0 "$t" --base HEAD~1
+
+# 25. The direction gate also fires under PYTHONOPTIMIZE=1: it runs under
+#     python3 -I with no bare asserts, so optimization cannot strip it.
+t="$(fresh_tree)"
+commit_base "$t" swap
+o="$(mktemp)"
+if PYTHONOPTIMIZE=1 "$CHECKER" --root "$t" --base HEAD~1 >"$o" 2>&1; then
+  echo "FAIL: regression gate rejects under PYTHONOPTIMIZE=1 (checker passed)" >&2
+  fail=$((fail + 1))
+elif grep -q "T1 regression vs the merge-base report" "$o"; then
+  echo "PASS: regression gate rejects under PYTHONOPTIMIZE=1"
+  pass=$((pass + 1))
+else
+  echo "FAIL: regression gate rejects under PYTHONOPTIMIZE=1 (wrong reason)" >&2
   fail=$((fail + 1))
 fi
 

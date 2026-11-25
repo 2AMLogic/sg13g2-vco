@@ -8,10 +8,11 @@ import copy
 import io
 import json
 import os
+import re
 import tempfile
 import unittest
 
-from _loader import load_module
+from _loader import ROOT, load_module
 
 manifest = load_module("vco_manifest", "layout/scripts/manifest.py")
 
@@ -29,7 +30,10 @@ VERIFY = {
     "em_only_layers_found": [],
     "top_cell": "vco",
     "dbu_um": 0.001,
-    "bbox_um": [0, 0, 10, 10],
+    # the same four-key object the stream verifier (layout/scripts/
+    # verify.py) supplies; equal to manifest.EXPECTED_BBOX_UM so the
+    # outline check passes at baseline
+    "bbox_um": {"x0": -305.13, "y0": -106.03, "x1": 305.13, "y1": 290.26},
     "area_mm2": 0.0001,
     "layers_present": ["1/0"],
 }
@@ -74,6 +78,95 @@ def _run_main(build, out):
                           "--pdk", "/pdk", "--repo", "/nonexistent-repo"])
 
 
+# PROVENANCE.md states the artifact outline in prose as
+# "(x ±305.13, y −106.03…290.26)": ± is U+00B1, − is U+2212 and … is
+# U+2026, so a plain-ASCII pattern cannot match it.  The pattern is
+# anchored to the full prose form so a reformat that drops or reshapes it
+# matches nothing and fails loudly instead of passing vacuously.
+OUTLINE_RE = re.compile(
+    r"\(x ±(?P<x>\d+(?:\.\d+)?), "
+    r"y −(?P<y0>\d+(?:\.\d+)?)…(?P<y1>\d+(?:\.\d+)?)\)")
+
+
+def provenance_sections():
+    """PROVENANCE.md split at its `## N.` headers -> {number: text}."""
+    with open(os.path.join(ROOT, "layout", "PROVENANCE.md"),
+              encoding="utf-8") as fh:
+        text = fh.read()
+    sections = {}
+    header = re.compile(r"^## (\d+)\.")
+    current, buf = None, []
+    for line in text.splitlines(keepends=True):
+        m = header.match(line)
+        if m:
+            if current is not None:
+                sections[current] = "".join(buf)
+            current, buf = int(m.group(1)), [line]
+        elif current is not None:
+            buf.append(line)
+    if current is not None:
+        sections[current] = "".join(buf)
+    return sections
+
+
+def provenance_outlines(text):
+    """Every "(x ±A, y −B…C)" outline in one section, as four-key dicts."""
+    return [{"x0": -float(m.group("x")), "y0": -float(m.group("y0")),
+             "x1": float(m.group("x")), "y1": float(m.group("y1"))}
+            for m in OUTLINE_RE.finditer(text)]
+
+
+def assert_section_outline(text, number, bbox):
+    """One section's outline statements must all equal the transcription."""
+    found = provenance_outlines(text)
+    if not found:
+        raise AssertionError(
+            "PROVENANCE section %d states no outline of the form "
+            "(x ±A, y −B…C); it was reformatted?" % number)
+    for outline in found:
+        if outline != bbox:
+            raise AssertionError(
+                "PROVENANCE section %d states %r but the transcribed "
+                "bbox is %r" % (number, outline, bbox))
+
+
+def assert_outline_agrees(section_numbers, bbox):
+    """The §15/§17 drift gate (issue #445): EXPECTED_BBOX_UM is a
+    hand transcription of PROVENANCE's prose outline, so every outline
+    statement in each named section must match it."""
+    sections = provenance_sections()
+    for n in section_numbers:
+        if n not in sections:
+            raise AssertionError("PROVENANCE.md has no section %d" % n)
+        assert_section_outline(sections[n], n, bbox)
+
+
+def assert_every_outline_agrees(bbox, sections=None):
+    """Issue #456: every section that restates the outline (section 18
+    today, any later one) must agree with the transcription.  Sections
+    with no outline statement are skipped; the 15/17 gate remains the
+    authority and fails on a reformat."""
+    if sections is None:
+        sections = provenance_sections()
+    for n in sorted(sections):
+        if provenance_outlines(sections[n]):
+            assert_section_outline(sections[n], n, bbox)
+
+
+FIXTURE_BBOX = {"x0": -10.5, "y0": -20.25, "x1": 10.5, "y1": 30.75}
+
+
+def outline_statement(bbox):
+    """The prose form "(x ±A, y −B…C)" for a symmetric-x bbox."""
+    return "(x ±%.2f, y −%.2f…%.2f)" % (bbox["x1"], -bbox["y0"], bbox["y1"])
+
+
+def assert_outline_agrees_in(sections, section_numbers, bbox):
+    """assert_outline_agrees over a supplied {number: text} mapping."""
+    for n in section_numbers:
+        assert_section_outline(sections[n], n, bbox)
+
+
 class HelperTests(unittest.TestCase):
     def test_sha256_known_answer(self):
         with tempfile.TemporaryDirectory() as d:
@@ -111,7 +204,8 @@ class MainTests(unittest.TestCase):
         self.assertEqual(m["schema_version"], 1)
         self.assertTrue(all(c["pass"] for c in m["acceptance_checks"]))
         # 2 pcells + labels + em-only + nospiral nets + 2 dead-metal checks
-        self.assertEqual(len(m["acceptance_checks"]), 7)
+        # + the artifact-outline check
+        self.assertEqual(len(m["acceptance_checks"]), 8)
         self.assertEqual(m["artifact"]["digest"],
                          "sha256:ba7816bf8f01cfea414140de5dae2223"
                          "b00361a396177a9cb410ff61f20015ad")
@@ -158,11 +252,140 @@ class MainTests(unittest.TestCase):
         out = os.path.join(self.root, "m.json")
         self.assertEqual(run_main(b, out), 1)
 
+    def test_outline_match_records_expected_and_measured(self):
+        b = make_build(self.root)
+        out = os.path.join(self.root, "m.json")
+        self.assertEqual(run_main(b, out), 0)
+        with open(out) as fh:
+            check = [c for c in json.load(fh)["acceptance_checks"]
+                     if c.get("check", "").startswith("artifact bbox")][0]
+        self.assertTrue(check["pass"])
+        self.assertEqual(check["expected"], manifest.EXPECTED_BBOX_UM)
+        self.assertEqual(check["measured"], manifest.EXPECTED_BBOX_UM)
+
+    def test_outline_one_edge_drift_fails(self):
+        # one database unit (0.001 um on the committed stream) off on a
+        # single edge must fail the check and name both bound sets
+        for edge, delta in (("x0", -0.001), ("y0", -0.001),
+                            ("x1", 0.001), ("y1", 0.001)):
+            bad = copy.deepcopy(VERIFY)
+            bad["bbox_um"][edge] += delta
+            b = make_build(self.root, bad)
+            out = os.path.join(self.root, "m.json")
+            self.assertEqual(run_main(b, out), 1, edge)
+            with open(out) as fh:
+                failed = [c for c in json.load(fh)["acceptance_checks"]
+                          if not c["pass"]]
+            self.assertEqual(len(failed), 1, edge)
+            self.assertTrue(failed[0]["check"].startswith("artifact bbox"),
+                            edge)
+            self.assertEqual(failed[0]["expected"], manifest.EXPECTED_BBOX_UM)
+            self.assertEqual(failed[0]["measured"], bad["bbox_um"])
+
+    def test_failed_check_prints_expected_and_measured(self):
+        # a failed check must print both bound sets under its name; the
+        # drifted edge (y1) is readable straight off the terminal
+        bad = copy.deepcopy(VERIFY)
+        bad["bbox_um"]["y1"] += 0.001
+        b = make_build(self.root, bad)
+        out = os.path.join(self.root, "m.json")
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout), \
+                contextlib.redirect_stderr(io.StringIO()):
+            rc = _run_main(b, out)
+        self.assertEqual(rc, 1)
+        lines = stdout.getvalue().splitlines()
+        fail_ix = [i for i, line in enumerate(lines) if "FAIL" in line]
+        self.assertEqual(len(fail_ix), 1)
+        i = fail_ix[0]
+        self.assertIn("artifact bbox", lines[i])
+        self.assertEqual(lines[i + 1],
+                         "    expected: %r" % manifest.EXPECTED_BBOX_UM)
+        self.assertEqual(lines[i + 2],
+                         "    measured: %r" % bad["bbox_um"])
+        # passing checks stay one line each: no indented detail follows [ok]
+        for j, line in enumerate(lines):
+            if "[ok]" in line and j + 1 < len(lines):
+                self.assertFalse(lines[j + 1].startswith("    "), line)
+
     def test_missing_required_input_raises(self):
         b = make_build(self.root)
         os.remove(os.path.join(b, "verify.json"))
         with self.assertRaises(FileNotFoundError):
             run_main(b, os.path.join(self.root, "m.json"))
+
+
+class OutlineProvenanceTests(unittest.TestCase):
+    """EXPECTED_BBOX_UM is a hand transcription of the prose outline in
+    PROVENANCE sections 15 and 17 (the authority, checked individually),
+    and every other section restating it must agree (issue #456); these
+    tests fail the moment the constant and
+    the record disagree (issue #445)."""
+
+    def test_expected_bbox_transcribes_provenance_15_and_17(self):
+        assert_outline_agrees((15, 17), manifest.EXPECTED_BBOX_UM)
+
+    def test_one_edge_drift_in_expected_bbox_fails(self):
+        # mutation case: mutate one edge of the transcription at a time
+        # and require the agreement check to fire for every one of them
+        for edge, delta in (("x0", -0.001), ("y0", -0.001),
+                            ("x1", 0.001), ("y1", 0.001)):
+            mutant = dict(manifest.EXPECTED_BBOX_UM)
+            mutant[edge] += delta
+            with self.assertRaises(AssertionError, msg=edge):
+                assert_outline_agrees((15, 17), mutant)
+
+    def test_reformatted_section_fails_not_passes_vacuously(self):
+        # a section whose outline no longer matches the prose form must
+        # fail the gate, not let it pass by finding nothing to compare
+        mangled = OUTLINE_RE.sub("", provenance_sections()[15])
+        self.assertEqual(provenance_outlines(mangled), [])
+        with self.assertRaises(AssertionError):
+            assert_section_outline(mangled, 15, manifest.EXPECTED_BBOX_UM)
+
+    def test_every_section_restating_outline_agrees(self):
+        # live check over whatever sections restate the outline; a section
+        # that only refers back to 15/17 has zero matches and is skipped
+        assert_every_outline_agrees(manifest.EXPECTED_BBOX_UM)
+
+    def test_stale_restatement_alone_fails_naming_it(self):
+        # controlled fixture: sections 15/17 and a restating section 18
+        # are all generated from the fixture bbox, so nothing here
+        # depends on today's PROVENANCE text or dimensions
+        sections = {n: outline_statement(FIXTURE_BBOX) for n in (15, 17, 18)}
+        assert_every_outline_agrees(FIXTURE_BBOX, sections)
+        stale = dict(FIXTURE_BBOX, y1=FIXTURE_BBOX["y1"] + 0.01)
+        sections[18] = outline_statement(stale)
+        assert_outline_agrees_in(sections, (15, 17), FIXTURE_BBOX)
+        with self.assertRaisesRegex(AssertionError, "section 18"):
+            assert_every_outline_agrees(FIXTURE_BBOX, sections)
+
+    def test_coordinated_outline_update_passes(self):
+        moved = dict(FIXTURE_BBOX, y0=FIXTURE_BBOX["y0"] - 0.02)
+        sections = {n: outline_statement(moved) for n in (15, 17, 18)}
+        assert_every_outline_agrees(moved, sections)
+        # the old bbox no longer agrees with the moved statements
+        with self.assertRaises(AssertionError):
+            assert_every_outline_agrees(FIXTURE_BBOX, sections)
+
+    def test_section_referring_back_without_coordinates_is_skipped(self):
+        sections = {15: outline_statement(FIXTURE_BBOX),
+                    17: outline_statement(FIXTURE_BBOX),
+                    18: "the outline specified in section 15"}
+        assert_every_outline_agrees(FIXTURE_BBOX, sections)
+
+    def test_every_section_check_covers_later_sections_and_skips_empty(self):
+        good = outline_statement(FIXTURE_BBOX)
+        bad = outline_statement(dict(FIXTURE_BBOX, y1=FIXTURE_BBOX["y1"] + 0.01))
+        assert_every_outline_agrees(
+            FIXTURE_BBOX, {1: "no outline here", 19: good + " and " + good})
+        with self.assertRaisesRegex(AssertionError, "section 19"):
+            assert_every_outline_agrees(FIXTURE_BBOX,
+                                        {1: "none", 19: good + bad})
+
+    def test_missing_section_fails(self):
+        with self.assertRaises(AssertionError):
+            assert_outline_agrees((15, 99), manifest.EXPECTED_BBOX_UM)
 
 
 if __name__ == "__main__":

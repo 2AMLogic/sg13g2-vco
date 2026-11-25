@@ -211,9 +211,15 @@ if stage verify; then
   echo "== verify: reading the composed stream back"
   KLAYOUT_PATH="${KLSCRATCH}" klayout -zz -r "${HERE}/scripts/verify.py" \
     -rd gds="${BUILD}/vco.gds" -rd out="${BUILD}/verify.json" 2>&1 | filt
-  cp "${BUILD}/vco.gds" "${HERE}/vco.gds"
-  python3 "${HERE}/scripts/manifest.py" "${BUILD}" "${HERE}/vco_manifest.json" \
+  # The manifest is assembled in the build directory first, and both
+  # deliverables are published only after its acceptance checks -- now
+  # including the artifact-outline comparison against the PROVENANCE
+  # sections 15/17 outline (issue #439) -- pass: set -e makes a failed
+  # check abort the build before either committed file is replaced.
+  python3 "${HERE}/scripts/manifest.py" "${BUILD}" "${BUILD}/vco_manifest.json" \
     --klt "${KLT_VERSION}" --klayout "${KLAYOUT_VERSION}" --pdk "${PDK}" \
     --repo "${REPO_ROOT}"
+  cp "${BUILD}/vco.gds" "${HERE}/vco.gds"
+  cp "${BUILD}/vco_manifest.json" "${HERE}/vco_manifest.json"
   echo "== wrote ${HERE}/vco.gds and ${HERE}/vco_manifest.json"
 fi

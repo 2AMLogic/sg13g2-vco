@@ -14,7 +14,9 @@
 #   lint-selftest         .github/scripts/test-lint-shell.sh        shellcheck
 #   lint                  .github/scripts/lint-shell.sh [file...]   shellcheck
 #   signoff-selftest      .github/scripts/test-check-signoff.sh     pinned klt
-#   signoff               .github/scripts/check-signoff.sh          pinned klt
+#   signoff [--base REF]  .github/scripts/check-signoff.sh          pinned klt git
+#                         (--base: T1 direction gate vs the merge-base
+#                         report, issue #449; without it, bare drift gate)
 #   regen-signoff-selftest .github/scripts/test-regen-signoff.sh    git python3
 #                         (issue #360: regen-signoff.sh is the one guarded,
 #                         atomic regen of signoff/t1-report.json; its
@@ -34,6 +36,8 @@
 #   record-id-selftest    sim/tests/test-reserve-record-id.sh
 #   tank-ab-selftest      sim/tests/test-tank-ab-reserve.sh (tank A/B runner
 #                         reserves its record id; no ngspice/PDK/network)
+#   stub-ab-selftest      sim/tests/test-stub-ab-reserve.sh (tank-stub A/B runner
+#                         reserve/collection/store paths; no ngspice/PDK/network)
 #   local-grid-guard-selftest  sim/tests/test-local-grid-guard.sh
 #   osdi-staging-selftest sim/tests/test-build-osdi-staging.sh (issue #182:
 #                         OSDI publication stays outside the PDK and a failed
@@ -106,7 +110,7 @@
 #   test  = lint-selftest signoff-selftest regen-signoff-selftest
 #           signoff-inventories signoff-characterization
 #           append-only-selftest
-#           record-id-selftest tank-ab-selftest local-grid-guard-selftest
+#           record-id-selftest tank-ab-selftest stub-ab-selftest local-grid-guard-selftest
 #           osdi-staging-selftest spec-dr-selftest runner-selftest
 #           test-wiring-selftest test-wiring grader-spec-selftest grader-spec currency-selftest currency
 #           model-inputs-selftest model-inputs
@@ -119,12 +123,14 @@
 #           skip) + py-numeric (only with numpy+scipy importable)
 #           + py-klayout (only with the pinned klayout wheel)
 #           + pr-diff (only with --base) + method
+#           (with --base, the signoff gate also runs the T1 direction
+#           check against that ref, issue #449)
 #   pr-diff --base REF [--head REF] = append-only + spec-dr
 # Runner options may also follow an aggregate name (the npm form:
 # `npm run check:all -- --strict --base origin/main`).
 # Before a single target, --base/--head are forwarded to the diff gates
-# (spec-dr: both; append-only: --base only) and verified like trailing ones;
-# --artifacts is accepted only by method. Any other leading
+# (spec-dr: both; append-only and signoff: --base only) and verified like
+# trailing ones; --artifacts is accepted only by method. Any other leading
 # --base/--head/--artifacts on a single target is a usage error (exit 2),
 # never silently ignored.
 #
@@ -288,7 +294,8 @@ gate() {
     signoff-selftest)
       need_tools "$g" klt python3 git && run_gate "$g" "$SCRIPTS/test-check-signoff.sh" "$@" ;;
     signoff)
-      need_tools "$g" klt python3 && run_gate "$g" "$SCRIPTS/check-signoff.sh" "$@" ;;
+      need_tools "$g" klt python3 git && check_forwarded_refs "$g" "$@" &&
+        run_gate "$g" "$SCRIPTS/check-signoff.sh" "$@" ;;
     regen-signoff-selftest)
       need_tools "$g" git python3 && run_gate "$g" "$SCRIPTS/test-regen-signoff.sh" "$@" ;;
     signoff-inventories)
@@ -301,6 +308,8 @@ gate() {
       run_gate "$g" "$ROOT/sim/tests/test-reserve-record-id.sh" "$@" ;;
     tank-ab-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-tank-ab-reserve.sh" "$@" ;;
+    stub-ab-selftest)
+      run_gate "$g" "$ROOT/sim/tests/test-stub-ab-reserve.sh" "$@" ;;
     local-grid-guard-selftest)
       run_gate "$g" "$ROOT/sim/tests/test-local-grid-guard.sh" "$@" ;;
     osdi-staging-selftest)
@@ -404,6 +413,7 @@ agg_test() {
   gate append-only-selftest
   gate record-id-selftest
   gate tank-ab-selftest
+  gate stub-ab-selftest
   gate local-grid-guard-selftest
   gate osdi-staging-selftest
   gate spec-dr-selftest
@@ -456,7 +466,9 @@ case "$TARGET" in
   all)
     gate lint
     agg_test
-    gate signoff
+    # --base also turns on the signoff T1 direction gate (issue #449);
+    # check_forwarded_refs above has already verified the ref resolves.
+    gate signoff ${BASE:+--base "$BASE"}
     # Issue #333: the only networked gate — all may fetch where test/ci
     # cannot; an unreadable tracker is a counted skip, never a pass.
     gate friction-upstream
@@ -497,6 +509,11 @@ case "$TARGET" in
     # check-sim-append-only.sh has no --head (it diffs the checked-out HEAD).
     reject_opts "$TARGET" HEAD_REF ARTIFACTS
     gate append-only ${BASE:+--base "$BASE"} "$@" ;;
+  signoff)
+    # check-signoff.sh takes --base only (issue #449); it grades the
+    # checked-out tree, so there is no --head to forward.
+    reject_opts "$TARGET" HEAD_REF ARTIFACTS
+    gate signoff ${BASE:+--base "$BASE"} "$@" ;;
   *)
     reject_opts "$TARGET" BASE HEAD_REF ARTIFACTS
     gate "$TARGET" "$@" ;;

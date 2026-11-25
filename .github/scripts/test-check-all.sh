@@ -54,7 +54,7 @@ for c in .github/scripts/test-lint-shell.sh .github/scripts/lint-shell.sh \
          .github/scripts/check-klt-friction-upstream.sh \
          .github/scripts/test-check-layout-evidence.sh \
          .github/scripts/check-layout-evidence.sh \
-         sim/tests/test-reserve-record-id.sh sim/tests/test-tank-ab-reserve.sh \
+         sim/tests/test-reserve-record-id.sh sim/tests/test-tank-ab-reserve.sh sim/tests/test-stub-ab-reserve.sh \
          sim/tests/test-local-grid-guard.sh \
          sim/tests/test-build-osdi-staging.sh; do
   cat > "$F/$c" <<'EOF'
@@ -113,11 +113,11 @@ for f in "$BIN"/*; do [ "$(basename "$f")" = ngspice ] || ln -s "$f" "$NONG/"; d
 NOKLT="$T/bin-noklt"; mkdir -p "$NOKLT"
 for f in "$BIN"/*; do [ "$(basename "$f")" = klt ] || ln -s "$f" "$NOKLT/"; done
 
-SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-regen-signoff.sh|check-signoff-inventories.sh|check-signoff-characterization.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-tank-ab-reserve.sh|test-local-grid-guard.sh|test-build-osdi-staging.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-test-wiring.sh|check-test-wiring.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-record-deck-integrity.sh|check-record-deck-integrity.sh|test-check-klt-friction.sh|check-klt-friction.sh|test-check-klt-friction-upstream.sh|test-check-layout-evidence.sh|check-layout-evidence.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
+SELFTESTS="test-lint-shell.sh|test-check-signoff.sh|test-regen-signoff.sh|check-signoff-inventories.sh|check-signoff-characterization.sh|test-check-sim-append-only.sh|test-reserve-record-id.sh|test-tank-ab-reserve.sh|test-stub-ab-reserve.sh|test-local-grid-guard.sh|test-build-osdi-staging.sh|test-check-spec-change-has-dr.sh|test-check-all.sh|test-check-test-wiring.sh|check-test-wiring.sh|test-check-grader-spec-agreement.sh|check-grader-spec-agreement.sh|test-record-currency.sh|check-record-currency.sh|test-model-inputs.sh|check-model-inputs.sh|test-record-deck-integrity.sh|check-record-deck-integrity.sh|test-check-klt-friction.sh|check-klt-friction.sh|test-check-klt-friction-upstream.sh|test-check-layout-evidence.sh|check-layout-evidence.sh|run-grading-fixtures.sh|test-check-python.sh|check-python.sh compile|check-python.sh tests|"
 
 # 1. test aggregate: thirty-one gates in workflow order, exit 0
 reset; run_case "$NONG" test
-if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '31 passed, 0 failed, 0 skipped' "$OUT"; then
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '32 passed, 0 failed, 0 skipped' "$OUT"; then
   ok "test runs the self-tests in order and passes"; else bad "test: rc=$RC calls=$(calls)"; fi
 
 # 2. ci = lint + test
@@ -127,7 +127,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "lint-shell.sh|$SELFTESTS" ]; then
 
 # 3. child failure propagates, remaining gates still run
 reset; touch "$FAILDIR/test-check-signoff.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '30 passed, 1 failed' "$OUT"; then
+if [ "$RC" -eq 1 ] && [ "$(calls)" = "$SELFTESTS" ] && grep -q '31 passed, 1 failed' "$OUT"; then
   ok "child failure -> exit 1, others still run"; else bad "child failure: rc=$RC calls=$(calls)"; fi
 
 # 4. absent mandatory tool fails (child not run)
@@ -196,7 +196,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-test-wiring.sh|" ]; then
 reset; touch "$FAILDIR/check-test-wiring.sh"; run_case "$BIN" test-wiring
 if [ "$RC" -eq 1 ]; then ok "test-wiring failure -> exit 1"; else bad "test-wiring failure: rc=$RC"; fi
 reset; touch "$FAILDIR/check-test-wiring.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: test-wiring' "$OUT" && grep -q '30 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: test-wiring' "$OUT" && grep -q '31 passed, 1 failed' "$OUT" \
    && grep -q '^test-check-grader-spec-agreement.sh$' "$CALLS"; then
   ok "test-wiring failure fails test, later gates still run"; else bad "test-wiring test agg: rc=$RC"; fi
 
@@ -210,7 +210,7 @@ if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-grader-spec-agreement.sh|" ]; then
 reset; touch "$FAILDIR/check-grader-spec-agreement.sh"; run_case "$BIN" grader-spec
 if [ "$RC" -eq 1 ]; then ok "grader-spec failure -> exit 1"; else bad "grader-spec failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-record-currency.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q '30 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
+if [ "$RC" -eq 1 ] && grep -q '31 passed, 1 failed' "$OUT" && grep -q '^check-record-currency.sh$' "$CALLS"; then
   ok "currency self-test failure fails test, later gates still run"; else bad "currency selftest fail: rc=$RC"; fi
 
 # 4b2. model-inputs targets (issue #139)
@@ -231,7 +231,7 @@ reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$BIN" osdi-staging
 if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT"; then
   ok "osdi-staging-selftest failure -> exit 1"; else bad "osdi-staging failure: rc=$RC"; fi
 reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT" && grep -q '30 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: osdi-staging-selftest' "$OUT" && grep -q '31 passed, 1 failed' "$OUT" \
    && grep -q '^test-check-spec-change-has-dr.sh$' "$CALLS"; then
   ok "osdi-staging failure fails test, later gates still run"; else bad "osdi-staging test agg: rc=$RC"; fi
 reset; touch "$FAILDIR/test-build-osdi-staging.sh"; run_case "$NONG" ci
@@ -261,7 +261,7 @@ reset; run_case "$NONG" grading-fixtures
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-grading-fixtures.sh|" ]; then
   ok "grading-fixtures target dispatches without ngspice"; else bad "grading-fixtures: rc=$RC $(calls)"; fi
 reset; touch "$FAILDIR/run-grading-fixtures.sh"; run_case "$NONG" test
-if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '30 passed, 1 failed' "$OUT" \
+if [ "$RC" -eq 1 ] && grep -q 'FAIL: grading-fixtures' "$OUT" && grep -q '31 passed, 1 failed' "$OUT" \
    && grep -q '^check-python.sh tests$' "$CALLS"; then
   ok "grading-fixtures failure fails test, later gates still run"; else bad "grading-fixtures fail: rc=$RC"; fi
 
@@ -381,6 +381,30 @@ if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
 reset; run_case "$BIN" --artifacts "$T/art" method
 if [ "$RC" -eq 0 ] && [ "$(calls)" = "run-method-checks.sh $T/art|" ]; then
   ok "leading --artifacts forwarded to method"; else bad "leading artifacts method: rc=$RC $(calls)"; fi
+
+# 9c. signoff --base forwarding (issue #449): trailing and leading forms,
+#     ref verification, rejected --head/--artifacts, and the all aggregate
+reset; run_case "$BIN" signoff --base "$FIRST"
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-signoff.sh --base $FIRST|" ]; then
+  ok "signoff forwards --base to the checker"; else bad "signoff fwd: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" signoff --base no-such-ref
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF: 'no-such-ref'" "$OUT" && [ ! -s "$CALLS" ]; then
+  ok "unavailable --base on signoff -> exit 1"; else bad "bad ref signoff: rc=$RC"; fi
+reset; run_case "$BIN" --base "$FIRST" signoff
+if [ "$RC" -eq 0 ] && [ "$(calls)" = "check-signoff.sh --base $FIRST|" ]; then
+  ok "leading --base forwarded to signoff"; else bad "leading fwd signoff: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" --base no-such-ref signoff
+if [ "$RC" -eq 1 ] && grep -q "UNAVAILABLE REF" "$OUT" && [ ! -s "$CALLS" ]; then
+  ok "leading unavailable --base on signoff -> exit 1"; else bad "leading bad ref signoff: rc=$RC $(calls)"; fi
+reset; run_case "$BIN" --head HEAD signoff
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --head on signoff -> exit 2"; else bad "leading head signoff: rc=$RC"; fi
+reset; run_case "$BIN" --artifacts "$T/art" signoff
+if [ "$RC" -eq 2 ] && [ ! -s "$CALLS" ]; then
+  ok "leading --artifacts on signoff -> exit 2"; else bad "leading artifacts signoff: rc=$RC"; fi
+reset; run_case "$BIN" --base "$FIRST" all
+if [ "$RC" -eq 0 ] && grep -q "^check-signoff.sh --base $FIRST$" "$CALLS"; then
+  ok "all --base forwards --base to the signoff gate"; else bad "all base signoff: rc=$RC $(calls)"; fi
 
 # 10. usage errors
 reset; run_case "$BIN" pr-diff

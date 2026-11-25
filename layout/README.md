@@ -35,29 +35,56 @@ dominated by the two `p11` spirals.
 | SiGe HBT | 4 | `SG13_dev/npn13G2V` |
 | Resistor | 3 | `SG13_dev/rppd` — see `PROVENANCE.md` §5 for why |
 | Guard-ring tap | 4 | `SG13_dev/ptap1` |
-| Via ladder | 55 | `SG13_dev/via_stack` |
+| Via ladder | 56 | `SG13_dev/via_stack` |
 
-All 9 nets of `design/vco.spice` are routed and labelled (`VCTRL` carries a
-second label, on its TopMetal2 chip-level pin, below): `VDD`, `OUTP`,
+All 9 nets of `design/vco.spice` are routed and labelled (`VCTRL` and `0`
+each carry a second label, on their TopMetal2 chip-level pins, and `OUTP`/`OUTN`
+each carry one on their TopMetal1 chip-level pins, below): `VDD`, `OUTP`,
 `OUTN`, `VCTRL`, `TAIL`, `TE`, `NBIAS`, `RE`, `0`.
 
-## Chip-level pin: VCTRL on TopMetal2 (issue #314)
+## Chip-level pins: VCTRL and 0 on TopMetal2 (#314, #427), OUTP/OUTN on TopMetal1 (#420)
 
 A parent that keeps Metal1-5 out of a region around the block can reach every
 signal the chip needs from outside the bbox only on TopMetal1/TopMetal2.
-`OUTP`/`OUTN` are TopMetal1 and `VDD` is TopMetal2; `VCTRL` is now a TopMetal2
-pin too (it was a Metal3 label inside the core only).
+`OUTP`/`OUTN` are TopMetal1 and `VDD` is TopMetal2; `VCTRL` and `0` are
+TopMetal2 pins too (they were a Metal3 label inside the core and a Metal1
+label on the guard ring, respectively), and `OUTP`/`OUTN` are pins at the bbox
+bottom edge (they were labels on the core tank metal only, 74–82 µm inside the
+edge).
 
 | Pin | Layer (GDS) | Shape (µm, in `vco` coordinates) | Label | Distance to artifact bbox edge |
 |---|---|---|---|---|
 | `VCTRL` | TopMetal2 `134/0` | x −68.0…−64.0, y −106.0…−54.5 (4.0 µm wide strap) | `VCTRL` on `134/25` at (−66.0, −104.0) | **0.03 µm** to the bottom edge (bbox y0 = −106.03; the strap's outboard end is the guard ring's outer edge, y = −106.0) |
+| `OUTP` | TopMetal1 `126/0` | x −121.0…−119.0, y −106.0…−22.0 (2.0 µm wide strap) | second `OUTP` on `126/25` at (−120.0, −104.0); core label at (−120.0, −24.0) stays | **0.03 µm** to the bottom edge (same edge geometry as VCTRL's pin) |
+| `OUTN` | TopMetal1 `126/0` | x 119.0…121.0, y −106.0…−30.0 (2.0 µm wide strap) | second `OUTN` on `126/25` at (120.0, −104.0); core label at (120.0, −32.0) stays | **0.03 µm** to the bottom edge |
+| `0` | TopMetal2 `134/0` | x 64.0…68.0, y −106.0…−101.57 (4.0 µm wide landing strap) | `0` on `134/25` at (66.0, −104.0) | **0.03 µm** to the bottom edge (same as `VCTRL`) |
 
-Land on the strap's bottom end (y −106…−104). It reaches the existing Metal3
-`VCTRL` trunk through one new Metal3→TopMetal2 `via_stack` (`VS_VCTRL_PIN`,
-at (−66.0, −57.0)); no other shape of the block changed, the artifact bbox is
-unchanged, and the strap adds no Metal1-5 outside that stack. The nearest
-other TopMetal2 is the `VDD` trunk (y −11.5…−3.5, 42.5 µm above the strap's
-top) and the RREF spur (x 93…97).
+Land on either strap's bottom end (y −106…−104). `VCTRL` reaches the
+existing Metal3 trunk through one Metal3→TopMetal2 `via_stack`
+(`VS_VCTRL_PIN`, at (−66.0, −57.0)); `0` reaches the bottom guard-ring bar's
+Metal1 through one Metal1→TopMetal2 `via_stack` (`VS_GND_PIN`, at
+(66.0, −104.07), the same `vs_m1_tm2` ladder `VS_VDD_REF` uses — its height
+is derived from the ladder's measured pads so the TopMetal2 pad never passes
+the ring edge while the Metal1 pad still bites the bar by 0.23 µm). No other
+shape of the block changed, the artifact bbox is unchanged, and the landings
+add no Metal1-5 outside their stacks. The nearest other TopMetal2 is the
+`VDD` trunk (y −11.5…−3.5; its lower edge is 43.0 µm above the `VCTRL`
+strap's top and 90.07 µm above the ground landing's) and the RREF spur
+(x 93…97); the two straps are 128 µm apart (`topmetal2.space` is 2.0).
+
+The OUTP/OUTN pins (land on each strap's bottom end, y −106…−104) need **no
+via at all** — each strap is TopMetal1 like the tank metal it drops from,
+overlapping the existing tank strap over its full 4.0 µm height, and adds no
+Metal1-5. The tank pin straps sit outside the guard ring's x-range (its Activ
+box spans x −80…105) with 39/14 µm of clearance (OUTP/OUTN), and the two
+straps are 238 µm apart.
+
+The straps are not free: they hang on the tank nodes, adding a measured
+6.888 fF (OUTP) / 6.199 fF (OUTN) of geometric substrate capacitance — a
+−0.8…−1.0 % f0 and −0.2 % tuning-ratio shift, quantified with its method and
+limits in `sim/tank-stub-load/` and `PROVENANCE.md` §18. A parent landing on
+these pins replaces ~103–111 µm of in-bbox route per side with ~29 µm, so the
+**net** tank load still drops sharply (the parent's own numbers, #345).
 
 The tank is **two independent 3-terminal spirals sharing `VDD`**
 (`XL1 VDD OUTP 0`, `XL2 VDD OUTN 0`), not one centre-tapped differential coil.
@@ -103,10 +130,12 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     labels untested), and `antenna.drc` (0 findings). All three were re-run
     for this record and are listed in §13. This is a block-level result, not
     a chip-level one.
-  - *klt's curated deck* (`drc/vco-drc.json`, a diagnostic): `violations`, 8,
-    all inside the PDK's own `npn13G2V` PCell. A same-deck control shows
-    they come from the deck's `Cnt.c` approximation (upstream
-    `klayout-tools#2688`), not from the layout.
+  - *klt's curated deck* (`drc/vco-drc.json`, a diagnostic): `violations`,
+    64, all `nwell.enclosing.pactiv.1` rolled up on the 32 SVaricap +
+    32 `SVaricap$1` cells. A same-deck control supplying the deck's dropped
+    `Cnt.c` activ_mask term does not clear them: the standing diagnosis is
+    a missing carve-out in the curated rule (§12, issue #315, upstream
+    `klayout-tools#2688` line), not a layout defect.
 - **Guard-ring continuity is verified on all three of its layers** (Activ,
   pSD, Metal1), each against a negative control that breaks it (§12).
 - **ERC supply evidence (#330): `klt erc` reports `erc_status: clean` — both
@@ -123,9 +152,12 @@ mutates the shared PDK install (`PROVENANCE.md` §3).
     declared PCell-provided p+ carve-outs), and the spec's own layer
     coverage is complete under the `sg13g2` deck.
   - *Negative control*: one `ptap1` bar deleted (`scripts/break_ring.py`)
-    flips the verdict to `violations` with `erc.missing_tie` and
-    `erc.unconnected_net` naming `0` — that bar also carries the layout's
-    only `0` label text (`erc/vco-erc-control.json`).
+    flips the verdict to `violations` with `erc.missing_tie` naming `0`
+    plus unlabelled-conductor findings. Since the TopMetal2 ground landing
+    (#427) the second `0` label sits on the landing and survives the
+    deletion, so `erc.unconnected_net` no longer fires — the rejection
+    rides on the severed substrate tie
+    (`erc/vco-erc-control.json`).
   - *Signoff*: item 11 cites this envelope plus `klt lvs`'s recorded
     refusal of the compare and renders `unmet` / `check_errored` — `met`
     stays gated on item 4's LVS report (#62); see §16.6 for the exact

@@ -6,7 +6,8 @@
 # fake OSDI binary and the experiment's .spiceinit. Checks that
 #   1. the capture follows the transitive closure and retains its manifest
 #      under the reserved record (repo-owned inputs as snapshots, PDK/OSDI
-#      by digest only);
+#      by digest only), and the production reader verifies the emitted
+#      manifest and snapshots (writer-to-reader contract, #221);
 #   2. every deck renders against the bundle, never a live path;
 #   3. a LIVE mutation after capture changes neither a later deck nor any
 #      recorded digest, and the summary still publishes;
@@ -23,6 +24,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 SIM_DIR="$(cd "${HERE}/.." && pwd)"
 REAL_OSC="${SIM_DIR}/oscillator-core"
 CLASSIFIER="${SIM_DIR}/../.github/scripts/record_currency.py"
+READER="${SIM_DIR}/../.github/scripts/model_inputs_check.py"
 # shellcheck source=../lib.sh
 source "${SIM_DIR}/lib.sh"
 
@@ -146,6 +148,13 @@ check "bundle files are read-only" '[ ! -w "$OSC_BUNDLE_DIR/models/cornerHBT.lib
 check "WORKDIR .spiceinit served from the bundle" 'cmp -s "$WORKDIR/.spiceinit" "$OSC_BUNDLE_DIR/init/.spiceinit"'
 JSON="$EXPERIMENT_DIR/records/${RECORD_ID}-model-inputs.json"
 check "manifest retained under the reserved record" '[ -f "$JSON" ]'
+# Writer-to-reader contract (#221): run the production reader on this
+# scratch repository while the retained snapshots are present. The manifest
+# count is asserted so an empty scan cannot pass.
+check "production reader verifies the emitted capture" \
+  'python3 -I "$READER" --root "$REPO_ROOT" check >"$T/reader.out" 2>"$T/reader.err" &&
+   grep -q "1 manifest(s) verified (3 retained snapshot(s) hash-checked, 10 external role(s) digest-only)" "$T/reader.out" &&
+   [ ! -s "$T/reader.err" ]'
 check "retained manifest parses, schema and record id" \
   'python3 -I -c "import json,sys; d=json.load(open(sys.argv[1])); assert d[\"schema\"]==\"sg13g2-vco/model-inputs/1\" and d[\"record_id\"]==sys.argv[2] and len(d[\"inputs\"])==13" "$JSON" "$RECORD_ID"'
 check "PDK libraries and OSDI are external (not retained)" \

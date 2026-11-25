@@ -199,7 +199,7 @@
     "pdk_relative_path": "libs.tech/klayout/tech/drc/ihp-sg13g2.drc"
   },
   "input": {
-    "content_hash": "sha256:c65cad9b999c5b87218d508dc13e36c84c5677f83b74df9fb3ba54cc9eadf87e",
+    "content_hash": "sha256:0f859c9572721dd9dce7d42a3946f0f993305124044e53cb1a28f7400947c462",
     "file": "layout/vco.gds"
   },
   "invocation": [

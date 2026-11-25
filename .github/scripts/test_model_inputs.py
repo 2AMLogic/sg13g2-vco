@@ -127,72 +127,48 @@ OVL = b'{"schema": "sg13g2-vco/model-overlay/1", "overlay": "svaricap-dsubw-vj"}
 OVL_BP = "overlay/svaricap-vj.json"
 
 
-def writer_manifest(rid, bundle, retain=True):
-    """Python port of osc_model_inputs_json (sim/oscillator-core/osc_bench.sh)
-    applied to MANIFEST.tsv rows as sim/lib.sh writes them
-    (role, bundle_path, sha256, original_path)."""
-    sp = "%s/netlist-snapshots/%s/model-inputs/" % (EXP, rid)
-    kept_roles = ("inductor-model", "simulator-init", "model-overlay")
-    inputs = []
-    for role, bp, digest, orig in bundle:
-        inputs.append({"role": role, "bundle_path": bp, "sha256": digest,
-                       "original_path": orig,
-                       "retained_snapshot":
-                       sp + bp if retain and role in kept_roles else None})
-    return {"schema": mic.SCHEMA, "record_id": rid, "note": "n",
-            "inputs": inputs}
-
-
-def writer_bundle(overlay=True):
-    rows = [("pdk-model", "models/cornerHBT.lib", "a" * 64, "/opt/pdk/c.lib"),
-            ("osdi-binary", "osdi/mosvar.osdi", "b" * 64, "/opt/osdi/m.osdi"),
-            ("inductor-model", "inductor/sg13g2_inductor_em.spice", sha(IND),
-             LIVE),
-            ("simulator-init", "init/.spiceinit", sha(INIT),
-             EXP + "/.spiceinit")]
-    if overlay:
-        rows.append(("model-overlay", OVL_BP, sha(OVL),
-                     "sim/tools/svaricap_overlay.py"))
-    return rows
+def overlay_doc(rid=RID):
+    """good_doc() plus one explicit model-overlay entry, the optional
+    retained role of issue #221. The writer-to-reader contract itself is
+    exercised by sim/tests/test-model-bundle.sh, which runs this reader on
+    a capture the real writer emitted."""
+    doc = good_doc(rid)
+    doc["inputs"].append(
+        {"role": "model-overlay", "bundle_path": OVL_BP, "sha256": sha(OVL),
+         "original_path": "sim/tools/svaricap_overlay.py",
+         "retained_snapshot": "%s/netlist-snapshots/%s/model-inputs/%s"
+                              % (EXP, rid, OVL_BP)})
+    return doc
 
 
 class TestOverlayRole(Base):
     """model-overlay is an optional retained role (issue #221); the fixtures
-    mirror what sim/lib.sh + osc_bench.sh emit for a reserved record."""
+    are reader-side documents, and the writer-to-reader contract is checked
+    end-to-end by sim/tests/test-model-bundle.sh against a real capture."""
 
     def write(self, doc, snapshot=True):
         write_valid(self.root, doc=doc)
         if snapshot:
             put(self.root, NS + OVL_BP, OVL)
 
-    def writer_doc(self):
-        return writer_manifest(RID, writer_bundle())
-
-    def test_writer_sources_still_emit_the_role(self):
-        repo = os.path.join(HERE, "..", "..")
-        for rel in ("sim/lib.sh", "sim/oscillator-core/osc_bench.sh"):
-            with open(os.path.join(repo, rel)) as f:
-                self.assertIn("model-overlay", f.read(), rel)
-
     def test_role_policy_split(self):
         self.assertNotIn("model-overlay", mic.MANDATORY_ROLES)
         self.assertIn("model-overlay", mic.ALLOWED_RETAINED_ROLES)
 
     def test_valid_overlay_passes(self):
-        self.write(self.writer_doc())
+        self.write(overlay_doc())
         rc, out, err = self.run_gate()
         self.assertEqual((rc, err), (0, ""))
         self.assertIn("(3 retained snapshot(s) hash-checked, "
                       "2 external role(s) digest-only)", out)
 
     def test_legacy_capture_without_overlay_passes(self):
-        self.write(writer_manifest(RID, writer_bundle(overlay=False)),
-                   snapshot=False)
+        self.write(good_doc(), snapshot=False)
         rc, out, err = self.run_gate()
         self.assertEqual((rc, err), (0, ""))
 
     def test_overlay_alone_does_not_satisfy_mandatory_roles(self):
-        doc = self.writer_doc()
+        doc = overlay_doc()
         doc["inputs"] = [e for e in doc["inputs"]
                          if e["role"] in ("model-overlay", "pdk-model",
                                           "osdi-binary", "simulator-init")]
@@ -202,28 +178,28 @@ class TestOverlayRole(Base):
         self.assertIn("no 'inductor-model' entry", err)
 
     def test_missing_overlay_snapshot(self):
-        self.write(self.writer_doc(), snapshot=False)
+        self.write(overlay_doc(), snapshot=False)
         rc, out, err = self.run_gate()
         self.assertEqual(rc, 1)
         self.assertIn("retained snapshot", err)
         self.assertIn("is missing", err)
 
     def test_overlay_snapshot_is_directory(self):
-        self.write(self.writer_doc(), snapshot=False)
+        self.write(overlay_doc(), snapshot=False)
         os.makedirs(os.path.join(self.root, NS + OVL_BP))
         rc, out, err = self.run_gate()
         self.assertEqual(rc, 1)
         self.assertIn("is missing", err)
 
     def test_changed_digest(self):
-        self.write(self.writer_doc())
+        self.write(overlay_doc())
         put(self.root, NS + OVL_BP, OVL + b" ")
         rc, out, err = self.run_gate()
         self.assertEqual(rc, 1)
         self.assertIn("hashes to", err)
 
     def test_overlay_must_be_retained(self):
-        doc = self.writer_doc()
+        doc = overlay_doc()
         doc["inputs"][-1]["retained_snapshot"] = None
         self.write(doc)
         rc, out, err = self.run_gate()
@@ -234,7 +210,7 @@ class TestOverlayRole(Base):
         for bad in ("/etc/passwd", NS + "../x.json", NS + "overlay/./a.json",
                     "sim/other/netlist-snapshots/%s/model-inputs/%s"
                     % (RID, OVL_BP)):
-            doc = self.writer_doc()
+            doc = overlay_doc()
             doc["inputs"][-1]["retained_snapshot"] = bad
             self.write(doc)
             rc, out, err = self.run_gate()
@@ -242,7 +218,7 @@ class TestOverlayRole(Base):
             self.assertIn("retained_snapshot", err)
 
     def test_unsafe_bundle_path(self):
-        doc = self.writer_doc()
+        doc = overlay_doc()
         doc["inputs"][-1]["bundle_path"] = "../overlay.json"
         self.write(doc)
         rc, out, err = self.run_gate()
@@ -250,7 +226,7 @@ class TestOverlayRole(Base):
         self.assertIn("not a safe relative path", err)
 
     def test_duplicate_identity(self):
-        doc = self.writer_doc()
+        doc = overlay_doc()
         doc["inputs"].append(dict(doc["inputs"][-1]))
         self.write(doc)
         rc, out, err = self.run_gate()
@@ -258,7 +234,7 @@ class TestOverlayRole(Base):
         self.assertIn("duplicate bundle identity", err)
 
     def test_unknown_role(self):
-        doc = self.writer_doc()
+        doc = overlay_doc()
         doc["inputs"][-1]["role"] = "model-overlay-extra"
         self.write(doc)
         rc, out, err = self.run_gate()
@@ -269,7 +245,7 @@ class TestOverlayRole(Base):
         # A retained-only role is never digest-only: null snapshot rejected
         # (covered by test_overlay_must_be_retained); an external role with a
         # snapshot is still rejected too.
-        doc = self.writer_doc()
+        doc = overlay_doc()
         doc["inputs"][0]["retained_snapshot"] = NS + doc["inputs"][0][
             "bundle_path"]
         self.write(doc)

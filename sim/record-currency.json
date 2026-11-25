@@ -2,7 +2,7 @@
   "counts": {
     "current": 0,
     "superseded": 0,
-    "unknown": 40
+    "unknown": 41
   },
   "records": [
     {
@@ -521,6 +521,25 @@
       "path": "sim/tank-characterization/records/20260927-081110-f88eb89.md",
       "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
       "record_id": "20260927-081110-f88eb89",
+      "state": "unknown"
+    },
+    {
+      "basis": "not-applicable",
+      "deck_integrity": {
+        "checked": 10,
+        "matched": 10,
+        "mismatched": [],
+        "unpaired": 0
+      },
+      "design_netlist_sha256": null,
+      "family": "sim/tank-stub-load",
+      "file_count": 54,
+      "filename_commit": {
+        "id": "e6b0670"
+      },
+      "path": "sim/tank-stub-load/records/20261121-074401-e6b0670-226451eb",
+      "reason": "component/model characterization or synthetic comparison: not derived from design/vco.spice and no documented source provenance; currency does not apply.",
+      "record_id": "20261121-074401-e6b0670-226451eb",
       "state": "unknown"
     },
     {

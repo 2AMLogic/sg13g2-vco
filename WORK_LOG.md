@@ -4,8 +4,43 @@ Merged PRs and closed issues, newest first. Entries record forge events;
 closure alone does not assert that engineering acceptance criteria passed.
 Guide maintenance PRs are excluded.
 
+### 2026-11-25
+
+- **PR #453**: test: add fixture and gate for the tank-stub A/B runner
+- **Issue #447** (closed): sim/tank-stub-load/run_stub_ab.sh has no simulator-free fixture test (its sibling runner does)
+- **PR #459**: test: check every PROVENANCE outline restatement against EXPECTED_BBOX_UM
+- **Issue #456** (closed): layout: PROVENANCE §18 restates the artifact outline but the new drift gate only covers §§15/17
+- **PR #455**: test: gate EXPECTED_BBOX_UM against the PROVENANCE outline; print bounds on failed checks
+- **Issue #445** (closed): layout: the artifact-outline gate's expected value is an unchecked transcription, and a failed acceptance check never prints its bounds
+
+### 2026-11-23
+
+- **PR #451**: signoff: gate T1 met-item regressions against the merge-base verdict
+- **PR #428**: layout: expose OUTP/OUTN as TopMetal1 pins at the bbox edge
+- **Issue #449** (closed): signoff: CI accepts a t1_met_count regression — check-signoff.sh only compares the render, never the met count
+- **Issue #448** (closed): layout/PROVENANCE.md §18 misstates the label-count assertion change; tank-stub make_requests.py docstring lists a flag it does not accept
+- **Issue #420** (closed): layout: expose OUTP/OUTN as top-metal pins at the bbox edge (parent tank routes are 100+ um at the floor)
+- **PR #446**: docs(layout): state 0.8.0 diagnostic counts in drc.sh header
+- **PR #443**: fix(layout): derive pin placements from measured pad edges and gate the artifact outline
+- **PR #442**: fix(layout): bound the curated-deck allowlist to exact artefact counts
+- **PR #441**: docs(layout): state the three DRC control outcomes and the per-strap VDD trunk gaps
+- **PR #434**: test: verify the emitted model-input capture with the production reader
+- **PR #432**: test: pin pre-change tuning row so the byte-identical check always runs
+- **PR #429**: layout: add TopMetal2 ground chip-level pin on the bottom guard-ring bar
+- **Issue #444** (closed): docs(layout): drc.sh file header still states the 0.6.0 `8 Cnt.c hits` story as present fact
+- **Issue #440** (closed): docs(layout): two measurable claims in PROVENANCE §17 / README do not match the committed records
+- **Issue #439** (closed): layout: ground-pin stack height assumes via_stack pad symmetry, and generate.sh never asserts the artifact bbox
+- **Issue #438** (closed): layout: drc.sh curated-deck gate permits activ.enclosing.cont.1 at any count
+- **Issue #433** (closed): Exercise the real overlay capture and remove the Python manifest-writer copy
+- **Issue #427** (closed): layout: expose VCO ground net `0` on top metal at the bottom edge for parent supply routing
+- **Issue #426** (closed): Remove the tuning fixture’s dependency on a local copy of the old bench
+
 ### 2026-11-22
 
+- **PR #437**: layout: extract LVS gate/record Python from lvs.sh heredoc into tracked lvs_record.py
+- **PR #419**: docs(lvs): split the section 14.6 draft into two IHP runset reports with fix proposals
+- **Issue #430** (closed): Move the LVS record writer into the existing Python compile gate
+- **Issue #417** (closed): lvs: prepare the two IHP runset reports (inductor terminal order; LA/LB texts as net names) and the tool-fix proposal for operator review (preparation authorised by the #162 ruling)
 - **PR #421**: build: bump pinned klt to 0.9.2 (ihp-sg13g2 runset allowlist) and re-render signoff
 - **Issue #416** (closed): Bump the klt pin 0.8.0 -> 0.9.2 (release carrying the ihp-sg13g2 runset digest allowlist) and re-render the signoff bundle
 

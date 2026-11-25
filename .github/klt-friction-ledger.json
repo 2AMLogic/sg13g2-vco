@@ -360,7 +360,7 @@
       "number": 5853,
       "gap": "klt sim batch/remote has no runner-side simulator selection or version requirement; the request's engine_version pin (klayout-tools#3041) is checked only against the version the runner's report carried, after the run. A runner image that changes its simulator major re-runs previously validated routes on a different solver, and the first signal is per-unit aborts that look like design failures.",
       "status": "closed",
-      "status_checked_on": "2026-11-20",
+      "status_checked_on": "2026-11-21",
       "klt_version_verified": "0.8.0",
       "reverified": "0.9.2",
       "workarounds": [
@@ -372,13 +372,32 @@
       "number": 5867,
       "gap": "klt signoff --manifest cannot write the tier-report render to a file (-o/--output is scoped to --attest), so callers redirect stdout destructively and a failing render truncates the committed record.",
       "status": "closed",
-      "status_checked_on": "2026-11-20",
+      "status_checked_on": "2026-11-21",
       "klt_version_verified": "0.8.0",
       "reverified": "0.9.2",
       "workarounds": [
         ".github/scripts/regen-signoff.sh"
       ],
       "note": "Closed completed upstream 2026-11-17 (re-checked 2026-11-20). The fix is NOT in the pinned release: v0.9.2 was tagged 2026-11-15 and `klt signoff --help` at 0.9.2 still scopes -o/--output to --attest (measured 2026-11-20). Workaround KEPT: .github/scripts/regen-signoff.sh renders to a temp file, gates the payload and only then moves it over the record (issue #360). Retire on the first pin whose -o covers the --manifest render."
+    },
+    {
+      "number": 6903,
+      "gap": "The pinned ihp-sg13g2 deck reverses the winding terminals when the LB port sorts before LA. The klt klayout-runset report lacks the strict top-port findings and a distinct reason for the terminal-order limitation.",
+      "status": "closed",
+      "status_checked_on": "2026-11-25",
+      "klt_version_verified": "0.8.0",
+      "reverified": "0.9.2",
+      "workarounds": [],
+      "note": "Closed completed upstream 2026-11-24 (checked 2026-11-25). The fix is NOT in the pinned release: v0.9.2 (the pin, and the latest release as of 2026-11-25) was tagged 2026-11-15, before the closure. The last measurement at 0.9.2 (2026-11-22) is unchanged and was not re-run on 2026-11-25: the allowlist still pins the IHP v0.3.0 deck (5cccb161), klt reads the verdict from the .lvsdb, and the three strict top-port findings remain FAIL in the recorded LVS run. Entry kept as a record of the limitation at the pin; re-measure on the first pin newer than 0.9.2."
+    },
+    {
+      "number": 6914,
+      "gap": "Whether label-based terminal ordering or marker-only net naming can preserve the pinned runset's negative controls and support signoff remains open.",
+      "status": "open",
+      "status_checked_on": "2026-11-22",
+      "klt_version_verified": "0.9.2",
+      "workarounds": [],
+      "note": "The measurement proposal depends on the fixture from #6903. The 0.9.2 allowlist pins the IHP v0.3.0 deck. Grading a normalised result requires an operator ruling."
     }
   ]
 }

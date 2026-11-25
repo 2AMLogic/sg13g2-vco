@@ -44,6 +44,17 @@ def git(repo, *args):
         return None
 
 
+# The block outline PROVENANCE.md sections 15 and 17 specify (x +-305.13,
+# y -106.03...290.26 um).  Independent of the stream on purpose (issue #439):
+# this constant is transcribed from the provenance record, not derived from
+# the artifact, so a geometry change that moves any edge fails the build
+# instead of being measured and recorded.  A deliberate outline change
+# updates PROVENANCE first, then this constant.  Sections 15 and 17 are the
+# authority; every other section that restates the outline (section 18, any
+# later one) must agree with it, and the tests fail naming the section.
+EXPECTED_BBOX_UM = {"x0": -305.13, "y0": -106.03, "x1": 305.13, "y1": 290.26}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("build")
@@ -144,6 +155,12 @@ def main(argv=None):
             "expected": 0,
             "measured": connectivity.get(v, {}).get("dead_metal_clusters"),
             "pass": connectivity.get(v, {}).get("dead_metal_clusters") == 0})
+    checks.append({
+        "check": ("artifact bbox matches the PROVENANCE sections 15/17 "
+                  "outline (all four edges, um)"),
+        "expected": EXPECTED_BBOX_UM,
+        "measured": verify["bbox_um"],
+        "pass": verify["bbox_um"] == EXPECTED_BBOX_UM})
 
     manifest = {
         "schema_version": 1,
@@ -200,6 +217,10 @@ def main(argv=None):
     for c in checks:
         print("  [%s] %s" % ("ok" if c["pass"] else "FAIL",
                              c.get("pcell") or c.get("check")))
+        if not c["pass"]:
+            for k in ("expected", "measured"):
+                if k in c:
+                    print("    %s: %r" % (k, c[k]))
     if failed:
         print("manifest.py: %d acceptance check(s) failed" % len(failed),
               file=sys.stderr)
