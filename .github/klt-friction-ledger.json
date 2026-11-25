@@ -383,12 +383,12 @@
     {
       "number": 6903,
       "gap": "The pinned ihp-sg13g2 deck reverses the winding terminals when the LB port sorts before LA. The klt klayout-runset report lacks the strict top-port findings and a distinct reason for the terminal-order limitation.",
-      "status": "open",
-      "status_checked_on": "2026-11-22",
+      "status": "closed",
+      "status_checked_on": "2026-11-25",
       "klt_version_verified": "0.8.0",
       "reverified": "0.9.2",
       "workarounds": [],
-      "note": "Upstream issue still open on 2026-11-22. At 0.9.2 the allowlist still pins the IHP v0.3.0 deck (5cccb161), and klt reads the verdict from the .lvsdb. The three strict top-port findings remain FAIL in the recorded LVS run."
+      "note": "Closed completed upstream 2026-11-24 (checked 2026-11-25). The fix is NOT in the pinned release: v0.9.2 (the pin, and the latest release as of 2026-11-25) was tagged 2026-11-15, before the closure. The last measurement at 0.9.2 (2026-11-22) is unchanged and was not re-run on 2026-11-25: the allowlist still pins the IHP v0.3.0 deck (5cccb161), klt reads the verdict from the .lvsdb, and the three strict top-port findings remain FAIL in the recorded LVS run. Entry kept as a record of the limitation at the pin; re-measure on the first pin newer than 0.9.2."
     },
     {
       "number": 6914,
