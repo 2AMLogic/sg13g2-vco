@@ -141,6 +141,18 @@ def assert_outline_agrees(section_numbers, bbox):
         assert_section_outline(sections[n], n, bbox)
 
 
+def assert_every_outline_agrees(bbox, sections=None):
+    """Issue #456: every section that restates the outline (section 18
+    today, any later one) must agree with the transcription.  Sections
+    with no outline statement are skipped; the 15/17 gate remains the
+    authority and fails on a reformat."""
+    if sections is None:
+        sections = provenance_sections()
+    for n in sorted(sections):
+        if provenance_outlines(sections[n]):
+            assert_section_outline(sections[n], n, bbox)
+
+
 class HelperTests(unittest.TestCase):
     def test_sha256_known_answer(self):
         with tempfile.TemporaryDirectory() as d:
@@ -291,8 +303,9 @@ class MainTests(unittest.TestCase):
 
 class OutlineProvenanceTests(unittest.TestCase):
     """EXPECTED_BBOX_UM is a hand transcription of the prose outline in
-    PROVENANCE sections 15 and 17 (checked individually, since section 18
-    repeats the same words); these tests fail the moment the constant and
+    PROVENANCE sections 15 and 17 (the authority, checked individually),
+    and every other section restating it must agree (issue #456); these
+    tests fail the moment the constant and
     the record disagree (issue #445)."""
 
     def test_expected_bbox_transcribes_provenance_15_and_17(self):
@@ -315,6 +328,27 @@ class OutlineProvenanceTests(unittest.TestCase):
         self.assertEqual(provenance_outlines(mangled), [])
         with self.assertRaises(AssertionError):
             assert_section_outline(mangled, 15, manifest.EXPECTED_BBOX_UM)
+
+    def test_every_section_restating_outline_agrees(self):
+        assert_every_outline_agrees(manifest.EXPECTED_BBOX_UM)
+        # section 18 restates the outline today, so it is covered
+        self.assertTrue(provenance_outlines(provenance_sections()[18]))
+
+    def test_stale_section_18_alone_fails_naming_it(self):
+        sections = dict(provenance_sections())
+        sections[18] = sections[18].replace("y −106.03", "y −106.04")
+        self.assertNotEqual(sections[18], provenance_sections()[18])
+        assert_outline_agrees((15, 17), manifest.EXPECTED_BBOX_UM)
+        with self.assertRaisesRegex(AssertionError, "section 18"):
+            assert_every_outline_agrees(manifest.EXPECTED_BBOX_UM, sections)
+
+    def test_every_section_check_covers_later_sections_and_skips_empty(self):
+        good = "(x ±305.13, y −106.03…290.26) and again (x ±305.13, y −106.03…290.26)"
+        bad = "(x ±305.13, y −106.03…290.27)"
+        bbox = manifest.EXPECTED_BBOX_UM
+        assert_every_outline_agrees(bbox, {1: "no outline here", 19: good})
+        with self.assertRaisesRegex(AssertionError, "section 19"):
+            assert_every_outline_agrees(bbox, {1: "none", 19: good + bad})
 
     def test_missing_section_fails(self):
         with self.assertRaises(AssertionError):

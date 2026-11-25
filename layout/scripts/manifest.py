@@ -49,7 +49,9 @@ def git(repo, *args):
 # this constant is transcribed from the provenance record, not derived from
 # the artifact, so a geometry change that moves any edge fails the build
 # instead of being measured and recorded.  A deliberate outline change
-# updates PROVENANCE first, then this constant.
+# updates PROVENANCE first, then this constant.  Sections 15 and 17 are the
+# authority; every other section that restates the outline (section 18, any
+# later one) must agree with it, and the tests fail naming the section.
 EXPECTED_BBOX_UM = {"x0": -305.13, "y0": -106.03, "x1": 305.13, "y1": 290.26}
 
 
