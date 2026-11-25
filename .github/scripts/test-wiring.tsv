@@ -22,6 +22,7 @@ sim/tests/test-build-osdi-staging.sh	osdi-staging-selftest	.github/scripts/check
 sim/tests/test-local-grid-guard.sh	local-grid-guard-selftest	.github/scripts/check-all.sh
 sim/tests/test-reserve-record-id.sh	record-id-selftest	.github/scripts/check-all.sh
 sim/tests/test-tank-ab-reserve.sh	tank-ab-selftest	.github/scripts/check-all.sh
+sim/tests/test-stub-ab-reserve.sh	stub-ab-selftest	.github/scripts/check-all.sh
 # launched by test-record-currency.sh (one-level transitive, root currency-selftest)
 sim/tests/test-model-bundle.sh	currency-selftest	.github/scripts/test-record-currency.sh
 sim/tests/test-resume-checkpoint.sh	currency-selftest	.github/scripts/test-record-currency.sh
