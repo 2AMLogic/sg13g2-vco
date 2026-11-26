@@ -1,5 +1,5 @@
 """Shared request/report inventory for the tank A/B record analyzers
-(issues #166 and #462).
+(issues #166, #462 and #470).
 
 A record directory (as written by run_tank_ab.sh / run_stub_ab.sh) holds
 two inventories:
@@ -10,9 +10,17 @@ two inventories:
 Discovery is the UNION of the two (#462): a unit whose report never came
 back still exists as a request, and each of its requested corners must get
 an explicit NO-REPORT coverage outcome -- a requested corner may never
-silently disappear from the coverage CSV.  The two consumers
-(../bn-substrate-tank/analyze.py and ../tank-stub-load/analyze.py) share
-this inventory and the missing-report coverage through this module; CSV
+silently disappear from the coverage CSV.
+
+A unit whose report DID come back carries the same request-status decision
+(#470): an absent or unreadable request gets exactly one request-level
+coverage entry per returned report, decided here (request_coverage) and
+applied by each consumer once per report, never inside its corner loop --
+an empty report must not be able to skip it.
+
+The two consumers (../bn-substrate-tank/analyze.py and
+../tank-stub-load/analyze.py) share this inventory, the missing-report
+coverage and the request-level coverage through this module; CSV
 formatting, units, validation and the delta/tuning reductions stay local
 to each experiment.
 
@@ -91,3 +99,22 @@ def no_report_coverage(rec, name, why):
         for pr, t in sorted(exp):
             entries.append((pr, fmt_t(t), "NO-REPORT", why))
     return variant, point, entries
+
+
+def request_coverage(name, exp, req_err):
+    """Request-level coverage entries for a unit whose report came back,
+    from its request state as returned by expected_corners (issue #470).
+
+    The consumer applies them once per returned report, whatever its corner
+    list: one REQUEST-UNREADABLE entry when the request file is present but
+    unreadable, one COVERAGE-UNCHECKED entry when it is absent (legacy
+    record) and none when it is readable -- a readable request is covered by
+    the consumer's per-corner entries and MISSING-CORNER rows.
+
+    Returns [(process, temp, outcome, detail), ...] with blank process and
+    temp; the caller maps the entries into its own coverage CSV format."""
+    if req_err:
+        return [("", "", "REQUEST-UNREADABLE", req_err)]
+    if exp is None:
+        return [("", "", "COVERAGE-UNCHECKED", "no decks/%s.request.json" % name)]
+    return []

@@ -11,9 +11,10 @@ it has no sampling variance; its numerical resolution is the sweep step
 (2 MHz) -- about +-0.05 % on f0 and +-0.5 % on Q here (same estimator and
 resolution as ../bn-substrate-tank/analyze.py, whose README states them).
 
-Validation and coverage follow ../bn-substrate-tank/analyze.py (issues #166
-and #462: the request/report inventory and the missing-report coverage are
-shared through ../tools/record_inventory.py): a corner is reduced to numbers
+Validation and coverage follow ../bn-substrate-tank/analyze.py (issues #166,
+#462 and #470: the request/report inventory, the missing-report coverage and
+the per-report request-level coverage are shared through
+../tools/record_inventory.py): a corner is reduced to numbers
 only if f0, f_p45, f_m45 and zpk are finite real numbers, positive and
 ordered f_p45 < f0 < f_m45 with a positive Q; otherwise the row is
 NO-VALUE(<reason>).  Every expected (variant, point, process, temperature)
@@ -162,17 +163,15 @@ def reduce_report(name, d):
                                       else "NO-VALUE (" + diag + ")")
             if invalid_pass:
                 covrow(variant, point, proc, temp, "INVALID", reason)
-            elif exp is None:
-                covrow(variant, point, proc, temp, "COVERAGE-UNCHECKED", "no request file")
-            else:
+            elif exp is not None:
                 covrow(variant, point, proc, temp, "ok" if ok else "NO-VALUE", reason or diag)
-        if req_err and exp is None:
-            covrow(variant, point, proc, temp, "REQUEST-UNREADABLE", req_err)
         rows.append(dict(variant=variant, mos=mos, vctrl_v=vctrl, point=point,
                          process=proc, temp_c=fmt_t(temp), status=status,
                          f0_hz=("%.6g" % m["f0"]) if ok else "",
                          q=("%.6g" % q) if ok else "",
                          zpk_ohm=("%.6g" % m["zpk"]) if ok else "", job=job or ""))
+    for pr, t, outcome, detail in inventory.request_coverage(name, exp, req_err):
+        covrow(variant, point, pr, t, outcome, detail)
     if exp is not None:
         for k2 in sorted(exp - set(x for x in keys if x is not None)):
             covrow(variant, point, k2[0], fmt_t(k2[1]), "MISSING-CORNER", "expected, not in report")

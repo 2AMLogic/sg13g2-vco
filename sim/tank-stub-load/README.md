@@ -66,7 +66,9 @@ f_p45, f_m45 and zpk are finite, positive and ordered; every expected
 inventoried -- its request file counts (discovery shared with the substrate
 bench through `../tools/record_inventory.py`, issue #462): each of its
 requested corners gets a `NO-REPORT` coverage row, and `--strict` exits 2
-on such gaps.
+on such gaps. A returned report whose request file is absent or unreadable
+gets one request-level `COVERAGE-UNCHECKED` or `REQUEST-UNREADABLE` row,
+whatever its corner list (issue #470).
 
 ## Corner set (declared; it is a subset)
 

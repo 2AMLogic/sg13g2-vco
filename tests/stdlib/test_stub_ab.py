@@ -10,6 +10,12 @@ submitted requests) is shared with sim/bn-substrate-tank/analyze.py, so a
 unit whose report never came back still gets one NO-REPORT coverage row
 per requested corner, --strict exits 2, and the complete committed record
 still reproduces its four CSVs byte for byte.
+
+Issue #470: the request-level coverage of a returned report (its request
+file absent or unreadable) is likewise decided by the shared inventory
+helper and recorded exactly once per returned report by both entry points,
+whatever the report's corner list: an empty report no longer passes
+--strict with a header-only coverage CSV.
 """
 import csv
 import json
@@ -25,6 +31,9 @@ SUBSTRATE_ANALYZE = "sim/bn-substrate-tank/analyze.py"
 RECORD = "sim/tank-stub-load/records/20261121-074401-e6b0670-226451eb"
 CSVS = ("stub-ab.csv", "stub-ab-delta.csv", "stub-ab-tuning.csv",
         "stub-ab-coverage.csv")
+ENTRY_POINTS = ((ANALYZE, "stub-ab-coverage.csv"),
+                (SUBSTRATE_ANALYZE, "tank-ab-coverage.csv"))
+EMPTY_REPORT = {"corners": []}
 
 
 def write_json(path, obj):
@@ -39,6 +48,12 @@ def report(f0, fp45, fm45, zpk, process="cap_typ", temp=27, status="pass"):
     return {"corners": [{"process": process, "temperature_c": temp,
                          "status": status, "measurements": ms}],
             "environment": {"remote": {"job_id": "job-1"}}}
+
+
+def multi_corner_report(*corners):
+    """A returned report with one passing, valid corner per (process, temp)."""
+    return {"corners": [report(5e9, 4.5e9, 5.5e9, 100.0, process, temp)["corners"][0]
+                        for process, temp in corners]}
 
 
 def add_point(rec, variant, mos, vctrl, rpt):
@@ -91,8 +106,9 @@ class SyntheticRecordTests(unittest.TestCase):
         self.assertEqual(rows[0]["point"], "tt_v1.5")
 
     def test_report_without_request_still_reduced(self):
-        # Union discovery must keep plain report-only names: the legacy
-        # COVERAGE-UNCHECKED behaviour of this analyzer is unchanged.
+        # Union discovery must keep plain report-only names: the report is
+        # still reduced, and its absent request gets one request-level
+        # COVERAGE-UNCHECKED row (issue #470).
         add_point(self.rec, "nostub", "tt", 1.5, report(5e9, 4.5e9, 5.5e9, 100.0))
         p = run_script(ANALYZE, self.rec)
         self.assertEqual(p.returncode, 0, p.stderr)
@@ -108,6 +124,86 @@ class SyntheticRecordTests(unittest.TestCase):
         cov = read_csv(os.path.join(self.rec, "stub-ab-coverage.csv"))
         self.assertEqual([c["outcome"] for c in cov], ["EMPTY-INVENTORY"])
         self.assertEqual(run_script(ANALYZE, self.rec, "--strict").returncode, 2)
+
+
+class RequestLevelCoverageTests(unittest.TestCase):
+    """Issue #470: the request-level status of a returned report -- request
+    file absent (COVERAGE-UNCHECKED) or unreadable (REQUEST-UNREADABLE) -- is
+    decided by the shared inventory helper and recorded exactly once per
+    returned report by BOTH entry points, whatever the report's corner list.
+    Before #470 the stub analyzer recorded it per visited corner, so an empty
+    report left a header-only coverage CSV and --strict exited 0."""
+
+    # request file body (None: absent), expected outcome, expected detail prefix
+    REQUESTS = ((None, "COVERAGE-UNCHECKED", "no decks/"),
+                ("{ nope", "REQUEST-UNREADABLE", "request unreadable"))
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.root = self._tmp.name
+
+    def _units(self, mos_list, rpt, body):
+        """A fresh record holding one returned unit per mos (all stub, Vctrl
+        1.5 V) with the same report and the same request state: body None
+        leaves no request file, otherwise it is the raw request-file text."""
+        rec = tempfile.mkdtemp(dir=self.root)
+        for mos in mos_list:
+            add_point(rec, "stub", mos, 1.5, rpt)
+            if body is not None:
+                with open(os.path.join(rec, "decks", "stub__%s_v1.5.request.json" % mos),
+                          "w") as fh:
+                    fh.write(body)
+        return rec
+
+    def _assert_one_request_level_row_per_report(self, rec, outcome, detail, mos_list):
+        """Both entry points: exactly one request-level coverage row per
+        returned unit (that unit's variant/point, blank process/temp), exit 0
+        by default and 2 under --strict."""
+        for script, coverage_csv in ENTRY_POINTS:
+            with self.subTest(request=outcome, script=script):
+                p = run_script(script, rec)
+                self.assertEqual(p.returncode, 0, p.stderr)
+                cov = read_csv(os.path.join(rec, coverage_csv))
+                self.assertEqual([(c["outcome"], c["variant"], c["point"], c["process"],
+                                   c["temp_c"]) for c in cov],
+                                 [(outcome, "stub", "%s_v1.5" % mos, "", "")
+                                  for mos in mos_list])
+                for c in cov:
+                    self.assertTrue(c["detail"].startswith(detail), c["detail"])
+                strict = run_script(script, rec, "--strict")
+                self.assertEqual(strict.returncode, 2, strict.stderr)
+
+    def test_empty_report_records_absent_or_unreadable_request_once(self):
+        # The issue's table: one returned report {"corners": []}; only the
+        # request varies.  The gap must be recorded without visiting a corner.
+        for body, outcome, detail in self.REQUESTS:
+            rec = self._units(["tt"], EMPTY_REPORT, body)
+            self._assert_one_request_level_row_per_report(rec, outcome, detail, ["tt"])
+
+    def test_multi_corner_report_gets_one_row_per_report(self):
+        # Once per returned report, never per visited corner: two units of
+        # three corners each with the same request state give exactly two
+        # request-level rows, one per unit.
+        units = ["ss", "tt"]
+        rpt = multi_corner_report(("cap_typ", 27), ("cap_typ", 125), ("cap_bcs", 27))
+        for body, outcome, detail in self.REQUESTS:
+            rec = self._units(units, rpt, body)
+            self._assert_one_request_level_row_per_report(rec, outcome, detail, units)
+
+    def test_valid_request_with_empty_report_is_missing_corner(self):
+        # The third row of the issue's table: a readable request is covered
+        # by its per-corner rows, so the empty report is all MISSING-CORNER.
+        rec = self._units(["tt"], EMPTY_REPORT, None)
+        add_request(rec, "stub", "tt", 1.5, ["cap_typ"], [27])
+        for script, coverage_csv in ENTRY_POINTS:
+            with self.subTest(script=script):
+                p = run_script(script, rec)
+                self.assertEqual(p.returncode, 0, p.stderr)
+                cov = read_csv(os.path.join(rec, coverage_csv))
+                self.assertEqual([(c["outcome"], c["process"], c["temp_c"]) for c in cov],
+                                 [("MISSING-CORNER", "cap_typ", "27")])
+                self.assertEqual(run_script(script, rec, "--strict").returncode, 2)
 
 
 class PartialRecordTests(unittest.TestCase):
