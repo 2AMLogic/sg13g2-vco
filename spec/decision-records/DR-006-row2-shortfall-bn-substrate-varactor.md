@@ -115,31 +115,43 @@ intrinsic device and the junction is not obviously proportional.
 
 Ratified 2026-11-26 (operator, on #198), with the threshold set in Decision 1.
 
-1. **Adopt option (b) as the first, bounded step.** A follow-up
-   characterization/retune issue (to be filed on ratification; not a
-   schematic change and not part of this record) measures, at bn = substrate
-   and via a `klt sim` request (any grid goes to the fleet, per host rules):
-   `Cmax`, `Cmin`, J, `r_eff` and Q at 5 GHz for the `sg13_hv_svaricap`
-   geometries that the shipped model allows (`w` 3.74-9.74 um, `l`
-   0.3-0.8 um, `Nx` 1-10; `sg13g2_svaricaphv_mod.lib`). Exit criterion,
-   stated now so the outcome cannot be negotiated afterward: a cell
-   **clears** iff, with the *measured* J, `r_eff >= 1.427` (F/V = 0.227,
+1. **Adopt option (b) as the first, bounded step.** Issue #198 measures
+   `Cmax`, `Cmin`, J, `r_eff` and Q at 5 GHz for its four representative
+   `sg13_hv_svaricap` geometries (legal unit-cell dimensions: `w` 3.74-9.74 um,
+   `l` 0.3-0.8 um, `Nx` 1-10). The `klt sim` batch campaign pairs the
+   bn = substrate measurements with the bn-tied reference. Both use the
+   IHP-Open-PDK v0.3.0 inputs pinned in `sim/pdk.json`, the OSDI `mosvar`
+   core and the run-local correction from #169. Use private model copies
+   prepared by `sim/tools/svaricap_overlay.py` for every corner. It changes
+   only `dsubw`'s `vj` from 0.1 to 0.3357 in
+   `sg13g2_svaricaphv_mod.lib` and its mismatch counterpart. Record the
+   original and overlaid SHA-256 digests and the digest of the loaded OSDI
+   artifact.
+
+   Run all 270 corners and retain the observed status, measurements and raw
+   diagnostics for each. A valid finite +125 C result is recorded as `ok`
+   with its values. An observed model failure such as a `dsubw` NaN is
+   `MODEL-ERROR`. Collection and coverage errors retain their own statuses
+   under #198. **All +125 C rows**, including finite ones, are excluded from
+   both clearing and failing this screen. [Operator ruling](https://github.com/2AMLogic/sg13g2-vco/issues/198#issuecomment-7183708640)
+
+   A cell **clears** iff its worst `r_eff` across the required -40 and +27 C
+   corners, with the *measured* J, meets `r_eff >= 1.427` (F/V = 0.227,
    i.e. a fixed-C budget of ~20.5 fF at V ~ 90 fF, the size of the
    baseline's `cap_cmim` alone) **and** the bank meets row 5 (loaded Q >= 6
    by DR-003's 1/Q rule, parallel small cells) **and** the resulting centre
    can be brought into row 1 by cell count/MIM. The operator set this
    threshold at ratification, before any measurement, in place of the
    proposed 1.367 (F/V = 0.10, ~9 fF): a layout could not meet a fixed-C
-   budget below the MIM it already carries. **+125 C corners** cannot be
-   simulated until the `dsubw` NaN problem (#95) is resolved. They are run
-   and reported as MODEL-ERROR evidence, and they do not count toward
-   clearing or failing.
-2. **If a cell clears**, the follow-up retunes the tank around it as a design
-   task; rows 1 and 2 stand unchanged; this DR stays proposed -> ratified
-   without a spec edit.
-3. **If none clears**, this record's fallback is option (a). Proposed
-   supersession text for row 2 (not applied): "Row 2 (tuning range), for the
-   substrate-`bn` `sg13_hv_svaricap` of DR-005: target f_max/f_min >= X,
+   budget below the MIM it already carries.
+2. **If a cell clears**, #198 identifies it and records the Q and centre
+   calculations. A separate design issue owns the schematic retune around
+   that candidate under the existing row-1 and row-2 targets.
+3. **If none clears with complete valid coverage of the required corners**,
+   this record's fallback is option (a). Incomplete required measurements
+   leave the decision open. Proposed supersession text for row 2 (not
+   applied): "Row 2 (tuning range), for the substrate-`bn`
+   `sg13_hv_svaricap` of DR-005: target f_max/f_min >= X,
    stretch >= Y, across 0.0-3.3 V, band-centre referenced; X and Y fixed by
    the operator from system need, not from measured results." This record
    does **not** pick X. For orientation only, the measured baseline tuning
@@ -199,7 +211,7 @@ Dependencies on the outcome:
   `sim/phase-noise` for the post-#79 netlist; blocked on OSDI paths). Under
   (b)-success the schematic changes (cell count/geometry/MIM), so regenerating
   against today's netlist would spend its fleet and unblock effort on a
-  netlist that is about to change: sequence #94 after the follow-up. Under
+  netlist that is about to change: sequence #94 after the design retune. Under
   (a) the netlist can stand, and #94 may proceed unchanged. The surrogate
   smoke (#179) is screening only and does not substitute.
 - **#50** (graded row-10/11 PVT grid, ~180 CPU-hours, row 1/2/3/6/8 verdicts).
@@ -226,13 +238,17 @@ Dependencies on the outcome:
   and it is bounded to the shipped model's range; the J-transfer assumption
   above may be false, in which case the answer is (a) with little lost.
   Cell-scaling (cells in parallel keep per-cell C and Q) is assumed, not
-  proven, outside the calibrated 12-16 cell range, and the +125 C corner
-  cannot be simulated until the `dsubw` NaN problem (#95) is resolved, so
-  neither clearing nor failing is graded at row 11 by this path.
+  proven, outside the calibrated 12-16 cell range. PR #169 closed #95. The
+  corrected passive-tank smoke measured 4.30870 GHz at +125 C with a lumped
+  R-C stand-in for the MOS core. Issue #198 must measure its own OSDI rows.
+  Its +125 C results are evidence only. Row 11 still requires +125 C for
+  signoff. [Passive-tank smoke record](../../sim/bn-substrate-tank/records/20261010-overlay-smoke-b233273/README.md)
 - **Nothing is measured here.** No simulation was run. Every number above is
-  arithmetic on committed records; the per-geometry bn = substrate ratios, the
-  true fixed-C budget and the HBT-pair parasitics are all unmeasured.
+  comes from committed records or arithmetic on them. The other geometries'
+  bn = substrate ratios, the true fixed-C budget and the HBT-pair parasitics
+  are still unmeasured.
 - **Operator decisions made at ratification (2026-11-26):** the F/V clearing
-  threshold is 0.227 (`r_eff >= 1.427`), and the follow-up (#198) is
-  authorized. **Still open:** on failure, the value of X and Y. Row 2 stays
+  threshold is 0.227 (`r_eff >= 1.427`). Issue #198 is authorized to
+  characterize the cells and report any clearing candidate for a separate
+  design issue. **Still open:** on failure, the value of X and Y. Row 2 stays
   binding as written until a separate operator ruling sets them.
