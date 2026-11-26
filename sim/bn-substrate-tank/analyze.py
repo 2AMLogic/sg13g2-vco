@@ -9,9 +9,10 @@ zero-phase crossing.  Each value is one deterministic AC solve, so it has no
 sampling variance; its numerical resolution is the sweep step (2 MHz) -- about
 +-0.05 % on f0 and +-0.5 % on Q here.
 
-Validation and coverage (issue #166; the request/report inventory and the
-missing-report coverage are shared with ../tank-stub-load/analyze.py through
-../tools/record_inventory.py, issue #462).  A corner is reduced to numbers only if
+Validation and coverage (issue #166; the request/report inventory, the
+missing-report coverage and the per-report request-level coverage are shared
+with ../tank-stub-load/analyze.py through ../tools/record_inventory.py, issues
+#462 and #470).  A corner is reduced to numbers only if
 f0, f_p45, f_m45 and zpk are finite real numbers (not bool), positive, ordered
 f_p45 < f0 < f_m45, and the resulting Q is finite and positive; otherwise the
 row is "NO-VALUE (<reason>)" with blank derived columns.  When the record has
@@ -182,11 +183,9 @@ def reduce_report(name, d):
         except Exception as e:  # one bad corner must not stop the others
             rows.append(dict(variant=variant, mos=mos, vctrl_v=vctrl, status="NO-VALUE (error: %s)" % type(e).__name__))
             covrow(variant, point, "", "", "INVALID", "error: %s" % type(e).__name__)
-    if req_err:
-        covrow(variant, point, "", "", "REQUEST-UNREADABLE", req_err)
-    elif exp is None:
-        covrow(variant, point, "", "", "COVERAGE-UNCHECKED", "no decks/%s.request.json" % name)
-    else:
+    for pr, t, outcome, detail in inventory.request_coverage(name, exp, req_err):
+        covrow(variant, point, pr, t, outcome, detail)
+    if exp is not None:
         for pr, t in sorted(exp):
             if (pr, t) not in seen:
                 covrow(variant, point, pr, fmt_t(t), "MISSING-CORNER", "")
