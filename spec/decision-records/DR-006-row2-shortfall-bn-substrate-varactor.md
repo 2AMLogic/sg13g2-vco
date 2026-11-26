@@ -1,11 +1,14 @@
 # DR-006: Row-1/row-2 shortfall for the bn=substrate varactor -- bounded option (b) first, row-2 supersession (a) as the stated fallback
 
-- **Status**: **proposed** -- awaits operator ratification. Nothing in this
-  record is binding on design work and **no row of `spec/target-spec.md` is
-  edited by it**. Every spec-text change below is proposed text only.
-- **Date**: 2026-10-10
-- **Decided by**: Builder agent, issue #184 (recommendation only; only the
-  operator can ratify a change to row 2)
+- **Status**: **ratified** 2026-11-26 -- option (b) at the stricter
+  threshold `r_eff >= 1.427` (F/V = 0.227); see Decision 1. **No row of
+  `spec/target-spec.md` is edited by it.** The option (a) supersession text
+  below stays proposed text only, and the row-2 X and Y need their own
+  operator ruling if (b) finds no cell.
+- **Date**: 2026-10-10 (ratified 2026-11-26)
+- **Decided by**: Builder agent, issue #184 (recommendation); ratified by the
+  operator (rjwalters) in attended `/fleet:decide` r20 on #198, which set the
+  threshold
 - **Supersedes**: none. It resolves the handoff `design/README.md:526`
   ("Decision needed (separate decision record; not made here)") left by the
   #93 re-tune, and builds on DR-005 (which created the shortfall) and
@@ -110,7 +113,7 @@ intrinsic device and the junction is not obviously proportional.
 
 ## Decision
 
-Proposed, for operator ratification.
+Ratified 2026-11-26 (operator, on #198), with the threshold set in Decision 1.
 
 1. **Adopt option (b) as the first, bounded step.** A follow-up
    characterization/retune issue (to be filed on ratification; not a
@@ -120,12 +123,17 @@ Proposed, for operator ratification.
    geometries that the shipped model allows (`w` 3.74-9.74 um, `l`
    0.3-0.8 um, `Nx` 1-10; `sg13g2_svaricaphv_mod.lib`). Exit criterion,
    stated now so the outcome cannot be negotiated afterward: a cell
-   **clears** iff, with the *measured* J, `r_eff >= 1.367` (F/V = 0.10, i.e.
-   a fixed-C budget of ~9 fF at V ~ 90 fF) **and** the bank meets row 5
-   (loaded Q >= 6 by DR-003's 1/Q rule, parallel small cells) **and** the
-   resulting centre can be brought into row 1 by cell count/MIM. The 0.10
-   threshold is a proposal; the operator may set it differently, but it must
-   be fixed before the measurement.
+   **clears** iff, with the *measured* J, `r_eff >= 1.427` (F/V = 0.227,
+   i.e. a fixed-C budget of ~20.5 fF at V ~ 90 fF, the size of the
+   baseline's `cap_cmim` alone) **and** the bank meets row 5 (loaded Q >= 6
+   by DR-003's 1/Q rule, parallel small cells) **and** the resulting centre
+   can be brought into row 1 by cell count/MIM. The operator set this
+   threshold at ratification, before any measurement, in place of the
+   proposed 1.367 (F/V = 0.10, ~9 fF): a layout could not meet a fixed-C
+   budget below the MIM it already carries. **+125 C corners** cannot be
+   simulated until the `dsubw` NaN problem (#95) is resolved. They are run
+   and reported as MODEL-ERROR evidence, and they do not count toward
+   clearing or failing.
 2. **If a cell clears**, the follow-up retunes the tank around it as a design
    task; rows 1 and 2 stand unchanged; this DR stays proposed -> ratified
    without a spec edit.
@@ -224,6 +232,7 @@ Dependencies on the outcome:
 - **Nothing is measured here.** No simulation was run. Every number above is
   arithmetic on committed records; the per-geometry bn = substrate ratios, the
   true fixed-C budget and the HBT-pair parasitics are all unmeasured.
-- **Operator decision required** on: the F/V clearing threshold (0.10
-  proposed), whether to authorize the follow-up, and, on failure, the value of
-  X and Y. Row 2 stays binding as written until then.
+- **Operator decisions made at ratification (2026-11-26):** the F/V clearing
+  threshold is 0.227 (`r_eff >= 1.427`), and the follow-up (#198) is
+  authorized. **Still open:** on failure, the value of X and Y. Row 2 stays
+  binding as written until a separate operator ruling sets them.
