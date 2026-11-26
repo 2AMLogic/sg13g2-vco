@@ -62,7 +62,11 @@ on Q). `f0` is the zero-phase crossing of Z; Q is the phase-bandwidth Q,
 `f0/(f_m45 - f_p45)`. `analyze.py` reduces a corner to numbers only if f0,
 f_p45, f_m45 and zpk are finite, positive and ordered; every expected
 (variant, point, process, temperature) appears exactly once in
-`stub-ab-coverage.csv`.
+`stub-ab-coverage.csv`. A unit whose report never came back is still
+inventoried -- its request file counts (discovery shared with the substrate
+bench through `../tools/record_inventory.py`, issue #462): each of its
+requested corners gets a `NO-REPORT` coverage row, and `--strict` exits 2
+on such gaps.
 
 ## Corner set (declared; it is a subset)
 

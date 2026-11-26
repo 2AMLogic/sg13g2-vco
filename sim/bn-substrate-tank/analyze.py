@@ -9,7 +9,9 @@ zero-phase crossing.  Each value is one deterministic AC solve, so it has no
 sampling variance; its numerical resolution is the sweep step (2 MHz) -- about
 +-0.05 % on f0 and +-0.5 % on Q here.
 
-Validation and coverage (issue #166).  A corner is reduced to numbers only if
+Validation and coverage (issue #166; the request/report inventory and the
+missing-report coverage are shared with ../tank-stub-load/analyze.py through
+../tools/record_inventory.py, issue #462).  A corner is reduced to numbers only if
 f0, f_p45, f_m45 and zpk are finite real numbers (not bool), positive, ordered
 f_p45 < f0 < f_m45, and the resulting Q is finite and positive; otherwise the
 row is "NO-VALUE (<reason>)" with blank derived columns.  When the record has
@@ -28,15 +30,27 @@ CSVs and a stderr summary); with --strict, 2 if any coverage gap or invalid
 known +125 C dsubw NaN) never affect the exit status: that is spec/evidence,
 not tool health.
 """
-import csv, glob, json, math, os, sys
+import csv, importlib.util, json, math, os, sys
+
+# Shared request/report inventory (issue #462): loaded by path because this
+# script runs under python3 -I (isolated mode), like make_requests.py's
+# svaricap_overlay import.
+_spec = importlib.util.spec_from_file_location(
+    "record_inventory", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "..", "tools", "record_inventory.py"))
+inventory = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(inventory)
+
+# The identical helpers and request parsing now live in the shared inventory
+# module; the aliases keep the call sites below unchanged.
+isnum = inventory.isnum
+fmt_t = inventory.fmt_t
+split_name = inventory.split_name
+expected_corners = inventory.expected_corners
 
 args = [a for a in sys.argv[1:] if a != "--strict"]
 strict = "--strict" in sys.argv[1:]
 rec = args[0]
-
-
-def isnum(x):
-    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 
 
 def validate_corner(m):
@@ -54,34 +68,6 @@ def validate_corner(m):
     if not (isnum(q) and q > 0):
         return False, "invalid Q", None
     return True, "", q
-
-
-def fmt_t(t):
-    return int(t) if float(t).is_integer() else t
-
-
-def expected_corners(rec, name):
-    """(set of (process, float temp), None) from decks/<name>.request.json.
-
-    Returns (None, None) when the request file is absent (legacy record) and
-    (None, why) when it is present but unreadable or malformed."""
-    p = os.path.join(rec, "decks", name + ".request.json")
-    if not os.path.exists(p):
-        return None, None
-    try:
-        with open(p) as fh:
-            cs = json.load(fh)["corners"]
-        procs = [x["name"] for x in cs["process"]]
-        temps = list(cs["temperature_c"])
-        if not procs or not temps:
-            raise ValueError("empty corner list")
-        if not all(isinstance(pr, str) for pr in procs):
-            raise ValueError("non-string process name")
-        if not all(isnum(t) for t in temps):
-            raise ValueError("non-numeric or non-finite temperature")
-        return {(pr, float(t)) for pr in procs for t in temps}, None
-    except Exception as e:
-        return None, "request unreadable: %s" % type(e).__name__
 
 
 def corner_key(c):
@@ -108,22 +94,11 @@ def covrow(variant, point, process, temp, outcome, detail=""):
         state["gap"] = True
 
 
-def split_name(name):
-    parts = name.split("__")
-    return (parts[0], parts[1]) if len(parts) == 2 else (name, "")
-
-
 def no_report(name, why):
-    variant, point = split_name(name)
+    variant, point, entries = inventory.no_report_coverage(rec, name, why)
     rows.append(dict(variant=variant, point=point, mim="", temp_c="", status="NO-REPORT"))
-    exp, req_err = expected_corners(rec, name)
-    if req_err:
-        covrow(variant, point, "", "", "REQUEST-UNREADABLE", req_err)
-    if exp is None:
-        covrow(variant, point, "", "", "NO-REPORT", why)
-    else:
-        for pr, t in sorted(exp):
-            covrow(variant, point, pr, fmt_t(t), "NO-REPORT", why)
+    for pr, t, outcome, detail in entries:
+        covrow(variant, point, pr, t, outcome, detail)
 
 
 def reduce_report(name, d):
@@ -217,16 +192,12 @@ def reduce_report(name, d):
                 covrow(variant, point, pr, fmt_t(t), "MISSING-CORNER", "")
 
 
-names = set()
-for p in sorted(glob.glob(os.path.join(rec, "reports", "*.json"))):
-    names.add(os.path.basename(p)[:-5])
-for p in sorted(glob.glob(os.path.join(rec, "decks", "*.request.json"))):
-    names.add(os.path.basename(p)[:-len(".request.json")])
+names = inventory.discover(rec)
 if not names:
     covrow("", "", "", "", "EMPTY-INVENTORY",
            "no reports/*.json and no decks/*.request.json found in " + rec)
     print("EMPTY-INVENTORY: no report or request evidence in %s" % rec, file=sys.stderr)
-for name in sorted(names):
+for name in names:
     p = os.path.join(rec, "reports", name + ".json")
     if not os.path.exists(p):
         no_report(name, "no report file")
