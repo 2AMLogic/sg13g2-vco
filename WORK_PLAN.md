@@ -11,6 +11,7 @@ only when label state changes and the Guide debounce window has elapsed.
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
 
 - **#424**: ci: file a loom:triage repair issue from scheduled friction-upstream drift
+- **#465**: DR-006: ratify option (b) at r_eff >= 1.427 (#198)
 
 ## Very Important
 
@@ -50,6 +51,7 @@ _None._
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
 - **#424**: ci: file a loom:triage repair issue from scheduled friction-upstream drift
+- **#465**: DR-006: ratify option (b) at r_eff >= 1.427 (#198)
 
 ## Proposed
 
@@ -77,13 +79,13 @@ _None._
 
 | Bucket | Count |
 |------|-------|
-| Operator merge-risk holds | 1 |
+| Operator merge-risk holds | 2 |
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 1 |
+| Approved PRs awaiting merge | 2 |
 | Curated | 8 |
 | Architect / Hermit proposals | 2 |
 | Active epics | 0 |
