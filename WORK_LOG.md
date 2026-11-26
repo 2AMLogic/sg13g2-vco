@@ -10,6 +10,8 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-26
 
+- **PR #424**: ci: file a loom:triage repair issue from scheduled friction-upstream drift
+- **Issue #422** (closed): ci: friction-upstream has been red on main's daily schedule since 2026-11-17 and nothing repairs the drift
 - **PR #464**: fix: share the tank A/B record inventory so strict mode catches missing reports
 - **Issue #462** (closed): Share tank A/B report discovery so strict mode catches missing reports
 
