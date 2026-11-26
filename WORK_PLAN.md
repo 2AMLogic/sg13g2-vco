@@ -31,14 +31,13 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-_None._
+- **#462**: Share tank A/B report discovery so strict mode catches missing reports
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
 - **#422**: ci: friction-upstream has been red on main's daily schedule since 2026-11-17 and nothing repairs the drift
-- **#447**: sim/tank-stub-load/run_stub_ab.sh has no simulator-free fixture test (its sibling runner does)
 
 ## PRs Awaiting Review
 
@@ -50,7 +49,6 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-- **#453**: test: add fixture and gate for the tank-stub A/B runner
 - **#424**: ci: file a loom:triage repair issue from scheduled friction-upstream drift
 
 ## Proposed
@@ -65,11 +63,11 @@ Issues carrying `loom:curated`.
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
 - **#422**: ci: friction-upstream has been red on main's daily schedule since 2026-11-17 and nothing repairs the drift *(curated)*
-- **#447**: sim/tank-stub-load/run_stub_ab.sh has no simulator-free fixture test (its sibling runner does) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
 - **#198**: sim: bounded bn=substrate varactor cell characterization per DR-006 option (b) (gated on ratification) *(architect)*
+- **#457**: Retire the klt 0.6.0 fleet-client default in run_tank_ab.sh *(hermit)*
 
 ## Epics
 
@@ -82,11 +80,11 @@ _None._
 | Operator merge-risk holds | 1 |
 | Very important | 0 |
 | Important | 4 |
-| Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 2 |
+| Ready (`loom:issue`) | 1 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 2 |
-| Curated | 9 |
-| Architect / Hermit proposals | 1 |
+| Approved PRs awaiting merge | 1 |
+| Curated | 8 |
+| Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
