@@ -11,13 +11,18 @@ it has no sampling variance; its numerical resolution is the sweep step
 (2 MHz) -- about +-0.05 % on f0 and +-0.5 % on Q here (same estimator and
 resolution as ../bn-substrate-tank/analyze.py, whose README states them).
 
-Validation and coverage follow ../bn-substrate-tank/analyze.py (issue #166):
-a corner is reduced to numbers only if f0, f_p45, f_m45 and zpk are finite
-real numbers, positive and ordered f_p45 < f0 < f_m45 with a positive Q;
-otherwise the row is NO-VALUE(<reason>).  Every expected (variant, point,
-process, temperature) appears exactly once in stub-ab-coverage.csv.  Nothing
-is invented.  Model failures (corner status != pass, e.g. the known +125 C
-dsubw NaN) never affect the exit status: that is evidence, not tool health.
+Validation and coverage follow ../bn-substrate-tank/analyze.py (issues #166
+and #462: the request/report inventory and the missing-report coverage are
+shared through ../tools/record_inventory.py): a corner is reduced to numbers
+only if f0, f_p45, f_m45 and zpk are finite real numbers, positive and
+ordered f_p45 < f0 < f_m45 with a positive Q; otherwise the row is
+NO-VALUE(<reason>).  Every expected (variant, point, process, temperature)
+appears exactly once in stub-ab-coverage.csv: the inventory is the union of
+returned reports and submitted requests, so a unit whose report never came
+back gets one NO-REPORT row per requested corner -- a coverage gap, which
+--strict turns into exit 2.  Nothing is invented.  Model failures (corner
+status != pass, e.g. the known +125 C dsubw NaN) never affect the exit
+status: that is evidence, not tool health.
 
 stub-ab-delta.csv joins the two variants per (mos, vctrl, process, temp)
 and reports the f0 and Q shift the #420 stubs load onto the tank.
@@ -27,15 +32,27 @@ the stub's delta on it -- the quantity spec row 2 grades.  A ratio is
 emitted only when both endpoints are 'ok' in that variant; a missing
 endpoint leaves blanks, never an interpolation.
 """
-import csv, glob, json, math, os, sys
+import csv, importlib.util, json, os, sys
+
+# Shared request/report inventory (issue #462): loaded by path because this
+# script runs under python3 -I (isolated mode), like make_requests.py's
+# svaricap_overlay import.
+_spec = importlib.util.spec_from_file_location(
+    "record_inventory", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "..", "tools", "record_inventory.py"))
+inventory = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(inventory)
+
+# The identical helpers and request parsing now live in the shared inventory
+# module; the aliases keep the call sites below unchanged.
+isnum = inventory.isnum
+fmt_t = inventory.fmt_t
+split_name = inventory.split_name
+expected_corners = inventory.expected_corners
 
 strict = "--strict" in sys.argv[1:]
 args = [a for a in sys.argv[1:] if a != "--strict"]
 rec = args[0]
-
-
-def isnum(x):
-    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 
 
 def validate_corner(m):
@@ -52,30 +69,6 @@ def validate_corner(m):
     if not (isnum(q) and q > 0):
         return False, "invalid Q", None
     return True, "", q
-
-
-def fmt_t(t):
-    return int(t) if float(t).is_integer() else t
-
-
-def expected_corners(rec, name):
-    p = os.path.join(rec, "decks", name + ".request.json")
-    if not os.path.exists(p):
-        return None, None
-    try:
-        with open(p) as fh:
-            cs = json.load(fh)["corners"]
-        procs = [x["name"] for x in cs["process"]]
-        temps = list(cs["temperature_c"])
-        if not procs or not temps:
-            raise ValueError("empty corner list")
-        if not all(isinstance(pr, str) for pr in procs):
-            raise ValueError("non-string process name")
-        if not all(isnum(t) for t in temps):
-            raise ValueError("non-numeric or non-finite temperature")
-        return {(pr, float(t)) for pr in procs for t in temps}, None
-    except Exception as e:
-        return None, "request unreadable: %s" % type(e).__name__
 
 
 def corner_key(c):
@@ -101,23 +94,12 @@ def covrow(variant, point, process, temp, outcome, detail=""):
         state["gap"] = True
 
 
-def split_name(name):
-    parts = name.split("__")
-    return (parts[0], parts[1]) if len(parts) == 2 else (name, "")
-
-
 def no_report(name, why):
-    variant, point = split_name(name)
+    variant, point, entries = inventory.no_report_coverage(rec, name, why)
     rows.append(dict(variant=variant, mos="", vctrl_v="", point=point, process="", temp_c="",
                      status="NO-REPORT", f0_hz="", q="", zpk_ohm="", job=""))
-    exp, req_err = expected_corners(rec, name)
-    if req_err:
-        covrow(variant, point, "", "", "REQUEST-UNREADABLE", req_err)
-    if exp is None:
-        covrow(variant, point, "", "", "NO-REPORT", why)
-    else:
-        for pr, t in sorted(exp):
-            covrow(variant, point, pr, fmt_t(t), "NO-REPORT", why)
+    for pr, t, outcome, detail in entries:
+        covrow(variant, point, pr, t, outcome, detail)
 
 
 def reduce_report(name, d):
@@ -196,12 +178,17 @@ def reduce_report(name, d):
             covrow(variant, point, k2[0], fmt_t(k2[1]), "MISSING-CORNER", "expected, not in report")
 
 
-reports = sorted(glob.glob(os.path.join(rec, "reports", "*.json")))
-reports = [r for r in reports if not r.endswith(".err")]
-if not reports and not glob.glob(os.path.join(rec, "decks", "*.request.json")):
+# Shared inventory discovery (issue #462): the union of returned reports and
+# submitted requests, so a requested unit whose report never came back still
+# gets one NO-REPORT coverage row per requested corner.
+names = inventory.discover(rec)
+if not names:
     covrow("", "", "", "", "EMPTY-INVENTORY", "no reports and no request files")
-for p in reports:
-    name = os.path.basename(p)[:-5]
+for name in names:
+    p = os.path.join(rec, "reports", name + ".json")
+    if not os.path.exists(p):
+        no_report(name, "no report file")
+        continue
     try:
         with open(p) as fh:
             txt = fh.read()
