@@ -24,7 +24,7 @@
     },
     {
       "path": ".github/workflows/friction-upstream.yml",
-      "sha256": "sha256:a519f436672d44ab23c4b2c5e49ce71be08df37d18d573b459d4b06fffd95d11"
+      "sha256": "sha256:2770a64759e1650ef3d180f7af2dcee9856c446f6bdb853d316206bb80d6eb20"
     },
     {
       "path": ".github/workflows/lint.yml",
