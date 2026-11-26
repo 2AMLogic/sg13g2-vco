@@ -243,7 +243,7 @@ Dependencies on the outcome:
   R-C stand-in for the MOS core. Issue #198 must measure its own OSDI rows.
   Its +125 C results are evidence only. Row 11 still requires +125 C for
   signoff. [Passive-tank smoke record](../../sim/bn-substrate-tank/records/20261010-overlay-smoke-b233273/README.md)
-- **Nothing is measured here.** No simulation was run. Every number above is
+- **Nothing is measured here.** No simulation was run. Every number above
   comes from committed records or arithmetic on them. The other geometries'
   bn = substrate ratios, the true fixed-C budget and the HBT-pair parasitics
   are still unmeasured.
