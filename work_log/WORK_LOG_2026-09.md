@@ -2,6 +2,17 @@
 
 Sections moved byte-for-byte from [WORK_LOG.md](../WORK_LOG.md) by `loom-daemon work-docs archive`.
 
+### 2026-09-27
+
+- **Issue #55** (closed): Consolidate the six copied ngspice model-resolution-error greps into one sim/lib.sh helper
+- **Issue #64** (closed): Consolidate the triplicated PDK-digest provenance block into osc_bench.sh
+- **Issue #65** (closed): Wire failed_points into the exit gates of the three sim/*/run_*.sh scripts (they report device-row failures but exit 0 on them)
+- **Issue #66** (closed): Extract the triplicated ideal-RLC reference network out of the three SPICE testbench templates (the half #22 left behind)
+- **PR #67**: sim: consolidate the triplicated PDK-digest provenance block into osc_bench.sh
+- **PR #68**: sim: extract the triplicated ideal-RLC reference network into sim/testbench-common/ref-network.inc
+- **PR #69**: refactor: consolidate ngspice model-resolution-error greps into sim/lib.sh
+- **PR #70**: fix: make sim evidence-script exit gates honor failed_points
+
 ### 2026-09-26
 
 - **Issue #47** (closed): sim: oscillator-core testbench — start-up, f_osc/tuning range and large-signal supply current vs Vctrl over PVT, against design/vco.sch

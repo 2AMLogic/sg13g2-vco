@@ -10,6 +10,8 @@ Guide maintenance PRs are excluded.
 
 ### 2026-11-26
 
+- **PR #471**: fix: share per-report request-level coverage between tank analyzers
+- **Issue #470** (closed): Share request-level coverage so empty tank-stub reports fail strict mode
 - **PR #424**: ci: file a loom:triage repair issue from scheduled friction-upstream drift
 - **Issue #422** (closed): ci: friction-upstream has been red on main's daily schedule since 2026-11-17 and nothing repairs the drift
 - **PR #464**: fix: share the tank A/B record inventory so strict mode catches missing reports
@@ -422,14 +424,3 @@ Guide maintenance PRs are excluded.
 
 - **Issue #63** (closed): Dedup design/run_elaborate.sh's read_osc() into sim/lib.sh's method-checked osc_metrics()
 - **PR #72**: refactor: dedup run_elaborate.sh extractors into sim/lib.sh helpers
-
-### 2026-09-27
-
-- **Issue #55** (closed): Consolidate the six copied ngspice model-resolution-error greps into one sim/lib.sh helper
-- **Issue #64** (closed): Consolidate the triplicated PDK-digest provenance block into osc_bench.sh
-- **Issue #65** (closed): Wire failed_points into the exit gates of the three sim/*/run_*.sh scripts (they report device-row failures but exit 0 on them)
-- **Issue #66** (closed): Extract the triplicated ideal-RLC reference network out of the three SPICE testbench templates (the half #22 left behind)
-- **PR #67**: sim: consolidate the triplicated PDK-digest provenance block into osc_bench.sh
-- **PR #68**: sim: extract the triplicated ideal-RLC reference network into sim/testbench-common/ref-network.inc
-- **PR #69**: refactor: consolidate ngspice model-resolution-error greps into sim/lib.sh
-- **PR #70**: fix: make sim evidence-script exit gates honor failed_points
