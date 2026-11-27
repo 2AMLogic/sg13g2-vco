@@ -31,13 +31,13 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#423**: ci: verify the scheduled friction-upstream drift reporter against a real scheduled run
+_None._
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#423**: ci: verify the scheduled friction-upstream drift reporter against a real scheduled run
 
 ## PRs Awaiting Review
 
@@ -80,8 +80,8 @@ _None._
 | Operator merge-risk holds | 1 |
 | Very important | 0 |
 | Important | 4 |
-| Ready (`loom:issue`) | 1 |
-| In Progress (`loom:building`) | 0 |
+| Ready (`loom:issue`) | 0 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
 | Curated | 8 |
