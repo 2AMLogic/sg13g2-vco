@@ -37,7 +37,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#423**: ci: verify the scheduled friction-upstream drift reporter against a real scheduled run
+_None._
 
 ## PRs Awaiting Review
 
@@ -81,7 +81,7 @@ _None._
 | Very important | 0 |
 | Important | 4 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
 | Curated | 8 |
