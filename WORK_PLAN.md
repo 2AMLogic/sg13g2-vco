@@ -62,7 +62,6 @@ Issues carrying `loom:curated`.
 - **#62**: layout: LVS closure + signoff manifest refresh for sg13g2-vco (T1 item 1/2, part 3/3) *(curated)*
 - **#144**: Auditor Capability Request: simulator-free validation tools missing on audit host *(curated)*
 - **#260**: T1 item 7 (post-layout verification): klt pex of layout/vco.gds against the ratified oscillator rows *(curated)*
-- **#423**: ci: verify the scheduled friction-upstream drift reporter against a real scheduled run *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -84,7 +83,7 @@ _None._
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 1 |
-| Curated | 8 |
+| Curated | 7 |
 | Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

@@ -8,6 +8,10 @@ Guide maintenance PRs are excluded.
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+### 2026-11-28
+
+- **Issue #423** (closed): ci: verify the scheduled friction-upstream drift reporter against a real scheduled run
+
 ### 2026-11-26
 
 - **PR #471**: fix: share per-report request-level coverage between tank analyzers
